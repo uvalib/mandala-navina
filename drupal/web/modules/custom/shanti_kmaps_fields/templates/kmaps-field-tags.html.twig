@@ -1,0 +1,10 @@
+{#
+  Template for KMaps field display.
+  Variables:
+    tags: array of render elements (links or markup), one per term.
+#}
+<div class="kmaps-field-tags">
+  {% for tag in tags %}
+    <span class="kmaps-tag-wrapper">{{ tag }}</span>
+  {% endfor %}
+</div>

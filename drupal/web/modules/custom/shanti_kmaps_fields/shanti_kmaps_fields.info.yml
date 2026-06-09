@@ -5,4 +5,4 @@ package: Mandala
 core_version_requirement: ^10
 dependencies:
   - drupal:field
-  - drupal:link
+  - shanti_kmaps_admin:shanti_kmaps_admin

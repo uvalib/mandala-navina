@@ -1,0 +1,32 @@
+.kmaps-field-item {
+  margin-bottom: 0.5em;
+}
+
+.kmaps-field-item .kmaps-search-input {
+  width: 100%;
+  max-width: 500px;
+}
+
+/* Show a small "KMaps" badge next to the autocomplete input */
+.kmaps-field-item .form-item {
+  position: relative;
+}
+
+.kmaps-field-item .form-item::after {
+  content: "KMaps";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #3d72a8;
+  color: #fff;
+  font-size: 0.7em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+/* Autocomplete dropdown item styling */
+.ui-autocomplete .ui-menu-item-wrapper {
+  font-size: 0.9em;
+}

@@ -1,0 +1,30 @@
+<?php
+
+/**
+ * @file
+ * KMaps server configuration module for Mandala.
+ */
+
+/**
+ * Returns the KMaps admin config object.
+ */
+function shanti_kmaps_admin_config(): \Drupal\Core\Config\ImmutableConfig {
+  return \Drupal::config('shanti_kmaps_admin.settings');
+}
+
+/**
+ * Returns the configured kmterms Solr URL.
+ */
+function shanti_kmaps_admin_solr_terms_url(): string {
+  return shanti_kmaps_admin_config()->get('server_solr_terms') ?? '';
+}
+
+/**
+ * Returns the KMaps explorer URL for a given domain and ID.
+ */
+function shanti_kmaps_admin_explorer_url(string $domain, int $id): string {
+  $config = shanti_kmaps_admin_config();
+  $key = 'explorer_' . $domain;
+  $template = $config->get($key) ?? '';
+  return str_replace('__KMAPID__', $id, $template);
+}

@@ -1,0 +1,17 @@
+kmaps_widget:
+  version: VERSION
+  css:
+    component:
+      css/kmaps_widget.css: {}
+  js:
+    js/kmaps_widget.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupal.autocomplete
+
+kmaps_display:
+  version: VERSION
+  css:
+    component:
+      css/kmaps_display.css: {}

@@ -1,0 +1,7 @@
+shanti_kmaps_fields.autocomplete:
+  path: '/shanti-kmaps/autocomplete/{domain}'
+  defaults:
+    _controller: '\Drupal\shanti_kmaps_fields\Controller\KmapsAutocompleteController::autocomplete'
+  requirements:
+    _permission: 'access content'
+    domain: 'subjects|places|terms'

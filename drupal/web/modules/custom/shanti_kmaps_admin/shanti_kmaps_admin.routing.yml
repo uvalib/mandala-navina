@@ -1,0 +1,7 @@
+shanti_kmaps_admin.settings:
+  path: '/admin/config/content/shanti-kmaps-admin'
+  defaults:
+    _form: '\Drupal\shanti_kmaps_admin\Form\KmapsAdminSettingsForm'
+    _title: 'KMaps Admin Settings'
+  requirements:
+    _permission: 'administer site configuration'

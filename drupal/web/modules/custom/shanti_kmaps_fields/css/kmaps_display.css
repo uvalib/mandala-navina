@@ -1,0 +1,24 @@
+.kmaps-field-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+.kmaps-tag-wrapper .kmaps-term-tag,
+.kmaps-tag-wrapper a.kmaps-term-tag {
+  display: inline-block;
+  background: #e8f0fe;
+  border: 1px solid #3d72a8;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 0.85em;
+  color: #1a3c6e;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.kmaps-tag-wrapper a.kmaps-term-tag:hover {
+  background: #3d72a8;
+  color: #fff;
+}

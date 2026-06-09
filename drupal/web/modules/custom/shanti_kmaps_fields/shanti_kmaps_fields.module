@@ -4,3 +4,17 @@
  * @file
  * KMaps term reference field type for Mandala.
  */
+
+/**
+ * Implements hook_theme().
+ */
+function shanti_kmaps_fields_theme(): array {
+  return [
+    'kmaps_field_tags' => [
+      'variables' => [
+        'tags' => [],
+      ],
+      'template' => 'kmaps-field-tags',
+    ],
+  ];
+}
