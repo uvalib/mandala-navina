@@ -1,0 +1,19 @@
+name: mandala
+type: drupal10
+docroot: drupal/web
+composer_root: drupal
+php_version: "8.1"
+webserver_type: apache-fpm
+database:
+  type: mariadb
+  version: "10.11"
+composer_version: "2"
+nodejs_version: "18"
+use_dns_when_possible: true
+
+hooks:
+  post-start:
+    - exec: if [ ! -d "/var/www/html/drupal/vendor" ]; then composer install --prefer-dist; fi
+
+web_environment:
+  - DRUPAL_HASH_SALT=temporary-local-dev-only

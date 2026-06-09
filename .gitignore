@@ -1,0 +1,26 @@
+# Drupal / Composer
+/drupal/vendor/
+/drupal/web/core/
+/drupal/web/libraries/
+/drupal/web/modules/contrib/
+/drupal/web/themes/contrib/
+/drupal/web/profiles/contrib/
+/drupal/web/sites/default/files/
+/drupal/web/sites/*/settings.php
+/drupal/web/sites/*/settings.local.php
+
+# DDEV — let DDEV manage its own gitignore inside .ddev/
+.ddev/.gitignore
+.ddev/config.*.yaml
+.ddev/db_snapshots/
+
+# Database dumps
+/drupal/dumps/
+*.sql
+*.sql.gz
+
+# OS / IDE
+.DS_Store
+.vscode
+.idea
+*.ksh

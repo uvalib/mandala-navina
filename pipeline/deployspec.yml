@@ -1,0 +1,28 @@
+version: 0.2
+
+# Deploys via Terraform + Ansible
+# Follows drupal-dsf/pipeline/deployspec.yml pattern
+
+env:
+  parameter-store:
+    TF_VAR_access_key: "/terraform/aws/accesskey"
+    TF_VAR_secret_key: "/terraform/aws/secretkey"
+    TF_VAR_region: "/terraform/aws/region"
+
+phases:
+  pre_build:
+    commands:
+      - echo Cloning terraform-infrastructure...
+      - git clone https://github.com/uvalib/terraform-infrastructure.git
+
+  build:
+    commands:
+      - cd terraform-infrastructure/mandala/drupal/$ENVIRONMENT
+      - terraform init
+      - terraform apply -auto-approve
+      - echo Running Ansible deployment...
+      - ansible-playbook ansible/deploy_backend.yml -e deploy_tag=$DEPLOY_TAG
+
+  post_build:
+    commands:
+      - echo Deploy complete.
