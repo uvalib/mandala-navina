@@ -45,7 +45,8 @@
             "phpstan/extension-installer": true,
             "simplesamlphp/composer-module-installer": true,
             "simplesamlphp/composer-xmlprovider-installer": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
         }
     },
     "extra": {

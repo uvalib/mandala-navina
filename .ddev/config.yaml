@@ -13,7 +13,7 @@ use_dns_when_possible: true
 
 hooks:
   post-start:
-    - exec: if [ ! -d "/var/www/html/drupal/vendor" ]; then composer install --prefer-dist; fi
+    - exec-host: if [ ! -d "drupal/vendor" ]; then ddev composer install --prefer-dist; fi
 
 web_environment:
   - DRUPAL_HASH_SALT=temporary-local-dev-only
