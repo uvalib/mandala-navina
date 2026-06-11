@@ -1,0 +1,7 @@
+nav:
+  - Home: index.md
+  - Planning: planning
+  - Architecture Decisions: adr
+  - Spikes: spikes
+  - Deferred Work: deferred
+  - Session Logs: session-logs
