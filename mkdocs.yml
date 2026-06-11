@@ -1,9 +1,8 @@
 site_name: Mandala Navīna
 site_description: Drupal 11 rebuild of the Mandala platform — University of Virginia Library
-# Update site_url once the GitHub repo name is confirmed:
-# site_url: https://uvalib.github.io/mandala/
-repo_url: https://github.com/uvalib/mandala
-repo_name: uvalib/mandala
+site_url: https://uvalib.github.io/mandala-navina/
+repo_url: https://github.com/uvalib/mandala-navina
+repo_name: uvalib/mandala-navina
 
 plugins:
   - search
