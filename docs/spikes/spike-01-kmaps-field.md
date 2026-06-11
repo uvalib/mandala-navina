@@ -1,11 +1,11 @@
-# Spike 1: KMaps Field Type on Drupal 10
+# Spike 1: KMaps Field Type on Drupal 11
 **Status:** Proven  
 **Date:** 2026-06  
 **Commit:** 038fd1c (deep work), aa5e47b (htaccess fix)
 
 ## Theory
 The D7 `shanti_kmaps_fields_default` field type — with its 6-column schema and
-dependency on an external KMaps taxonomy — can be ported to the Drupal 10 Field
+dependency on an external KMaps taxonomy — can be ported to the Drupal 11 Field
 API without architectural blockers.
 
 ## Demo

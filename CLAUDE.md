@@ -4,7 +4,36 @@ This file provides guidance to Claude Code when working with this repository.
 
 ## Project Overview
 
-Monorepo for the Mandala Digital Library platform at the University of Virginia Library. This is a Drupal 10 rebuild of the legacy Drupal 7 multi-site installation, consolidating five sites (AV, Images, Sources, Texts, Mandala Home) into a single Drupal instance deployed on AWS via Terraform + Ansible + CodePipeline.
+Monorepo for the Mandala Digital Library platform at the University of Virginia Library. This is a Drupal 11 rebuild of the legacy Drupal 7 multi-site installation, consolidating five sites (AV, Images, Sources, Texts, Mandala Home) into a single Drupal instance deployed on AWS via Terraform + Ansible + CodePipeline.
+
+## Session startup
+
+At the start of every session, read these files to orient yourself before doing any work:
+
+1. `docs/adr/README.md` — index of all architectural decisions; read any ADR that seems relevant to the task
+2. `docs/spikes/README.md` — spike status; read the doc for any spike being continued or referenced
+3. `docs/deferred/README.md` — known gaps and deferred work
+
+This ensures all team members' Claude instances start from the same shared context regardless of who drove the previous session.
+
+## Team workflow
+
+Development is driven collaboratively — team members take turns leading sessions. Key practices:
+
+- **One repo, one session.** Always open Claude Code from this directory. Never work on Mandala from a legacy repo directory.
+- **Session end ritual.** Before closing a significant session: flush any decisions to `docs/adr/`, findings to `docs/spikes/`, and deferred notes to `docs/deferred/`. Run `scripts/save-session-log.py` for long planning or spike sessions.
+- **ADRs are immutable.** Once accepted, don't edit an ADR — write a new one that supersedes it.
+- **Spikes over engineering.** Prove unknowns with the lightest possible demo before building production code.
+
+## Team
+
+- **Yuji Shinozaki** — Lead Architect & DevOps (UVA Library)
+- **Xiaoming Wang** — Software Engineer & DevOps (UVA Library)
+- **Carla Arton** — Project Manager / Coordinator (UVA Library)
+- **Dave Goldstein** — Director, Cloud Infrastructure (UVA Library)
+- **David Germano** — Director, Mandala Project (UVA Religious Studies)
+- **Than Grove** — Software Engineer (CSC); original D7 developer on texts, collections, and APIs; React front-end / KMaps React app
+- **Andres Montano** — Rails KMaps application (Casa Tibet Guatemala)
 
 See `/docs/` for architecture and planning documentation.
 
@@ -12,7 +41,7 @@ See `/docs/` for architecture and planning documentation.
 
 ```
 mandala/
-├── drupal/           # Drupal 10 application
+├── drupal/           # Drupal 11 application
 │   ├── web/          # Drupal webroot (Composer-managed)
 │   │   ├── modules/custom/   # Custom modules (committed here)
 │   │   └── themes/custom/    # Custom themes
@@ -54,7 +83,7 @@ ddev drush pmu <module>       # Uninstall module
 
 All custom modules live in `drupal/web/modules/custom/`. Key modules:
 
-- `shanti_kmaps_fields` — KMaps term reference field type (D10 port — spike work)
+- `shanti_kmaps_fields` — KMaps term reference field type (Spike 1 — proven on D11)
 - `shanti_kmaps_admin` — KMaps server configuration
 - `solr_proxy` — Solr authentication proxy
 

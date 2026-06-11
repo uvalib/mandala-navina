@@ -69,14 +69,19 @@ class KmapsAutocompleteController extends ControllerBase {
       }
       [$doc_domain, $kmap_id] = $parts;
       $header = $doc['header'] ?? '';
-      $path   = implode('/', $doc['ancestor_id_path'] ?? []);
+      $ancestorPath = $doc['ancestor_id_path'] ?? [];
+      $path = implode('/', is_array($ancestorPath) ? $ancestorPath : [$ancestorPath]);
 
       // raw format: id|header|domain|path|defids
       $raw = implode('|', [$kmap_id, $header, $doc_domain, $path, '']);
+      $label = "{$header} ({$doc_domain}-{$kmap_id})";
 
+      // value = label so Drupal's autocomplete shows readable text in the input.
+      // raw is a custom property read by kmaps_widget.js to populate the hidden field.
       $matches[] = [
-        'value' => $raw,
-        'label' => "{$header} ({$doc_domain}-{$kmap_id})",
+        'value' => $label,
+        'label' => $label,
+        'raw'   => $raw,
       ];
     }
 

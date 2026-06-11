@@ -1,0 +1,4 @@
+comparison:
+  css:
+    theme:
+      css/comparison.css: {}

@@ -2,47 +2,37 @@
  * @file
  * KMaps field widget JS.
  *
- * When the user selects a suggestion from the Drupal autocomplete, the
- * suggestion's 'value' (the pipe-delimited raw string) is copied into the
- * associated hidden <input class="kmaps-raw-value"> field so that
- * massageFormValues() on the server can parse it.
+ * The autocomplete controller returns suggestions with three properties:
+ *   value — human-readable label, e.g. "Buddhism (subjects-385)"
+ *   label — same as value (shown in the dropdown and set in the visible input)
+ *   raw   — pipe-delimited machine value: id|header|domain|path|defids
  *
- * The visible autocomplete input keeps the human-readable label.
+ * On selection, Drupal's jQuery UI autocomplete sets the visible input to
+ * ui.item.value (the human label). This handler's only job is to copy
+ * ui.item.raw into the paired hidden field so massageFormValues() can parse it.
  */
 (function ($, Drupal) {
   'use strict';
 
   Drupal.behaviors.kmapsWidget = {
     attach: function (context, settings) {
-      // For each KMaps search input, wire up the autocompleteselect event.
-      // Drupal's autocomplete fires 'autocompleteselect' on the input element
-      // when a suggestion is chosen from the dropdown.
       once('kmaps-widget', '.kmaps-search-input', context).forEach(function (input) {
         var $input = $(input);
         var rawTargetId = $input.data('kmapsRawTarget');
 
+        // autocompleteselect fires after jQuery UI has set the input value to
+        // ui.item.value (the human label). We just need to stash the raw string.
         $input.on('autocompleteselect', function (event, ui) {
-          // ui.item.value is the machine value returned by the controller:
-          // "id|header|domain|path|defids"
-          // ui.item.label is the human string: "header (domain-id)"
-          var raw = ui.item.value;
-          var label = ui.item.label;
-
-          // Store the raw value in the hidden field.
+          var raw = ui.item.raw || '';
           if (rawTargetId) {
             $('#' + rawTargetId).val(raw);
           } else {
             $input.siblings('input.kmaps-raw-value').val(raw);
           }
-
-          // Show the label in the visible field instead of the raw value.
-          $input.val(label);
-
-          // Prevent the default which would set input.val to ui.item.value.
-          event.preventDefault();
+          // Do NOT preventDefault — let Drupal set the visible input to the label.
         });
 
-        // When the visible field is cleared, also clear the hidden raw value.
+        // Clearing the visible field also clears the stored raw value.
         $input.on('input', function () {
           if ($(this).val() === '') {
             if (rawTargetId) {

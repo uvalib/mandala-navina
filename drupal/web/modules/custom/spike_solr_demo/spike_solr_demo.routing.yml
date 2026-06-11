@@ -1,0 +1,7 @@
+spike_solr_demo.comparison:
+  path: '/spike/solr-comparison'
+  defaults:
+    _controller: '\Drupal\spike_solr_demo\Controller\SpikeComparisonController::compare'
+    _title: 'Spike 2: Solr Query Comparison'
+  requirements:
+    _permission: 'access content'

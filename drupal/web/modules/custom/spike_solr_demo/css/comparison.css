@@ -1,0 +1,80 @@
+.spike-comparison { font-family: sans-serif; max-width: 1200px; margin: 0 auto; padding: 1em; }
+
+/* ── Form ── */
+.spike-form { margin-bottom: 1em; display: flex; gap: .5em; align-items: center; }
+.spike-form input[type=text] { flex: 1; padding: .4em .6em; font-size: 1em; border: 1px solid #ccc; border-radius: 3px; }
+.spike-form input[type=number] { width: 4em; padding: .4em .6em; font-size: 1em; border: 1px solid #ccc; border-radius: 3px; }
+.spike-form button { padding: .4em 1em; background: #0071b8; color: #fff; border: none; border-radius: 3px; cursor: pointer; font-size: 1em; }
+.spike-form button:hover { background: #005a94; }
+
+/* ── Summary bar ── */
+.spike-summary { background: #f4f4f4; border: 1px solid #ddd; border-radius: 4px; padding: .5em 1em; margin-bottom: 1.2em; font-size: .9em; }
+.spike-error   { background: #fff0f0; border: 1px solid #fcc; padding: .5em 1em; border-radius: 4px; color: #900; margin-bottom: 1em; }
+
+/* ── Per-document block ── */
+.spike-doc-block { margin-bottom: 2em; }
+
+.spike-doc-heading { font-size: .95em; font-weight: bold; color: #333; padding: .4em .6em; background: #e8f0f8; border-left: 4px solid #0071b8; margin-bottom: 0; }
+.spike-title { font-weight: bold; }
+.spike-uid   { font-weight: normal; color: #666; font-size: .9em; }
+.spike-missing { color: #999; font-style: italic; padding: .4em .6em; }
+
+/* ── Comparison table ── */
+.cmp-table { width: 100%; border-collapse: collapse; font-size: .82em; table-layout: fixed; }
+.cmp-table thead th { background: #0071b8; color: #fff; padding: .45em .6em; text-align: left; font-size: .85em; }
+.cmp-table thead th:first-child { width: 12em; }
+.cmp-table thead th:last-child  { width: 7em; text-align: center; }
+
+.cmp-table tbody td { padding: .3em .6em; border-bottom: 1px solid #eee; vertical-align: top; word-break: break-word; }
+.cmp-field { color: #555; font-weight: 600; white-space: nowrap; font-size: .82em; }
+
+/* Row states */
+.cmp-diff     { background: #fff8e6; }
+.cmp-only-d11 { background: #f0f8ff; }
+.cmp-only-raw { background: #f8f8f8; }
+
+.cmp-table tbody tr:hover td { background: #f0f4ff; }
+
+/* Absent cell (field not in this column) */
+.cmp-absent { color: #bbb; font-style: italic; }
+.cmp-empty  { color: #bbb; }
+
+/* Badges */
+.cmp-ind { text-align: center; white-space: nowrap; }
+.cmp-badge { display: inline-block; padding: .1em .4em; border-radius: 3px; font-size: .8em; font-weight: bold; }
+.cmp-badge-ok   { background: #d4edda; color: #155724; }
+.cmp-badge-diff { background: #fff3cd; color: #856404; }
+.cmp-badge-d11  { background: #cce5ff; color: #004085; }
+.cmp-badge-raw  { background: #e2e3e5; color: #383d41; }
+
+/* Match summary in header */
+.cmp-all-ok   { color: #d4edda; font-size: .85em; }
+.cmp-has-diff { color: #fff3cd; font-size: .85em; }
+
+/* Footnote */
+.spike-footnote { font-size: .8em; color: #888; margin-top: .5em; }
+
+/* ── Section headings ── */
+.spike-section-head { font-size: 1.1em; border-bottom: 2px solid #0071b8; margin: 1.5em 0 .5em; padding-bottom: .2em; }
+.spike-section-note { font-size: .85em; color: #555; margin: .3em 0 .4em; }
+.spike-query { font-size: .78em; background: #f4f4f4; border: 1px solid #ddd; border-radius: 3px; padding: .5em .8em; margin: 0 0 .8em; white-space: pre-wrap; word-break: break-all; }
+
+/* ── Rank comparison table ── */
+.rank-table { width: 100%; border-collapse: collapse; font-size: .85em; table-layout: fixed; margin-bottom: 1.5em; }
+.rank-table thead th { background: #0071b8; color: #fff; padding: .45em .6em; text-align: left; }
+.rank-table thead th.rank-n { width: 2.5em; }
+.rank-table thead th.rank-corr { background: #155724; }
+.rank-table thead th:last-child { width: 7em; }
+.rank-table tbody td { padding: .35em .6em; border-bottom: 1px solid #eee; vertical-align: top; }
+.rank-n  { text-align: center; font-weight: bold; color: #777; }
+.rank-doc { }
+.rank-title { display: block; font-weight: 500; }
+.rank-uid   { display: block; font-size: .8em; color: #888; }
+.rank-absent { font-style: italic; }
+.rank-ind { text-align: center; white-space: nowrap; }
+
+/* Row states */
+.rank-same    { background: #f0fff4; }
+.rank-reorder { background: #fff8e6; }
+.rank-diff    { background: #fff0f0; }
+.rank-table tbody tr:hover td { background: #f0f4ff; }
