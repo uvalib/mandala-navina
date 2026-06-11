@@ -4,7 +4,7 @@ Drupal 11 rebuild of the Mandala platform at the University of Virginia Library.
 
 This site documents architectural decisions, spike findings, and deferred work
 for the active rebuild. For the codebase, see the
-[uvalib/mandala](https://github.com/uvalib/mandala) repository.
+[uvalib/mandala-navina](https://github.com/uvalib/mandala-navina) repository.
 
 ## Quick links
 
