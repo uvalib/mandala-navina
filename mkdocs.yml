@@ -9,7 +9,7 @@ plugins:
   - awesome-pages
   - git-revision-date-localized:
       enable_creation_date: false
-      type: date
+      type: datetime
 
 theme:
   name: material
