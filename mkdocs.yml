@@ -3,6 +3,7 @@ site_description: Drupal 11 rebuild of the Mandala Digital Asset Library — Uni
 site_url: https://uvalib.github.io/mandala-navina/
 repo_url: https://github.com/uvalib/mandala-navina
 repo_name: uvalib/mandala-navina
+edit_uri: blob/main/docs/
 
 plugins:
   - search
@@ -20,6 +21,7 @@ theme:
     - navigation.sections
     - navigation.top
     - search.highlight
+    - content.action.view
 
 docs_dir: docs
 
