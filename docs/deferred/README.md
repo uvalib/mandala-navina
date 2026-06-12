@@ -19,3 +19,10 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 **Jira:** (add when available)
 **Priority:** High / Medium / Low
 ```
+
+## Open items
+
+| File | Area | Raised | Priority |
+|---|---|---|---|
+| [group-subgroup-nesting-approach.md](group-subgroup-nesting-approach.md) | collections / group module | Spike 3 | High |
+| [group-access-inheritance-subcollections.md](group-access-inheritance-subcollections.md) | collections / access control | Spike 3 | High |
