@@ -24,7 +24,7 @@ theme:
     - search.highlight
     - content.action.view
 
-docs_dir: docs
+docs_dir: ../docs
 
 extra_css:
   - stylesheets/extra.css
