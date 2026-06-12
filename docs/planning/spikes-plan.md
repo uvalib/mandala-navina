@@ -352,6 +352,60 @@ The D7 AV site uses the `kaltura` contributed module to post video/audio content
 
 ---
 
+## Spike 8 — reindeer_x Consolidation as Managed Sync Subsystem
+
+**Time-box:** 2–3 days  
+**Priority:** High — fixes a known production race condition; independent of D11 Drupal work  
+**Lead:** Yuji Shinozaki
+
+### Theory
+The `synch`/`synchandler` shell+Perl pipeline (clsync + rclone) can be replaced
+with Node.js equivalents inside the existing `reindeer_x` process, and `reindeer_x`
+can subscribe to AWS SQS events directly to eliminate the UDP trigger and the
+race condition that causes silent stale kmassets writes.
+
+### Background
+Currently three separate runtime components handle kmassets sync. The UDP ping
+from KMaps Rails fires before the ECS kmterms Solr update completes, causing
+`reindeer_x` to read stale data and write stale kmassets entries silently.
+This spike consolidates all sync responsibilities into `reindeer_x` and replaces
+the UDP trigger with SQS subscription.
+
+See [docs/deferred/solr-sync-architecture-d11.md](../deferred/solr-sync-architecture-d11.md).
+
+### Work
+
+**Part A — Fold synchandler in:** Add `chokidar` + `@aws-sdk/client-s3`;
+implement `sync/fileWatcher.js` to watch Drupal solrdocs directories and upload
+to S3 using AWS SDK. Retire `synch`, `synchandler`, and `rclone`.
+
+**Part B — SQS trigger:** Add `@aws-sdk/client-sqs`; implement `queue/sqsConsumer.js`
+to long-poll a configurable queue, trigger the existing sync path on receipt,
+and acknowledge messages on success.
+
+**Part C (stretch) — SNS reporting:** Publish sync completion/failure summaries
+to SNS topics for downstream visibility.
+
+### Pass Criteria
+- chokidar detects file events and AWS SDK uploads to S3 correctly
+- SQS consumer receives a test message and triggers a sync job (visible in Arena UI)
+- No shell, Perl, or rclone dependency at runtime
+
+### Fail Criteria and Response
+| Finding | Response |
+|---|---|
+| chokidar misses events in Docker volume mounts | Use `usePolling: true` or switch to HTTP POST inbound from Drupal |
+| SQS queue not available for testing | Use LocalStack; defer real integration |
+| ECS task can't publish completion event yet | Keep UDP as interim; document gap |
+
+### Outputs
+- Updated `kmaps-solr-sync/` with fileWatcher and sqsConsumer modules
+- `synch`, `synchandler`, `rclone` removed from Docker image
+- Updated `.env.dist` with new env vars
+- Go/no-go on retiring the shell/Perl layer
+
+---
+
 ## Decision Gate: Week 4 Review
 
 After all six initial spikes are complete, hold a review session with the following agenda:
