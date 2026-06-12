@@ -6,3 +6,5 @@ nav:
   - "003: Terraform + Ansible deployment": 003-terraform-ansible-deployment.md
   - "004: Solr as source of truth": 004-solr-source-of-truth.md
   - "005: Single-site redesign": 005-single-site.md
+  - "006: kmterms-in-kmassets shadow pattern": 006-kmterms-in-kmassets-shadow-pattern.md
+  - "007: reindeer_x as independent service": 007-reindeer-x-independent-service.md

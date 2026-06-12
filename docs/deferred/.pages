@@ -4,3 +4,5 @@ nav:
   - KMaps widget UX: kmaps-widget-ux.md
   - "Group nesting approach": group-subgroup-nesting-approach.md
   - "Group access inheritance": group-access-inheritance-subcollections.md
+  - "Solr sync architecture (D11)": solr-sync-architecture-d11.md
+  - "Solr pipeline cost discussion": solr-pipeline-cost-discussion.md
