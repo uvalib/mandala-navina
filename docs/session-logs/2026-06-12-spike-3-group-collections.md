@@ -288,3 +288,47 @@ please record this spike in mkdocs including the session history
 ## Claude — 2026-06-12
 
 Writing this session log at `docs/session-logs/2026-06-12-spike-3-group-collections.md`.
+
+---
+
+## User — 2026-06-12
+
+One feature we had in D7 with Organic Groups was for subcollections to inherit the access permission of the parent collection so that if a parent collection was private the subcollection by default would be private, but a subcollection could also be set to public on its own. Could you investigate whether ggroups or subgroups provides that functionality?
+
+---
+
+## Claude — 2026-06-12
+
+Investigated both modules against the specific requirement: private parent → private subcollection by default; subcollection can independently override to public.
+
+**`ggroup`:** Handles membership/role inheritance (parent members can access child groups) but does NOT propagate group-level visibility (public/private) from parent to child. No stable release; D11 compatibility work still in progress.
+
+**`subgroup`:** Same limitation — membership inheritance only, not visibility inheritance. D10-stable (2.0.1+), D11 unconfirmed.
+
+Neither module implements the required pattern. Recommended path: entity reference approach (proven in Spike 3) + custom `hook_group_presave` / `hook_group_update` logic with a `visibility_overridden` flag on subcollection to track independent overrides. ~1–2 days of custom module work. Updated deferred notes.
+
+---
+
+## User — 2026-06-12
+
+Further requirements are the subcollections inherit the users associated with the parent but can have specific users added as well.
+
+---
+
+## Claude — 2026-06-12
+
+Confirmed full D7 inheritance model:
+
+1. **Visibility inheritance** — private parent → private subcollection by default; subcollection can override independently
+2. **Membership inheritance** — subcollection inherits all parent collection members; additional members can be added to subcollection independently
+
+`ggroup` and `subgroup` both handle membership inheritance (partially addressing requirement 2) but neither handles visibility inheritance (requirement 1). `ggroup` also not D11-ready.
+
+Recommended approach updated to **Option D**: entity reference + custom hooks covering both requirements:
+
+- Membership: `hook_group_relationship_insert` on parent membership changes to sync members to subcollections; tracks members added directly to subcollection to prevent accidental removal
+- Visibility: `hook_group_presave` / `hook_group_update` with `visibility_overridden` flag
+
+Estimated ~2–3 days of custom module work. Key edge case: member removed from parent collection but added directly to subcollection — should remain on subcollection.
+
+Updated both deferred notes and deferred `.pages` nav entry.

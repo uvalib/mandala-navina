@@ -2,3 +2,5 @@ title: Deferred Work
 nav:
   - Overview: README.md
   - KMaps widget UX: kmaps-widget-ux.md
+  - "Group nesting approach": group-subgroup-nesting-approach.md
+  - "Group access inheritance": group-access-inheritance-subcollections.md
