@@ -1,8 +1,16 @@
-# Session Log: kmterms/kmassets Architecture Investigation
+# Session Log: kmterms/kmassets Architecture Investigation and reindeer_x Transfer
 
 **Date:** 2026-06-12  
 **Participants:** Yuji Shinozaki, Claude Sonnet 4.6  
-**Outcome:** Architecture documented; `kmaps-solr-sync` consolidated into monorepo; deferred note filed at [docs/deferred/solr-sync-architecture-d11.md](../deferred/solr-sync-architecture-d11.md)
+**Outcome:** Full kmassets/kmterms architecture documented; race condition identified; reindeer_x transferred to `uvalib/mandala-reindeer_x`; ADRs 006 and 007 filed; Spike 8 scoped
+
+**Outputs:**
+- [ADR 006](../adr/006-kmterms-in-kmassets-shadow-pattern.md) — kmterms-in-kmassets shadow pattern
+- [ADR 007](../adr/007-reindeer-x-independent-service.md) — reindeer_x as independent service
+- [docs/deferred/solr-sync-architecture-d11.md](../deferred/solr-sync-architecture-d11.md) — D11 sync architecture gaps
+- [docs/deferred/solr-pipeline-cost-discussion.md](../deferred/solr-pipeline-cost-discussion.md) — Dave Goldstein conversation needed
+- [docs/spikes/spike-08-reindeer-x-consolidation.md](../spikes/spike-08-reindeer-x-consolidation.md) — Spike 8 scoped
+- [github.com/uvalib/mandala-reindeer_x](https://github.com/uvalib/mandala-reindeer_x) — new canonical repo
 
 ---
 
@@ -150,7 +158,7 @@ Two distinct populations coexist in the `kmassets` Solr index:
 | KMaps-derived | `subjects`, `places`, `terms` | kmterms Solr index | `kmaps-solr-sync` Node.js service (reindeer_x) |
 | Drupal content | `audio-video`, `images`, `texts`, `visuals`, `sources`, `collections` | Drupal nodes | `shanti_kmaps_fields` → clsync → synchandler → S3 → ECS |
 
-### Code now in monorepo
+### Code now in monorepo (later reversed — see Part 2)
 
 - `kmaps-solr-sync/` — the Node.js service that syncs kmterms→kmassets for subjects/places/terms
 - `kmaps-solr-sync/docker/reindeer_x/files/usr/local/bin/synch` — clsync launcher
@@ -162,3 +170,167 @@ See [docs/deferred/solr-sync-architecture-d11.md](../deferred/solr-sync-architec
 1. What replaces the `clsync`/`synchandler` pipeline for content assets in D11 (no Aegir)?
 2. How does `kmaps-solr-sync` get modernized and integrated into ECS?
 3. Does Drupal post directly to S3/ECS, or via a sidecar service?
+
+---
+
+## Part 2: reindeer_x architectural discussion
+
+### User
+
+I want to discuss the re-engineering. I am the lead architect and this is all my original code.
+
+---
+
+### Claude
+
+Read `server/index.js`, `sync/kmassetSync.js`, `queue/jobCreationQueue.js`, and the transform modules in full. Understood the complete pipeline.
+
+**The current D7 content asset pipeline** (Drupal → kmassets):
+Node save → `shanti_kmaps_fields` writes JSON to `private://solrdocs/` → `clsync` detects file → `synchandler` (Perl) uploads to S3 via `rclone` → SQS → ECS → Solr.
+
+**The current kmterms→kmassets pipeline**:
+UDP ping → reindeer_x queries kmterms Solr → transforms entries → writes to kmassets Solr directly.
+
+**Race condition identified:** KMaps Rails fires the UDP ping simultaneously with posting to S3. `reindeer_x` races ahead of the ECS pipeline — reads stale kmterms, writes stale kmassets silently. Confirmed this has caused "update didn't take" behavior in production.
+
+---
+
+### User
+
+There are two ways I think about this: 1. we don't want to over-specialize the Drupal code to handle this particular implementation detail. 2. This implementation has its own headaches that probably should be handled inside Drupal for cleaner management purposes. Those two inclinations are in conflict.
+
+---
+
+### Claude
+
+Named the tension precisely: **separation of concerns** (Drupal is a content store, not a pipeline operator) vs. **operational visibility** (when something goes wrong, debug it in one place). 
+
+Proposed the middle position: Drupal's abstraction boundary is the queue, not the filesystem. On node save, Drupal pushes to Drupal's Queue API. A queue worker — separate concern, same codebase — handles S3 delivery. The ECS pipeline downstream unchanged. This gives visibility into what's queued/failed within Drupal without coupling node save to AWS.
+
+---
+
+### User
+
+The visibility one is apt: "Someone makes an update and it's not reflected anywhere, what happened?"
+
+---
+
+### Claude
+
+Identified the root cause: the pipeline is fire-and-forget from Drupal's perspective across 4+ async hops, none of which report back. Proposed splitting along the natural seam: Drupal-originated content owns its own Solr write (via queue worker → Solr direct); the ECS pipeline becomes exclusively the home of kmterms-derived assets. Drupal then knows whether its content landed in Solr.
+
+---
+
+### User
+
+We will need to work with our Cloud architect (Dave Goldstein) to see what the issues are. Those pipelines are expensive so we need to talk to them about lowering the costs while still maintaining timely updates.
+
+---
+
+### Claude
+
+Identified cost levers: the ECS pipeline may be sized for high-throughput indexes; Drupal content saves are low-frequency. A direct Drupal→Solr write path would eliminate the ECS pipeline for Drupal content entirely. For kmterms, `reindeer_x` is already cost-efficient (single container, on-demand trigger). Filed `docs/deferred/solr-pipeline-cost-discussion.md` for the Dave conversation.
+
+---
+
+### User
+
+In the meantime we could make the reindexer and the synch/synchandler a fully managed subsystem. Perhaps folding the synchandler into reindeer_x.
+
+---
+
+### Claude
+
+Affirmed: consolidate `synch` + `synchandler` (shell+Perl+rclone) into `reindeer_x` using `chokidar` + `@aws-sdk/client-s3`. One container, one codebase, one log stream. The HTTP `/post` endpoint already in Express means the D11 path (Drupal POSTs to `reindeer_x` directly instead of dropping files) is already partially built.
+
+Proposed full event-driven architecture:
+- **Inbound:** SQS subscription (kmterms completion event) + HTTP POST (Drupal doc push) + UDP (manual/legacy)
+- **Processing:** existing transform logic unchanged
+- **Outbound:** SNS completion/failure events — visible to Drupal, alerting, monitoring
+
+Race condition eliminated by design: SQS trigger fires after ECS kmterms Solr update confirms completion.
+
+---
+
+### User
+
+Do you get how reindeer_x is named?
+
+---
+
+### Claude
+
+`re-index-er` → `reindeer` with the `x` displaced from `index`.
+
+---
+
+### User
+
+The original purpose of reindeer_x was to maintain the kmterms-in-kmassets shadow entries to make the Drupal paths for subjects/places/terms easier to manage (they are managed conceptually like assets). Do you understand how that works? Do you think that this is a sustainable architecture?
+
+---
+
+### Claude
+
+Confirmed understanding: shadow entries unify search and routing — subjects/places/terms get kmasset documents so the React front-end and Drupal can treat them identically to content assets without a separate index or document schema.
+
+Assessment: **sustainable as an architecture, not sustainable as currently operated.** The shadow pattern is correct and worth keeping for D11. What needs to change: reliable automatic triggering (not UDP), per-document sync capability, and sync status visible somewhere. The pattern itself is sound; the trigger mechanism is the problem.
+
+---
+
+### User
+
+Yes, at present it sends a UDP ping to inform us that changes have been posted to an S3 bucket (if I remember correctly).
+
+---
+
+### Claude
+
+Read `server/index.js` carefully. The code shows: UDP ping arrives → reindeer_x immediately queries **kmterms Solr** (not S3). S3 is the kmterms update path (KMaps Rails → S3 → ECS → Solr); the UDP is a separate notification. The ping fires at the start of the KMaps Rails upload, before the ECS pipeline has finished updating Solr. reindeer_x wins the race, reads stale data, writes stale kmassets.
+
+---
+
+### User
+
+Oh yes, I was misremembering... it's been a while. And yes, I think that race condition has been a problem.
+
+---
+
+### Claude
+
+Confirmed: fix is to trigger reindeer_x from the **end** of the ECS kmterms Solr update task, not the beginning of the KMaps Rails upload. The HTTP `/post` endpoint is already built and ready — just needs something reliable to call it at the right moment (SNS/SQS from ECS task completion).
+
+---
+
+### User
+
+If done properly, it can be more than a spike: it could be a deployable hotfix, as reindeer_x is living code. Now that is a case for keeping it as an independent codebase.
+
+---
+
+### Claude
+
+Agreed. `reindeer_x` has a different character from the monorepo components: it's living production code with its own release cycle. Coupling it to mandala-navina would force sync fixes to wait on Drupal releases. Proposed reverting the monorepo addition and creating `uvalib/mandala-reindeer_x` as its proper home.
+
+---
+
+### User
+
+Yes, do that. And rename it mandala-reindeer_x in the uvalib repo. Document the transfer and its kmaps-solr-sync heritage.
+
+---
+
+### Claude
+
+Created `github.com/uvalib/mandala-reindeer_x`. Transferred code as clean orphan commit (git history had rotated-but-present credentials; orphan start avoided pushing them to a new org). README documents heritage, architecture, name etymology, and links to mandala-navina spike/deferred docs. Removed `kmaps-solr-sync/` from monorepo. CLAUDE.md updated with Related Services section.
+
+---
+
+### Decisions made this session
+
+| Decision | ADR |
+|---|---|
+| kmterms-in-kmassets shadow pattern retained for D11 | [ADR 006](../adr/006-kmterms-in-kmassets-shadow-pattern.md) |
+| reindeer_x as independent deployable service | [ADR 007](../adr/007-reindeer-x-independent-service.md) |
+| Spike 8 scoped: fold synchandler in, add SQS trigger | [Spike 8](../spikes/spike-08-reindeer-x-consolidation.md) |
+| Dave Goldstein conversation needed on pipeline costs | [Deferred](../deferred/solr-pipeline-cost-discussion.md) |

@@ -39,7 +39,7 @@ See `/docs/` for architecture and planning documentation.
 
 ## Related Services (independent repos)
 
-- [`uvalib/mandala-reindeer_x`](https://github.com/uvalib/mandala-reindeer_x) — kmterms→kmassets sync service (Node.js, `reindeer_x` container); formerly `shanti-uva/kmaps-solr-sync`
+- [`uvalib/mandala-reindeer_x`](https://github.com/uvalib/mandala-reindeer_x) — kmterms→kmassets sync service (Node.js, `reindeer_x` container); formerly `shanti-uva/kmaps-solr-sync`. Maintains the 1:1 shadow kmasset entries for `subjects`, `places`, and `terms` asset types so that KMaps taxonomy terms are discoverable as first-class assets in a single Solr index. See [ADR 006](docs/adr/006-kmterms-in-kmassets-shadow-pattern.md) and [ADR 007](docs/adr/007-reindeer-x-independent-service.md).
 
 ## Repository Structure
 

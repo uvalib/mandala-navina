@@ -12,3 +12,5 @@ get a new ADR that references the old one, rather than editing in place.
 | [003](003-terraform-ansible-deployment.md) | Replace Aegir/docker-compose with Terraform + Ansible + AWS CodePipeline | Accepted |
 | [004](004-solr-source-of-truth.md) | Treat existing Solr infrastructure as source of truth; defer Solr refactor | Accepted |
 | [005](005-single-site.md) | Redesign as Drupal single-site rather than multisite | Accepted |
+| [006](006-kmterms-in-kmassets-shadow-pattern.md) | Maintain kmterms-in-kmassets shadow entries for subjects, places, and terms | Accepted |
+| [007](007-reindeer-x-independent-service.md) | reindeer_x lives as an independent deployable service, not in the monorepo | Accepted |
