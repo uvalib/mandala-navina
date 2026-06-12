@@ -20,7 +20,7 @@
 *.sql.gz
 
 # MkDocs generated site
-/site/
+/mkdocs/site/
 
 # Claude Code auto-memory (lives in ~/.claude/projects/, not the repo)
 /memory/
