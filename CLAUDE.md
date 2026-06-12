@@ -37,6 +37,10 @@ Development is driven collaboratively — team members take turns leading sessio
 
 See `/docs/` for architecture and planning documentation.
 
+## Related Services (independent repos)
+
+- [`uvalib/mandala-reindeer_x`](https://github.com/uvalib/mandala-reindeer_x) — kmterms→kmassets sync service (Node.js, `reindeer_x` container); formerly `shanti-uva/kmaps-solr-sync`
+
 ## Repository Structure
 
 ```
@@ -49,7 +53,6 @@ mandala/
 │   └── composer.json
 ├── solr-proxy/       # Solr authentication proxy service
 ├── s3-sync/          # S3 file sync utilities
-├── kmaps-solr-sync/  # kmterms→kmassets sync service (Node.js, runs as reindeer_x container)
 ├── package/          # Production Dockerfile
 ├── pipeline/         # AWS CodeBuild specs (buildspec.yml, deployspec.yml)
 └── scripts/          # Local dev helper scripts
@@ -101,4 +104,4 @@ Deployment follows the UVA Library standard pattern (same as drupal-dsf, drupal-
 - `mandala_drupal_docker` — legacy Aegir/Docker deployment
 - `mandala-solr-proxy` — being merged into `solr-proxy/`
 - `mandala_s3_synch` — being merged into `s3-sync/`
-- `shanti-uva/kmaps-solr-sync` — consolidated into `kmaps-solr-sync/`
+- `shanti-uva/kmaps-solr-sync` — transferred to `uvalib/mandala-reindeer_x` (independent repo, not in monorepo)
