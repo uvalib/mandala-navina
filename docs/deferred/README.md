@@ -26,3 +26,4 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 |---|---|---|---|
 | [group-subgroup-nesting-approach.md](group-subgroup-nesting-approach.md) | collections / group module | Spike 3 | High |
 | [group-access-inheritance-subcollections.md](group-access-inheritance-subcollections.md) | collections / access control | Spike 3 | High |
+| [solr-sync-architecture-d11.md](solr-sync-architecture-d11.md) | solr / kmassets / kmterms | Session 2026-06-12 | High |
