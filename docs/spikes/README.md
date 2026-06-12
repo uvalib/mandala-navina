@@ -8,6 +8,7 @@
 | [Spike 4](spike-04-ckeditor5-footnotes.md) | CKEditor 5 footnotes + Tibetan Unicode | Than | Individual | Pending |
 | [Spike 5](spike-05-bibcite-sources.md) | bibcite for Sources site | Xiaoming | Individual | Pending |
 | [Spike 6](spike-06-api-compatibility.md) | API compatibility for React application | Than | Team candidate | Pending |
+| [Spike 7](spike-07-kaltura-av-integration.md) | Kaltura AV integration on Drupal 11 | — | Individual | Pending |
 
 See [docs/planning/spikes-plan.md](../planning/spikes-plan.md) for full spike definitions and pass/fail criteria.
 

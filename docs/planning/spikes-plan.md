@@ -304,9 +304,57 @@ Each Mandala site currently exposes JSON APIs (consumed by an external React app
 
 ---
 
+## Spike 7 — Kaltura AV Integration on Drupal 11
+
+**Time-box:** 2–3 days  
+**Priority:** High — blocks Phase 4 AV site work  
+**Prerequisite:** Working D11 instance from Spike 1  
+**Requires:** Kaltura API credentials (from AV site admin); access to D7 AV database for entry ID audit
+
+### Theory
+The D7 Kaltura module's two responsibilities — uploading AV content to Kaltura and embedding the Kaltura player in node display — can both be satisfied on D11 using Drupal core Media, a D11-compatible Kaltura contrib module or custom Media Source plugin, and the Kaltura API v3.
+
+### Background
+The D7 AV site uses the `kaltura` contributed module to post video/audio content to the Kaltura platform and to embed the Kaltura player in node display using the stored entry ID. Drupal 11 replaces the D7 file and media handling model with the core Media system; a D11 Kaltura integration must cover both the upload/ingest workflow and the player embed. Migration must preserve existing Kaltura entry IDs without re-uploading content.
+
+### Work
+1. Survey drupal.org and Kaltura Community for a maintained D11 Kaltura module
+2. Prototype Kaltura player embed on a D11 node (oEmbed or custom MediaSource plugin)
+3. Prototype the upload/ingest workflow: Drupal → Kaltura API → entry ID stored on Media entity
+4. Audit D7 AV database: field storing entry IDs, node count, edge cases
+5. Document migration strategy (D7 AV nodes → D11 nodes referencing Kaltura Media entities, no re-upload)
+6. Confirm Kaltura partner/credential model for consolidated single-instance D11
+
+### Pass Criteria
+- Clear D11 integration path exists for both upload and playback
+- Working player embed prototype for a known entry ID
+- Upload workflow demonstrated or concretely planned
+- Migration strategy defined; no re-upload required
+- Kaltura credential model confirmed for single-instance
+
+### Fail Criteria and Response
+| Finding | Response |
+|---|---|
+| No maintained D11 Kaltura module | Build minimal custom Media Source plugin + upload widget using Kaltura API v3 |
+| No Kaltura oEmbed endpoint | Use iFrame/JS embed via custom MediaSource plugin |
+| Upload workflow requires significant custom work | Scope dedicated upload module sprint; use Kaltura portal as interim workflow |
+| Migration requires re-uploading all media | Escalate to David Germano — out of scope without stakeholder decision |
+| Kaltura API auth model changed | Obtain current application token credentials from AV site admin |
+
+### Outputs
+- Inventory of D11-compatible Kaltura modules and maintenance status
+- Documented Kaltura API v3 authentication and embed approach
+- Working D11 Kaltura player embed prototype
+- Upload workflow prototype or implementation plan
+- Migration strategy for existing entry IDs
+- Credential/partner model recommendation
+- Go/no-go recommendation for Phase 4 AV site work
+
+---
+
 ## Decision Gate: Week 4 Review
 
-After all six spikes are complete, hold a review session with the following agenda:
+After all six initial spikes are complete, hold a review session with the following agenda:
 
 1. **Spike 1 (KMaps):** Pass → proceed to Phase 2 implementation. Fail → resolve field architecture before proceeding.
 2. **Spike 2 (Solr):** Pass → proceed with field mapping documented. Fail → build mapping layer before Phase 2 Solr work.
@@ -314,8 +362,9 @@ After all six spikes are complete, hold a review session with the following agen
 4. **Spike 4 (Footnotes + Tibetan):** Pass → migration plugin can be written. Fail → schedule content cleanup sprint and/or database charset fix.
 5. **Spike 5 (bibcite):** Pass → proceed to Phase 4d. Fail → select alternative approach for Sources.
 6. **Spike 6 (APIs):** Pass → URL strategy agreed, proceed to Phase 5 design. Fail → escalate React app ownership question before proceeding.
+7. **Spike 7 (Kaltura):** Pass → proceed to Phase 4 AV site work. Fail → assess custom module scope and timeline impact.
 
-**If all six pass:** The implementation plan and timeline estimates hold. Proceed to Phase 0.  
+**If all six initial spikes pass:** The implementation plan and timeline estimates hold. Proceed to Phase 0.  
 **If one or two fail:** Resolve the failures in targeted follow-on spikes before proceeding to affected phases. Timeline extends by the resolution time.  
 **If three or more fail:** Reassess the overall plan and timeline before committing to implementation.
 
