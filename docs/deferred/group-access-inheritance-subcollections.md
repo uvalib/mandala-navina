@@ -15,13 +15,15 @@ In Group 3.x with the entity reference nesting approach (Option A from the compa
 - "Tibetan Sutras" subcollection inside it — public by default if anonymous role has view permissions on subcollection group type
 - A node in "Tibetan Sutras" would be publicly visible even if the parent collection is restricted
 
-## What needs to be decided
+## Resolution (2026-06-12)
 
-1. **Is this acceptable for Mandala?** If subcollections are always independently governed (i.e., each subcollection's admin sets its own access), the entity reference model is fine.
+**D7 baseline confirmed — full inheritance model:**
+1. **Visibility**: private parent → private subcollection by default; subcollection can independently override to public
+2. **Membership**: subcollection inherits all parent collection members; additional members can be added to subcollection independently
 
-2. **If inheritance is required:** Either adopt `ggroup`/`subgroup` modules (see companion deferred note), or implement custom logic in a `hook_group_relationship_insert` / `hook_entity_presave` that mirrors parent collection access down to subcollections when a new subcollection is created or when the parent's access changes.
+**`ggroup` and `subgroup` investigated:** Both handle membership/role inheritance (partially addressing requirement 2) but neither propagates group-level visibility (public/private) from parent to child (requirement 1 unaddressed by either).
 
-3. **D7 baseline:** Confirm from David Germano whether D7 `og_subgroups` enforced access inheritance from parent to child group, or whether subcollection access was independently managed.
+**Recommended approach:** Entity reference field (proven in Spike 3) + custom hooks for both inheritance requirements. See [group-subgroup-nesting-approach.md](group-subgroup-nesting-approach.md) — Option D for full details including membership sync edge cases.
 
 ## Impact
 
