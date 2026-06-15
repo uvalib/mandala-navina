@@ -1,7 +1,7 @@
 # Spike 8: reindeer_x Consolidation as Managed Sync Subsystem
-**Status:** Pending
-**Date:** —
-**Branch/commit:** —
+**Status:** Partial — Part A (file watcher) proven; Parts B (SQS) and C (SNS) deferred
+**Date:** 2026-06
+**Branch/commit:** `uvalib/mandala-reindeer_x` branch [`spike/08-reindeer-x-consolidation`](https://github.com/uvalib/mandala-reindeer_x/tree/spike/08-reindeer-x-consolidation)
 
 ## Theory
 
@@ -111,6 +111,39 @@ aws sqs send-message \
 | AWS SDK auth doesn't work in container context | Verify IAM role / instance profile; fall back to explicit credential env vars |
 | SQS queue doesn't exist yet for testing | Use LocalStack or mock SQS for Part B; defer real integration to post-spike |
 | ECS kmterms task can't be modified to publish completion event | Keep UDP trigger as interim; document as remaining gap |
+
+## Findings (Part A — proven)
+
+Part A is proven. A new `sync/fileWatcher.js` module folds the `synch` (clsync)
++ `synchandler` (Perl/rclone) pipeline into reindeer_x as native Node.js, wired
+into `server/index.js` startup behind the `ENABLE_FILE_WATCHER` flag.
+
+Verified end-to-end against a throwaway S3 bucket (no production buckets touched)
+— see the demo script run on branch `spike/08-reindeer-x-consolidation`:
+
+- **chokidar reliably detects new files** in a watched directory (`add`/`change`
+  events), with `awaitWriteFinish` so partially-written docs aren't uploaded and
+  `usePolling` available for Docker bind mounts.
+- **AWS SDK v3 (`@aws-sdk/client-s3`) uploads with the correct path structure** —
+  `s3://{bucket}/kmassets-inbound/test/{app}/{file}`. The per-site `{app}` segment
+  is derived from the solrdocs path with the same regex `synchandler.prod` used.
+- **Behaviour parity with the Perl handler:** empty files are skipped (the `-s`
+  test); `*.ids` deletion files route to a separate `kmassets-delete/` prefix.
+- **No rclone or Perl needed.** The Node module fully replaces both scripts.
+
+**Retiring the legacy pipeline:** once `ENABLE_FILE_WATCHER=true` is the default,
+`Dockerfile.reindeer_x` can drop the `clsync`, `rclone`, and `s3fs` apt installs,
+the `rclone.conf` copies, and the `synch`/`synchandler` COPY+chmod lines
+(lines ~16–33). Left in place for now so the spike branch only adds the new path;
+the Dockerfile cleanup is a follow-up when Part A is promoted to default.
+
+**Auth note:** the reindeer_x Node SDK resolves AWS creds via the `login_session`
+profile, whose token can expire independently of the AWS CLI session. For local
+runs, `eval "$(aws configure export-credentials --format env)"` bridges a valid
+CLI session to the SDK. In ECS this is moot — the task role supplies credentials.
+
+Parts B (SQS subscription) and C (SNS reporting) were not attempted — see scope
+note below.
 
 ## What this does NOT establish
 
