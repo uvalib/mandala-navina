@@ -4,7 +4,9 @@
 **Raised during:** Spike 8 (Part A — file watcher)
 **Jira:** (add when available)
 **Priority:** High — blocks deployed use of the Node file watcher
-**Owner:** (unassigned — needs Terraform infra access: Yuji / Xiaoming / Dave)
+**Owner:** Yuji Shinozaki (has Terraform infra access)
+**Approval gate:** requires sign-off from Dave Goldstein (Director, Cloud
+Infrastructure) before the task roles / IAM policies are created and deployed.
 
 ## Context
 
@@ -114,7 +116,7 @@ needed for testing.
 
 - **App repo (can be done now):** drop baked credential files + legacy tooling from
   the image so the SDK falls through to the task role.
-- **Infra repo (needs Terraform access):** three task roles (dev/staging/prod),
-  each trusting `ecs-tasks` **and** a scoped operator group, each granting
-  `s3:PutObject` on its env's inbound bucket.
+- **Infra repo (Yuji has Terraform access; gated on Dave Goldstein's approval):**
+  three task roles (dev/staging/prod), each trusting `ecs-tasks` **and** a scoped
+  operator group, each granting `s3:PutObject` on its env's inbound bucket.
 - **No application code change** in either case.
