@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-15  
 **Participants:** Yuji Shinozaki, Claude (Sonnet 4.6 → Opus 4.8 for planning)  
-**Outcome:** [Migration Roadmap & MVP Sequencing](../roadmap.md) — also new deferred note [tibetan-search-quality.md](../deferred/tibetan-search-quality.md) and re-scoped [Spike 4](../spikes/spike-04-ckeditor5-footnotes.md)
+**Outcome:** [Migration Roadmap & MVP Sequencing](../roadmap.md) — also new deferred note [tibetan-search-quality.md](../deferred/tibetan-search-quality.md) and re-scoped [Spike 4](../spikes/spike-04-ckeditor5-footnotes.md). Follow-on session ratified [ADR 008](../adr/008-mvp-migrate-not-improve.md) and [ADR 009](../adr/009-migration-sequencing-strategy.md) (see addendum).
 
 ---
 
@@ -913,5 +913,42 @@ A couple of follow-ups worth noting for your session-end ritual: the roadmap lea
 ## User — 2026-06-15 18:05
 
 Go ahead and save this session
+
+---
+
+---
+
+## Addendum — 2026-06-15 (follow-on session): ADR ratification
+
+Continuation after team discussion of the proposed roadmap. The two decisions the
+roadmap flagged for ratification were accepted collaboratively and written up as ADRs.
+
+**Decisions ratified**
+- **ADR 008 — MVP is migrate, not improve** ([008-mvp-migrate-not-improve.md](../adr/008-mvp-migrate-not-improve.md)).
+  Faithful migration in scope; Tibetan/Solr search-quality improvement deferred.
+  Carries the in/out-of-scope boundary table, the NFC/NFD normalization-fidelity
+  requirement, and the Spike 2 query-layer constraints (`language_field` disabled;
+  `title`/`names_txt` are string fields needing prefix wildcards). Relates to ADR 004.
+- **ADR 009 — Migration sequencing strategy** ([009-migration-sequencing-strategy.md](../adr/009-migration-sequencing-strategy.md)).
+  Phase 0 parallel start → Images two-step pilot (1a public plumbing, 1b auth
+  increment) mob-built → fork to parallel site tracks → AV last; Spike 6 as the
+  cutover gate. Notes the access-control coherence concern and the open AV-transcript
+  question. Relates to ADR 005 and ADR 008.
+
+**Doc wiring (session-end ritual)**
+- Added rows 008/009 to `adr/README.md` and entries to `adr/.pages`.
+- Flipped `roadmap.md` status from *Proposed — for team review* to *Accepted*,
+  referencing both ADRs; updated its *Decisions to ratify* section to point at them.
+
+**Delivery**
+- Commit `56bd339` on branch `docs/migration-roadmap`, pushed.
+- PR [#3](https://github.com/uvalib/mandala-navina/pull/3) opened against `main`
+  (covers the roadmap commit + the ratification commit).
+
+**Open follow-ups carried forward**
+- Several owners still TBD (Kaltura probe; Collections track).
+- Phase 0 human-latency item: open the Solr cost/architecture conversation with Dave
+  Goldstein (gates Spike 8 design).
+- AV-transcript format triage still resolves the one-spike-vs-two question for Spike 4.
 
 ---
