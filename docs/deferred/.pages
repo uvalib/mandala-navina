@@ -6,3 +6,4 @@ nav:
   - "Group access inheritance": group-access-inheritance-subcollections.md
   - "Solr sync architecture (D11)": solr-sync-architecture-d11.md
   - "Solr pipeline cost discussion": solr-pipeline-cost-discussion.md
+  - "Tibetan search quality (deferred)": tibetan-search-quality.md

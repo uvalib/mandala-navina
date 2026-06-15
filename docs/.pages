@@ -1,5 +1,6 @@
 nav:
   - Home: index.md
+  - Roadmap: roadmap.md
   - Planning: planning
   - Architecture Decisions: adr
   - Spikes: spikes
