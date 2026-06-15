@@ -14,3 +14,5 @@ get a new ADR that references the old one, rather than editing in place.
 | [005](005-single-site.md) | Redesign as Drupal single-site rather than multisite | Accepted |
 | [006](006-kmterms-in-kmassets-shadow-pattern.md) | Maintain kmterms-in-kmassets shadow entries for subjects, places, and terms | Accepted |
 | [007](007-reindeer-x-independent-service.md) | reindeer_x lives as an independent deployable service, not in the monorepo | Accepted |
+| [008](008-mvp-migrate-not-improve.md) | MVP scope is migrate, not improve | Accepted |
+| [009](009-migration-sequencing-strategy.md) | Migration sequencing: Images pilot → mob → parallel tracks → AV last | Accepted |

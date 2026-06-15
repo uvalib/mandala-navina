@@ -1,6 +1,6 @@
 # Migration Roadmap & MVP Sequencing
 
-**Status:** Proposed — for team review
+**Status:** Accepted — ratified by [ADR 008](adr/008-mvp-migrate-not-improve.md) and [ADR 009](adr/009-migration-sequencing-strategy.md)
 **Drafted:** Session 2026-06-15
 
 This roadmap reorganizes the two proven spikes, six pending spikes, and four
@@ -8,8 +8,8 @@ deferred items into a phased plan built around the MVP goal and a deliberate
 sequencing strategy: what to build first, who works in parallel, and — critically —
 what is **not** in scope.
 
-It does not supersede any spike or ADR. It sequences them. Two decisions embedded
-below are flagged for ratification as ADRs (see *Decisions to ratify*).
+It does not supersede any spike or ADR. It sequences them. The two decisions embedded
+below have been ratified as ADRs (see *Decisions to ratify*).
 
 ## Driving decisions
 
@@ -123,12 +123,14 @@ structured, [Spike 4](spikes/spike-04-ckeditor5-footnotes.md) (footnotes) and th
 transcript work are the *same* underlying spike ("structured Tibetan rich-text
 round-trip") and should share a proof.
 
-## Decisions to ratify (proposed ADRs)
+## Decisions to ratify (ratified ADRs)
 
-Per team practice, ADRs are accepted collaboratively — these are proposed, not
-written, here:
+Per team practice, ADRs are accepted collaboratively. Both decisions embedded in this
+roadmap have been ratified:
 
 1. **MVP scope = migrate, not improve** — faithful migration in scope; Tibetan/Solr
    search improvement deferred. Complements ADR 004.
+   → [ADR 008](adr/008-mvp-migrate-not-improve.md) (Accepted).
 2. **Migration sequencing strategy** — Images two-step pilot → mob → parallel site
    tracks → AV last.
+   → [ADR 009](adr/009-migration-sequencing-strategy.md) (Accepted).
