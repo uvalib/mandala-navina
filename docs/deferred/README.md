@@ -28,3 +28,4 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [group-access-inheritance-subcollections.md](group-access-inheritance-subcollections.md) | collections / access control | Spike 3 | High |
 | [solr-sync-architecture-d11.md](solr-sync-architecture-d11.md) | solr / kmassets / kmterms | Session 2026-06-12 | High |
 | [solr-pipeline-cost-discussion.md](solr-pipeline-cost-discussion.md) | solr / infrastructure | Session 2026-06-12 | High |
+| [tibetan-search-quality.md](tibetan-search-quality.md) | solr / search / i18n | Session 2026-06-15 | Low (post-MVP) |
