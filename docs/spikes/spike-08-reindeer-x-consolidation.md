@@ -137,13 +137,40 @@ the `rclone.conf` copies, and the `synch`/`synchandler` COPY+chmod lines
 (lines ~16–33). Left in place for now so the spike branch only adds the new path;
 the Dockerfile cleanup is a follow-up when Part A is promoted to default.
 
-**Auth note:** the reindeer_x Node SDK resolves AWS creds via the `login_session`
-profile, whose token can expire independently of the AWS CLI session. For local
-runs, `eval "$(aws configure export-credentials --format env)"` bridges a valid
-CLI session to the SDK. In ECS this is moot — the task role supplies credentials.
-
 Parts B (SQS subscription) and C (SNS reporting) were not attempted — see scope
 note below.
+
+## Credential strategy
+
+The watcher creates its S3 client with **no hardcoded credentials**
+(`new S3Client({ region })`), so it resolves credentials via the AWS SDK default
+provider chain (env vars → shared ini → … → ECS task role / IMDS). The
+**application code needs no change** across environments — only *which* identity
+the chain finds differs. Full design and infra hand-off in
+[reindeer-x-aws-credential-strategy.md](../deferred/reindeer-x-aws-credential-strategy.md).
+
+- **Local / testing — defer to the developer's own AWS identity.** No task role or
+  IAM setup needed. The Node SDK resolves the `login_session` profile, whose token
+  can expire independently of the AWS CLI; `eval "$(aws configure
+  export-credentials --format env)"` bridges an active CLI session to the SDK
+  (env vars sit first in the chain). Part A was demonstrated this way against a
+  throwaway bucket.
+- **Deployed (dev / staging / production) — per-environment ECS task role** granting
+  `s3:PutObject` on `mandala-ingest-{env}-inbound/*`. **Blocking gotcha:** the
+  legacy image bakes a static `~/.aws/credentials` file, which is resolved *before*
+  the task role in the chain and silently shadows it. So removing the baked
+  credential files (app repo) and adding the task role (Terraform infra repo) must
+  land **together**.
+- **Manual / operator runs against a real environment** (diagnosing a downstream
+  failure, testing a downstream fix) — operators **assume the same task role**
+  rather than using static keys or a personal identity, so the run has exactly the
+  deployed service's permissions (no drift), with temporary creds and CloudTrail
+  attribution. This requires the task role's trust policy to allow **both**
+  `ecs-tasks.amazonaws.com` and a scoped operator group (treat prod as
+  break-glass). "Run as <env>, manually" is then pure configuration
+  (`INGEST_BUCKET`, etc.) — no code path. Caution: writing to a real `…-inbound`
+  bucket feeds the live downstream pipeline; for pure diagnosis use the `…/test/`
+  prefix or a scratch bucket.
 
 ## What this does NOT establish
 
