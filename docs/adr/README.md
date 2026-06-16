@@ -16,3 +16,4 @@ get a new ADR that references the old one, rather than editing in place.
 | [007](007-reindeer-x-independent-service.md) | reindeer_x lives as an independent deployable service, not in the monorepo | Accepted |
 | [008](008-mvp-migrate-not-improve.md) | MVP scope is migrate, not improve | Accepted |
 | [009](009-migration-sequencing-strategy.md) | Migration sequencing: Images pilot → mob → parallel tracks → AV last | Accepted |
+| [010](010-adr-008-scope-clarification.md) | Clarify scope of "migrate, not improve": user-facing features, not internal architecture (refines ADR 008) | Accepted |

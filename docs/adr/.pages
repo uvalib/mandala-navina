@@ -10,3 +10,4 @@ nav:
   - "007: reindeer_x as independent service": 007-reindeer-x-independent-service.md
   - "008: MVP is migrate, not improve": 008-mvp-migrate-not-improve.md
   - "009: Migration sequencing strategy": 009-migration-sequencing-strategy.md
+  - "010: ADR 008 scope clarification": 010-adr-008-scope-clarification.md
