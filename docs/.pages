@@ -2,6 +2,7 @@ nav:
   - Home: index.md
   - Roadmap: roadmap.md
   - Planning: planning
+  - Sprints: sprints
   - Architecture Decisions: adr
   - Spikes: spikes
   - Deferred Work: deferred
