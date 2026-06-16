@@ -58,6 +58,13 @@ inherited access than to retrofit onto independent satellite nodes — reinforce
 remains bound by ADR 008's faithful-migration floor (data round-trips identically, stays
 retrievable).
 
+A later concern — that denormalizing **agents** might destroy a meaningful shared identity
+(agent nodes are reused across images) — was tested against the production data and
+dismissed by the room (2026-06-16): agents are **99.8% per-image**, the reuse is a small
+set of concentrated import defaults ("Unknown" photographer), and D7 exposes no
+browse-by-agent, so paragraphs lose nothing user-facing. Evidence in
+[Data profile](#data-profile-production-dump-2026-06-11) below.
+
 > **Scope of this decision:** it applies to the **Images satellite graph only**. It sets
 > **no precedent** for other content types or sites — per ADR 010, each such case is
 > decided on its own merits. Do not cite "Images collapsed to paragraphs" as a general rule.
@@ -149,6 +156,13 @@ later, promoting taxonomy → custom entity is itself a (small, low-volume) migr
    `image_descriptions` / `external_classification` nodes in and transforming each into an
    **embedded paragraph** on the image (classification paragraphs reference the scheme
    *term* from step 1). No separate pre-migration of the satellite nodes.
+   - **Source satellites via the image reference field, not the raw node table** — this
+     skips orphaned satellite nodes (~12,091 unreferenced agent nodes, ~17,412 unreferenced
+     description nodes; see Data profile) that should not be migrated.
+   - **Expect fan-out on shared agents:** the 146 agents shared across images (esp. the
+     ~3,219-image "Unknown"/default) duplicate into one paragraph per referencing image, so
+     the agent-paragraph count ≈ 111,345, not the 91,852 distinct source agents. Acceptable
+     and expected — not a bug.
 3. the `shanti_images` sidecar / IIIF identity linkage (below).
 
 ## The `shanti_images` sidecar table (not a content type)
@@ -252,6 +266,42 @@ Storage `type` is the D7 field-base type; cardinality `-1` = unlimited.
 - **external_classification:** `field_external_class_scheme` (entityref →
   `external_classification_scheme`), `field_external_class_id` (text), `field_external_class_note` (text_long).
 
+## Data profile (production dump, 2026-06-11)
+
+Verified against the production Images DB (`mandala-prod-images-db_2026-06-11.sql.gz`):
+**111,340 `shanti_image` nodes.** Other bundles: 103,943 `image_agent`, 72,453
+`image_descriptions`, 13 `external_classification`, 2 `external_classification_scheme`,
+plus 55 collections / 116 subcollections / 11 asset_link / 6 page.
+
+### Required fields: clean — zero migration blockers
+All four required `list_*` fields carry a value on **every** image (0 missing) with **0
+out-of-list** values, and the required `field_image_agents` reference is satisfied on all
+111,340 images (0 missing). Distribution is heavily default-skewed (MMS bulk-import
+defaults, 2018–19) — low signal, but faithful per ADR 008:
+
+| Required field | values in use | top value | missing | out-of-list |
+|---|---|---|---|---|
+| `field_image_type` | 8 of 14 | photograph 110,800 (99.5%) | 0 | 0 |
+| `field_image_color` | 1 of 2 | color 111,340 (100%; `bw` unused) | 0 | 0 |
+| `field_image_quality` | 4 of 5 | Average 111,284 (99.95%) | 0 | 0 |
+| `field_image_rotation` | 4 of 4 | 0º 108,696 (97.6%) | 0 | 0 |
+
+⚠️ `field_image_quality` keys are **capitalized words** (`Excellent`/`Good`/`Average`/
+`Poor`/`Unusable`), not slugs — keep them verbatim in D11; stored content uses these keys.
+
+### Satellite volumes & the agent reuse check
+- **Descriptions:** on 48,140 of 111,340 images (43% have none); 55,041 refs — genuinely
+  per-image, not shared. (72,453 description *nodes* exist but only 55,041 are referenced →
+  ~17,412 orphaned description nodes.)
+- **External classification:** only 8 images, 9 refs, 2 schemes — a tiny slice.
+- **Agents — paragraph choice confirmed on evidence.** 91,852 distinct agents are
+  referenced; **99.8% (91,706) are used by exactly one image.** Only **146** are shared
+  across >1 image, absorbing 19,639 refs and topped by a single agent on **3,219** images —
+  the signature of the importer's "Default Photographer / Unknown" fallback, not a
+  normalized identity. D7 exposes no browse-by-agent (only an admin View; agents render
+  inline as provenance). ~12,091 agent nodes are orphaned (103,943 exist, 91,852
+  referenced). Conclusion: agents are owned per-image data → Paragraphs (see migration notes).
+
 ## What this audit establishes (ready to scope Step 1a)
 - The D11 `shanti_image` content type field list, types, cardinalities, and required flags.
 - The full entity graph: three satellites referenced directly from `shanti_image`
@@ -261,6 +311,9 @@ Storage `type` is the D7 field-base type; cardinality `-1` = unlimited.
   `subjects`/`places`/`terms` (+ a collections root).
 - The IIIF/MMS identity linkage (`shanti_images` table, `i3fid`, `mmsid`, `field_other_ids`)
   that must be preserved.
+- Production-data validation (111,340 images): required fields and the required agent
+  reference are 0-missing / 0-out-of-list, and agents are 99.8% per-image — confirming both
+  a clean migration and the paragraph model. See [Data profile](#data-profile-production-dump-2026-06-11).
 
 ## What this audit does NOT establish (still open)
 1. **IIIF wiring details (not a strategy decision).** The IIIF *server* decision is made
@@ -273,9 +326,9 @@ Storage `type` is the D7 field-base type; cardinality `-1` = unlimited.
    and the proxy-auth contract (ADR 009 Step 1b). Out of scope for Step 1a public plumbing.
 3. **JSON/AJAX API parity.** `shanti_images_node_json()` (`api/json/{nid}`) and the
    `api/*` family are Phase 5; documented in the module README, not re-derived here.
-4. **`list_*` allowed-values inventory.** The exact option sets for `field_image_type`,
-   `field_image_color`, `field_image_quality`, `field_image_rotation` were not extracted —
-   pull from the field_base before building those fields.
+4. ~~**`list_*` allowed-values inventory.**~~ **RESOLVED** (2026-06-16) — option sets
+   extracted from `field_base` and validated against the production dump: required fields
+   are 0-missing / 0-out-of-list. See [Data profile](#data-profile-production-dump-2026-06-11).
 
 ## Recommended next step
 Both modeling decisions are settled: ADR 008 scope by
@@ -291,7 +344,9 @@ ADR 009 **Step 1a** slice:
   the remaining IIIF risk is wiring (open item #1) — verify D11 can reach the endpoints
   and port the upload/display path.
 - Write the D7 → D11 migration as a node→paragraph transform for the satellites, in the
-  dependency order above; defer OG/auth to Step 1b.
+  dependency order above (source satellites via the image reference to skip orphans; expect
+  shared-agent fan-out); defer OG/auth to Step 1b.
 
-A near-term follow-up: enumerate the `list_*` allowed-values (open item #4) before
-building those fields.
+All four pre-build modeling/data questions are now closed (paragraphs, taxonomy scheme,
+IIIF-as-is, list-value drift). The remaining open items (#1 IIIF wiring, #2 OG/auth,
+#3 API parity) are downstream of Step 1a, not blockers to starting it.
