@@ -1,11 +1,11 @@
 title: Spikes
 nav:
   - Overview: README.md
-  - "Spike 1: KMaps field type": spike-01-kmaps-field.md
-  - "Spike 2: Solr integration": spike-02-solr-integration.md
-  - "Spike 3: Group collections": spike-03-group-collections.md
-  - "Spike 4: CKEditor 5 footnotes": spike-04-ckeditor5-footnotes.md
-  - "Spike 5: bibcite Sources": spike-05-bibcite-sources.md
-  - "Spike 6: API compatibility": spike-06-api-compatibility.md
-  - "Spike 7: Kaltura AV integration": spike-07-kaltura-av-integration.md
-  - "Spike 8: reindeer_x consolidation": spike-08-reindeer-x-consolidation.md
+  - "● Spike 1: KMaps field type": spike-01-kmaps-field.md
+  - "● Spike 2: Solr integration": spike-02-solr-integration.md
+  - "◐ Spike 3: Group collections": spike-03-group-collections.md
+  - "○ Spike 4: CKEditor 5 footnotes": spike-04-ckeditor5-footnotes.md
+  - "○ Spike 5: bibcite Sources": spike-05-bibcite-sources.md
+  - "○ Spike 6: API compatibility": spike-06-api-compatibility.md
+  - "○ Spike 7: Kaltura AV integration": spike-07-kaltura-av-integration.md
+  - "◐ Spike 8: reindeer_x consolidation": spike-08-reindeer-x-consolidation.md

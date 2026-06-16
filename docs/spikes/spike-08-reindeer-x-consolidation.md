@@ -1,7 +1,7 @@
 # Spike 8: reindeer_x Consolidation as Managed Sync Subsystem
-**Status:** Pending
-**Date:** —
-**Branch/commit:** —
+**Status:** Partial — Part A (file watcher) proven; Parts B (SQS) and C (SNS) deferred
+**Date:** 2026-06
+**Branch/commit:** `uvalib/mandala-reindeer_x` branch [`spike/08-reindeer-x-consolidation`](https://github.com/uvalib/mandala-reindeer_x/tree/spike/08-reindeer-x-consolidation)
 
 ## Theory
 
@@ -111,6 +111,66 @@ aws sqs send-message \
 | AWS SDK auth doesn't work in container context | Verify IAM role / instance profile; fall back to explicit credential env vars |
 | SQS queue doesn't exist yet for testing | Use LocalStack or mock SQS for Part B; defer real integration to post-spike |
 | ECS kmterms task can't be modified to publish completion event | Keep UDP trigger as interim; document as remaining gap |
+
+## Findings (Part A — proven)
+
+Part A is proven. A new `sync/fileWatcher.js` module folds the `synch` (clsync)
++ `synchandler` (Perl/rclone) pipeline into reindeer_x as native Node.js, wired
+into `server/index.js` startup behind the `ENABLE_FILE_WATCHER` flag.
+
+Verified end-to-end against a throwaway S3 bucket (no production buckets touched)
+— see the demo script run on branch `spike/08-reindeer-x-consolidation`:
+
+- **chokidar reliably detects new files** in a watched directory (`add`/`change`
+  events), with `awaitWriteFinish` so partially-written docs aren't uploaded and
+  `usePolling` available for Docker bind mounts.
+- **AWS SDK v3 (`@aws-sdk/client-s3`) uploads with the correct path structure** —
+  `s3://{bucket}/kmassets-inbound/test/{app}/{file}`. The per-site `{app}` segment
+  is derived from the solrdocs path with the same regex `synchandler.prod` used.
+- **Behaviour parity with the Perl handler:** empty files are skipped (the `-s`
+  test); `*.ids` deletion files route to a separate `kmassets-delete/` prefix.
+- **No rclone or Perl needed.** The Node module fully replaces both scripts.
+
+**Retiring the legacy pipeline:** once `ENABLE_FILE_WATCHER=true` is the default,
+`Dockerfile.reindeer_x` can drop the `clsync`, `rclone`, and `s3fs` apt installs,
+the `rclone.conf` copies, and the `synch`/`synchandler` COPY+chmod lines
+(lines ~16–33). Left in place for now so the spike branch only adds the new path;
+the Dockerfile cleanup is a follow-up when Part A is promoted to default.
+
+Parts B (SQS subscription) and C (SNS reporting) were not attempted — see scope
+note below.
+
+## Credential strategy
+
+The watcher creates its S3 client with **no hardcoded credentials**
+(`new S3Client({ region })`), so it resolves credentials via the AWS SDK default
+provider chain (env vars → shared ini → … → ECS task role / IMDS). The
+**application code needs no change** across environments — only *which* identity
+the chain finds differs. Full design and infra hand-off in
+[reindeer-x-aws-credential-strategy.md](../deferred/reindeer-x-aws-credential-strategy.md).
+
+- **Local / testing — defer to the developer's own AWS identity.** No task role or
+  IAM setup needed. The Node SDK resolves the `login_session` profile, whose token
+  can expire independently of the AWS CLI; `eval "$(aws configure
+  export-credentials --format env)"` bridges an active CLI session to the SDK
+  (env vars sit first in the chain). Part A was demonstrated this way against a
+  throwaway bucket.
+- **Deployed (dev / staging / production) — per-environment ECS task role** granting
+  `s3:PutObject` on `mandala-ingest-{env}-inbound/*`. **Blocking gotcha:** the
+  legacy image bakes a static `~/.aws/credentials` file, which is resolved *before*
+  the task role in the chain and silently shadows it. So removing the baked
+  credential files (app repo) and adding the task role (Terraform infra repo) must
+  land **together**.
+- **Manual / operator runs against a real environment** (diagnosing a downstream
+  failure, testing a downstream fix) — operators **assume the same task role**
+  rather than using static keys or a personal identity, so the run has exactly the
+  deployed service's permissions (no drift), with temporary creds and CloudTrail
+  attribution. This requires the task role's trust policy to allow **both**
+  `ecs-tasks.amazonaws.com` and a scoped operator group (treat prod as
+  break-glass). "Run as <env>, manually" is then pure configuration
+  (`INGEST_BUCKET`, etc.) — no code path. Caution: writing to a real `…-inbound`
+  bucket feeds the live downstream pipeline; for pure diagnosis use the `…/test/`
+  prefix or a scratch bucket.
 
 ## What this does NOT establish
 
