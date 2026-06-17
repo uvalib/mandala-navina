@@ -1,0 +1,27 @@
+uuid: ecd4bf6b-5790-430e-a1f5-0d26c6545d5a
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_image_color
+field_name: field_image_color
+entity_type: node
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: color
+      label: Color
+    -
+      value: bw
+      label: 'Black & White'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

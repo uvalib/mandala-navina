@@ -1,0 +1,73 @@
+uuid: 66b53155-481c-4bc8-a530-33914e311238
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.taxonomy_term.external_classification_scheme.field_scheme_abbreviation
+    - field.field.taxonomy_term.external_classification_scheme.field_scheme_home_url
+    - field.field.taxonomy_term.external_classification_scheme.field_scheme_item_url
+    - field.field.taxonomy_term.external_classification_scheme.field_scheme_record_path
+    - field.field.taxonomy_term.external_classification_scheme.field_scheme_record_type
+    - taxonomy.vocabulary.external_classification_scheme
+  module:
+    - link
+    - options
+    - text
+id: taxonomy_term.external_classification_scheme.default
+targetEntityType: taxonomy_term
+bundle: external_classification_scheme
+mode: default
+content:
+  description:
+    type: text_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  field_scheme_abbreviation:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  field_scheme_home_url:
+    type: link
+    label: above
+    settings:
+      trim_length: 80
+      url_only: false
+      url_plain: false
+      rel: ''
+      target: ''
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  field_scheme_item_url:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 3
+    region: content
+  field_scheme_record_path:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 4
+    region: content
+  field_scheme_record_type:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 5
+    region: content
+hidden:
+  langcode: true
+  search_api_excerpt: true

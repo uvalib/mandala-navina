@@ -61,6 +61,14 @@ The Images content model is settled by the
 (111,340 images) confirms required fields are 0-missing / 0-out-of-list and agents are
 99.8% per-image. Tasks are in dependency order.
 
+### Progress
+
+| Date | Landed |
+|---|---|
+| 2026-06-17 | **1a.1–1a.3 ✅** — `shanti_image` (48 fields), the three paragraph types, and the `external_classification_scheme` vocabulary built as committed CMI config (382-file baseline, zero-diff round-trip). Prereqs cleared: **core bumped D10.6 → D11** ([ADR 002](../adr/002-drupal-11.md)) + paragraphs/ERR added; `settings.php` committed env-driven with `config_sync_directory` ([drupal-dsf convention](../deferred/images-prod-packaging-monorepo-pass.md)); Dockerfile → D11. New deferred notes: [agent-name mapping](../deferred/images-agent-name-paragraph-title-mapping.md), [prod packaging](../deferred/images-prod-packaging-monorepo-pass.md). KMaps search-roots punted to 1a.4. |
+
+> **Next-session blocker:** the [Group collections inheritance decision](../planning/collections-inheritance-decision-brief.md) (OPEN) — gates Step 1b (1b.2) and the access story behind 1a.7.
+
 ### Step 1a — public plumbing
 
 | # | Task | Depends on | Owner |

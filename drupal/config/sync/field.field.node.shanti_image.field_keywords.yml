@@ -1,0 +1,19 @@
+uuid: e4f534d9-6c4e-4e71-8d9c-3a2332668484
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_keywords
+    - node.type.shanti_image
+id: node.shanti_image.field_keywords
+field_name: field_keywords
+entity_type: node
+bundle: shanti_image
+label: Keywords
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

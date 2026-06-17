@@ -1,0 +1,63 @@
+uuid: 4cbd82a0-df42-461f-80e0-1f4108946778
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_image_type
+field_name: field_image_type
+entity_type: node
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: artwork
+      label: Artwork
+    -
+      value: blueprint
+      label: Blueprint
+    -
+      value: chart
+      label: Chart
+    -
+      value: drawing
+      label: Drawing
+    -
+      value: graphic
+      label: Graphic
+    -
+      value: logo
+      label: Logo
+    -
+      value: map
+      label: Map
+    -
+      value: music
+      label: 'Music Score'
+    -
+      value: other
+      label: Other
+    -
+      value: photograph
+      label: Photograph
+    -
+      value: scan-object
+      label: 'Scan (Object)'
+    -
+      value: scan-text
+      label: 'Scan (Text)'
+    -
+      value: screenshot
+      label: Screenshot
+    -
+      value: video-still
+      label: 'Video Still'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

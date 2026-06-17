@@ -1,0 +1,22 @@
+uuid: bd33a1cb-fee9-49e2-8725-bf25fd63db30
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_agent_notes
+    - paragraphs.paragraphs_type.image_agent
+  module:
+    - text
+id: paragraph.image_agent.field_agent_notes
+field_name: field_agent_notes
+entity_type: paragraph
+bundle: image_agent
+label: Notes
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

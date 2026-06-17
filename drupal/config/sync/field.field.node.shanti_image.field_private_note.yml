@@ -1,0 +1,19 @@
+uuid: 4dd40bff-fa95-4595-865b-e81a85ac6240
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_private_note
+    - node.type.shanti_image
+id: node.shanti_image.field_private_note
+field_name: field_private_note
+entity_type: node
+bundle: shanti_image
+label: 'Private Note'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

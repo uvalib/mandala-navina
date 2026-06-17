@@ -1,0 +1,22 @@
+uuid: 70229323-5c9f-41a5-af70-64aa560860ab
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_language
+    - paragraphs.paragraphs_type.image_descriptions
+  module:
+    - shanti_kmaps_fields
+id: paragraph.image_descriptions.field_language
+field_name: field_language
+entity_type: paragraph
+bundle: image_descriptions
+label: Language
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: terms
+field_type: shanti_kmaps_fields_default

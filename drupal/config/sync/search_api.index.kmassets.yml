@@ -1,0 +1,156 @@
+uuid: 2c49c376-35dd-4fe4-ad62-0a24d1e497e7
+langcode: en
+status: true
+dependencies:
+  config:
+    - search_api.server.kmassets
+  module:
+    - search_api
+    - search_api_solr
+third_party_settings:
+  search_api_solr:
+    finalize: false
+    commit_before_finalize: false
+    commit_after_finalize: false
+id: kmassets
+name: 'KMassets index'
+description: 'Read-only index over the external kmassets Solr core.'
+read_only: true
+field_settings:
+  asset_subtype:
+    label: 'Asset subtype'
+    datasource_id: solr_document
+    property_path: asset_subtype
+    type: string
+  asset_type:
+    label: 'Asset type'
+    datasource_id: solr_document
+    property_path: asset_type
+    type: string
+  caption:
+    label: Caption
+    datasource_id: solr_document
+    property_path: caption
+    type: text
+    boost: 1.0
+    dependencies: {  }
+  collection_nid:
+    label: 'Collection NID'
+    datasource_id: solr_document
+    property_path: collection_nid
+    type: string
+  collection_title:
+    label: 'Collection title'
+    datasource_id: solr_document
+    property_path: collection_title
+    type: string
+  description:
+    label: Description
+    datasource_id: solr_document
+    property_path: description
+    type: string
+  id:
+    label: 'Solr ID'
+    datasource_id: solr_document
+    property_path: id
+    type: string
+  kmapid:
+    label: 'KMap IDs'
+    datasource_id: solr_document
+    property_path: kmapid
+    type: string
+  names_txt:
+    label: 'Names (searchable)'
+    datasource_id: solr_document
+    property_path: names_txt
+    type: text
+    boost: 9.0
+    dependencies: {  }
+  node_changed:
+    label: Changed
+    datasource_id: solr_document
+    property_path: node_changed
+    type: date
+  node_created:
+    label: Created
+    datasource_id: solr_document
+    property_path: node_created
+    type: date
+  node_lang:
+    label: Language
+    datasource_id: solr_document
+    property_path: node_lang
+    type: string
+    dependencies: {  }
+  node_user:
+    label: 'Node user'
+    datasource_id: solr_document
+    property_path: node_user
+    type: string
+    dependencies: {  }
+  service:
+    label: Service
+    datasource_id: solr_document
+    property_path: service
+    type: string
+  summary:
+    label: Summary
+    datasource_id: solr_document
+    property_path: summary
+    type: text
+    boost: 1.0
+    dependencies: {  }
+  title:
+    label: Title
+    datasource_id: solr_document
+    property_path: title
+    type: text
+    boost: 21.0
+  uid:
+    label: 'Asset UID'
+    datasource_id: solr_document
+    property_path: uid
+    type: string
+  url_html:
+    label: 'URL (HTML)'
+    datasource_id: solr_document
+    property_path: url_html
+    type: string
+  url_json:
+    label: 'URL (JSON API)'
+    datasource_id: solr_document
+    property_path: url_json
+    type: string
+  url_thumb:
+    label: 'Thumbnail URL'
+    datasource_id: solr_document
+    property_path: url_thumb
+    type: string
+  visibility_i:
+    label: 'Visibility (int)'
+    datasource_id: solr_document
+    property_path: visibility_i
+    type: integer
+    dependencies: {  }
+  visibility_s:
+    label: Visibility
+    datasource_id: solr_document
+    property_path: visibility_s
+    type: string
+datasource_settings:
+  solr_document:
+    id_field: id
+    request_handler: ''
+    default_query: '*:*'
+    label_field: title
+    language_field: ''
+    url_field: url_html
+processor_settings:
+  add_url: {  }
+  aggregated_field: {  }
+tracker_settings:
+  default: {  }
+options:
+  cron_limit: 50
+  index_directly: false
+server: kmassets

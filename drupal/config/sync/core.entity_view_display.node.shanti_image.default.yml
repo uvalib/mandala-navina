@@ -1,0 +1,466 @@
+uuid: 018dd85f-e179-45ec-b778-a029a4160d3f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.shanti_image.field_admin_notes
+    - field.field.node.shanti_image.field_altitude
+    - field.field.node.shanti_image.field_aperture
+    - field.field.node.shanti_image.field_classification_notes
+    - field.field.node.shanti_image.field_copyright_date
+    - field.field.node.shanti_image.field_copyright_holder
+    - field.field.node.shanti_image.field_copyright_statement
+    - field.field.node.shanti_image.field_exposure_bias
+    - field.field.node.shanti_image.field_external_classification
+    - field.field.node.shanti_image.field_flash_settings
+    - field.field.node.shanti_image.field_focal_length
+    - field.field.node.shanti_image.field_general_note
+    - field.field.node.shanti_image.field_image
+    - field.field.node.shanti_image.field_image_agents
+    - field.field.node.shanti_image.field_image_capture_device
+    - field.field.node.shanti_image.field_image_color
+    - field.field.node.shanti_image.field_image_descriptions
+    - field.field.node.shanti_image.field_image_digital
+    - field.field.node.shanti_image.field_image_enhancement
+    - field.field.node.shanti_image.field_image_materials
+    - field.field.node.shanti_image.field_image_notes
+    - field.field.node.shanti_image.field_image_quality
+    - field.field.node.shanti_image.field_image_rotation
+    - field.field.node.shanti_image.field_image_type
+    - field.field.node.shanti_image.field_iso_speed_rating
+    - field.field.node.shanti_image.field_keywords
+    - field.field.node.shanti_image.field_kmap_collections
+    - field.field.node.shanti_image.field_kmap_terms
+    - field.field.node.shanti_image.field_latitude
+    - field.field.node.shanti_image.field_lens
+    - field.field.node.shanti_image.field_license_url
+    - field.field.node.shanti_image.field_light_source
+    - field.field.node.shanti_image.field_longitude
+    - field.field.node.shanti_image.field_metering_mode
+    - field.field.node.shanti_image.field_noise_reduction
+    - field.field.node.shanti_image.field_organization_name
+    - field.field.node.shanti_image.field_original_filename
+    - field.field.node.shanti_image.field_other_ids
+    - field.field.node.shanti_image.field_physical_size
+    - field.field.node.shanti_image.field_places
+    - field.field.node.shanti_image.field_private_note
+    - field.field.node.shanti_image.field_project_name
+    - field.field.node.shanti_image.field_rights_notes
+    - field.field.node.shanti_image.field_sensing_method
+    - field.field.node.shanti_image.field_sponsor_name
+    - field.field.node.shanti_image.field_spot_feature
+    - field.field.node.shanti_image.field_subjects
+    - field.field.node.shanti_image.field_technical_notes
+    - node.type.shanti_image
+  module:
+    - datetime
+    - entity_reference_revisions
+    - image
+    - link
+    - options
+    - shanti_kmaps_fields
+    - text
+    - user
+id: node.shanti_image.default
+targetEntityType: node
+bundle: shanti_image
+mode: default
+content:
+  field_admin_notes:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 24
+    region: content
+  field_altitude:
+    type: number_decimal
+    label: above
+    settings:
+      thousand_separator: ''
+      decimal_separator: .
+      scale: 2
+      prefix_suffix: true
+    third_party_settings: {  }
+    weight: 38
+    region: content
+  field_aperture:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 39
+    region: content
+  field_classification_notes:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 23
+    region: content
+  field_copyright_date:
+    type: datetime_default
+    label: above
+    settings:
+      timezone_override: ''
+      format_type: medium
+    third_party_settings: {  }
+    weight: 29
+    region: content
+  field_copyright_holder:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 28
+    region: content
+  field_copyright_statement:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 30
+    region: content
+  field_exposure_bias:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 40
+    region: content
+  field_external_classification:
+    type: entity_reference_revisions_entity_view
+    label: above
+    settings:
+      view_mode: default
+      link: ''
+    third_party_settings: {  }
+    weight: 10
+    region: content
+  field_flash_settings:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 47
+    region: content
+  field_focal_length:
+    type: number_decimal
+    label: above
+    settings:
+      thousand_separator: ''
+      decimal_separator: .
+      scale: 2
+      prefix_suffix: true
+    third_party_settings: {  }
+    weight: 41
+    region: content
+  field_general_note:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 21
+    region: content
+  field_image:
+    type: image
+    label: above
+    settings:
+      image_link: ''
+      image_style: ''
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  field_image_agents:
+    type: entity_reference_revisions_entity_view
+    label: above
+    settings:
+      view_mode: default
+      link: ''
+    third_party_settings: {  }
+    weight: 8
+    region: content
+  field_image_capture_device:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 48
+    region: content
+  field_image_color:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 12
+    region: content
+  field_image_descriptions:
+    type: entity_reference_revisions_entity_view
+    label: above
+    settings:
+      view_mode: default
+      link: ''
+    third_party_settings: {  }
+    weight: 9
+    region: content
+  field_image_digital:
+    type: boolean
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    weight: 26
+    region: content
+  field_image_enhancement:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 19
+    region: content
+  field_image_materials:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 18
+    region: content
+  field_image_notes:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 20
+    region: content
+  field_image_quality:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 13
+    region: content
+  field_image_rotation:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 14
+    region: content
+  field_image_type:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 11
+    region: content
+  field_iso_speed_rating:
+    type: number_integer
+    label: above
+    settings:
+      thousand_separator: ''
+      prefix_suffix: true
+    third_party_settings: {  }
+    weight: 42
+    region: content
+  field_keywords:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 15
+    region: content
+  field_kmap_collections:
+    type: kmap_default_formatter
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 7
+    region: content
+  field_kmap_terms:
+    type: kmap_default_formatter
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 6
+    region: content
+  field_latitude:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 36
+    region: content
+  field_lens:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 43
+    region: content
+  field_license_url:
+    type: link
+    label: above
+    settings:
+      trim_length: 80
+      url_only: false
+      url_plain: false
+      rel: ''
+      target: ''
+    third_party_settings: {  }
+    weight: 31
+    region: content
+  field_light_source:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 44
+    region: content
+  field_longitude:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 37
+    region: content
+  field_metering_mode:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 45
+    region: content
+  field_noise_reduction:
+    type: boolean
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    weight: 27
+    region: content
+  field_organization_name:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 33
+    region: content
+  field_original_filename:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  field_other_ids:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 3
+    region: content
+  field_physical_size:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 17
+    region: content
+  field_places:
+    type: kmap_default_formatter
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 5
+    region: content
+  field_private_note:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 25
+    region: content
+  field_project_name:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 34
+    region: content
+  field_rights_notes:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 32
+    region: content
+  field_sensing_method:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 46
+    region: content
+  field_sponsor_name:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 35
+    region: content
+  field_spot_feature:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 16
+    region: content
+  field_subjects:
+    type: kmap_default_formatter
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 4
+    region: content
+  field_technical_notes:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 22
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  langcode: true
+  search_api_excerpt: true

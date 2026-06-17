@@ -1,0 +1,10 @@
+uuid: aea8f3df-d6b1-42e7-87ce-1baf4f752e1e
+langcode: en
+status: true
+dependencies: {  }
+id: image_agent
+label: 'Image Agent'
+icon_uuid: null
+icon_default: null
+description: null
+behavior_plugins: {  }

@@ -1,0 +1,19 @@
+uuid: fb6c8fc4-602d-44cd-9fa5-e2e8e58d91ab
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_other_ids
+    - node.type.shanti_image
+id: node.shanti_image.field_other_ids
+field_name: field_other_ids
+entity_type: node
+bundle: shanti_image
+label: 'Other IDs'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

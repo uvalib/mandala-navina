@@ -1,0 +1,19 @@
+uuid: 49fdf0bc-2be1-437a-a7dc-dafb38886d39
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_scheme_abbreviation
+    - taxonomy.vocabulary.external_classification_scheme
+id: taxonomy_term.external_classification_scheme.field_scheme_abbreviation
+field_name: field_scheme_abbreviation
+entity_type: taxonomy_term
+bundle: external_classification_scheme
+label: Abbreviation
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

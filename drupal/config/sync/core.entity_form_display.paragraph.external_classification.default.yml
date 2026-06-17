@@ -1,0 +1,41 @@
+uuid: f7033fa3-96e9-442b-b572-dc518a015079
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.external_classification.field_external_class_id
+    - field.field.paragraph.external_classification.field_external_class_note
+    - field.field.paragraph.external_classification.field_external_class_scheme
+    - paragraphs.paragraphs_type.external_classification
+  module:
+    - text
+id: paragraph.external_classification.default
+targetEntityType: paragraph
+bundle: external_classification
+mode: default
+content:
+  field_external_class_id:
+    type: string_textfield
+    weight: 2
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_external_class_note:
+    type: text_textarea
+    weight: 3
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_external_class_scheme:
+    type: options_select
+    weight: 1
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true

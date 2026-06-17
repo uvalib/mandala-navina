@@ -1,0 +1,11 @@
+uuid: 912a3d0d-68f0-42fa-afa7-b18b12c959e6
+langcode: en
+status: true
+dependencies: {  }
+name: 'Shanti Image'
+type: shanti_image
+description: 'Primary Mandala Images metadata record. Satellites (agents, descriptions, classifications) are embedded paragraphs; the external scheme is a taxonomy vocabulary.'
+help: null
+new_revision: true
+preview_mode: 1
+display_submitted: true

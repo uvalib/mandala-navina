@@ -1,0 +1,19 @@
+uuid: 5715890d-22bc-4ddf-8023-8cf6d252b2c1
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_copyright_holder
+    - node.type.shanti_image
+id: node.shanti_image.field_copyright_holder
+field_name: field_copyright_holder
+entity_type: node
+bundle: shanti_image
+label: 'Copyright Holder'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -1,0 +1,21 @@
+uuid: 88c91ebb-923a-4d76-97da-bcc3e60a82b7
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_scheme_record_type
+    - taxonomy.vocabulary.external_classification_scheme
+  module:
+    - options
+id: taxonomy_term.external_classification_scheme.field_scheme_record_type
+field_name: field_scheme_record_type
+entity_type: taxonomy_term
+bundle: external_classification_scheme
+label: 'Record type'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

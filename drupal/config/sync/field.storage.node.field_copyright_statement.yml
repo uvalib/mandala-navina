@@ -1,0 +1,19 @@
+uuid: 83d78c79-cc17-42f4-8913-3c43a205c03a
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - text
+id: node.field_copyright_statement
+field_name: field_copyright_statement
+entity_type: node
+type: text_long
+settings: {  }
+module: text
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

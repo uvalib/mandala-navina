@@ -1,0 +1,22 @@
+uuid: d32ba459-1932-4a1e-9b41-b9f034293e5f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_kmap_terms
+    - node.type.shanti_image
+  module:
+    - shanti_kmaps_fields
+id: node.shanti_image.field_kmap_terms
+field_name: field_kmap_terms
+entity_type: node
+bundle: shanti_image
+label: Terms
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: terms
+field_type: shanti_kmaps_fields_default

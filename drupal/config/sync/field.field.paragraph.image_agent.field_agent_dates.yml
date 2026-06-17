@@ -1,0 +1,21 @@
+uuid: 5a39aefb-bfca-4da6-8b07-9978fb2b274b
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_agent_dates
+    - paragraphs.paragraphs_type.image_agent
+  module:
+    - datetime
+id: paragraph.image_agent.field_agent_dates
+field_name: field_agent_dates
+entity_type: paragraph
+bundle: image_agent
+label: Dates
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

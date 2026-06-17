@@ -1,0 +1,19 @@
+uuid: d39656b3-3b79-4a76-975a-fc09f7926883
+langcode: en
+status: true
+dependencies:
+  module:
+    - paragraphs
+    - shanti_kmaps_fields
+id: paragraph.field_language
+field_name: field_language
+entity_type: paragraph
+type: shanti_kmaps_fields_default
+settings: {  }
+module: shanti_kmaps_fields
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

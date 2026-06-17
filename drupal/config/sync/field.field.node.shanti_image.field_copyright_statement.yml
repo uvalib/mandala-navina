@@ -1,0 +1,22 @@
+uuid: 868e1ab1-6852-4d5c-9729-7011b4bcd84c
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_copyright_statement
+    - node.type.shanti_image
+  module:
+    - text
+id: node.shanti_image.field_copyright_statement
+field_name: field_copyright_statement
+entity_type: node
+bundle: shanti_image
+label: 'Copyright Statement'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

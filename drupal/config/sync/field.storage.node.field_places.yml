@@ -1,0 +1,19 @@
+uuid: deb71eab-431b-478b-b276-5aba3d94e9e6
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - shanti_kmaps_fields
+id: node.field_places
+field_name: field_places
+entity_type: node
+type: shanti_kmaps_fields_default
+settings: {  }
+module: shanti_kmaps_fields
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,19 @@
+uuid: dc445f0d-adef-46cf-a950-ac030faf5d55
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_original_filename
+    - node.type.shanti_image
+id: node.shanti_image.field_original_filename
+field_name: field_original_filename
+entity_type: node
+bundle: shanti_image
+label: 'Original Filename'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

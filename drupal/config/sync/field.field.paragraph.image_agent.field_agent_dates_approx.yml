@@ -1,0 +1,19 @@
+uuid: 138c4160-50b0-41c4-a003-f826d34f3f2a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_agent_dates_approx
+    - paragraphs.paragraphs_type.image_agent
+id: paragraph.image_agent.field_agent_dates_approx
+field_name: field_agent_dates_approx
+entity_type: paragraph
+bundle: image_agent
+label: 'Dates (approximate)'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

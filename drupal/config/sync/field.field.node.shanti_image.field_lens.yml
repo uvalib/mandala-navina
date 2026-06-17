@@ -1,0 +1,19 @@
+uuid: 96e76b26-c4c3-43a6-a0d3-7b6aa8fd18d6
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_lens
+    - node.type.shanti_image
+id: node.shanti_image.field_lens
+field_name: field_lens
+entity_type: node
+bundle: shanti_image
+label: Lens
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

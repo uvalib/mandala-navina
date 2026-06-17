@@ -6,7 +6,8 @@
 /drupal/web/themes/contrib/
 /drupal/web/profiles/contrib/
 /drupal/web/sites/default/files/
-/drupal/web/sites/*/settings.php
+# settings.php is committed (drupal-dsf convention): it is env-driven (no secrets)
+# and sets config_sync_directory. Only the per-machine local override is ignored.
 /drupal/web/sites/*/settings.local.php
 
 # DDEV — let DDEV manage its own gitignore inside .ddev/

@@ -1,0 +1,24 @@
+uuid: 13bf277a-0588-41af-9602-e06c43b255d2
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_external_class_scheme
+    - paragraphs.paragraphs_type.external_classification
+    - taxonomy.vocabulary.external_classification_scheme
+id: paragraph.external_classification.field_external_class_scheme
+field_name: field_external_class_scheme
+entity_type: paragraph
+bundle: external_classification
+label: Scheme
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:taxonomy_term'
+  handler_settings:
+    target_bundles:
+      external_classification_scheme: external_classification_scheme
+field_type: entity_reference

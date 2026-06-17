@@ -1,0 +1,30 @@
+uuid: 5cf49cb5-964d-497f-87e0-439eb561434f
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - taxonomy
+id: taxonomy_term.field_scheme_record_type
+field_name: field_scheme_record_type
+entity_type: taxonomy_term
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: json
+      label: JSON
+    -
+      value: rdf
+      label: RDF
+    -
+      value: xml
+      label: XML
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,66 @@
+uuid: ae32a748-1faa-4063-8c55-264023ece67f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.image_agent.field_agent_dates
+    - field.field.paragraph.image_agent.field_agent_dates_approx
+    - field.field.paragraph.image_agent.field_agent_name
+    - field.field.paragraph.image_agent.field_agent_notes
+    - field.field.paragraph.image_agent.field_agent_place
+    - field.field.paragraph.image_agent.field_agent_role
+    - paragraphs.paragraphs_type.image_agent
+  module:
+    - datetime
+    - shanti_kmaps_fields
+    - text
+id: paragraph.image_agent.default
+targetEntityType: paragraph
+bundle: image_agent
+mode: default
+content:
+  field_agent_dates:
+    type: datetime_default
+    weight: 4
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_agent_dates_approx:
+    type: string_textfield
+    weight: 5
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_agent_name:
+    type: string_textfield
+    weight: 1
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_agent_notes:
+    type: text_textarea
+    weight: 6
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_agent_place:
+    type: kmap_tree_picker
+    weight: 3
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_agent_role:
+    type: options_select
+    weight: 2
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true

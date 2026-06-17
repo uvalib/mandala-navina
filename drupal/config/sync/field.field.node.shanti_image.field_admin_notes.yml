@@ -1,0 +1,22 @@
+uuid: 3fa17931-e4d0-4f4e-a3c9-47e356cca7f8
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_admin_notes
+    - node.type.shanti_image
+  module:
+    - text
+id: node.shanti_image.field_admin_notes
+field_name: field_admin_notes
+entity_type: node
+bundle: shanti_image
+label: 'Admin Notes'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

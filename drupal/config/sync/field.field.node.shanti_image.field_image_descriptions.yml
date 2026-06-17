@@ -1,0 +1,27 @@
+uuid: cc7cc56b-6c97-4c7d-afca-61f842152a80
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_image_descriptions
+    - node.type.shanti_image
+    - paragraphs.paragraphs_type.image_descriptions
+  module:
+    - entity_reference_revisions
+id: node.shanti_image.field_image_descriptions
+field_name: field_image_descriptions
+entity_type: node
+bundle: shanti_image
+label: 'Image Descriptions'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      image_descriptions: image_descriptions
+    negate: 0
+field_type: entity_reference_revisions

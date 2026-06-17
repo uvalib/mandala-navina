@@ -1,0 +1,22 @@
+uuid: ef35e196-8e9e-4215-8bbe-5f3053b1ce06
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_image_enhancement
+    - node.type.shanti_image
+  module:
+    - text
+id: node.shanti_image.field_image_enhancement
+field_name: field_image_enhancement
+entity_type: node
+bundle: shanti_image
+label: Enhancement
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

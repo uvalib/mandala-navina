@@ -1,0 +1,40 @@
+uuid: 6114745c-77a2-46ca-996c-97f938645d27
+langcode: en
+status: true
+dependencies:
+  module:
+    - search_api_solr
+id: kmassets
+name: 'KMassets (external Mandala Solr)'
+description: 'Read-only connection to the existing kmassets Solr index managed by the Mandala ingest pipeline.'
+backend: search_api_solr
+backend_config:
+  retrieve_data: true
+  highlight_data: false
+  site_hash: false
+  server_prefix: ''
+  domain: generic
+  connector: standard
+  connector_config:
+    scheme: https
+    host: mandala-solr-proxy.internal.lib.virginia.edu
+    port: 443
+    path: /
+    core: kmassets
+    timeout: 5
+    index_timeout: 20
+    optimize_timeout: 5
+    finalize_timeout: 30
+    skip_schema_check: true
+    solr_version: '7'
+    http_method: AUTO
+    commit_within: 1000
+    jmx: false
+    jts: false
+    solr_install_dir: ''
+  optimize: false
+  fallback_multiple: true
+  rows: 10
+  index_single_documents_fallback_count: 10
+  index_empty_text_fields: false
+  suppress_missing_languages: false

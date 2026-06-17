@@ -1,0 +1,23 @@
+uuid: 95246c2c-0f9b-4664-bc84-d2923c9afd14
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_altitude
+    - node.type.shanti_image
+id: node.shanti_image.field_altitude
+field_name: field_altitude
+entity_type: node
+bundle: shanti_image
+label: Altitude
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: float

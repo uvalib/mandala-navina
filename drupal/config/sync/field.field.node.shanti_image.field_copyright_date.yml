@@ -1,0 +1,21 @@
+uuid: 6ef76739-7e5e-4472-91b9-4cab7d1e6b6c
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_copyright_date
+    - node.type.shanti_image
+  module:
+    - datetime
+id: node.shanti_image.field_copyright_date
+field_name: field_copyright_date
+entity_type: node
+bundle: shanti_image
+label: 'Copyright Date'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime
