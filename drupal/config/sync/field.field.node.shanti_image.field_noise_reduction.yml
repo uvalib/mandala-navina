@@ -1,0 +1,21 @@
+uuid: b6acd80e-f13d-4011-b6fe-6210397c34c4
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_noise_reduction
+    - node.type.shanti_image
+id: node.shanti_image.field_noise_reduction
+field_name: field_noise_reduction
+entity_type: node
+bundle: shanti_image
+label: 'Noise Reduction'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

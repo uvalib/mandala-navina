@@ -1,0 +1,33 @@
+uuid: 1c18d2e7-edb0-4e95-a32b-9b3415403a2c
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_image_rotation
+field_name: field_image_rotation
+entity_type: node
+type: list_integer
+settings:
+  allowed_values:
+    -
+      value: 0
+      label: 0º
+    -
+      value: 90
+      label: 90º
+    -
+      value: 180
+      label: 180º
+    -
+      value: 270
+      label: 270º
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

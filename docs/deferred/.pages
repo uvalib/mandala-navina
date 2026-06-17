@@ -8,3 +8,5 @@ nav:
   - "Solr pipeline cost discussion": solr-pipeline-cost-discussion.md
   - "Tibetan search quality (deferred)": tibetan-search-quality.md
   - "reindeer_x AWS credential strategy": reindeer-x-aws-credential-strategy.md
+  - "Images prod packaging (monorepo pass)": images-prod-packaging-monorepo-pass.md
+  - "Images agent name → paragraph title mapping": images-agent-name-paragraph-title-mapping.md

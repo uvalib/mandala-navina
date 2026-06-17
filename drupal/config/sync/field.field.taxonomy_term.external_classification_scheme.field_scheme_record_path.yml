@@ -1,0 +1,19 @@
+uuid: 2b42084e-2f54-4b4b-8d4d-b1ad533dbb74
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_scheme_record_path
+    - taxonomy.vocabulary.external_classification_scheme
+id: taxonomy_term.external_classification_scheme.field_scheme_record_path
+field_name: field_scheme_record_path
+entity_type: taxonomy_term
+bundle: external_classification_scheme
+label: 'Record path'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -1,0 +1,22 @@
+uuid: fbddb0f5-082c-4142-aa3d-835b3499b0f2
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_external_class_note
+    - paragraphs.paragraphs_type.external_classification
+  module:
+    - text
+id: paragraph.external_classification.field_external_class_note
+field_name: field_external_class_note
+entity_type: paragraph
+bundle: external_classification
+label: Note
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

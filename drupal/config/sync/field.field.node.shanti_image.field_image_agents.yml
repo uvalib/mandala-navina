@@ -1,0 +1,27 @@
+uuid: 9f6b95b2-fcf4-4241-b578-deacedd7914b
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_image_agents
+    - node.type.shanti_image
+    - paragraphs.paragraphs_type.image_agent
+  module:
+    - entity_reference_revisions
+id: node.shanti_image.field_image_agents
+field_name: field_image_agents
+entity_type: node
+bundle: shanti_image
+label: 'Image Agents'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      image_agent: image_agent
+    negate: 0
+field_type: entity_reference_revisions

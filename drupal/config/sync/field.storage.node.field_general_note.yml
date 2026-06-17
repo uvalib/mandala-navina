@@ -1,0 +1,21 @@
+uuid: e8bfd35e-2031-4163-ac01-19adff89d78e
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_general_note
+field_name: field_general_note
+entity_type: node
+type: string
+settings:
+  max_length: 255
+  case_sensitive: false
+  is_ascii: false
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

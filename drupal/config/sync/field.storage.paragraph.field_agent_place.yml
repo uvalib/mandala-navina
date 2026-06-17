@@ -1,0 +1,19 @@
+uuid: c2dfdb47-0d10-4b52-ac64-67383ac23186
+langcode: en
+status: true
+dependencies:
+  module:
+    - paragraphs
+    - shanti_kmaps_fields
+id: paragraph.field_agent_place
+field_name: field_agent_place
+entity_type: paragraph
+type: shanti_kmaps_fields_default
+settings: {  }
+module: shanti_kmaps_fields
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

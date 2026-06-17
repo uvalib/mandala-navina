@@ -1,0 +1,19 @@
+uuid: 96ffa530-3cda-47df-aa40-db826d57ff9d
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_general_note
+    - node.type.shanti_image
+id: node.shanti_image.field_general_note
+field_name: field_general_note
+entity_type: node
+bundle: shanti_image
+label: 'General Note'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

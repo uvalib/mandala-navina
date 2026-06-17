@@ -1,0 +1,23 @@
+uuid: a4ab83fe-70f6-4873-b6c5-e6ce991450f9
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_license_url
+    - node.type.shanti_image
+  module:
+    - link
+id: node.shanti_image.field_license_url
+field_name: field_license_url
+entity_type: node
+bundle: shanti_image
+label: 'License URL'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  title: 1
+  link_type: 17
+field_type: link

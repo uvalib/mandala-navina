@@ -1,0 +1,21 @@
+uuid: 520ce7ac-90e0-4a9f-84d0-8ebeba1e4f88
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_image_color
+    - node.type.shanti_image
+  module:
+    - options
+id: node.shanti_image.field_image_color
+field_name: field_image_color
+entity_type: node
+bundle: shanti_image
+label: Color
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

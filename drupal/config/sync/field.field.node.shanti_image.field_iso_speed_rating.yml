@@ -1,0 +1,23 @@
+uuid: 78aae433-ac04-43b4-8c00-ae2de6e9f93c
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_iso_speed_rating
+    - node.type.shanti_image
+id: node.shanti_image.field_iso_speed_rating
+field_name: field_iso_speed_rating
+entity_type: node
+bundle: shanti_image
+label: 'ISO Speed Rating'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

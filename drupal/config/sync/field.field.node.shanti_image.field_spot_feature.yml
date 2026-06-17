@@ -1,0 +1,19 @@
+uuid: 33cd159a-2c0d-4088-a16e-798837b65f64
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_spot_feature
+    - node.type.shanti_image
+id: node.shanti_image.field_spot_feature
+field_name: field_spot_feature
+entity_type: node
+bundle: shanti_image
+label: 'Spot Feature'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

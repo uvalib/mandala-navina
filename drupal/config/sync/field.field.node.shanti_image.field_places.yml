@@ -1,0 +1,22 @@
+uuid: 54452fb2-9e82-46a1-bb21-d88110374cde
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_places
+    - node.type.shanti_image
+  module:
+    - shanti_kmaps_fields
+id: node.shanti_image.field_places
+field_name: field_places
+entity_type: node
+bundle: shanti_image
+label: Places
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: places
+field_type: shanti_kmaps_fields_default

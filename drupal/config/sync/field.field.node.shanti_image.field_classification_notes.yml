@@ -1,0 +1,22 @@
+uuid: 41271176-16d5-4ce4-a52b-5fce40a931dd
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_classification_notes
+    - node.type.shanti_image
+  module:
+    - text
+id: node.shanti_image.field_classification_notes
+field_name: field_classification_notes
+entity_type: node
+bundle: shanti_image
+label: 'Classification Notes'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

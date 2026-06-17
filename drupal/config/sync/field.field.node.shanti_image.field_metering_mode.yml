@@ -1,0 +1,19 @@
+uuid: f6a86ae7-b141-4d37-965c-68cacba7d491
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_metering_mode
+    - node.type.shanti_image
+id: node.shanti_image.field_metering_mode
+field_name: field_metering_mode
+entity_type: node
+bundle: shanti_image
+label: 'Metering Mode'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -1,0 +1,506 @@
+uuid: 967dea14-af87-4635-8718-73c006d29213
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.shanti_image.field_admin_notes
+    - field.field.node.shanti_image.field_altitude
+    - field.field.node.shanti_image.field_aperture
+    - field.field.node.shanti_image.field_classification_notes
+    - field.field.node.shanti_image.field_copyright_date
+    - field.field.node.shanti_image.field_copyright_holder
+    - field.field.node.shanti_image.field_copyright_statement
+    - field.field.node.shanti_image.field_exposure_bias
+    - field.field.node.shanti_image.field_external_classification
+    - field.field.node.shanti_image.field_flash_settings
+    - field.field.node.shanti_image.field_focal_length
+    - field.field.node.shanti_image.field_general_note
+    - field.field.node.shanti_image.field_image
+    - field.field.node.shanti_image.field_image_agents
+    - field.field.node.shanti_image.field_image_capture_device
+    - field.field.node.shanti_image.field_image_color
+    - field.field.node.shanti_image.field_image_descriptions
+    - field.field.node.shanti_image.field_image_digital
+    - field.field.node.shanti_image.field_image_enhancement
+    - field.field.node.shanti_image.field_image_materials
+    - field.field.node.shanti_image.field_image_notes
+    - field.field.node.shanti_image.field_image_quality
+    - field.field.node.shanti_image.field_image_rotation
+    - field.field.node.shanti_image.field_image_type
+    - field.field.node.shanti_image.field_iso_speed_rating
+    - field.field.node.shanti_image.field_keywords
+    - field.field.node.shanti_image.field_kmap_collections
+    - field.field.node.shanti_image.field_kmap_terms
+    - field.field.node.shanti_image.field_latitude
+    - field.field.node.shanti_image.field_lens
+    - field.field.node.shanti_image.field_license_url
+    - field.field.node.shanti_image.field_light_source
+    - field.field.node.shanti_image.field_longitude
+    - field.field.node.shanti_image.field_metering_mode
+    - field.field.node.shanti_image.field_noise_reduction
+    - field.field.node.shanti_image.field_organization_name
+    - field.field.node.shanti_image.field_original_filename
+    - field.field.node.shanti_image.field_other_ids
+    - field.field.node.shanti_image.field_physical_size
+    - field.field.node.shanti_image.field_places
+    - field.field.node.shanti_image.field_private_note
+    - field.field.node.shanti_image.field_project_name
+    - field.field.node.shanti_image.field_rights_notes
+    - field.field.node.shanti_image.field_sensing_method
+    - field.field.node.shanti_image.field_sponsor_name
+    - field.field.node.shanti_image.field_spot_feature
+    - field.field.node.shanti_image.field_subjects
+    - field.field.node.shanti_image.field_technical_notes
+    - image.style.thumbnail
+    - node.type.shanti_image
+  module:
+    - datetime
+    - image
+    - link
+    - paragraphs
+    - path
+    - shanti_kmaps_fields
+    - text
+id: node.shanti_image.default
+targetEntityType: node
+bundle: shanti_image
+mode: default
+content:
+  created:
+    type: datetime_timestamp
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_admin_notes:
+    type: text_textarea
+    weight: 24
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_altitude:
+    type: number
+    weight: 38
+    region: content
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+  field_aperture:
+    type: string_textfield
+    weight: 39
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_classification_notes:
+    type: text_textarea
+    weight: 23
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_copyright_date:
+    type: datetime_default
+    weight: 29
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_copyright_holder:
+    type: string_textfield
+    weight: 28
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_copyright_statement:
+    type: text_textarea
+    weight: 30
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_exposure_bias:
+    type: string_textfield
+    weight: 40
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_external_classification:
+    type: paragraphs
+    weight: 10
+    region: content
+    settings:
+      title: Paragraph
+      title_plural: Paragraphs
+      edit_mode: open
+      closed_mode: summary
+      autocollapse: none
+      closed_mode_threshold: 0
+      add_mode: dropdown
+      form_display_mode: default
+      default_paragraph_type: ''
+      features:
+        collapse_edit_all: collapse_edit_all
+        duplicate: duplicate
+    third_party_settings: {  }
+  field_flash_settings:
+    type: string_textfield
+    weight: 47
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_focal_length:
+    type: number
+    weight: 41
+    region: content
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+  field_general_note:
+    type: string_textfield
+    weight: 21
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_image:
+    type: image_image
+    weight: 1
+    region: content
+    settings:
+      progress_indicator: throbber
+      preview_image_style: thumbnail
+    third_party_settings: {  }
+  field_image_agents:
+    type: paragraphs
+    weight: 8
+    region: content
+    settings:
+      title: Paragraph
+      title_plural: Paragraphs
+      edit_mode: open
+      closed_mode: summary
+      autocollapse: none
+      closed_mode_threshold: 0
+      add_mode: dropdown
+      form_display_mode: default
+      default_paragraph_type: ''
+      features:
+        collapse_edit_all: collapse_edit_all
+        duplicate: duplicate
+    third_party_settings: {  }
+  field_image_capture_device:
+    type: string_textfield
+    weight: 48
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_image_color:
+    type: options_select
+    weight: 12
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_image_descriptions:
+    type: paragraphs
+    weight: 9
+    region: content
+    settings:
+      title: Paragraph
+      title_plural: Paragraphs
+      edit_mode: open
+      closed_mode: summary
+      autocollapse: none
+      closed_mode_threshold: 0
+      add_mode: dropdown
+      form_display_mode: default
+      default_paragraph_type: ''
+      features:
+        collapse_edit_all: collapse_edit_all
+        duplicate: duplicate
+    third_party_settings: {  }
+  field_image_digital:
+    type: boolean_checkbox
+    weight: 26
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  field_image_enhancement:
+    type: text_textarea
+    weight: 19
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_image_materials:
+    type: text_textarea
+    weight: 18
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_image_notes:
+    type: text_textarea
+    weight: 20
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_image_quality:
+    type: options_select
+    weight: 13
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_image_rotation:
+    type: options_select
+    weight: 14
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_image_type:
+    type: options_select
+    weight: 11
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_iso_speed_rating:
+    type: number
+    weight: 42
+    region: content
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+  field_keywords:
+    type: string_textfield
+    weight: 15
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_kmap_collections:
+    type: kmap_tree_picker
+    weight: 7
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_kmap_terms:
+    type: kmap_tree_picker
+    weight: 6
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_latitude:
+    type: string_textfield
+    weight: 36
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_lens:
+    type: string_textfield
+    weight: 43
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_license_url:
+    type: link_default
+    weight: 31
+    region: content
+    settings:
+      placeholder_url: ''
+      placeholder_title: ''
+    third_party_settings: {  }
+  field_light_source:
+    type: string_textfield
+    weight: 44
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_longitude:
+    type: string_textfield
+    weight: 37
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_metering_mode:
+    type: string_textfield
+    weight: 45
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_noise_reduction:
+    type: boolean_checkbox
+    weight: 27
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  field_organization_name:
+    type: string_textfield
+    weight: 33
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_original_filename:
+    type: string_textfield
+    weight: 2
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_other_ids:
+    type: string_textfield
+    weight: 3
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_physical_size:
+    type: string_textfield
+    weight: 17
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_places:
+    type: kmap_tree_picker
+    weight: 5
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_private_note:
+    type: string_textfield
+    weight: 25
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_project_name:
+    type: string_textfield
+    weight: 34
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_rights_notes:
+    type: text_textarea
+    weight: 32
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_sensing_method:
+    type: string_textfield
+    weight: 46
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_sponsor_name:
+    type: string_textfield
+    weight: 35
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_spot_feature:
+    type: string_textfield
+    weight: 16
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_subjects:
+    type: kmap_tree_picker
+    weight: 4
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_technical_notes:
+    type: text_textarea
+    weight: 22
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  langcode:
+    type: language_select
+    weight: 2
+    region: content
+    settings:
+      include_locked: true
+    third_party_settings: {  }
+  path:
+    type: path
+    weight: 30
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  status:
+    type: boolean_checkbox
+    weight: 120
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  title:
+    type: string_textfield
+    weight: -5
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 5
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  promote: true
+  sticky: true

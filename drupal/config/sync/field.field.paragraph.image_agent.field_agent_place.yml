@@ -1,0 +1,22 @@
+uuid: 998d0e95-c4a2-4727-aa88-166a26d9a554
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_agent_place
+    - paragraphs.paragraphs_type.image_agent
+  module:
+    - shanti_kmaps_fields
+id: paragraph.image_agent.field_agent_place
+field_name: field_agent_place
+entity_type: paragraph
+bundle: image_agent
+label: Place
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: places
+field_type: shanti_kmaps_fields_default

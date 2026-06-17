@@ -1,0 +1,19 @@
+uuid: ec2365af-0743-4377-b2a1-5f4e149a1163
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_flash_settings
+    - node.type.shanti_image
+id: node.shanti_image.field_flash_settings
+field_name: field_flash_settings
+entity_type: node
+bundle: shanti_image
+label: 'Flash Settings'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

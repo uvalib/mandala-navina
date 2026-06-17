@@ -1,0 +1,22 @@
+uuid: 5dfc5b95-cce0-4f52-ad27-43cde92fd289
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_rights_notes
+    - node.type.shanti_image
+  module:
+    - text
+id: node.shanti_image.field_rights_notes
+field_name: field_rights_notes
+entity_type: node
+bundle: shanti_image
+label: 'Rights Notes'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

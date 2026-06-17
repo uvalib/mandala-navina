@@ -1,0 +1,21 @@
+uuid: 834de1c6-f6bd-48ee-b8d1-1de51521c11e
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_image_rotation
+    - node.type.shanti_image
+  module:
+    - options
+id: node.shanti_image.field_image_rotation
+field_name: field_image_rotation
+entity_type: node
+bundle: shanti_image
+label: Rotation
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_integer

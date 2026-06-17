@@ -1,0 +1,22 @@
+uuid: 2d3f30b2-a094-410d-bd10-57cdbeec52c4
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_kmaps_subject
+    - node.type.article
+  module:
+    - shanti_kmaps_fields
+id: node.article.field_kmaps_subject
+field_name: field_kmaps_subject
+entity_type: node
+bundle: article
+label: 'KMaps Subjects'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: subjects
+field_type: shanti_kmaps_fields_default

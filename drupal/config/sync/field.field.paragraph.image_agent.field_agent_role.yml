@@ -1,0 +1,23 @@
+uuid: d4c75b51-143c-4918-9822-6c9d33fc03b1
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_agent_role
+    - paragraphs.paragraphs_type.image_agent
+  module:
+    - options
+id: paragraph.image_agent.field_agent_role
+field_name: field_agent_role
+entity_type: paragraph
+bundle: image_agent
+label: Role
+description: ''
+required: false
+translatable: true
+default_value:
+  -
+    value: photographer
+default_value_callback: ''
+settings: {  }
+field_type: list_string

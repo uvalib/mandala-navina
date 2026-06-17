@@ -1,0 +1,23 @@
+uuid: 13b84bfc-df62-4a74-afd2-f0aaa8295348
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_scheme_home_url
+    - taxonomy.vocabulary.external_classification_scheme
+  module:
+    - link
+id: taxonomy_term.external_classification_scheme.field_scheme_home_url
+field_name: field_scheme_home_url
+entity_type: taxonomy_term
+bundle: external_classification_scheme
+label: 'Home URL'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  title: 1
+  link_type: 17
+field_type: link

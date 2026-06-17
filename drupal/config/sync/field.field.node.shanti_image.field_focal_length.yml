@@ -1,0 +1,23 @@
+uuid: e1291660-dcc3-4af1-ad17-d953131fa075
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_focal_length
+    - node.type.shanti_image
+id: node.shanti_image.field_focal_length
+field_name: field_focal_length
+entity_type: node
+bundle: shanti_image
+label: 'Focal Length'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: float

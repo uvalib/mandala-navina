@@ -1,0 +1,19 @@
+uuid: 7f8ab5bb-82d1-4ada-a95d-7c47e58722a3
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_aperture
+    - node.type.shanti_image
+id: node.shanti_image.field_aperture
+field_name: field_aperture
+entity_type: node
+bundle: shanti_image
+label: Aperture
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

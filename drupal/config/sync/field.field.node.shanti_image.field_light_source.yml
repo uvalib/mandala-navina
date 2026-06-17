@@ -1,0 +1,19 @@
+uuid: e8cd0546-b7c6-4133-a0c9-ac27c10ce029
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_light_source
+    - node.type.shanti_image
+id: node.shanti_image.field_light_source
+field_name: field_light_source
+entity_type: node
+bundle: shanti_image
+label: 'Light Source'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

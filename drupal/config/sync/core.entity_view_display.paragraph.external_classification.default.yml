@@ -1,0 +1,41 @@
+uuid: 14e4c081-42f4-42dc-95e8-beec958b23f0
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.external_classification.field_external_class_id
+    - field.field.paragraph.external_classification.field_external_class_note
+    - field.field.paragraph.external_classification.field_external_class_scheme
+    - paragraphs.paragraphs_type.external_classification
+  module:
+    - text
+id: paragraph.external_classification.default
+targetEntityType: paragraph
+bundle: external_classification
+mode: default
+content:
+  field_external_class_id:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  field_external_class_note:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 3
+    region: content
+  field_external_class_scheme:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 1
+    region: content
+hidden:
+  search_api_excerpt: true

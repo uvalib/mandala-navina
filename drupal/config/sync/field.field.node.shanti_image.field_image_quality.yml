@@ -1,0 +1,21 @@
+uuid: 842c7b8b-f2e1-4254-856c-2a0d113d64f0
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_image_quality
+    - node.type.shanti_image
+  module:
+    - options
+id: node.shanti_image.field_image_quality
+field_name: field_image_quality
+entity_type: node
+bundle: shanti_image
+label: Quality
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

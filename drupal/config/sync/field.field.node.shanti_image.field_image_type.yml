@@ -1,0 +1,21 @@
+uuid: d0d6fe06-4c4b-4290-ad4e-4344aba6a049
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_image_type
+    - node.type.shanti_image
+  module:
+    - options
+id: node.shanti_image.field_image_type
+field_name: field_image_type
+entity_type: node
+bundle: shanti_image
+label: 'Image Type'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

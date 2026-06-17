@@ -1,0 +1,19 @@
+uuid: 4dcf765a-7ca2-4f63-b8d2-49f80ef1e19c
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_external_class_id
+    - paragraphs.paragraphs_type.external_classification
+id: paragraph.external_classification.field_external_class_id
+field_name: field_external_class_id
+entity_type: paragraph
+bundle: external_classification
+label: 'External ID'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

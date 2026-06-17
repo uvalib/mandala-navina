@@ -1,0 +1,19 @@
+uuid: dfe521bd-34c3-4bfc-a498-4728a65c6573
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_summary
+    - paragraphs.paragraphs_type.image_descriptions
+id: paragraph.image_descriptions.field_summary
+field_name: field_summary
+entity_type: paragraph
+bundle: image_descriptions
+label: Summary
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

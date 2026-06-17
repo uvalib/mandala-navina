@@ -1,0 +1,9 @@
+uuid: 8b780d62-1db3-4338-a166-9906dad9e808
+langcode: en
+status: true
+dependencies: {  }
+name: 'External Classification Scheme'
+vid: external_classification_scheme
+description: 'External controlled-vocabulary schemes (Getty TGN, LoC, …) referenced by image classifications. The term name is the scheme name; the D7 scheme node title.'
+weight: 0
+new_revision: false
