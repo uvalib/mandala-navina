@@ -5,13 +5,9 @@ set -e
 
 echo "Rebuilding Mandala local environment..."
 
-ddev drush site:install --yes \
+ddev drush site:install --existing-config --yes \
   --account-name=admin \
-  --account-pass=admin \
-  --site-name="Mandala" \
-  --locale=en
-
-ddev drush config:import --yes
+  --account-pass=admin
 ddev drush cache:rebuild
 
 echo "Done. Site available at https://mandala.ddev.site"

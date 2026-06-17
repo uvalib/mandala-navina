@@ -2,6 +2,6 @@ name: 'Shanti KMaps Admin'
 type: module
 description: 'KMaps server configuration for Mandala. Stores URLs for KMaps subjects, places, terms servers and the Solr indexes.'
 package: Mandala
-core_version_requirement: ^10
+core_version_requirement: ^10 || ^11
 dependencies:
   - drupal:system

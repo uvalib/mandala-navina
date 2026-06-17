@@ -2,7 +2,7 @@ name: 'Shanti KMaps Fields'
 type: module
 description: 'KMaps term reference field type for Mandala. Ports the D7 shanti_kmaps_fields module to Drupal 10 Field API.'
 package: Mandala
-core_version_requirement: ^10
+core_version_requirement: ^10 || ^11
 dependencies:
   - drupal:field
   - shanti_kmaps_admin:shanti_kmaps_admin
