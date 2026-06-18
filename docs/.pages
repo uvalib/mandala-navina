@@ -6,4 +6,5 @@ nav:
   - Architecture Decisions: adr
   - Spikes: spikes
   - Deferred Work: deferred
+  - Developer Notes: dev-notes
   - Session Logs: session-logs

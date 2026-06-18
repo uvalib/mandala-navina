@@ -19,12 +19,16 @@ theme:
     primary: blue
     accent: blue
   features:
-    - navigation.sections
     - navigation.top
     - search.highlight
     - content.action.view
 
 docs_dir: ../docs
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
 
 extra_css:
   - stylesheets/extra.css
