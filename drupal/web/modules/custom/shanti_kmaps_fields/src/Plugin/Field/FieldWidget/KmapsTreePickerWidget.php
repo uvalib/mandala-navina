@@ -37,6 +37,7 @@ class KmapsTreePickerWidget extends WidgetBase {
   ): array {
     $item = $items[$delta] ?? NULL;
     $domain = $this->fieldDefinition->getSetting('kmap_domain') ?: 'subjects';
+    $search_root = $this->fieldDefinition->getSetting('search_root_kmapid');
 
     // Current stored value as raw pipe-delimited string.
     $raw = ($item && !$item->isEmpty()) ? $this->itemToRaw($item) : '';
@@ -47,8 +48,15 @@ class KmapsTreePickerWidget extends WidgetBase {
       $display = $item->header . ' (' . $item->domain . '-' . $item->id . ')';
     }
 
+    // Route params for autocomplete. The route declares only {domain}, so
+    // search_root flows to the query string when present.
+    $route_params = ['domain' => $domain];
+    if (!empty($search_root)) {
+      $route_params['search_root'] = (int) $search_root;
+    }
+
     // Autocomplete URL for this domain.
-    $autocomplete_url = Url::fromRoute('shanti_kmaps_fields.autocomplete', ['domain' => $domain])->toString();
+    $autocomplete_url = Url::fromRoute('shanti_kmaps_fields.autocomplete', $route_params)->toString();
 
     $element['#type'] = 'container';
     $element['#attributes']['class'][] = 'kmaps-field-item';
@@ -61,7 +69,7 @@ class KmapsTreePickerWidget extends WidgetBase {
       '#title_display' => $delta === 0 ? 'before' : 'invisible',
       '#default_value' => $display,
       '#autocomplete_route_name' => 'shanti_kmaps_fields.autocomplete',
-      '#autocomplete_route_parameters' => ['domain' => $domain],
+      '#autocomplete_route_parameters' => $route_params,
       '#size' => 60,
       '#maxlength' => 512,
       '#attributes' => [

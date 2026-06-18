@@ -1,0 +1,21 @@
+field.field_settings.shanti_kmaps_fields_default:
+  type: mapping
+  label: 'KMaps field settings'
+  mapping:
+    kmap_domain:
+      type: string
+      label: 'KMaps domain'
+      constraints:
+        Choice:
+          - subjects
+          - places
+          - terms
+    search_root_kmapid:
+      type: integer
+      label: 'Search-root KMaps ID'
+      nullable: true
+
+field.storage_settings.shanti_kmaps_fields_default:
+  type: mapping
+  label: 'KMaps field storage settings'
+  mapping: {  }

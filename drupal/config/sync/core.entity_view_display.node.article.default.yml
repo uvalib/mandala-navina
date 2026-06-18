@@ -7,14 +7,12 @@ dependencies:
     - field.field.node.article.body
     - field.field.node.article.comment
     - field.field.node.article.field_image
-    - field.field.node.article.field_kmaps_subject
     - field.field.node.article.field_tags
     - image.style.wide
     - node.type.article
   module:
     - comment
     - image
-    - shanti_kmaps_fields
     - text
     - user
 _core:
@@ -50,13 +48,6 @@ content:
         attribute: eager
     third_party_settings: {  }
     weight: -1
-    region: content
-  field_kmaps_subject:
-    type: kmap_default_formatter
-    label: above
-    settings: {  }
-    third_party_settings: {  }
-    weight: 10
     region: content
   field_tags:
     type: entity_reference_label

@@ -97,6 +97,7 @@ class KmapsItem extends FieldItemBase {
   public static function defaultFieldSettings(): array {
     return [
       'kmap_domain' => 'subjects',
+      'search_root_kmapid' => NULL,
     ] + parent::defaultFieldSettings();
   }
 
@@ -116,6 +117,13 @@ class KmapsItem extends FieldItemBase {
         'terms' => $this->t('Terms'),
       ],
       '#default_value' => $this->getSetting('kmap_domain'),
+    ];
+    $element['search_root_kmapid'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Search-root KMaps ID'),
+      '#description' => $this->t('Restrict the picker to descendants of this KMaps node. Leave empty for whole-domain search. Examples: <code>2823</code> (collections root), <code>301</code> (language root).'),
+      '#default_value' => $this->getSetting('search_root_kmapid'),
+      '#min' => 1,
     ];
     return $element;
   }
