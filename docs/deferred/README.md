@@ -24,11 +24,16 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 
 | File | Area | Raised | Priority |
 |---|---|---|---|
-| [group-subgroup-nesting-approach.md](group-subgroup-nesting-approach.md) | collections / group module | Spike 3 | High |
-| [group-access-inheritance-subcollections.md](group-access-inheritance-subcollections.md) | collections / access control | Spike 3 | High |
 | [solr-sync-architecture-d11.md](solr-sync-architecture-d11.md) | solr / kmassets / kmterms | Session 2026-06-12 | High |
 | [solr-pipeline-cost-discussion.md](solr-pipeline-cost-discussion.md) | solr / infrastructure | Session 2026-06-12 | High |
 | [tibetan-search-quality.md](tibetan-search-quality.md) | solr / search / i18n | Session 2026-06-15 | Low (post-MVP) |
 | [reindeer-x-aws-credential-strategy.md](reindeer-x-aws-credential-strategy.md) | reindeer_x / infrastructure / IAM | Spike 8 | High |
 | [images-prod-packaging-monorepo-pass.md](images-prod-packaging-monorepo-pass.md) | deployment / packaging / CI | Sprint 1 (1a) | High |
 | [images-agent-name-paragraph-title-mapping.md](images-agent-name-paragraph-title-mapping.md) | migration / Images / paragraphs | Sprint 1 (1a) | Medium |
+
+## Resolved / superseded
+
+| File | Resolved by |
+|---|---|
+| [group-subgroup-nesting-approach.md](group-subgroup-nesting-approach.md) | [ADR 011](../adr/011-group-collections-inheritance.md) (2026-06-18) |
+| [group-access-inheritance-subcollections.md](group-access-inheritance-subcollections.md) | [ADR 011](../adr/011-group-collections-inheritance.md) (2026-06-18) |

@@ -4,4 +4,4 @@ nav:
   - Critical Path: critical-path.md
   - Spikes Plan: spikes-plan.md
   - "Images: Content Model Audit": images-content-model-audit.md
-  - "Collections: Inheritance Decision Brief (OPEN)": collections-inheritance-decision-brief.md
+  - "Collections: Inheritance Decision Brief (RESOLVED → ADR 011)": collections-inheritance-decision-brief.md

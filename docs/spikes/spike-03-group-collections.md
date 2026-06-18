@@ -1,5 +1,5 @@
 # Spike 3: Group Module Collections Architecture
-**Status:** Partial — hierarchy and access control proven; nesting model requires design decision
+**Status:** ● Proven (closed 2026-06-18) — structural model proven in this spike; the inheritance design question is resolved by [ADR 011](../adr/011-group-collections-inheritance.md) (Option D: entity-reference + custom hooks)
 **Lead:** Than Grove
 **Mode:** Team spike (candidate)
 **Date:** 2026-06
@@ -113,6 +113,21 @@ This is the most significant architectural implication. Because subcollections a
 | No critical open issues in Group module issue queue affecting the collections model | PARTIAL — four known access issues; not blocking but require monitoring |
 
 **Overall: PARTIAL PASS.** The core collection model works. One architectural decision remains open: whether to use the entity reference approach (proven here, simpler, no access inheritance) or a subgroup module (unproven, adds inheritance but adds a dependency). This decision gates Phase 3 design.
+
+---
+
+## Closeout (2026-06-18)
+
+The open architectural decision flagged above is resolved by
+[**ADR 011 — Group collections inheritance**](../adr/011-group-collections-inheritance.md)
+(Option D: entity-reference + custom hooks). Both inheritance requirements
+(visibility, membership) are implemented by a custom inheritance module that
+hooks Group's existing lifecycle events; no contrib subgroup dependency is
+adopted for MVP. Inheritance lands in **Sprint 1 Step 1b (task 1b.2)** rather
+than Phase 3 — see the ADR for the sequencing rationale and the
+edge cases (`visibility_overridden` flag, sub-only member retention) the
+implementation must handle. With that decision recorded, this spike is closed
+**Proven** for MVP purposes.
 
 ---
 

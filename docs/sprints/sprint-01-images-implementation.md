@@ -67,7 +67,7 @@ The Images content model is settled by the
 |---|---|
 | 2026-06-17 | **1a.1–1a.3 ✅** — `shanti_image` (48 fields), the three paragraph types, and the `external_classification_scheme` vocabulary built as committed CMI config (382-file baseline, zero-diff round-trip). Prereqs cleared: **core bumped D10.6 → D11** ([ADR 002](../adr/002-drupal-11.md)) + paragraphs/ERR added; `settings.php` committed env-driven with `config_sync_directory` ([drupal-dsf convention](../deferred/images-prod-packaging-monorepo-pass.md)); Dockerfile → D11. New deferred notes: [agent-name mapping](../deferred/images-agent-name-paragraph-title-mapping.md), [prod packaging](../deferred/images-prod-packaging-monorepo-pass.md). KMaps search-roots punted to 1a.4. |
 
-> **Next-session blocker:** the [Group collections inheritance decision](../planning/collections-inheritance-decision-brief.md) (OPEN) — gates Step 1b (1b.2) and the access story behind 1a.7.
+> **Next-session blocker:** ~~Group collections inheritance decision~~ — **resolved 2026-06-18** by [ADR 011](../adr/011-group-collections-inheritance.md) (Option D: entity-reference + custom hooks). Inheritance hooks fold into task **1b.2** below; no collections work lands in Step 1a.
 
 ### Step 1a — public plumbing
 
@@ -91,7 +91,7 @@ the remaining field/paragraph types.
 | # | Task | Depends on | Owner |
 |---|------|-----------|-------|
 | 1b.1 | Wire D11 into the existing proxy-auth contract (do **not** redesign auth) | [Spike 2](../spikes/spike-02-solr-integration.md) deferred (blocking) | mob |
-| 1b.2 | Migrate OG → Group: `group_content_access` (Visibility) + `field_og_collection_ref` → Group membership | [Spike 3](../spikes/spike-03-group-collections.md) | mob |
+| 1b.2 | Build Group `collection`/`subcollection` bundles + `group_node:shanti_image` relation as CMI config; implement custom inheritance module ([ADR 011](../adr/011-group-collections-inheritance.md) Option D — visibility + membership hooks, `visibility_overridden` flag, sub-only retention); migrate OG → Group: `group_content_access` (Visibility) + `field_og_collection_ref` → Group membership | [Spike 3](../spikes/spike-03-group-collections.md), [ADR 011](../adr/011-group-collections-inheritance.md) | mob |
 | 1b.3 | Solr-proxy visibility filtering; prove access-control coherence (search results agree with node/Group access) | 1b.1, 1b.2 | mob |
 | 1b.4 | Confirm paragraph access inheritance: a private image's satellite paragraphs are not independently retrievable | 1b.3 | mob |
 

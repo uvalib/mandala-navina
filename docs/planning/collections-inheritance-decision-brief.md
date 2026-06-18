@@ -1,11 +1,11 @@
 # Decision Brief: Group Collections Inheritance Model
 
-**Status:** 🔴 OPEN — resolve at the **top** of the next working session (2026-06-18)
-**Decision owner:** Than Grove (Spike 3 lead), with Yuji Shinozaki
-**Outcome:** becomes an ADR once resolved (supersedes the "recommended" status of the deferred notes)
-**Inputs:** [Spike 3](../spikes/spike-03-group-collections.md) (Partial),
-[group-subgroup-nesting-approach.md](../deferred/group-subgroup-nesting-approach.md),
-[group-access-inheritance-subcollections.md](../deferred/group-access-inheritance-subcollections.md)
+**Status:** ✅ RESOLVED (2026-06-18) — superseded by [ADR 011](../adr/011-group-collections-inheritance.md). See **Resolution** section at the bottom.
+**Decision owner:** Than Grove (Spike 3 lead), with Yuji Shinozaki, Xiaoming Wang
+**Outcome:** ADR 011 written and accepted; supersedes the "recommended" status of the deferred notes
+**Inputs:** [Spike 3](../spikes/spike-03-group-collections.md) (now Proven),
+[group-subgroup-nesting-approach.md](../deferred/group-subgroup-nesting-approach.md) (superseded),
+[group-access-inheritance-subcollections.md](../deferred/group-access-inheritance-subcollections.md) (superseded)
 
 > **Why this is first.** The Images content model (Sprint 1 Step 1a) is built, but
 > images are organized and **access-gated** by collections. The reason Images chose
@@ -76,3 +76,30 @@ Match D7 `og_subgroups` behaviour, one level of nesting only (prod: 55 collectio
 - Re-check **`ggroup` / `subgroup` D11 release status** — the "not D11-ready / unconfirmed"
   findings date from 2026-06-12 and could have moved; if `ggroup` is now stable on D11,
   Option E re-enters contention.
+
+---
+
+## Resolution (2026-06-18)
+
+Resolved in working session with Than Grove, Yuji Shinozaki, and Xiaoming Wang.
+Outcome recorded as [**ADR 011 — Group collections inheritance**](../adr/011-group-collections-inheritance.md).
+
+- **Q1 (inheritance approach):** Option D ratified — entity-reference nesting
+  plus a custom module providing visibility and membership inheritance via
+  Group's lifecycle hooks. No contrib subgroup dependency adopted for MVP;
+  Option E remains revisitable later if `ggroup` matures on D11.
+- **Q2 (sequencing):** All collections work — both structural CMI config and
+  the inheritance module — held for **Step 1b**. No `collection` /
+  `subcollection` group config lands in the Sprint 1 Step 1a baseline.
+  Rationale: Images audit explicitly puts OG-related fields out of scope for
+  Step 1a, and task 1a.7 (the image migration) doesn't touch OG/Group fields.
+- **Q3 (phase ownership):** Inheritance hooks land **with 1b.2 in Sprint 1
+  Step 1b**, not deferred to Phase 3. Rationale: Sprint 1's security acceptance
+  criterion cannot honestly pass for nested-collection content without
+  visibility inheritance in place. The "before Phase 3" wording in the
+  superseded deferred notes was defensive against contrib-readiness risk,
+  which Option D eliminates.
+
+See ADR 011 for full decision text, edge-case handling
+(`visibility_overridden` flag, sub-only member retention), and the closeouts
+that flow from it.
