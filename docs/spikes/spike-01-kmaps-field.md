@@ -41,19 +41,13 @@ Autocomplete queries the live `kmterms` Solr index (requires UVA VPN).
 
 ## What this does NOT establish
 
-- **Migration path.** This spike proves the D10 field can hold KMaps data, not
-  that D7 content can be moved into it. A separate migration spike is needed to
-  prove that Drupal Migrate can read D7 `field_data_*` tables and write correctly
-  into D10 field instances.
+- ~~**Migration path.**~~ **Spec'd 2026-06-18** in [KMaps D7→D11 migration mapping](../planning/kmaps-migration-mapping.md) (Sprint 1 task 1a.4): because the D7 schema was preserved verbatim, the migration is a column-for-column copy; three policy calls (preserve paths/headers, don't validate orphans) are pinned. Implementation is task 1a.7.
 - **Full widget UX.** The autocomplete picker is functional but not production-ready.
   See deferred note below.
 - **Solr indexing.** The D7 module wrote KMaps-enriched documents to the `kmassets`
   Solr index on node save. This write path has not been ported; Spike 2 covers
-  read-only integration with the existing index.
-- **KMaps ancestor path resolution.** The D7 module called the KMaps API to resolve
-  ancestor paths at save time. The D10 widget currently relies on the autocomplete
-  result to supply the path. Full ancestor resolution against the KMaps API has not
-  been implemented.
+  read-only integration with the existing index. Replacement lives in [task 1a.8 / Spike 8](spike-08-reindeer-x-consolidation.md) via `reindeer_x`.
+- ~~**KMaps ancestor path resolution.**~~ **Closed 2026-06-18** by the new `KmapsPathResolver` service (Sprint 1 task 1a.4, branch `sprint-01/kmaps-search-root`): single + batched `(domain, id) → path` lookup against the live `kmterms` Solr index, with Drupal cache.default backing it. Available to migrations and any programmatic save path; the widget continues to take the path inline from autocomplete.
 
 ## Deferred notes
 
