@@ -1,0 +1,8 @@
+services:
+  shanti_kmaps_fields.path_resolver:
+    class: Drupal\shanti_kmaps_fields\KmapsPathResolver
+    arguments:
+      - '@http_client'
+      - '@config.factory'
+      - '@cache.default'
+      - '@logger.factory'
