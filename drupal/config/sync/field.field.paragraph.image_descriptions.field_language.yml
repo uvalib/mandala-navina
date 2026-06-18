@@ -18,6 +18,6 @@ translatable: true
 default_value: {  }
 default_value_callback: ''
 settings:
-  kmap_domain: terms
+  kmap_domain: subjects
   search_root_kmapid: 301
 field_type: shanti_kmaps_fields_default
