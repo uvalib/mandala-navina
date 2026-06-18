@@ -29,17 +29,26 @@ class KmapsAutocompleteController extends ControllerBase {
       return new JsonResponse([['value' => '', 'label' => 'KMaps Solr not configured — visit /admin/config/content/shanti-kmaps-admin']]);
     }
 
-    $results = $this->querySolr($solr_url, $domain, $input);
+    $search_root = (int) $request->query->get('search_root', 0);
+
+    $results = $this->querySolr($solr_url, $domain, $input, $search_root);
     return new JsonResponse($results);
   }
 
-  private function querySolr(string $solr_url, string $domain, string $input): array {
+  private function querySolr(string $solr_url, string $domain, string $input, int $search_root = 0): array {
     $escaped = $this->escapeSolrQuery($input);
 
-    // Search on header (name) with prefix match, filtered to the requested domain.
+    // Filter to the requested domain, and (optionally) to descendants of a
+    // search-root KMaps node via the multi-valued ancestor_id_path field.
+    $fq = "tree:{$domain}";
+    if ($search_root > 0) {
+      $fq = "({$fq}) AND ancestor_id_path:{$search_root}";
+    }
+
+    // Search on header (name) with prefix match, filtered as above.
     $params = http_build_query([
       'q'    => "header:{$escaped}* OR name_autocomplete:{$escaped}*",
-      'fq'   => "tree:{$domain}",
+      'fq'   => $fq,
       'fl'   => 'id,header,ancestor_id_path',
       'rows' => 20,
       'wt'   => 'json',

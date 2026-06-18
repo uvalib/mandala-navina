@@ -4,4 +4,5 @@ nav:
   - Critical Path: critical-path.md
   - Spikes Plan: spikes-plan.md
   - "Images: Content Model Audit": images-content-model-audit.md
+  - "KMaps: Migration Mapping (D7 → D11)": kmaps-migration-mapping.md
   - "Collections: Inheritance Decision Brief (RESOLVED → ADR 011)": collections-inheritance-decision-brief.md
