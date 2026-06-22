@@ -1,0 +1,40 @@
+id: d7_images_external_classification_scheme
+label: 'D7 Images: external_classification_scheme nodes → taxonomy terms'
+migration_group: mandala_images
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1a.6'
+
+source:
+  plugin: d7_node
+  node_type: external_classification_scheme
+
+process:
+  # Preserve the D7 nid as the D11 term's tid is auto — we don't reuse the
+  # numeric id (it'd collide with already-installed tags). The migrate map table
+  # keeps the D7 nid → D11 tid correspondence for downstream migrations.
+  name: title
+  description/value: body/0/value
+  description/format:
+    plugin: default_value
+    source: body/0/format
+    default_value: basic_html
+
+  field_scheme_abbreviation: field_scheme_abbreviation/0/value
+
+  # D7 link field stored URL in *_value (legacy link module). D11 link field
+  # type wants 'uri'; the d7_node source plugin returns home_url as a multi-
+  # column array — pick .0.value for the URL and pass through title if any.
+  field_scheme_home_url/uri: field_scheme_home_url/0/value
+  field_scheme_home_url/title: field_scheme_home_url/0/title
+
+  field_scheme_item_url: field_scheme_item_url/0/value
+  field_scheme_record_path: field_scheme_record_path/0/value
+  field_scheme_record_type: field_scheme_record_type/0/value
+
+destination:
+  plugin: 'entity:taxonomy_term'
+  default_bundle: external_classification_scheme
+
+migration_dependencies: {  }

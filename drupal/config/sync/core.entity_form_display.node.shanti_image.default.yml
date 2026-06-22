@@ -191,7 +191,7 @@ content:
     region: content
     settings:
       size: 32
-      placeholder: 'shanti-image-NNNNNN'
+      placeholder: shanti-image-NNNNNN
     third_party_settings: {  }
   field_iiif_mms_id:
     type: string_textfield

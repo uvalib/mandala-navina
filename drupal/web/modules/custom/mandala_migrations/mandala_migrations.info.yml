@@ -1,0 +1,10 @@
+name: 'Mandala Migrations'
+type: module
+description: 'D7 → D11 migration definitions for the Mandala consolidation. Hosts migration group and migration YAMLs for each legacy site (Images first, others as tracks unfreeze). See Sprint 1 1a.6 onward.'
+package: Mandala
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:migrate
+  - drupal:migrate_drupal
+  - migrate_plus:migrate_plus
+  - migrate_tools:migrate_tools
