@@ -1,0 +1,20 @@
+uuid: 7f0659eb-10a7-496b-9e3a-0138df6c4450
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_iiif_height
+field_name: field_iiif_height
+entity_type: node
+type: integer
+settings:
+  unsigned: true
+  size: normal
+module: core
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

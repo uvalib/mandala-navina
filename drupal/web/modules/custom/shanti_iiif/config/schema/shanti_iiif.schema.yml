@@ -1,0 +1,10 @@
+shanti_iiif.settings:
+  type: config_object
+  label: 'Shanti IIIF settings'
+  mapping:
+    view_url:
+      type: string
+      label: 'IIIF view URL (server base, no trailing slash)'
+    view_path:
+      type: string
+      label: 'IIIF view path (URL prefix between server and i3fid, with leading and trailing slash)'

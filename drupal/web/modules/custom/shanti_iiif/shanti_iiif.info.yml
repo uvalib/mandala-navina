@@ -1,0 +1,8 @@
+name: 'Shanti IIIF'
+type: module
+description: 'IIIF Image API wiring for Mandala: settings, URL builder service, and field formatter for shanti_image. Reads from the existing Cantaloupe IIIF server (ADR 004).'
+package: Mandala
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:system
+  - drupal:image

@@ -15,6 +15,10 @@ dependencies:
     - field.field.node.shanti_image.field_flash_settings
     - field.field.node.shanti_image.field_focal_length
     - field.field.node.shanti_image.field_general_note
+    - field.field.node.shanti_image.field_iiif_height
+    - field.field.node.shanti_image.field_iiif_id
+    - field.field.node.shanti_image.field_iiif_mms_id
+    - field.field.node.shanti_image.field_iiif_width
     - field.field.node.shanti_image.field_image
     - field.field.node.shanti_image.field_image_agents
     - field.field.node.shanti_image.field_image_capture_device
@@ -58,6 +62,7 @@ dependencies:
     - image
     - link
     - options
+    - shanti_iiif
     - shanti_kmaps_fields
     - text
     - user
@@ -168,13 +173,14 @@ content:
     weight: 21
     region: content
   field_image:
-    type: image
+    type: iiif_image
     label: above
     settings:
-      image_link: ''
-      image_style: ''
-      image_loading:
-        attribute: lazy
+      width: 800
+      height: ''
+      rotation: 0
+      scaled: true
+      iiif_id_field: field_iiif_id
     third_party_settings: {  }
     weight: 1
     region: content
@@ -462,5 +468,9 @@ content:
     weight: 100
     region: content
 hidden:
+  field_iiif_height: true
+  field_iiif_id: true
+  field_iiif_mms_id: true
+  field_iiif_width: true
   langcode: true
   search_api_excerpt: true

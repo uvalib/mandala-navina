@@ -1,0 +1,19 @@
+uuid: a198d37f-469b-43b3-b611-16c955559605
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_iiif_id
+    - node.type.shanti_image
+id: node.shanti_image.field_iiif_id
+field_name: field_iiif_id
+entity_type: node
+bundle: shanti_image
+label: 'IIIF identifier'
+description: "The Cantaloupe IIIF identifier for this image (e.g. 'shanti-image-680687'). Drives display via the iiif_image formatter. Migrated verbatim from the D7 shanti_images.i3fid column; never change after creation."
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

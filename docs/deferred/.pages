@@ -10,3 +10,5 @@ nav:
   - "reindeer_x AWS credential strategy": reindeer-x-aws-credential-strategy.md
   - "Images prod packaging (monorepo pass)": images-prod-packaging-monorepo-pass.md
   - "Images agent name → paragraph title mapping": images-agent-name-paragraph-title-mapping.md
+  - "Cantaloupe 404 information disclosure": iiif-cantaloupe-404-information-disclosure.md
+  - "IIIF prefix alignment (/mandala/ vs /iiif/2/)": iiif-prefix-alignment-mandala-vs-canonical.md
