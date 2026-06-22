@@ -907,6 +907,22 @@ $settings['config_sync_directory'] = '../config/sync';
 // Automatically generated include for settings managed by ddev.
 if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev.php')) {
   include __DIR__ . '/settings.ddev.php';
+
+  // Migrate API source DB connection — points at the secondary 'd7_images'
+  // database on the same DDEV MariaDB instance. Used by mandala_migrations
+  // module to migrate D7 → D11 (Sprint 1 1a.6/1a.7). Load the dump with:
+  //   ddev import-db --database=d7_images --file=data/mandala-prod-images-db_2026-06-11.sql.gz
+  // Harmless if the target DB does not exist; Drupal only opens it when a
+  // migration actually runs.
+  $databases['migrate']['default'] = [
+    'database' => 'd7_images',
+    'username' => 'db',
+    'password' => 'db',
+    'host'     => 'db',
+    'port'     => 3306,
+    'driver'   => 'mysql',
+    'prefix'   => '',
+  ];
 }
 
 /**

@@ -1,0 +1,16 @@
+uuid: 7854f4af-17c9-4537-9b83-746cf2008759
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: rnSxx_2CfVVqHo6Bmk4fDePWqryLvclozPf17u6-vHI
+id: mandala_images
+label: 'Mandala Images (D7 → D11)'
+description: 'Migrations that read from the D7 production Images database into the D11 single-site model. Source DB is the secondary "d7_images" DDEV database (mandala-prod-images-db_2026-06-11.sql.gz). See Sprint 1 Step 1a tasks 1a.6–1a.9.'
+source_type: 'Drupal 7'
+module: null
+shared_configuration:
+  source:
+    key: migrate
+    constants:
+      source_site_id: images

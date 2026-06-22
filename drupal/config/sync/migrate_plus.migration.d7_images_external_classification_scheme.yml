@@ -1,0 +1,38 @@
+uuid: 98f3b8a2-2523-42fb-943d-83e032498b00
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: TDeS5fc3e6WOAO5nkIsZgiU90M5AuDquqpI2bOD7IkE
+id: d7_images_external_classification_scheme
+class: null
+idMap: {  }
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1a.6'
+migration_group: mandala_images
+label: 'D7 Images: external_classification_scheme nodes → taxonomy terms'
+source:
+  plugin: d7_node
+  node_type: external_classification_scheme
+process:
+  name: title
+  description/value: body/0/value
+  description/format:
+    plugin: default_value
+    source: body/0/format
+    default_value: basic_html
+  field_scheme_abbreviation: field_scheme_abbreviation/0/value
+  field_scheme_home_url/uri: field_scheme_home_url/0/value
+  field_scheme_home_url/title: field_scheme_home_url/0/title
+  field_scheme_item_url: field_scheme_item_url/0/value
+  field_scheme_record_path: field_scheme_record_path/0/value
+  field_scheme_record_type: field_scheme_record_type/0/value
+destination:
+  plugin: 'entity:taxonomy_term'
+  default_bundle: external_classification_scheme
+migration_dependencies: {  }
+include: null
