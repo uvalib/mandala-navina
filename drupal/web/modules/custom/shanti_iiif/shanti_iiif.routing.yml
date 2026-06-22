@@ -1,0 +1,7 @@
+shanti_iiif.settings:
+  path: '/admin/config/media/shanti-iiif'
+  defaults:
+    _form: '\Drupal\shanti_iiif\Form\SettingsForm'
+    _title: 'Shanti IIIF Settings'
+  requirements:
+    _permission: 'administer site configuration'

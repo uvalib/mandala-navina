@@ -1,0 +1,19 @@
+uuid: d7eb05e0-80cd-4a2a-bbd4-8c9be0792020
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_iiif_mms_id
+    - node.type.shanti_image
+id: node.shanti_image.field_iiif_mms_id
+field_name: field_iiif_mms_id
+entity_type: node
+bundle: shanti_image
+label: 'Legacy MMS ID'
+description: 'The pre-2019 Media Management System identifier for images migrated from MMS. Empty for images created in the D7 site directly. Migrated from the D7 shanti_images.mmsid column.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

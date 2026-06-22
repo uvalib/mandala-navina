@@ -15,6 +15,10 @@ dependencies:
     - field.field.node.shanti_image.field_flash_settings
     - field.field.node.shanti_image.field_focal_length
     - field.field.node.shanti_image.field_general_note
+    - field.field.node.shanti_image.field_iiif_height
+    - field.field.node.shanti_image.field_iiif_id
+    - field.field.node.shanti_image.field_iiif_mms_id
+    - field.field.node.shanti_image.field_iiif_width
     - field.field.node.shanti_image.field_image
     - field.field.node.shanti_image.field_image_agents
     - field.field.node.shanti_image.field_image_capture_device
@@ -172,6 +176,36 @@ content:
     region: content
     settings:
       size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_iiif_height:
+    type: number
+    weight: 5
+    region: content
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+  field_iiif_id:
+    type: string_textfield
+    weight: 2
+    region: content
+    settings:
+      size: 32
+      placeholder: 'shanti-image-NNNNNN'
+    third_party_settings: {  }
+  field_iiif_mms_id:
+    type: string_textfield
+    weight: 3
+    region: content
+    settings:
+      size: 16
+      placeholder: ''
+    third_party_settings: {  }
+  field_iiif_width:
+    type: number
+    weight: 4
+    region: content
+    settings:
       placeholder: ''
     third_party_settings: {  }
   field_image:

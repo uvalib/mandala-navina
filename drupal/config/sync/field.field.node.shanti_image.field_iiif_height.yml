@@ -1,0 +1,23 @@
+uuid: 3f4bd3ad-54c8-4bd7-9ea7-b627053231f1
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_iiif_height
+    - node.type.shanti_image
+id: node.shanti_image.field_iiif_height
+field_name: field_iiif_height
+entity_type: node
+bundle: shanti_image
+label: 'IIIF source height (px)'
+description: 'Height in pixels of the source image on the IIIF server, cached for layout sizing. Refreshable from info.json.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

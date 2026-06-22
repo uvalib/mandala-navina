@@ -1,0 +1,20 @@
+uuid: 9723e6c7-29c5-45dd-86e9-fd75c3a5cfd4
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_iiif_width
+field_name: field_iiif_width
+entity_type: node
+type: integer
+settings:
+  unsigned: true
+  size: normal
+module: core
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

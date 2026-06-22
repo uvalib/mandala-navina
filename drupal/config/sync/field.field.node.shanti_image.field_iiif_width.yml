@@ -1,0 +1,23 @@
+uuid: 58b98801-a58f-47b4-9dfd-d629a6f6054f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_iiif_width
+    - node.type.shanti_image
+id: node.shanti_image.field_iiif_width
+field_name: field_iiif_width
+entity_type: node
+bundle: shanti_image
+label: 'IIIF source width (px)'
+description: 'Width in pixels of the source image on the IIIF server, cached for layout sizing. Refreshable from info.json.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

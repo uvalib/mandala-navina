@@ -1,0 +1,5 @@
+services:
+  shanti_iiif.url_builder:
+    class: Drupal\shanti_iiif\IiifUrlBuilder
+    arguments:
+      - '@config.factory'

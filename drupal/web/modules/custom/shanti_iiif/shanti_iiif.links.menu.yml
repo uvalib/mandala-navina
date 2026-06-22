@@ -1,0 +1,6 @@
+shanti_iiif.settings:
+  title: 'Shanti IIIF'
+  description: 'Configure the IIIF image server URL for Mandala'
+  route_name: shanti_iiif.settings
+  parent: system.admin_config_media
+  weight: 10
