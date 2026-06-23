@@ -1,0 +1,58 @@
+id: d7_images_image_descriptions
+label: 'D7 Images: image_descriptions nodes → image_descriptions paragraphs (per reference)'
+migration_group: mandala_images
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1a.7'
+
+source:
+  plugin: d7_image_satellite
+  node_type: image_descriptions
+  reference_field: field_image_descriptions
+
+process:
+  # D7 node title is a meaningful caption/headline on ~89% of referenced
+  # descriptions (distinct from summary/description); carried verbatim into the
+  # new field_description_title (1a.7 decision).
+  field_description_title: title
+
+  field_description/value: field_description/0/value
+  field_description/format:
+    plugin: default_value
+    default_value: basic_html
+
+  field_summary: field_summary/0/value
+
+  # field_author is multi-value (cardinality -1).
+  field_author:
+    plugin: sub_process
+    source: field_author
+    process:
+      value: value
+
+  field_language:
+    plugin: sub_process
+    source: field_language
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      # Rebuild the D11 canonical pipe-composite raw (see shanti_image migration).
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: image_descriptions
+
+migration_dependencies: {  }

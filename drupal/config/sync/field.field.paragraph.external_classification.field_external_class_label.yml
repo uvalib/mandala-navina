@@ -1,0 +1,19 @@
+uuid: 3c7bb491-e207-4474-b32e-a347f3290a60
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_external_class_label
+    - paragraphs.paragraphs_type.external_classification
+id: paragraph.external_classification.field_external_class_label
+field_name: field_external_class_label
+entity_type: paragraph
+bundle: external_classification
+label: Label
+description: 'Concept label migrated verbatim from the D7 external_classification node title (1a.7). The human-readable label (e.g. "Nebulae", "Parrot"), distinct from the scheme id/note.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

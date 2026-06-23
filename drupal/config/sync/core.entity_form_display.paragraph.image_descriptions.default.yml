@@ -5,6 +5,7 @@ dependencies:
   config:
     - field.field.paragraph.image_descriptions.field_author
     - field.field.paragraph.image_descriptions.field_description
+    - field.field.paragraph.image_descriptions.field_description_title
     - field.field.paragraph.image_descriptions.field_language
     - field.field.paragraph.image_descriptions.field_summary
     - paragraphs.paragraphs_type.image_descriptions
@@ -30,6 +31,14 @@ content:
     region: content
     settings:
       rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_description_title:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
       placeholder: ''
     third_party_settings: {  }
   field_language:

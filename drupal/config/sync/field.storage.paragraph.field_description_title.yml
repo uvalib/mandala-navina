@@ -1,15 +1,15 @@
-uuid: a6f0cc27-c0b6-4ebe-8051-4e49c451f9b0
+uuid: d3db0d42-7967-46e8-bd70-7e9f01a7e6ae
 langcode: en
 status: true
 dependencies:
   module:
     - paragraphs
-id: paragraph.field_summary
-field_name: field_summary
+id: paragraph.field_description_title
+field_name: field_description_title
 entity_type: paragraph
 type: string
 settings:
-  max_length: 1024
+  max_length: 255
   case_sensitive: false
   is_ascii: false
 module: core

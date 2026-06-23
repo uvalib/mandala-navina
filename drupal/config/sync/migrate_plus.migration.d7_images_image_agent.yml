@@ -1,0 +1,70 @@
+uuid: 47661a38-6dc9-47bf-b5e4-07dd92bee3fc
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: uYvICWoT99yhqTfvPwnJ4mn23nc9cDJbZ_uugys2Yos
+id: d7_images_image_agent
+class: null
+idMap: {  }
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1a.7'
+migration_group: mandala_images
+label: 'D7 Images: image_agent nodes → image_agent paragraphs (per reference, fanned out)'
+source:
+  plugin: d7_image_satellite
+  node_type: image_agent
+  reference_field: field_image_agents
+process:
+  field_agent_name:
+    -
+      plugin: callback
+      callable: trim
+      source: title
+    -
+      plugin: static_map
+      bypass: true
+      map:
+        '': Unknown
+  field_agent_role: field_agent_role/0/value
+  field_agent_place:
+    plugin: sub_process
+    source: field_agent_place
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+  field_agent_dates:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_agent_dates/0/value
+    -
+      plugin: format_date
+      from_format: 'Y-m-d H:i:s'
+      to_format: 'Y-m-d\TH:i:s'
+  field_agent_dates_approx: field_agent_dates_approx/0/value
+  field_agent_notes/value: field_agent_notes/0/value
+  field_agent_notes/format:
+    plugin: default_value
+    default_value: basic_html
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: image_agent
+migration_dependencies: {  }
+include: null

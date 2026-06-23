@@ -13,8 +13,8 @@ field_name: field_image_agents
 entity_type: node
 bundle: shanti_image
 label: 'Image Agents'
-description: ''
-required: true
+description: 'Optional: ~151 D7 images reference only a since-deleted agent node and migrate agent-less (1a.7).'
+required: false
 translatable: true
 default_value: {  }
 default_value_callback: ''

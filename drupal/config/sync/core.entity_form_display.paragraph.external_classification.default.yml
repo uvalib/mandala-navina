@@ -4,6 +4,7 @@ status: true
 dependencies:
   config:
     - field.field.paragraph.external_classification.field_external_class_id
+    - field.field.paragraph.external_classification.field_external_class_label
     - field.field.paragraph.external_classification.field_external_class_note
     - field.field.paragraph.external_classification.field_external_class_scheme
     - paragraphs.paragraphs_type.external_classification
@@ -17,6 +18,14 @@ content:
   field_external_class_id:
     type: string_textfield
     weight: 2
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_external_class_label:
+    type: string_textfield
+    weight: 0
     region: content
     settings:
       size: 60

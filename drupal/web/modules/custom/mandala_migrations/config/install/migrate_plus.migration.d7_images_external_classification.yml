@@ -1,0 +1,39 @@
+id: d7_images_external_classification
+label: 'D7 Images: external_classification nodes → external_classification paragraphs (per reference)'
+migration_group: mandala_images
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1a.7'
+
+source:
+  plugin: d7_image_satellite
+  node_type: external_classification
+  reference_field: field_external_classification
+
+process:
+  # D7 node title is the concept label (e.g. "Nebulae", "Parrot"), not captured
+  # by class_id/note; carried verbatim into field_external_class_label (1a.7).
+  field_external_class_label: title
+
+  field_external_class_id: field_external_class_id/0/value
+
+  field_external_class_note/value: field_external_class_note/0/value
+  field_external_class_note/format:
+    plugin: default_value
+    default_value: basic_html
+
+  # D7 referenced an external_classification_scheme node; remap to the taxonomy
+  # term created by the 1a.6 scheme migration.
+  field_external_class_scheme:
+    plugin: migration_lookup
+    migration: d7_images_external_classification_scheme
+    source: field_external_class_scheme/0/target_id
+
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: external_classification
+
+migration_dependencies:
+  required:
+    - d7_images_external_classification_scheme
