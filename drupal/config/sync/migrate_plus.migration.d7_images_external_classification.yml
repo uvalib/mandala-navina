@@ -1,0 +1,39 @@
+uuid: 3d5923d3-8fc5-4ff6-bf2e-8f823efa0477
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: PQoWEQsXjh6knSdHvvFNOOq0G1BGkvwdkPOZUvfPvVA
+id: d7_images_external_classification
+class: null
+idMap: {  }
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1a.7'
+migration_group: mandala_images
+label: 'D7 Images: external_classification nodes → external_classification paragraphs (per reference)'
+source:
+  plugin: d7_image_satellite
+  node_type: external_classification
+  reference_field: field_external_classification
+process:
+  field_external_class_label: title
+  field_external_class_id: field_external_class_id/0/value
+  field_external_class_note/value: field_external_class_note/0/value
+  field_external_class_note/format:
+    plugin: default_value
+    default_value: basic_html
+  field_external_class_scheme:
+    plugin: migration_lookup
+    migration: d7_images_external_classification_scheme
+    source: field_external_class_scheme/0/target_id
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: external_classification
+migration_dependencies:
+  required:
+    - d7_images_external_classification_scheme
+include: null

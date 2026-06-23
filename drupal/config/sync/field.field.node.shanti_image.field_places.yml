@@ -19,4 +19,5 @@ default_value: {  }
 default_value_callback: ''
 settings:
   kmap_domain: places
+  search_root_kmapid: null
 field_type: shanti_kmaps_fields_default

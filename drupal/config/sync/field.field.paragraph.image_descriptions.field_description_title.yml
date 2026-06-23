@@ -1,0 +1,19 @@
+uuid: dfff33c2-7c73-40d0-9fbe-1ed68c1bae0c
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_description_title
+    - paragraphs.paragraphs_type.image_descriptions
+id: paragraph.image_descriptions.field_description_title
+field_name: field_description_title
+entity_type: paragraph
+bundle: image_descriptions
+label: Title
+description: 'Caption/headline migrated verbatim from the D7 image_descriptions node title (1a.7). Distinct from summary/description/author; ~89% of referenced descriptions carry meaningful content here.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

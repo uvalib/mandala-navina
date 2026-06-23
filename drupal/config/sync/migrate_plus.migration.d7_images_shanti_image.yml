@@ -1,0 +1,237 @@
+uuid: e3006016-121a-4cc1-b65b-e9a4b2804e38
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: 4bTtFNKITsyT7iqiNEv8r9-WNxDhsj3KJsvt4qG2nyo
+id: d7_images_shanti_image
+class: null
+idMap: {  }
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1a.7'
+migration_group: mandala_images
+label: 'D7 Images: shanti_image nodes → shanti_image nodes (with satellites as paragraphs)'
+source:
+  plugin: d7_shanti_image
+  node_type: shanti_image
+process:
+  title: title
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+  field_iiif_id: i3fid
+  field_iiif_mms_id: mmsid
+  field_iiif_width: iiif_width
+  field_iiif_height: iiif_height
+  field_original_filename: field_original_filename/0/value
+  field_other_ids:
+    plugin: sub_process
+    source: field_other_ids
+    process:
+      value: value
+  field_subjects:
+    plugin: sub_process
+    source: field_subjects
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+  field_places:
+    plugin: sub_process
+    source: field_places
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+  field_kmap_terms:
+    plugin: sub_process
+    source: field_kmap_terms
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+  field_kmap_collections:
+    plugin: sub_process
+    source: field_kmap_collections
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+  field_license_url/uri: field_license_url/0/value
+  field_license_url/title: field_license_url/0/title
+  field_copyright_holder: field_copyright_holder/0/value
+  field_copyright_statement/value: field_copyright_statement/0/value
+  field_copyright_statement/format:
+    plugin: default_value
+    default_value: basic_html
+  field_copyright_date:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_copyright_date/0/value
+    -
+      plugin: format_date
+      from_format: 'Y-m-d H:i:s'
+      to_format: 'Y-m-d\TH:i:s'
+  field_rights_notes/value: field_rights_notes/0/value
+  field_rights_notes/format:
+    plugin: default_value
+    default_value: basic_html
+  field_organization_name: field_organization_name/0/value
+  field_project_name: field_project_name/0/value
+  field_sponsor_name: field_sponsor_name/0/value
+  field_image_type: field_image_type/0/value
+  field_image_color: field_image_color/0/value
+  field_image_quality: field_image_quality/0/value
+  field_image_rotation: field_image_rotation/0/value
+  field_image_digital: field_image_digital/0/value
+  field_noise_reduction: field_noise_reduction/0/value
+  field_keywords: field_keywords/0/value
+  field_spot_feature: field_spot_feature/0/value
+  field_physical_size: field_physical_size/0/value
+  field_general_note: field_general_note/0/value
+  field_private_note: field_private_note/0/value
+  field_image_materials/value: field_image_materials/0/value
+  field_image_materials/format:
+    plugin: default_value
+    default_value: basic_html
+  field_image_enhancement/value: field_image_enhancement/0/value
+  field_image_enhancement/format:
+    plugin: default_value
+    default_value: basic_html
+  field_image_notes/value: field_image_notes/0/value
+  field_image_notes/format:
+    plugin: default_value
+    default_value: basic_html
+  field_technical_notes/value: field_technical_notes/0/value
+  field_technical_notes/format:
+    plugin: default_value
+    default_value: basic_html
+  field_classification_notes/value: field_classification_notes/0/value
+  field_classification_notes/format:
+    plugin: default_value
+    default_value: basic_html
+  field_admin_notes/value: field_admin_notes/0/value
+  field_admin_notes/format:
+    plugin: default_value
+    default_value: basic_html
+  field_latitude: field_latitude/0/value
+  field_longitude: field_longitude/0/value
+  field_altitude: field_altitude/0/value
+  field_aperture: field_aperture/0/value
+  field_exposure_bias: field_exposure_bias/0/value
+  field_focal_length: field_focal_length/0/value
+  field_iso_speed_rating: field_iso_speed_rating/0/value
+  field_lens: field_lens/0/value
+  field_light_source: field_light_source/0/value
+  field_metering_mode: field_metering_mode/0/value
+  field_sensing_method: field_sensing_method/0/value
+  field_flash_settings: field_flash_settings/0/value
+  field_image_capture_device: field_image_capture_device/0/value
+  field_image_agents:
+    plugin: sub_process
+    source: agent_keys
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_images_image_agent
+        source:
+          - nid
+          - delta
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_image_descriptions:
+    plugin: sub_process
+    source: description_keys
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_images_image_descriptions
+        source:
+          - nid
+          - delta
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_external_classification:
+    plugin: sub_process
+    source: classification_keys
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_images_external_classification
+        source:
+          - nid
+          - delta
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+destination:
+  plugin: 'entity:node'
+  default_bundle: shanti_image
+migration_dependencies:
+  required:
+    - d7_images_image_agent
+    - d7_images_image_descriptions
+    - d7_images_external_classification
+include: null

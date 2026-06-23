@@ -1,0 +1,56 @@
+uuid: b319b547-fa05-4c7b-9e4d-fd4fdb1b3d15
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: zLn_6BJaZKNuI0AOWiKjujqDM2uxAY4RcWNV47EfkSg
+id: d7_images_image_descriptions
+class: null
+idMap: {  }
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1a.7'
+migration_group: mandala_images
+label: 'D7 Images: image_descriptions nodes → image_descriptions paragraphs (per reference)'
+source:
+  plugin: d7_image_satellite
+  node_type: image_descriptions
+  reference_field: field_image_descriptions
+process:
+  field_description_title: title
+  field_description/value: field_description/0/value
+  field_description/format:
+    plugin: default_value
+    default_value: basic_html
+  field_summary: field_summary/0/value
+  field_author:
+    plugin: sub_process
+    source: field_author
+    process:
+      value: value
+  field_language:
+    plugin: sub_process
+    source: field_language
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: image_descriptions
+migration_dependencies: {  }
+include: null

@@ -1,0 +1,212 @@
+id: d7_images_shanti_image
+label: 'D7 Images: shanti_image nodes → shanti_image nodes (with satellites as paragraphs)'
+migration_group: mandala_images
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1a.7'
+
+source:
+  plugin: d7_shanti_image
+  node_type: shanti_image
+
+process:
+  # --- node base ---
+  title: title
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+  # uid intentionally not mapped — user migration is a separate concern; nodes
+  # default to uid 0 until the user migration lands.
+
+  # --- IIIF identity (from the shanti_images sidecar, via the source plugin) ---
+  field_iiif_id: i3fid
+  field_iiif_mms_id: mmsid
+  field_iiif_width: iiif_width
+  field_iiif_height: iiif_height
+
+  # --- identity / other ids ---
+  field_original_filename: field_original_filename/0/value
+  field_other_ids:
+    plugin: sub_process
+    source: field_other_ids
+    process:
+      value: value
+
+  # --- KMaps (Spike 1 schema: column-for-column copy) ---
+  field_subjects:
+    plugin: sub_process
+    source: field_subjects
+    process: &kmaps_copy
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      # The D11 KMaps field's canonical raw is the pipe composite
+      # id|header|domain|path|defids (per the widget + isEmpty()); the D7 raw
+      # column is a different, angle-bracket ancestor format, so rebuild it.
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+  field_places:
+    plugin: sub_process
+    source: field_places
+    process: *kmaps_copy
+  field_kmap_terms:
+    plugin: sub_process
+    source: field_kmap_terms
+    process: *kmaps_copy
+  field_kmap_collections:
+    plugin: sub_process
+    source: field_kmap_collections
+    process: *kmaps_copy
+
+  # --- rights (field_license_url required; 100% coverage in source) ---
+  field_license_url/uri: field_license_url/0/value
+  field_license_url/title: field_license_url/0/title
+  field_copyright_holder: field_copyright_holder/0/value
+  field_copyright_statement/value: field_copyright_statement/0/value
+  field_copyright_statement/format:
+    plugin: default_value
+    default_value: basic_html
+  field_copyright_date:
+    - plugin: skip_on_empty
+      method: process
+      source: field_copyright_date/0/value
+    - plugin: format_date
+      from_format: 'Y-m-d H:i:s'
+      to_format: 'Y-m-d\TH:i:s'
+  field_rights_notes/value: field_rights_notes/0/value
+  field_rights_notes/format:
+    plugin: default_value
+    default_value: basic_html
+  field_organization_name: field_organization_name/0/value
+  field_project_name: field_project_name/0/value
+  field_sponsor_name: field_sponsor_name/0/value
+
+  # --- required descriptive list fields (0-missing / 0-out-of-list per audit) ---
+  field_image_type: field_image_type/0/value
+  field_image_color: field_image_color/0/value
+  field_image_quality: field_image_quality/0/value
+  field_image_rotation: field_image_rotation/0/value
+  field_image_digital: field_image_digital/0/value
+  field_noise_reduction: field_noise_reduction/0/value
+
+  # --- descriptive text ---
+  field_keywords: field_keywords/0/value
+  field_spot_feature: field_spot_feature/0/value
+  field_physical_size: field_physical_size/0/value
+  field_general_note: field_general_note/0/value
+  field_private_note: field_private_note/0/value
+  field_image_materials/value: field_image_materials/0/value
+  field_image_materials/format:
+    plugin: default_value
+    default_value: basic_html
+  field_image_enhancement/value: field_image_enhancement/0/value
+  field_image_enhancement/format:
+    plugin: default_value
+    default_value: basic_html
+  field_image_notes/value: field_image_notes/0/value
+  field_image_notes/format:
+    plugin: default_value
+    default_value: basic_html
+  field_technical_notes/value: field_technical_notes/0/value
+  field_technical_notes/format:
+    plugin: default_value
+    default_value: basic_html
+  field_classification_notes/value: field_classification_notes/0/value
+  field_classification_notes/format:
+    plugin: default_value
+    default_value: basic_html
+  field_admin_notes/value: field_admin_notes/0/value
+  field_admin_notes/format:
+    plugin: default_value
+    default_value: basic_html
+
+  # --- geo ---
+  field_latitude: field_latitude/0/value
+  field_longitude: field_longitude/0/value
+  field_altitude: field_altitude/0/value
+
+  # --- camera / EXIF ---
+  field_aperture: field_aperture/0/value
+  field_exposure_bias: field_exposure_bias/0/value
+  field_focal_length: field_focal_length/0/value
+  field_iso_speed_rating: field_iso_speed_rating/0/value
+  field_lens: field_lens/0/value
+  field_light_source: field_light_source/0/value
+  field_metering_mode: field_metering_mode/0/value
+  field_sensing_method: field_sensing_method/0/value
+  field_flash_settings: field_flash_settings/0/value
+  field_image_capture_device: field_image_capture_device/0/value
+
+  # --- satellites → paragraphs (lookup the fanned-out paragraph per delta) ---
+  field_image_agents:
+    plugin: sub_process
+    source: agent_keys
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_images_image_agent
+        source:
+          - nid
+          - delta
+      # Drop dangling refs (agent node deleted in D7) so they don't yield a
+      # null paragraph; ~151 such refs exist.
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_image_descriptions:
+    plugin: sub_process
+    source: description_keys
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_images_image_descriptions
+        source:
+          - nid
+          - delta
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_external_classification:
+    plugin: sub_process
+    source: classification_keys
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_images_external_classification
+        source:
+          - nid
+          - delta
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: shanti_image
+
+migration_dependencies:
+  required:
+    - d7_images_image_agent
+    - d7_images_image_descriptions
+    - d7_images_external_classification

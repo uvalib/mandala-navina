@@ -13,3 +13,6 @@ nav:
   - "Cantaloupe 404 information disclosure": iiif-cantaloupe-404-information-disclosure.md
   - "IIIF prefix alignment (/mandala/ vs /iiif/2/)": iiif-prefix-alignment-mandala-vs-canonical.md
   - "migrate_drupal noise on `drush ms`": migrate-drupal-noise-site-specific-dump.md
+  - "KMaps raw rebuilt on migration": kmaps-raw-format-rebuild-on-migration.md
+  - "Images field_image binary migration": images-field-image-binary-migration.md
+  - "image_descriptions summary length": image-descriptions-summary-length.md

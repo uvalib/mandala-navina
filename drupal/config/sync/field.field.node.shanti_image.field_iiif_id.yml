@@ -10,8 +10,8 @@ field_name: field_iiif_id
 entity_type: node
 bundle: shanti_image
 label: 'IIIF identifier'
-description: "The Cantaloupe IIIF identifier for this image (e.g. 'shanti-image-680687'). Drives display via the iiif_image formatter. Migrated verbatim from the D7 shanti_images.i3fid column; never change after creation."
-required: true
+description: "The Cantaloupe IIIF identifier for this image (e.g. 'shanti-image-680687'). Drives display via the iiif_image formatter. Migrated verbatim from the D7 shanti_images.i3fid column; never change after creation. Optional: ~36 D7 images are imageless metadata records with no sidecar i3fid (1a.7)."
+required: false
 translatable: false
 default_value: {  }
 default_value_callback: ''
