@@ -5,4 +5,5 @@ nav:
   - Spikes Plan: spikes-plan.md
   - "Images: Content Model Audit": images-content-model-audit.md
   - "KMaps: Migration Mapping (D7 → D11)": kmaps-migration-mapping.md
+  - "KMasset Solr Doc Contract (golden doc)": kmasset-solr-doc-contract.md
   - "Collections: Inheritance Decision Brief (RESOLVED → ADR 011)": collections-inheritance-decision-brief.md
