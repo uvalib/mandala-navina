@@ -4,6 +4,15 @@
 **Participants:** Yuji Shinozaki, Claude (Sonnet 4.6 → Opus 4.8)  
 **Outcome:** Re-oriented onto current `main` (Step 1a 1a.4–1a.7 landed; ADR 011 accepted). Opened up Sprint 1 task **1a.8** and traced the full kmasset Solr document contract end-to-end — deployed topology (Solr 7.7.3 master/replica + read-only proxy), the generative doc grammar (`kmaps_engine`), the type layer (`kmassets` schema.xml), and both consumer generations (D7 AjaxSolr clients + mandala-om React). Captured as the foundation doc [KMasset Solr Doc Contract](../planning/kmasset-solr-doc-contract.md). Write transport (A: S3→ECS / B: reindeer_x / C: direct Drupal→master) left as an **open decision** gated on the Dave Goldstein cost conversation.
 
+> **⚠ Correction (2026-06-25):** Two findings recorded below were later corrected.
+> (1) This session concluded "kmasset docs are nested block-join documents" — that is
+> **wrong**. The block-join structure belongs to the **`kmterms`** index; **kmassets
+> docs are FLAT** (verified in Spike 2 against live Solr). (2) `mediabase` was listed
+> as an Images producer — it is **A/V only**; `shanti_images` is the Images producer.
+> Both are fixed in [the corrected contract doc, §5 + §4](../planning/kmasset-solr-doc-contract.md)
+> (commit `75f0a33`). The erroneous reasoning is left intact below as the historical
+> record of this session; see the 2026-06-25 session log for the correction discussion.
+
 ---
 
 *This is the raw conversation transcript. Tool calls and code output are omitted; only*
