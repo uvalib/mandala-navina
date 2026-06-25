@@ -101,7 +101,7 @@ path, not a chosen D11 design.** Candidate options, still under investigation:
 |---|---|---|---|
 | **A — S3 → ECS** (D7 model) | Drupal → S3 → SQS → ECS transform → master | existing ECS transform already emits the correct format | no shared FS in D11; the Part-A file-watcher is legacy multisite; 4-hop fire-and-forget visibility gap |
 | **B — via reindeer_x** | Drupal → HTTP POST → reindeer_x → master | reindeer_x's existing `kmassets_write_client` | needs a new content-doc handler + transform; couples to reindeer_x productionization |
-| **C — direct Drupal write** | Drupal queue worker → master (direct) | simplest; debuggable; no ECS/S3 | Drupal must emit the exact nested format itself; schema changes are deploy-coordinated (see below) |
+| **C — direct Drupal write** | Drupal queue worker → master (direct) | simplest; debuggable; no ECS/S3 | Drupal must emit the exact flat doc format itself (§5); schema changes are deploy-coordinated (see below) |
 
 All three **write to the master**, never the proxy. The choice is gated on the
 [cost/architecture conversation with Dave Goldstein](../deferred/solr-pipeline-cost-discussion.md).
@@ -124,47 +124,73 @@ No single source is canonical; the contract is pinned where producer output and
 both consumer generations agree. The chain:
 
 ```
-kmaps_engine (Rails, Andres)  ── defines the doc GRAMMAR + writes kmterms
-   └▶ reindeer_x              ── shadows kmterms → kmassets Pop.1 (same grammar)
-   └▶ Drupal media managers   ── write kmassets Pop.2 (av/images/sources/texts), mirror the grammar
+kmaps_engine (Rails, Andres)  ── defines the naming GRAMMAR + writes kmterms (nested)
+   └▶ reindeer_x              ── shadows kmterms → kmassets Pop.1 (same naming grammar, FLATTENED)
+   └▶ Drupal media managers   ── write kmassets Pop.2 (av/images/sources/texts) as FLAT docs
           consumed by ↓
    D7 AjaxSolr clients (legacy)  +  mandala-om React (current)  +  kmassets schema.xml (types)
 ```
 
 | Authority | Location | Side | Defines |
 |---|---|---|---|
-| `kmaps_engine` `Feature#document_for_rsolr` / `nested_documents_for_rsolr` | `mandala-legacy/kmaps_engine/app/models/feature.rb` | **producer (upstream)** | the nested block-join structure + the `{prefix}_{lang}_{id}` naming grammar |
-| Drupal media managers (`shanti_kmaps_solr`, `shanti_images`, `mediabase`) | `mandala-legacy/mandala-drupal/.../modules/custom/` | **producer (Pop.2)** | the Images-specific fields + derivations **← Phase 1 TODO (§7)** |
+| `kmaps_engine` `Feature#document_for_rsolr` / `nested_documents_for_rsolr` | `mandala-legacy/kmaps_engine/app/models/feature.rb` | **producer (upstream — kmterms)** | the **`kmterms`** nested block-join structure + the `{prefix}_{lang}_{id}` naming grammar that kmassets reuses (flattened) |
+| `shanti_images` (Images), `mediabase` (**A/V only**), `shanti_kmaps_solr` (KMaps Solr jQuery plugin) | `mandala-legacy/mandala-drupal/.../modules/custom/` | **producer (Pop.2)** | per-type flat asset fields + derivations. **`shanti_images` is the Images producer; `mediabase` is A/V, not images** **← Phase 1 TODO (§7)** |
 | `kmassets` Solr schema | `solr-shanti-configsets/solr7.3.x/production/kmassets/conf/schema.xml` | **types** | field types, multivalue, dynamic-field grammar |
 | D7 AjaxSolr clients (`kmaps_views_solr`, `shanti_kmaps_faceted_search`, `kmaps_integrated_search`, `kmaps_explorer`) | `mandala-legacy/mandala-drupal/.../modules/custom/` | **consumer (legacy)** | original field vocabulary; *may still be live* on un-migrated sites |
-| mandala-om React | `mandala-legacy/mandala-om/kmaps-app/src/{hooks,model,catalog}` | **consumer (current)** | load-bearing fields + the nested-child retrieval (`[child …]`) |
+| mandala-om React | `mandala-legacy/mandala-om/kmaps-app/src/{hooks,model,catalog}` | **consumer (current)** | load-bearing **flat** asset fields (`solr_urls.assets`); its `[child]` retrieval targets **kmterms** (`solr_urls.terms`), not assets |
 | reindeer_x `kmassetSync` | `uvalib/mandala-reindeer_x/sync/kmassetSync.js` | cross-check (Pop.1 producer) | the shared core fields |
 
 ---
 
-## 5. The contract is a generative grammar, not a flat schema
+## 5. Two structures, one naming grammar — the kmasset writer contract is FLAT
 
-From `kmaps_engine` `feature.rb`:
+> **Correction (2026-06-25):** An earlier version of this section attributed the
+> nested block-join structure to kmasset documents and stated "any D11 writer must
+> reproduce this parent/child shape." That is wrong. The block-join structure
+> belongs to the **`kmterms`** index. **kmasset documents are flat** — including
+> images and the flattened KMaps-taxonomy shadows. Verified against live Solr in
+> [Spike 2 §7/§12](../spikes/spike-02-solr-integration.md): querying `block_type`
+> on `kmassets` returns "undefined field."
 
-1. **Nested block-join documents.** A parent doc (`block_type: ['parent']`) owns a
-   `_childDocuments_` array of `block_type: ['child']` docs, each tagged with a
-   `block_child_type` (e.g. `related_names`, per-relation prefixes). Consumers
-   retrieve children with Solr child transformers — e.g. mandala-om
-   `useKmap.js:24`: `fl: '*,[child parentFilter=block_type:parent …]'`; and query
-   them with `{!child of=block_type:parent}` (`feature.rb:385`). **Any D11 writer
-   must reproduce this parent/child shape**, not a flat field set.
-2. **Field names are generated, not fixed.** Built by interpolation:
+Two distinct Solr structures are in play, and they must not be conflated:
+
+**(a) `kmterms` — nested block-join (NOT this writer's target).** `kmaps_engine`
+(`feature.rb` `document_for_rsolr` / `nested_documents_for_rsolr`) writes the
+**kmterms** index as nested docs: a parent (`block_type: ['parent']`) owns a
+`_childDocuments_` array of `block_type: ['child']` docs, each tagged by
+`block_child_type` (`related_names`, etc.). Consumers retrieve children with Solr
+child transformers — mandala-om `useKmap.js:24` (`fl: '*,[child parentFilter=block_type:parent …]'`)
+issues this **against `solr_urls.terms`**, and queries with
+`{!child of=block_type:parent}` (`feature.rb:385`). ~472K parents / ~4M children.
+This is the KMaps tree-browse contract, not the asset contract.
+
+**(b) `kmassets` — flat.** Every kmasset doc is a single flat document. This holds
+for media assets (images, A/V, sources, texts) **and** for the KMaps-taxonomy
+shadow entries (`subjects`/`places`/`terms` asset types) that reindeer_x projects
+in from kmterms — reindeer_x **flattens** the nested term into a flat asset doc; it
+does not copy the block-join structure. mandala-om reads assets via
+`solr_urls.assets` (`useKmap.js:49,63`) with **no** `[child]` transformer.
+**A D11 image — or any kmasset — writer produces flat docs: no parent/child, no
+`_childDocuments_`.** The schema retains `_root_` / `parent_uid` (§6) for block-join
+support, but the deployed kmassets index does not populate them.
+
+What the kmasset writer *does* inherit from `kmaps_engine` is the **naming grammar**,
+not the structure:
+
+1. **Field names are generated, not fixed.** Built by interpolation:
    `caption_#{language.code}_#{id}`, `summary_#{language.code}_#{id}`,
    `code_#{geo_code_type.code}`. So the contract is a **naming grammar**
    (`{prefix}_{langcode}` / `{prefix}_{suffix}`), which is why consumers query
-   with wildcards (`names_txt:…*`). The literal fields are mostly the
-   *structural* ones (`block_type`, `block_child_type`, `child_node_id`,
-   `parent_node_id`, `context_id`).
-3. **Tagging logic is spread across models** — `rsolr_document_tags` /
-   `…_for_notes` on `Note` / `Citation` attach prefixed fields to a doc.
+   with wildcards (`names_txt:…*`). These are flat fields on a flat doc.
+2. **Language-analyzer suffix typing** (§6 dynamic grammar) — where NFC/diacritic
+   fidelity lives.
+3. **Tagging logic is spread across models** (in the kmterms producer) —
+   `rsolr_document_tags` / `…_for_notes` on `Note` / `Citation` attach prefixed
+   fields; the kmassets projection lands these as flat fields.
 
-The golden doc must therefore capture **the grammar** (block structure + naming
-conventions + suffix typing) and **then** the concrete Images instance of it.
+The golden doc must therefore capture **the flat kmasset doc** + the naming/suffix
+grammar — and explicitly *not* the kmterms block-join shape — then the concrete
+Images instance of it.
 
 ---
 
@@ -177,7 +203,7 @@ From `solr7.3.x/production/kmassets/conf/schema.xml`.
 | Field | Type | MV | Role |
 |---|---|---|---|
 | `id`, `ids`, `uid` | string (required) | ids/uid mv | identity |
-| `parent_uid`, `_root_` | string | | block-join linkage |
+| `parent_uid`, `_root_` | string | | block-join linkage (schema supports it; **unused in the live kmassets index** — see §5) |
 | `asset_type`, `asset_subtype` | string | **single** | faceting spine — one type per doc |
 | `kmapid`, `kmapid_strict` | string | mv | KMaps linkage |
 | `name`, `names` | string | names mv | names |
@@ -222,9 +248,11 @@ Sprint 1 transliteration-fidelity acceptance criterion.
 
 ## 7. Images-specific field inventory — **Phase 1 TODO**
 
-Not yet extracted. Source: the D7 Images media-manager doc builder in
-`shanti_images` / `shanti_kmaps_solr` / `mediabase`
-(`mandala-legacy/mandala-drupal/docroot/sites/all/modules/custom/`). Phase 1
+Not yet extracted. Source: the D7 **Images** media-manager doc builder in
+`shanti_images` (the Images producer), with the shared `shanti_kmaps_solr` KMaps
+Solr plugin (`mandala-legacy/mandala-drupal/docroot/sites/all/modules/custom/`).
+Note: `mediabase` is the **A/V** producer (`package = Mandala Audio-Video`), not an
+Images source — the A/V field inventory is a separate, later task. Phase 1
 will produce a field-by-field table:
 
 `solr field · type (schema §6) · cardinality · D7 source/derivation · transform notes · example`
