@@ -101,7 +101,7 @@ path, not a chosen D11 design.** Candidate options, still under investigation:
 |---|---|---|---|
 | **A — S3 → ECS** (D7 model) | Drupal → S3 → SQS → ECS transform → master | existing ECS transform already emits the correct format | no shared FS in D11; the Part-A file-watcher is legacy multisite; 4-hop fire-and-forget visibility gap |
 | **B — via reindeer_x** | Drupal → HTTP POST → reindeer_x → master | reindeer_x's existing `kmassets_write_client` | needs a new content-doc handler + transform; couples to reindeer_x productionization |
-| **C — direct Drupal write** | Drupal queue worker → master (direct) | simplest; debuggable; no ECS/S3 | Drupal must emit the exact nested format itself; schema changes are deploy-coordinated (see below) |
+| **C — direct Drupal write** | Drupal queue worker → master (direct) | simplest; debuggable; no ECS/S3 | Drupal must emit the exact flat doc format itself (§5); schema changes are deploy-coordinated (see below) |
 
 All three **write to the master**, never the proxy. The choice is gated on the
 [cost/architecture conversation with Dave Goldstein](../deferred/solr-pipeline-cost-discussion.md).
@@ -124,47 +124,73 @@ No single source is canonical; the contract is pinned where producer output and
 both consumer generations agree. The chain:
 
 ```
-kmaps_engine (Rails, Andres)  ── defines the doc GRAMMAR + writes kmterms
-   └▶ reindeer_x              ── shadows kmterms → kmassets Pop.1 (same grammar)
-   └▶ Drupal media managers   ── write kmassets Pop.2 (av/images/sources/texts), mirror the grammar
+kmaps_engine (Rails, Andres)  ── defines the naming GRAMMAR + writes kmterms (nested)
+   └▶ reindeer_x              ── shadows kmterms → kmassets Pop.1 (same naming grammar, FLATTENED)
+   └▶ Drupal media managers   ── write kmassets Pop.2 (av/images/sources/texts) as FLAT docs
           consumed by ↓
    D7 AjaxSolr clients (legacy)  +  mandala-om React (current)  +  kmassets schema.xml (types)
 ```
 
 | Authority | Location | Side | Defines |
 |---|---|---|---|
-| `kmaps_engine` `Feature#document_for_rsolr` / `nested_documents_for_rsolr` | `mandala-legacy/kmaps_engine/app/models/feature.rb` | **producer (upstream)** | the nested block-join structure + the `{prefix}_{lang}_{id}` naming grammar |
-| Drupal media managers (`shanti_kmaps_solr`, `shanti_images`, `mediabase`) | `mandala-legacy/mandala-drupal/.../modules/custom/` | **producer (Pop.2)** | the Images-specific fields + derivations **← Phase 1 TODO (§7)** |
+| `kmaps_engine` `Feature#document_for_rsolr` / `nested_documents_for_rsolr` | `mandala-legacy/kmaps_engine/app/models/feature.rb` | **producer (upstream — kmterms)** | the **`kmterms`** nested block-join structure + the `{prefix}_{lang}_{id}` naming grammar that kmassets reuses (flattened) |
+| `shanti_images` (Images), `mediabase` (**A/V only**), `shanti_kmaps_solr` (KMaps Solr jQuery plugin) | `mandala-legacy/mandala-drupal/.../modules/custom/` | **producer (Pop.2)** | per-type flat asset fields + derivations. **`shanti_images` is the Images producer; `mediabase` is A/V, not images** **← Phase 1 TODO (§7)** |
 | `kmassets` Solr schema | `solr-shanti-configsets/solr7.3.x/production/kmassets/conf/schema.xml` | **types** | field types, multivalue, dynamic-field grammar |
 | D7 AjaxSolr clients (`kmaps_views_solr`, `shanti_kmaps_faceted_search`, `kmaps_integrated_search`, `kmaps_explorer`) | `mandala-legacy/mandala-drupal/.../modules/custom/` | **consumer (legacy)** | original field vocabulary; *may still be live* on un-migrated sites |
-| mandala-om React | `mandala-legacy/mandala-om/kmaps-app/src/{hooks,model,catalog}` | **consumer (current)** | load-bearing fields + the nested-child retrieval (`[child …]`) |
+| mandala-om React | `mandala-legacy/mandala-om/kmaps-app/src/{hooks,model,catalog}` | **consumer (current)** | load-bearing **flat** asset fields (`solr_urls.assets`); its `[child]` retrieval targets **kmterms** (`solr_urls.terms`), not assets |
 | reindeer_x `kmassetSync` | `uvalib/mandala-reindeer_x/sync/kmassetSync.js` | cross-check (Pop.1 producer) | the shared core fields |
 
 ---
 
-## 5. The contract is a generative grammar, not a flat schema
+## 5. Two structures, one naming grammar — the kmasset writer contract is FLAT
 
-From `kmaps_engine` `feature.rb`:
+> **Correction (2026-06-25):** An earlier version of this section attributed the
+> nested block-join structure to kmasset documents and stated "any D11 writer must
+> reproduce this parent/child shape." That is wrong. The block-join structure
+> belongs to the **`kmterms`** index. **kmasset documents are flat** — including
+> images and the flattened KMaps-taxonomy shadows. Verified against live Solr in
+> [Spike 2 §7/§12](../spikes/spike-02-solr-integration.md): querying `block_type`
+> on `kmassets` returns "undefined field."
 
-1. **Nested block-join documents.** A parent doc (`block_type: ['parent']`) owns a
-   `_childDocuments_` array of `block_type: ['child']` docs, each tagged with a
-   `block_child_type` (e.g. `related_names`, per-relation prefixes). Consumers
-   retrieve children with Solr child transformers — e.g. mandala-om
-   `useKmap.js:24`: `fl: '*,[child parentFilter=block_type:parent …]'`; and query
-   them with `{!child of=block_type:parent}` (`feature.rb:385`). **Any D11 writer
-   must reproduce this parent/child shape**, not a flat field set.
-2. **Field names are generated, not fixed.** Built by interpolation:
+Two distinct Solr structures are in play, and they must not be conflated:
+
+**(a) `kmterms` — nested block-join (NOT this writer's target).** `kmaps_engine`
+(`feature.rb` `document_for_rsolr` / `nested_documents_for_rsolr`) writes the
+**kmterms** index as nested docs: a parent (`block_type: ['parent']`) owns a
+`_childDocuments_` array of `block_type: ['child']` docs, each tagged by
+`block_child_type` (`related_names`, etc.). Consumers retrieve children with Solr
+child transformers — mandala-om `useKmap.js:24` (`fl: '*,[child parentFilter=block_type:parent …]'`)
+issues this **against `solr_urls.terms`**, and queries with
+`{!child of=block_type:parent}` (`feature.rb:385`). ~472K parents / ~4M children.
+This is the KMaps tree-browse contract, not the asset contract.
+
+**(b) `kmassets` — flat.** Every kmasset doc is a single flat document. This holds
+for media assets (images, A/V, sources, texts) **and** for the KMaps-taxonomy
+shadow entries (`subjects`/`places`/`terms` asset types) that reindeer_x projects
+in from kmterms — reindeer_x **flattens** the nested term into a flat asset doc; it
+does not copy the block-join structure. mandala-om reads assets via
+`solr_urls.assets` (`useKmap.js:49,63`) with **no** `[child]` transformer.
+**A D11 image — or any kmasset — writer produces flat docs: no parent/child, no
+`_childDocuments_`.** The schema retains `_root_` / `parent_uid` (§6) for block-join
+support, but the deployed kmassets index does not populate them.
+
+What the kmasset writer *does* inherit from `kmaps_engine` is the **naming grammar**,
+not the structure:
+
+1. **Field names are generated, not fixed.** Built by interpolation:
    `caption_#{language.code}_#{id}`, `summary_#{language.code}_#{id}`,
    `code_#{geo_code_type.code}`. So the contract is a **naming grammar**
    (`{prefix}_{langcode}` / `{prefix}_{suffix}`), which is why consumers query
-   with wildcards (`names_txt:…*`). The literal fields are mostly the
-   *structural* ones (`block_type`, `block_child_type`, `child_node_id`,
-   `parent_node_id`, `context_id`).
-3. **Tagging logic is spread across models** — `rsolr_document_tags` /
-   `…_for_notes` on `Note` / `Citation` attach prefixed fields to a doc.
+   with wildcards (`names_txt:…*`). These are flat fields on a flat doc.
+2. **Language-analyzer suffix typing** (§6 dynamic grammar) — where NFC/diacritic
+   fidelity lives.
+3. **Tagging logic is spread across models** (in the kmterms producer) —
+   `rsolr_document_tags` / `…_for_notes` on `Note` / `Citation` attach prefixed
+   fields; the kmassets projection lands these as flat fields.
 
-The golden doc must therefore capture **the grammar** (block structure + naming
-conventions + suffix typing) and **then** the concrete Images instance of it.
+The golden doc must therefore capture **the flat kmasset doc** + the naming/suffix
+grammar — and explicitly *not* the kmterms block-join shape — then the concrete
+Images instance of it.
 
 ---
 
@@ -177,7 +203,7 @@ From `solr7.3.x/production/kmassets/conf/schema.xml`.
 | Field | Type | MV | Role |
 |---|---|---|---|
 | `id`, `ids`, `uid` | string (required) | ids/uid mv | identity |
-| `parent_uid`, `_root_` | string | | block-join linkage |
+| `parent_uid`, `_root_` | string | | block-join linkage (schema supports it; **unused in the live kmassets index** — see §5) |
 | `asset_type`, `asset_subtype` | string | **single** | faceting spine — one type per doc |
 | `kmapid`, `kmapid_strict` | string | mv | KMaps linkage |
 | `name`, `names` | string | names mv | names |
@@ -220,22 +246,184 @@ Sprint 1 transliteration-fidelity acceptance criterion.
 
 ---
 
-## 7. Images-specific field inventory — **Phase 1 TODO**
+## 7. Images-specific field inventory (Phase 1 — extracted 2026-06-25)
 
-Not yet extracted. Source: the D7 Images media-manager doc builder in
-`shanti_images` / `shanti_kmaps_solr` / `mediabase`
-(`mandala-legacy/mandala-drupal/docroot/sites/all/modules/custom/`). Phase 1
-will produce a field-by-field table:
+Extracted from the D7 producer chain (`mandala-legacy/mandala-drupal/docroot/sites/all/modules/custom/`)
+and reconciled against **live kmassets docs sampled via the proxy on VPN** (read path;
+`numFound` = 111,326 image docs). A representative live image doc carries **61 fields**.
 
-`solr field · type (schema §6) · cardinality · D7 source/derivation · transform notes · example`
+### 7.1 The Images doc is built by a 3-module chain, not one builder
 
-…split into **common-core** (shared by all asset types) vs. **image-specific**,
-reconciled against the consumers (§4) so any field touched by only one side is
-flagged optional/uncertain rather than guessed. Deliverable also includes
-**annotated golden JSON fixtures** (a representative set: public, restricted,
-multi-agent, all-four-KMaps-domains, and a Tibetan/diacritic doc) committed as
-**test fixtures** — the acceptance check for the D11 writer (build writer → diff
-output vs. golden).
+The kmasset doc for an image is assembled in order, then normalized:
+
+1. **`shanti_kmaps_fields`** — `_shanti_kmaps_fields_get_solr_doc()` (`shanti_kmaps_fields.module:1039`).
+   The **common-core base** every asset type shares: identity, KMaps linkage,
+   visibility, URLs, collection title/nid, plus a site-configured `extra_fields`
+   map (`asset_subtype`, `creator`, `caption`, `summary`, `date_start/end`,
+   `language`).
+2. **`drupal_alter('kmaps_fields_solr_doc')`** (`:1268`) fans out to two producers:
+   - **`shanti_collections`** — `…_solr_doc_alter()` (`shanti_collections.module:782`)
+     writes the **collection hierarchy / access-path fields** — i.e. the §9 ↔ 1b
+     security seam. *Not the base builder, not shanti_images.*
+   - **`shanti_images`** — `…_solr_doc_alter()` (`shanti_images.module:1625`) writes
+     the **image-specific** fields (captions/descriptions from the
+     `field_image_descriptions` paragraph, IIIF thumb/dimensions, agent→creator/date).
+3. **Post-alter normalization** (`:1270–1352`): `title_sort_s`, `creator_sort_s`,
+   `date_start` defaulting (`0000-01-01T…` + `date_start_corrupt_s` on bad input),
+   URL `http→https` + prod-alias→canonical-domain rewrite, then
+   `_shanti_kmaps_fields_normalize_solrdoc()` (entity-decode of text fields → the
+   NFC/Unicode fidelity step). Sets `mogrified_s`.
+
+**A faithful D11 writer must reproduce all three layers** — getting only the
+`shanti_images` layer would silently drop the access-control fields (1b breaks).
+
+### 7.2 Field inventory
+
+**Most image fields are realized through dynamic fields, not static schema
+declarations.** Every suffixed field below (`*_s`, `*_ss`, `*_i`, `*_is`, `*_txt`,
+`*_idfacet`, …) is matched by a `schema.xml` dynamic-field rule (§6), which means:
+(a) the **suffix is load-bearing** — it sets the field's type and cardinality, so
+the writer must emit the exact suffix the contract specifies; and (b) **a new
+suffix-matching field can be added with writer code alone — no schema deploy**
+(this is what makes `rotation_s`, §7.3.4, free to add). The only fields that need a
+static declaration or `copyField` are the **unsuffixed** ones (table D).
+
+**A. Common-core base** (`shanti_kmaps_fields` — shared by every media manager)
+
+| Field | Type (§6) | Card | D7 source / derivation |
+|---|---|---|---|
+| `id` | string (req) | 1 | `$node->nid` |
+| `uid` | string (req) | 1 | `service-nid` (e.g. `images-1028396`) |
+| `service` / `asset_type` | string | 1 | `SHANTI_KMAPS_ADMIN_SERVICE` / site var per type (`images`) |
+| `asset_subtype` | string | 1 | `extra_fields` map — `photograph` (110,786), `artwork` (528), … |
+| `title` | text_kw | 1 | `$node->title` |
+| `node_user` | string | 1 | author **username** — *access field (1b)* |
+| `node_user_i` / `node_user_full_s` | int / string | 1 | `$node->uid` / realname |
+| `node_lang` | string | 1 | `'en'` default (`und`→`''`) |
+| `node_created` / `node_changed` | date | 1 | `gmdate()` from node timestamps |
+| `pogrified_s` | string | 1 | producer marker `'fields_module'` |
+| `kmapid` | string | mv | **ancestor-expanded** domain-id list |
+| `kmapid_strict` / `kmapid_strict_ss` | string | mv | directly-tagged domain-ids / their header names |
+| `kmapid_is` | int | mv | encoded `id*100 + domain` (places=1,subjects=2,terms=3) |
+| `kmapid_{places,subjects,terms}_idfacet` | idfacet | mv | `header\|domain-id` |
+| `visibility_i` / `visibility_s` | int / string | 1 | 1/2/3 ↔ public/private/uva (`inherit`→resolved from group) — *access field (1b)* |
+| `solrdoc_ts_i` | int | 1 | `time()` at index |
+| `url_html` / `url_ajax` / `url_json` / `url_thumb` | url text | 1 | site URL templates w/ nid; https+canonical-domain normalized |
+| `collection_title` / `collection_nid` | string / int | 1 | from collection field |
+| `title_sort_s` / `creator_sort_s` | string | 1 | normalized sort keys (post-alter) |
+| `date_start` / `date_end` | date | 1 | extra_fields/agent; defaults to `0000-01-01T00:00:00Z` |
+| `mogrified_s` | string | 1 | normalization marker |
+
+**B. Collection / access path** (`shanti_collections` alter — **the 1a.8 ↔ 1b seam, §9**)
+
+| Field | Type | Card | Role |
+|---|---|---|---|
+| `collection_uid_s` | string | 1 | owning collection uid — *access* |
+| `collection_uid_path_ss` | string | mv | ancestor collection uid path — *access* |
+| `collection_title_path_ss` | string | mv | ancestor title path |
+| `collection_nid_path_is` | int | mv | ancestor nid path |
+| `collection_idfacet` | idfacet | mv | collection facet (group-access prepended) |
+| `subcollection_uid_ss` / `subcollection_idfacet_ss` | string | mv | when the node is itself a (sub)collection |
+
+**C. Image-specific** (`shanti_images` alter)
+
+| Field | Type | Card | D7 source / derivation |
+|---|---|---|---|
+| `shanti_image_id_s` | string | 1 | `shanti_uid` (e.g. `shanti-image-469626`) — IIIF identifier |
+| `creator` | string | 1 | first `field_image_agents` agent title |
+| `caption` / `caption_lang_s` | text / string | 1 | first `field_image_descriptions` paragraph label + its language |
+| `summary` / `summary_lang_s` | text / string | 1 | first desc summary (or truncated `description` ≤550c) |
+| `description` / `description_lang_s` | text / string | 1 | first desc `field_description` safe_value |
+| `description_type_s` | string | 1 | literal `'general description'` |
+| `description_authors_s` | string | 1 | comma-joined `field_author` |
+| `caption_alt_txt` / `summary_alt_txt` / `description_alt_txt` | text | mv | the **remaining** descriptions — **present only on multi-description images** (see §7.3.5) |
+| `caption_alt_lang_ss` / `summary_alt_lang_ss` / `description_alt_lang_ss` | string | mv | their languages (conditional, as above) |
+| `description_alt_type_ss` / `description_alt_authors_ss` | string | mv | their type/authors (conditional, as above) |
+| `rotation_s` | string | 1 | **wanted, not yet emitted** — see §7.3.4 |
+| `url_thumb` (override) | url | 1 | IIIF 200×200 thumb |
+| `url_thumb_width` / `_height` / `_size` | string | 1 | thumb geometry |
+| `img_width_s` / `img_height_s` | string | 1 | source image dimensions |
+| `url_iiif_s` | string | 1 | IIIF `info.json` URL |
+
+**D. Schema-derived (unsuffixed) — the writer must NOT emit these** — CONFIRMED against `schema.xml`
+
+Verified in the deployed 7.x configset (`solr7.3.x/{production,staging}/kmassets/conf/schema.xml`
+— the two are **byte-identical** for these declarations). These unsuffixed fields fall
+outside the dynamic-field grammar; each is a statically-declared aggregation populated
+by `copyField`, **not** by the producer chain. A writer that emits them duplicates or
+fights the index — omit them:
+
+| Field | Decl | Fed by `copyField` from |
+|---|---|---|
+| `ids` | `string` mv, required | `uid`, `id`, `*_id_s`, `*_id_ss` |
+| `titles` | `text_kw` mv | `title`, `title_*`, `*_title_s`, `caption` |
+| `names` | `string` mv | `name`, `name_*`, `names_txt` |
+| `creators` | `text_kw` mv | `creator`, `creator_*`, `contributor_*`, `agent_*`, `*_authors_s(s)`, `node_user_*` |
+| `descriptions` | `text_general` mv | `caption`, `summary`, `description`, `caption_*`, `summary_*` |
+| `str` | `text_kw` mv | the universal catch-all — all of title/name/creator/id/caption variants (incl. the Tibetan `*_bo`/`*_tibt` title/caption fields) |
+| `timestamp` | `date`, required, `default="NOW"` | (none — index sets it) |
+| `_version_` | `long` | (none — Solr internal) |
+
+**Consequence for the writer (useful, not just a prohibition):** the aggregations are
+*automatic*. Fields the producer **does** emit are swept in for free — e.g. the
+image-specific `description_authors_s` and `node_user_full_s` flow into `creators`;
+`caption_alt_txt`/`summary_*` flow into `descriptions`; `shanti_image_id_s` flows into
+`ids`. So the writer only emits the **source** fields (tables A–C); search-spanning
+fields like `str`/`titles`/`creators` build themselves. (Note `caption` is copied into
+**`titles`, `descriptions`, and `str`** — intentional, since a caption is both a
+title-ish and a description-ish value.)
+
+### 7.3 Findings that sharpen the contract
+
+1. **Images carry no Tibetan-script fields.** Verified live: `title_tibt`,
+   `title_bo`, `caption_bo`, `caption_tibt`, `summary_bo` all return **0** image
+   docs. **`names_txt` is also 0 for images** — it is a kmterms/taxonomy field, not
+   an image field. So for Images, NFC/diacritic fidelity lives in the **plain
+   Unicode** `title`/`caption`/`summary`/`description` text fields, *not* in the
+   `*_tibt`/`*_bo` analyzers. This narrows §8's language-suffix worry (below).
+2. **Images do NOT use the `{prefix}_{lang}_{id}` grammar.** That grammar is
+   `kmaps_engine`/kmterms (§5). The Images producer encodes language as a separate
+   **`*_lang_s` companion string** (`caption_lang_s`, `summary_lang_s`,
+   `description_lang_s`, `*_alt_lang_ss`). This **resolves the §8/§10 Q3 open
+   question for the Images contract** — there are no `caption_eng_123`-style
+   fields in image docs.
+3. **`*_lang_s` values are dirty.** The `caption_lang_s` facet is heterogeneous —
+   `en` (41,561) **and** `English` (6,541), `Tibetan` (21) **and** `Standard
+   Tibetan` (1), `Chinese Languages` (5). Cause: the base builder defaults `'en'`
+   while the image alter copies `field_language->header` (a KMaps name like
+   `"English"`). The D11 writer should decide whether to normalize or preserve
+   bug-for-bug (ADR 008 leans preserve for retrieval parity; flag for the search
+   phase).
+4. **`rotation_s` — wanted, but a D7 typo means it has never been written.**
+   `shanti_images.module:1747` assigns `$sdog['rotation_s']` (a typo for `$sdoc`),
+   so the value is silently dropped — confirmed absent in all 111k live docs. This
+   field **is desired going forward**: the D11 writer should populate it correctly
+   from the image rotation (D7 source value: `$siimg->rotation`). Because
+   `rotation_s` matches the **`*_s` dynamic-field rule** (§6), adding it requires
+   **no `schema.xml` change/deploy** — only writer code. Tracked in
+   [`docs/deferred/images-rotation-field-support.md`](../deferred/images-rotation-field-support.md).
+5. **The `*_alt_*` description family is presence-conditional.** It is written
+   **only when an image has ≥2 descriptions** (`shanti_images.module:1705` — the
+   first description fills `caption`/`summary`/`description`; the remainder fill the
+   `*_alt_*` arrays). Single-description images (the common case, e.g. baseline
+   fixture 1028396) carry **none** of these fields; fixture 1087551 carries the full
+   set. A golden-diff harness must treat them as optional, not missing.
+
+### 7.4 Golden fixtures captured (this session)
+
+Three live image docs pulled via the proxy, committed under
+[`kmasset-fixtures/`](kmasset-fixtures/) (interim home until the D11 writer module
+exists, at which point they move there as its test fixtures):
+
+| Fixture | id | Why representative |
+|---|---|---|
+| `sample-image-doc-1.json` | 1028396 | baseline public photograph; multi-domain KMaps (places + subjects); diacritic creator names |
+| `sample-image-multidesc.json` | 1087551 | exercises the alt-description arrays |
+| `sample-image-tibetan.json` | 1243616 | `caption_lang_s:Tibetan` + diacritics (`Orgyen Sinzhutsé Script`) — NFC fidelity check |
+
+These become the **acceptance check** for the D11 writer: build writer → diff
+output vs. golden (excluding the §7.2-D schema-derived fields and volatile
+`solrdoc_ts_i`/`timestamp`/`_version_`).
 
 ---
 
@@ -246,11 +434,14 @@ output vs. golden).
   mandala-om `useSearch.js:75`). A D11 writer/query must respect this.
 - **`language_field` handling** can silently drop KMaps taxonomy (prior project
   note) — verify against the live index when sampling.
-- **Language-suffix resolution is unconfirmed.** The D7 `caption_#{lang}_#{id}`
-  builder yields e.g. `caption_eng_123`, but the schema dynamic rule is `*_en`
-  (not `_eng`), and the `_123` id-suffix matches no dynamic rule cleanly. How
-  these resolve (explicit fields? a default? a copyField?) is a **Phase 1
-  reconciliation item** — pin it from the schema + a live doc.
+- **Language-suffix resolution — RESOLVED for Images (Phase 1, §7.3).** The
+  `caption_#{lang}_#{id}` grammar is `kmaps_engine`/kmterms, **not** the Images
+  producer. Image docs encode language as a separate `*_lang_s` companion string,
+  and live image docs carry **no** `*_tibt`/`*_bo`/`caption_eng_123` fields. The
+  `_eng`-vs-`_en` reconciliation only matters for the kmterms/taxonomy producers,
+  not the Images media manager.
+- **`*_lang_s` values are inconsistent** (§7.3): `en` vs `English`, `Tibetan` vs
+  `Standard Tibetan`. A query/normalization decision for the search phase.
 
 ---
 
@@ -279,8 +470,9 @@ these fields.
 2. **Proxy write isolation** — confirmed read-only; a writer needs a *separate*
    master write-connection/credentials. What is the master write endpoint +
    auth for a D11 writer?
-3. **Language-suffix resolution** (§8) — how `{prefix}_{lang}_{id}` fields land
-   in the 7.x schema.
+3. **Language-suffix resolution** (§8) — RESOLVED for Images (§7.3: `*_lang_s`
+   companions, no script-suffixed fields); still open for the kmterms/taxonomy
+   producers (`_eng` vs `_en`).
 4. **Solr 7 → 9** — the deployed index is 7.7.3; the 9.x configset is prep. When
    does the 7→9 contract diff become in-scope?
 5. **Legacy consumer liveness** — are the D7 AjaxSolr clients still serving any

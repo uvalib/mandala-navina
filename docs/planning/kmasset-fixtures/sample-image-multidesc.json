@@ -1,0 +1,180 @@
+{
+  "id": "1087551",
+  "ids": [
+    "1087551",
+    "images-1087551",
+    "shanti-image-559521"
+  ],
+  "str": [
+    "1087551",
+    "images-1087551",
+    "105",
+    "Ra am (local name for maize)",
+    "Than Grove",
+    "Kencho Wangmo",
+    "Ra am (local name for maize)",
+    "shanti-image-559521",
+    "Kencho Wangmo",
+    "Kencho Wangmo",
+    "Ra am (local name for maize",
+    "Kencho Wangmo"
+  ],
+  "uid": "images-1087551",
+  "node_user": "ndg8f",
+  "node_user_i": 105,
+  "creators": [
+    "105",
+    "Than Grove",
+    "Kencho Wangmo",
+    "Kencho Wangmo",
+    "Kencho Wangmo",
+    "Kencho Wangmo"
+  ],
+  "node_lang": "en",
+  "node_created": "2019-02-14T13:20:56Z",
+  "node_changed": "2019-06-01T18:05:01Z",
+  "pogrified_s": "fields_module",
+  "title": [
+    "Ra am (local name for maize)"
+  ],
+  "titles": [
+    "Ra am (local name for maize)",
+    "Ra am (local name for maize)",
+    "Ra am (local name for maize"
+  ],
+  "service": "images",
+  "asset_type": "images",
+  "url_html": "https://images.mandala.library.virginia.edu/image/ra-am-local-name-maize",
+  "url_ajax": "https://images.mandala.library.virginia.edu/api/ajax/1087551",
+  "url_json": "https://images.mandala.library.virginia.edu/api/json/1087551",
+  "url_thumb": "https://iiif.lib.virginia.edu/mandala/shanti-image-559521/full/^!200,200/0/default.jpg",
+  "kmapid": [
+    "places-13735",
+    "places-13740",
+    "places-427",
+    "places-5421",
+    "places-5579",
+    "places-20682",
+    "subjects-6403",
+    "subjects-8260",
+    "subjects-7315",
+    "subjects-7357",
+    "subjects-7562"
+  ],
+  "kmapid_strict": [
+    "places-20682",
+    "subjects-7562",
+    "subjects-8260"
+  ],
+  "kmapid_strict_ss": [
+    "Jigme",
+    "Kitchen Utensil Carpentry",
+    "Bhutan Cultural Library"
+  ],
+  "kmapid_is": [
+    1373501,
+    1374001,
+    42701,
+    542101,
+    557901,
+    2068201,
+    2068201,
+    640302,
+    826002,
+    731502,
+    735702,
+    756202,
+    756202,
+    640302,
+    826002,
+    826002
+  ],
+  "kmapid_places_idfacet": [
+    "Jigme|places-20682"
+  ],
+  "kmapid_subjects_idfacet": [
+    "Kitchen Utensil Carpentry|subjects-7562",
+    "Bhutan Cultural Library|subjects-8260"
+  ],
+  "visibility_i": 1,
+  "visibility_s": "public",
+  "solrdoc_ts_i": 1706207591,
+  "node_user_full_s": "Than Grove",
+  "collection_title": "MMS Import Miscellaneous",
+  "collection_nid": "952851",
+  "asset_subtype": "photograph",
+  "creator": [
+    "Kencho Wangmo"
+  ],
+  "caption": "Ra am (local name for maize)",
+  "descriptions": [
+    "Ra am (local name for maize)",
+    "Ra am is a local name of maize",
+    "en",
+    "en",
+    "<p>Ra am is a  local name of maize</p>\n",
+    "Ra am (local name for maize)",
+    "en",
+    "The local name of the maize is called Ra am. The villagers keep few seeds for the next season and the name of the seed that they keep is called Ra lee (maize seed)",
+    "en"
+  ],
+  "summary": "Ra am is a local name of maize",
+  "mogrified_s": "true",
+  "collection_idfacet": [
+    "MMS Import Miscellaneous (images)|images-collection-952851"
+  ],
+  "collection_uid_s": "images-collection-952851",
+  "collection_uid_path_ss": [
+    "images-collection-952851"
+  ],
+  "collection_title_path_ss": [
+    "MMS Import Miscellaneous"
+  ],
+  "collection_nid_path_is": [
+    952851
+  ],
+  "shanti_image_id_s": "shanti-image-559521",
+  "caption_lang_s": "en",
+  "summary_lang_s": "en",
+  "description": [
+    "<p>Ra am is a  local name of maize</p>\n"
+  ],
+  "description_lang_s": "en",
+  "description_type_s": "general description",
+  "description_authors_s": "Kencho Wangmo",
+  "caption_alt_txt": [
+    "Ra am (local name for maize)"
+  ],
+  "caption_alt_lang_ss": [
+    "en"
+  ],
+  "summary_alt_txt": [
+    "The local name of the maize is called Ra am. The villagers keep few seeds for the next season and the name of the seed that they keep is called Ra lee (maize seed)"
+  ],
+  "summary_alt_lang_ss": [
+    "en"
+  ],
+  "description_alt_txt": [
+    "<p>The local name of the maize is called Ra am. The villagers keep few seeds for the next season and the name of the seed that they keep is called Ra lee (maize seed)</p>\n"
+  ],
+  "description_alt_lang_ss": [
+    "en"
+  ],
+  "description_alt_type_ss": [
+    "general description"
+  ],
+  "description_alt_authors_ss": [
+    "Kencho Wangmo"
+  ],
+  "date_start": "2014-09-24T16:11:57Z",
+  "url_thumb_width": "200",
+  "url_thumb_height": "132",
+  "url_thumb_size": "30000",
+  "img_width_s": "6034",
+  "img_height_s": "4012",
+  "url_iiif_s": "https://iiif.lib.virginia.edu/mandala/shanti-image-559521/info.json",
+  "title_sort_s": "Ra am (local name for maize",
+  "creator_sort_s": "Kencho Wangmo",
+  "_version_": 1831665772732088320,
+  "timestamp": "2025-05-09T17:43:23.346Z"
+}

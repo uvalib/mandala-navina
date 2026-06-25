@@ -1,0 +1,149 @@
+{
+  "id": "1028396",
+  "ids": [
+    "1028396",
+    "images-1028396",
+    "shanti-image-469626"
+  ],
+  "str": [
+    "1028396",
+    "images-1028396",
+    "37",
+    "First folios of buddhist text zab mo yang tig",
+    "Samuel Chrisinger",
+    "Rinchen Dorji",
+    "First folios of buddhist text zab mo yang tig",
+    "shanti-image-469626",
+    "",
+    "First folios of buddhist text zab mo yang tig",
+    "Rinchen Dorji"
+  ],
+  "uid": "images-1028396",
+  "node_user": "shc7pw",
+  "node_user_i": 37,
+  "creators": [
+    "37",
+    "Samuel Chrisinger",
+    "Rinchen Dorji",
+    "",
+    "Rinchen Dorji"
+  ],
+  "node_lang": "en",
+  "node_created": "2019-02-09T06:30:00Z",
+  "node_changed": "2019-04-03T00:59:40Z",
+  "pogrified_s": "fields_module",
+  "title": [
+    "First folios of buddhist text zab mo yang tig"
+  ],
+  "titles": [
+    "First folios of buddhist text zab mo yang tig",
+    "First folios of buddhist text zab mo yang tig",
+    "First folios of buddhist text zab mo yang tig"
+  ],
+  "service": "images",
+  "asset_type": "images",
+  "url_html": "https://images.mandala.library.virginia.edu/image/first-folios-buddhist-text-zab-mo-yang-tig",
+  "url_ajax": "https://images.mandala.library.virginia.edu/api/ajax/1028396",
+  "url_json": "https://images.mandala.library.virginia.edu/api/json/1028396",
+  "url_thumb": "https://iiif.lib.virginia.edu/mandala/shanti-image-469626/full/^!200,200/0/default.jpg",
+  "kmapid": [
+    "places-13735",
+    "places-13740",
+    "places-427",
+    "places-5279",
+    "places-5562",
+    "places-69866",
+    "places-18115",
+    "subjects-6403",
+    "subjects-8260",
+    "subjects-7315",
+    "subjects-7350",
+    "subjects-7535"
+  ],
+  "kmapid_strict": [
+    "places-18115",
+    "subjects-7535"
+  ],
+  "kmapid_strict_ss": [
+    "Ugyenchhoeling",
+    "Vartu Script"
+  ],
+  "kmapid_is": [
+    1373501,
+    1374001,
+    42701,
+    527901,
+    556201,
+    6986601,
+    1811501,
+    1811501,
+    640302,
+    826002,
+    731502,
+    735002,
+    753502,
+    753502
+  ],
+  "kmapid_places_idfacet": [
+    "Ugyenchhoeling|places-18115"
+  ],
+  "kmapid_subjects_idfacet": [
+    "Vartu Script|subjects-7535"
+  ],
+  "visibility_i": 1,
+  "visibility_s": "public",
+  "solrdoc_ts_i": 1706208112,
+  "node_user_full_s": "Samuel Chrisinger",
+  "collection_title": "Oral Cultures of Bhutan",
+  "collection_nid": "619101",
+  "asset_subtype": "photograph",
+  "creator": [
+    "Rinchen Dorji"
+  ],
+  "caption": "First folios of buddhist text zab mo yang tig",
+  "descriptions": [
+    "First folios of buddhist text zab mo yang tig",
+    "First folios of buddhist text zab mo yang tig. The title is printed fron woodblock. This is a rnying ma pa buddhist text containing dzogchen instructions authored by Longchen Rabjam. This text is one of the famous scriptures on dzogchen instructions and a part of snying thig ya Bzhi or four heart-essences authored by Longchen Rabjam. The text a rnying ma pa xylograpgy text printed from woodblocks.",
+    "en",
+    "en",
+    "<p>First folios of buddhist text zab mo yang tig. The title is printed fron woodblock. This is a rnying ma pa buddhist text containing dzogchen instructions authored by Longchen Rabjam.<br />\nThis text is one of the famous scriptures on dzogchen instructions and a part of snying thig ya Bzhi or four heart-essences authored by Longchen Rabjam. The text a rnying ma pa xylograpgy text printed from woodblocks.</p>\n"
+  ],
+  "summary": "First folios of buddhist text zab mo yang tig. The title is printed fron woodblock. This is a rnying ma pa buddhist text containing dzogchen instructions authored by Longchen Rabjam. This text is one of the famous scriptures on dzogchen instructions and a part of snying thig ya Bzhi or four heart-essences authored by Longchen Rabjam. The text a rnying ma pa xylograpgy text printed from woodblocks.",
+  "mogrified_s": "true",
+  "collection_idfacet": [
+    "Oral Cultures of Bhutan (images)|images-collection-619101"
+  ],
+  "collection_uid_s": "images-collection-619101",
+  "collection_uid_path_ss": [
+    "images-collection-619101"
+  ],
+  "collection_title_path_ss": [
+    "Oral Cultures of Bhutan"
+  ],
+  "collection_nid_path_is": [
+    619101
+  ],
+  "shanti_image_id_s": "shanti-image-469626",
+  "caption_lang_s": "en",
+  "summary_lang_s": "en",
+  "description": [
+    "<p>First folios of buddhist text zab mo yang tig. The title is printed fron woodblock. This is a rnying ma pa buddhist text containing dzogchen instructions authored by Longchen Rabjam.<br />\nThis text is one of the famous scriptures on dzogchen instructions and a part of snying thig ya Bzhi or four heart-essences authored by Longchen Rabjam. The text a rnying ma pa xylograpgy text printed from woodblocks.</p>\n"
+  ],
+  "description_lang_s": "en",
+  "description_type_s": "general description",
+  "description_authors_s": "",
+  "date_start": "2016-12-16T00:00:00Z",
+  "url_thumb_width": "200",
+  "url_thumb_height": "132",
+  "url_thumb_size": "30000",
+  "img_width_s": "6016",
+  "img_height_s": "4000",
+  "url_iiif_s": "https://iiif.lib.virginia.edu/mandala/shanti-image-469626/info.json",
+  "projects_ss": [
+    "tibet"
+  ],
+  "title_sort_s": "First folios of buddhist text zab mo yang tig",
+  "creator_sort_s": "Rinchen Dorji",
+  "_version_": 1831665772228771840,
+  "timestamp": "2025-05-09T17:43:22.896Z"
+}
