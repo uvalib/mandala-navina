@@ -16,3 +16,4 @@ nav:
   - "KMaps raw rebuilt on migration": kmaps-raw-format-rebuild-on-migration.md
   - "Images field_image binary migration": images-field-image-binary-migration.md
   - "image_descriptions summary length": image-descriptions-summary-length.md
+  - "Images rotation_s field support": images-rotation-field-support.md

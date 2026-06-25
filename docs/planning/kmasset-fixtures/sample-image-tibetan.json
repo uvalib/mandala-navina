@@ -1,0 +1,196 @@
+{
+  "id": "1243616",
+  "ids": [
+    "1243616",
+    "images-1243616",
+    "shanti-image-563991"
+  ],
+  "str": [
+    "1243616",
+    "images-1243616",
+    "105",
+    "Orgyen Sinzhutsé Script",
+    "Than Grove",
+    "Dudul Dorjay",
+    "Orgyen Sinzhutsé Script",
+    "shanti-image-563991",
+    "",
+    "",
+    "",
+    "Orgyen Sinzhutsé Script",
+    "Dudul Dorjay"
+  ],
+  "uid": "images-1243616",
+  "node_user": "ndg8f",
+  "node_user_i": 105,
+  "creators": [
+    "105",
+    "Than Grove",
+    "Dudul Dorjay",
+    "",
+    "",
+    "",
+    "Dudul Dorjay"
+  ],
+  "node_lang": "en",
+  "node_created": "2019-06-12T21:36:23Z",
+  "node_changed": "2021-06-16T23:44:07Z",
+  "pogrified_s": "fields_module",
+  "title": [
+    "Orgyen Sinzhutsé Script"
+  ],
+  "titles": [
+    "Orgyen Sinzhutsé Script",
+    "Orgyen Sinzhutsé Script",
+    "Orgyen Sinzhutsé Script"
+  ],
+  "service": "images",
+  "asset_type": "images",
+  "url_html": "https://images.mandala.library.virginia.edu/image/untitled-54084",
+  "url_ajax": "https://images.mandala.library.virginia.edu/api/ajax/1243616",
+  "url_json": "https://images.mandala.library.virginia.edu/api/json/1243616",
+  "url_thumb": "https://iiif.lib.virginia.edu/mandala/shanti-image-563991/full/^!200,200/0/default.jpg",
+  "kmapid": [
+    "places-13735",
+    "places-13740",
+    "places-1",
+    "places-2",
+    "places-317",
+    "places-637",
+    "subjects-192",
+    "subjects-4825",
+    "terms-180747"
+  ],
+  "kmapid_strict": [
+    "places-637",
+    "subjects-4825",
+    "terms-180747"
+  ],
+  "kmapid_strict_ss": [
+    "Lhasa",
+    "Tibetan Scripts",
+    "ཡིག་གཟུགས"
+  ],
+  "kmapid_is": [
+    1373501,
+    1374001,
+    101,
+    201,
+    31701,
+    63701,
+    63701,
+    19202,
+    482502,
+    482502,
+    18074703
+  ],
+  "kmapid_places_idfacet": [
+    "Lhasa|places-637"
+  ],
+  "kmapid_subjects_idfacet": [
+    "Tibetan Scripts|subjects-4825"
+  ],
+  "kmapid_terms_idfacet": [
+    "ཡིག་གཟུགས|terms-180747"
+  ],
+  "visibility_i": 1,
+  "visibility_s": "public",
+  "solrdoc_ts_i": 1706206597,
+  "node_user_full_s": "Than Grove",
+  "collection_title": "ཡིག་གཟུགས་བཤམས་སྟོན་ཁང་།",
+  "collection_nid": "1242551",
+  "asset_subtype": "photograph",
+  "creator": [
+    "Dudul Dorjay"
+  ],
+  "caption": "Orgyen Sinzhutsé Script",
+  "descriptions": [
+    "Orgyen Sinzhutsé Script",
+    "",
+    "Tibetan",
+    "Tibetan",
+    "",
+    "ཨོ་རྒྱན་སྲིན་ཞུ་རྩེའི་ཡི་གེ",
+    "邬坚森稀仔书法",
+    "en",
+    "en",
+    "",
+    "",
+    "en",
+    "en"
+  ],
+  "summary": "",
+  "mogrified_s": "true",
+  "collection_idfacet": [
+    "Dudul Dorjay Photos (images)|images-collection-1239481",
+    "ཡིག་གཟུགས་བཤམས་སྟོན་ཁང་། (images)|images-collection-1242551"
+  ],
+  "collection_uid_s": "images-collection-1242551",
+  "collection_uid_path_ss": [
+    "images-collection-1239481",
+    "images-collection-1242551"
+  ],
+  "collection_title_path_ss": [
+    "Dudul Dorjay Photos",
+    "ཡིག་གཟུགས་བཤམས་སྟོན་ཁང་།"
+  ],
+  "collection_nid_path_is": [
+    1239481,
+    1242551
+  ],
+  "shanti_image_id_s": "shanti-image-563991",
+  "caption_lang_s": "Tibetan",
+  "summary_lang_s": "Tibetan",
+  "description": [
+    ""
+  ],
+  "description_lang_s": "Tibetan",
+  "description_type_s": "general description",
+  "description_authors_s": "",
+  "caption_alt_txt": [
+    "ཨོ་རྒྱན་སྲིན་ཞུ་རྩེའི་ཡི་གེ",
+    "邬坚森稀仔书法"
+  ],
+  "caption_alt_lang_ss": [
+    "en",
+    "en"
+  ],
+  "summary_alt_txt": [
+    "",
+    ""
+  ],
+  "summary_alt_lang_ss": [
+    "en",
+    "en"
+  ],
+  "description_alt_txt": [
+    "",
+    ""
+  ],
+  "description_alt_lang_ss": [
+    "en",
+    "en"
+  ],
+  "description_alt_type_ss": [
+    "general description",
+    "general description"
+  ],
+  "description_alt_authors_ss": [
+    "",
+    ""
+  ],
+  "date_start": "2011-09-08T00:00:00Z",
+  "url_thumb_width": "200",
+  "url_thumb_height": "132",
+  "url_thumb_size": "30000",
+  "img_width_s": "4928",
+  "img_height_s": "3264",
+  "url_iiif_s": "https://iiif.lib.virginia.edu/mandala/shanti-image-563991/info.json",
+  "projects_ss": [
+    "tibet"
+  ],
+  "title_sort_s": "Orgyen Sinzhutsé Script",
+  "creator_sort_s": "Dudul Dorjay",
+  "_version_": 1831665957817286656,
+  "timestamp": "2025-05-09T17:46:20.205Z"
+}

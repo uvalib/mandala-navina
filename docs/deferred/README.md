@@ -36,6 +36,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [kmaps-raw-format-rebuild-on-migration.md](kmaps-raw-format-rebuild-on-migration.md) | migration / KMaps | Sprint 1 (1a.7) | High |
 | [images-field-image-binary-migration.md](images-field-image-binary-migration.md) | migration / Images / files | Sprint 1 (1a.7) | Low |
 | [image-descriptions-summary-length.md](image-descriptions-summary-length.md) | migration / Images / content model | Sprint 1 (1a.7) | Low |
+| [images-rotation-field-support.md](images-rotation-field-support.md) | solr / kmassets / Images / write path | Sprint 1 (1a.8) | Medium |
 
 ## Resolved / superseded
 
