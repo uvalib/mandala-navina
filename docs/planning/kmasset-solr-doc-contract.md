@@ -189,8 +189,10 @@ broad enough that most fields already have a home.
 an initial conversation; these are unresolved and Dave may add to them:
 
 - **Direct-to-master sink** — is a second writer to the master acceptable, and how
-  does Drupal get write access (network path + credentials) to the master? This is
-  the newest piece and the most likely to draw constraints.
+  does Drupal reach it? **Likely no credentials** — the master is internal-network
+  isolated and access control is enforced at the read proxy, not the master — so
+  write access is probably just network reachability. **To be verified by testing**,
+  not assumed. This is the newest piece and the most likely to draw constraints.
 - **Batch cadence / "triggered when needed"** — how promptly is a freshly-written
   S3 file processed? (Governs how much we lean on the direct sink for latency.)
 - **Regen-directory scheme** — still supported by the current mechanism?
@@ -548,11 +550,15 @@ these fields.
 
 ## 10. Open questions
 
-1. **Write transport (§3)** — A (S3→ECS), B (via reindeer_x), or C (direct
-   Drupal→master)? Gated on the Dave Goldstein cost/architecture conversation.
-2. **Proxy write isolation** — confirmed read-only; a writer needs a *separate*
-   master write-connection/credentials. What is the master write endpoint +
-   auth for a D11 writer?
+1. **Write transport (§3)** — superseded. The old A/B/C framing assumed an ECS
+   transform that doesn't exist. Now a **working model** (§3): Dave's small-batch
+   S3 poster (authoritative) + a direct-to-master sink (incremental + diagnosis).
+   Coordination with Dave is still open — see §3 "Open with Dave."
+2. **Master write endpoint + auth** — the proxy is read-only, so a writer needs a
+   *separate* master write-connection. **Probably no credentials**: the master is
+   internal-network isolated and access control lives at the read proxy, so write
+   access is likely network reachability only. **Verify by testing** rather than
+   assuming an auth scheme. (Open with Dave — §3.)
 3. **Language-suffix resolution** (§8) — RESOLVED for Images (§7.3: `*_lang_s`
    companions, no script-suffixed fields); still open for the kmterms/taxonomy
    producers (`_eng` vs `_en`).
@@ -561,3 +567,20 @@ these fields.
 5. **Legacy consumer liveness** — are the D7 AjaxSolr clients still serving any
    production site (constraining what we can change), or fully superseded by
    mandala-om?
+6. **Does the Mandala Drupal app read through the proxy?** — Leaning **no**. The
+   proxy enforces visibility for *untrusted, end-user-driven* clients (mandala-om
+   React, D7 JS) that hit Solr directly. Drupal is a **trusted tier** with its own
+   node/Group access control; routing it through the proxy pre-filters results to a
+   single visibility context — wrong for a tier that must see content across
+   visibility levels (editorial/admin, access-aware per-user rendering, index
+   verification) and would duplicate Drupal's access logic in the proxy. Symmetric
+   with the write path (Drupal→master directly): the trusted tier reads the
+   **replicas directly**; the proxy is the *external-client* boundary.
+   - **Caveat:** if Drupal serves any end-user-facing search itself, it then **owns**
+     the access filtering for that surface, which must agree with the proxy's
+     filtering (the Sprint **1b.3** coherence criterion). So the answer depends partly
+     on whether end-user search is served by Drupal or delegated entirely to
+     mandala-om.
+   - **Exception:** Drupal may query *through* the proxy to **verify** it enforces
+     correctly — proxy as system-under-test, essentially the 1b.3 acceptance check.
+   - **ADR-worthy** once decided (read-path access-control architecture).
