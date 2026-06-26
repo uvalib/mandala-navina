@@ -17,4 +17,5 @@ nav:
   - "Images field_image binary migration": images-field-image-binary-migration.md
   - "image_descriptions summary length": image-descriptions-summary-length.md
   - "Images rotation_s field support": images-rotation-field-support.md
+  - "kmassets sync error-management & resubmit": kmassets-sync-error-management.md
   - "Jira issue-tracking integration": jira-issue-tracking-integration.md

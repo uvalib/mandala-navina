@@ -2,8 +2,12 @@
 
 **Status:** Foundation / discovery — captures the kmassets Solr document format as an
 *informal contract* so any D11 media manager can reproduce it faithfully. The
-Solr **topology** below is settled fact; the D11 **write transport** (§3) is an
-**OPEN decision**. The Images field-by-field inventory (§7) is a **Phase 1 TODO**.
+Solr **topology** below is settled fact; the D11 **write transport** now has a
+**pragmatic working model** (§3 — Dave Goldstein's small-batch S3 poster for the
+authoritative path, plus a direct-to-master sink for incremental updates and
+diagnosis), **with coordination still open** — Dave may surface new constraints
+about the mechanism. The Images field-by-field inventory (§7) is **complete
+(Phase 1, 2026-06-25)**.
 **Relates to:** [Sprint 1 task 1a.8](../sprints/sprint-01-images-implementation.md)
 (Solr write/sync) and [1b.3](../sprints/sprint-01-images-implementation.md) (proxy
 visibility), [ADR 004](../adr/004-solr-source-of-truth.md) (Solr is source of truth;
@@ -34,8 +38,9 @@ match the existing contract), [ADR 006](../adr/006-kmterms-in-kmassets-shadow-pa
   managers. The deployed Solr topology and the write/read separation.
 - **Out of scope (separate concerns):** the **AV transcript index** (different
   ancestry — D7 `transcripts` module; not kmassets); the `kmterms` index itself
-  (written upstream by KMaps Rails); and the *decision* of which write transport
-  D11 adopts (framed here as open in §3, decided elsewhere).
+  (written upstream by KMaps Rails). The D11 write *mechanism* is described in §3
+  (working model — Dave's batch poster + a direct sink; coordination with Dave
+  still open); the proxy visibility layer is Sprint 1 Step 1b.
 
 ---
 
@@ -90,31 +95,109 @@ The proxy and its visibility enforcement are the subject of **Sprint 1 Step 1b**
 
 ---
 
-## 3. The D11 write transport (OPEN DECISION)
+## 3. The D11 write transport (WORKING MODEL — Dave coordination ongoing)
 
-The topology above fixes the *destination* (the master) and the *document format*
-(the rest of this doc). It does **not** decide **how** a D11 Drupal content save
-reaches the master. reindeer_x + the ECS ingest pipeline are the **inherited D7
-path, not a chosen D11 design.** Candidate options, still under investigation:
+> **Revision (2026-06-26):** This section previously framed the transport as an
+> OPEN decision among three options, one of which (A) assumed an **"ECS transform"**
+> that rewrites the producer doc into its final form. From an initial conversation
+> with Dave Goldstein (Cloud Infrastructure) we now understand the actual
+> mechanism: **there is no transform.** This is a *working model*, **not a closed
+> decision** — the discussion with Dave continues and he may surface new
+> constraints about the mechanism (see "Open with Dave" below).
+> The producer writes the **complete, final add-doc** (this contract, §5–§7) to S3;
+> Dave's mechanism is a **batch poster** that collects docs and POSTs them to the
+> master unchanged. `copyField` aggregation (§7.2-D) is **Solr's** job at index
+> time and happens on any path — it is not a transform step and not the producer's
+> to emit.
 
-| Option | Path to master | Reuses | Open risk |
+**What Dave's mechanism actually is — a small-batch S3 poster:**
+
+- **Batches are small (~32 docs) and atomic.** One bad doc fails the whole batch;
+  the remedy is to regenerate/resubmit the batch — which the change-detection model
+  below makes necessary anyway.
+- **Change detection is object-level.** Reprocessing is forced by **(re)writing or
+  renaming the file** (one/few docs), or by staging docs under a **"regen directory"
+  naming scheme** (larger sets — a proven operational lever). We need **not** track
+  the exact internal timestamp Dave keys on: the file *is* the request, and
+  rewriting it *is* the resubmit.
+- **Failures are logged with the citing document** — so the culprit isn't a mystery
+  in principle. But **reaching that log today is involved and taxing**: the errors
+  surface only in **CloudWatch**, and must be located and read by hand. And because
+  the batch aborts at the first failure, a cited doc can **mask later bad docs** in
+  the same batch. (This manual CloudWatch excavation is the single biggest ergonomics
+  gap; the automation that addresses it is broken out as a downstream capability —
+  see below.)
+- **Reconciliation bookkeeping is ours.** Dave's side won't account per-doc; we
+  track which nodes changed / need (re)writing. Drupal's own changed-timestamps
+  largely cover this — no separate heavyweight ledger required.
+
+**One builder, two sinks.** Build the contract doc once (§5–§7); emit it two ways,
+both writing **to the master, never the proxy** (§2 invariant):
+
+| Sink | Path to master | Role | Force-resubmit lever |
 |---|---|---|---|
-| **A — S3 → ECS** (D7 model) | Drupal → S3 → SQS → ECS transform → master | existing ECS transform already emits the correct format | no shared FS in D11; the Part-A file-watcher is legacy multisite; 4-hop fire-and-forget visibility gap |
-| **B — via reindeer_x** | Drupal → HTTP POST → reindeer_x → master | reindeer_x's existing `kmassets_write_client` | needs a new content-doc handler + transform; couples to reindeer_x productionization |
-| **C — direct Drupal write** | Drupal queue worker → master (direct) | simplest; debuggable; no ECS/S3 | Drupal must emit the exact flat doc format itself (§5); schema changes are deploy-coordinated (see below) |
+| **File sink** | Drupal → S3 inbound → Dave's batch poster → master | the **authoritative** path: bulk migrations + steady-state | rewrite/rename a file (few) · "regen directory" (many) |
+| **Direct sink** | Drupal queue worker → POST add-doc → master | **incremental** day-to-day updates **+** fast **diagnostic** loop | n/a — synchronous |
 
-All three **write to the master**, never the proxy. The choice is gated on the
-[cost/architecture conversation with Dave Goldstein](../deferred/solr-pipeline-cost-discussion.md).
-Note also (ADR 007 context): reindeer_x's *own* job — the kmterms→kmassets shadow
-sync (Population 1) — is a **separate** concern from Images content indexing;
-"refactor reindeer_x out of D11 Mandala" is a stated future goal that, when
-pursued, warrants its own successor ADR.
+The **direct sink** is the pragmatic win. A synchronous POST returns Solr's exact
+error on the cited doc immediately, so it (a) gives day-to-day saves low latency and
+visible success/failure — fixing D7's fire-and-forget invisibility — and (b) is the
+fast inner loop for diagnosing batch failures: replay suspect docs to surface *all*
+problems (de-masking the serial failures the atomic batch hides) and to test whether
+a fix is **systematic**, *before* doing the authoritative whole-batch regenerate via
+the file sink. **Diagnose fast with direct; land authoritatively via the batch.**
+Both carry the identical contract doc — the only difference is the courier and the
+latency.
+
+**Error-management automation is a separate downstream capability — not Sprint 1.**
+Batch failures today require manual **CloudWatch** excavation (bullet above), and the
+direct sink is the manual workaround that shortens that loop. A full
+error-management & resubmit *automation* layer on top of these two sinks — a single
+managed failure queue, batch errors normalized to the direct-sink error shape, managed
+resubmit, **batch de-masking via direct replay** (replay a failed batch's members
+doc-by-doc to surface *all* failures at once), **provenance metadata** (source channel
++ batch identity as first-class, decision-driving fields), and a **systemic-error
+circuit-breaker** (group by signature + threshold so a field/schema change doesn't
+dump ~100k near-identical errors or hammer the master) — is **out of Sprint 1 scope**
+and broken out as its own downstream effort, possibly its own sprint:
+[kmassets-sync-error-management.md](../deferred/kmassets-sync-error-management.md).
+The observability/reporting ideas in
+[solr-sync-architecture-d11.md](../deferred/solr-sync-architecture-d11.md) (SNS
+events) and [Spike 8 Part C](../spikes/spike-08-reindeer-x-consolidation.md) fold
+into it.
+
+**Getting Drupal's doc to S3 (file-sink mechanics).** D11 has no shared filesystem
+(Aegir is gone), so the D7 `clsync`/`synchandler` file-watch is retired. The file
+sink reaches S3 either by Drupal writing directly via the AWS SDK, or by relaying
+through reindeer_x's HTTP `/post` (the Node.js consolidation proven in
+[Spike 8 Part A](../spikes/spike-08-reindeer-x-consolidation.md)). That sub-choice
+is an implementation detail of the file sink, **not** a transport fork.
+
+A writer reaches the master over a **master write-connection**, never the
+proxy-pointed read connection (§2). Note (ADR 007 context): reindeer_x's *own* job —
+the kmterms→kmassets shadow sync (Population 1) — is a **separate** concern from
+Images content indexing; "refactor reindeer_x out of D11 Mandala" is a stated future
+goal that, when pursued, warrants its own successor ADR.
 
 **Schema changes are file-deploys.** Because this is classic `schema.xml` (no
 managed-schema API), any field the Images doc needs that the current `kmassets`
 schema lacks requires a **coordinated configset + Terraform/Ansible deploy with
 infra**, not a Drupal-side change. The static core + dynamic grammar (§6) is
 broad enough that most fields already have a home.
+
+**Open with Dave (coordination not yet closed).** The working model above is from
+an initial conversation; these are unresolved and Dave may add to them:
+
+- **Direct-to-master sink** — is a second writer to the master acceptable, and how
+  does Drupal get write access (network path + credentials) to the master? This is
+  the newest piece and the most likely to draw constraints.
+- **Batch cadence / "triggered when needed"** — how promptly is a freshly-written
+  S3 file processed? (Governs how much we lean on the direct sink for latency.)
+- **Regen-directory scheme** — still supported by the current mechanism?
+- **Failure surface** — do the cited-failure logs come back reliably, and are failed
+  batch members preserved anywhere, or do we regenerate from the node?
+- **Timestamp field** — which one Dave keys on (low priority; file-rewrite forces
+  reprocessing regardless).
 
 ---
 

@@ -52,3 +52,35 @@ design for D11 should give operators a way to answer "what happened to this node
 This split aligns pipeline complexity with actual workload and restores visibility
 where it matters most. See [solr-sync-architecture-d11.md](solr-sync-architecture-d11.md)
 for the full reindeer_x event-driven architecture proposal.
+
+## Current understanding (2026-06-26) — discussion ongoing
+
+An initial conversation reframed the picture, but **the discussion with Dave is
+still open** — he may surface new constraints about the mechanism (especially the
+direct-to-master sink). This is a working model, not a settled decision.
+
+**There is no ECS "transform"** — the producer writes the *complete, final* add-doc
+and Dave's mechanism is a **small-batch (~32-doc) S3 poster** that POSTs docs to the
+master unchanged. Operational facts so far:
+
+- Batches are **atomic** (one bad doc fails the batch; whole-batch regenerate is the
+  remedy), with **cited-failure logs** (culprit named, though it can mask later
+  failures in the same batch).
+- Change detection is **object-level** — **rewrite/rename a file** to force a doc,
+  or stage a **"regen directory"** to force a larger set. No need to match Dave's
+  internal timestamp.
+- **Reconciliation bookkeeping is ours**, but light — Drupal's changed-timestamps
+  mostly cover "what needs (re)writing."
+
+**Direction (working):** keep bulk + authoritative writes on the **S3 batch** path
+(Dave owns it); add a **direct-to-master** sink for **incremental day-to-day**
+updates **and** as the fast diagnostic loop for batch failures (synchronous error,
+de-masks serial failures, tests systematic fixes). Both emit the identical contract
+doc. The original cost worry recedes — there's no always-on ECS to right-size — but
+that's contingent on the mechanism as currently understood.
+
+**Still open with Dave** (see the list in
+[kmasset-solr-doc-contract.md §3](../planning/kmasset-solr-doc-contract.md)):
+direct-to-master access/credentials + whether a second writer is acceptable; batch
+cadence; regen-directory support; failure-log reliability; which timestamp he keys
+on. Full write-up in that §3.
