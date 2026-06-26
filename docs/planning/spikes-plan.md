@@ -406,6 +406,54 @@ to SNS topics for downstream visibility.
 
 ---
 
+## Spike 9 — Documentation Hosting & Access Control (mkdocs → public + Confluence)
+
+**Time-box:** 1–2 days (mostly sync-fidelity evaluation)  
+**Priority:** Low — long-run / precedent-setting; not on the implementation critical path  
+**Lead:** Yuji Shinozaki
+
+### Theory
+The documentation surface can be split into a small curated **public** GitHub
+Pages site and an **access-controlled** internal corpus (ADRs, spikes, deferred
+notes, session logs) that is still authored as git markdown but auto-published to
+a restricted Confluence space — without abandoning the session-driven,
+docs-beside-code workflow.
+
+### Background
+The repo `uvalib/mandala-navina` is public on a free org plan, so all docs
+markdown is readable directly regardless of where GitHub Pages publishes, and
+GitHub's private Pages feature is unavailable. Code stays public (decided), so the
+internal docs' *source* must move out of the public repo to be access-controlled.
+Confluence/Jira are now available. The Jira half is the more urgent, separable
+track — see [docs/deferred/jira-issue-tracking-integration.md](../deferred/jira-issue-tracking-integration.md).
+
+### Work
+Retire the cheapest unknown first — markdown → Confluence sync fidelity — by
+round-tripping one ADR and one session log through a candidate tool
+(`mkdocs-with-confluence`, Confluence REST API + converter, or Foliant) into a
+restricted test space. Then prove git-submodule ergonomics for a private docs repo.
+
+### Pass Criteria
+- An unattended merge publishes a faithful page to a restricted Confluence space
+- Admonitions, code fences, tables survive; internal links resolve or degrade gracefully
+- Submodule workflow is tolerable for day-to-day sessions
+
+### Fail Criteria and Response
+| Finding | Response |
+|---|---|
+| No tool renders mkdocs features faithfully | Publish flattened HTML/PDF as attachments, or accept lossy reading-only conversion |
+| Confluence REST/CI auth too fiddly | Manual periodic publish, or private mkdocs behind UVA SSO instead of Confluence |
+| Submodule workflow too painful | Documented sibling-clone convention instead |
+
+### Outputs
+- Go/no-go on automated markdown → Confluence publishing
+- Decision on git history (scrub vs. accept already-disclosed)
+- Definition of the public page vs. internal corpus boundary
+
+Full write-up: [Spike 9](../spikes/spike-09-docs-hosting-confluence.md).
+
+---
+
 ## Decision Gate: Week 4 Review
 
 After all six initial spikes are complete, hold a review session with the following agenda:

@@ -116,6 +116,9 @@ Sprint 1 closes when, against a copy of the production Images DB in staging:
       via the D11 search path, and retrievable by an authorized one.
 - [ ] The test-run → validate → rollback cycle is documented and repeatable.
 
+**On close:** kick off the [Jira issue-tracking integration](../deferred/jira-issue-tracking-integration.md)
+(sequenced to start after this sprint; backfill open deferred notes as tickets).
+
 ## References
 
 - **Decisions:** [ADR 008](../adr/008-mvp-migrate-not-improve.md),
