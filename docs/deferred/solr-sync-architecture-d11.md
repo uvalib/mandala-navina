@@ -59,6 +59,19 @@ In D11, Aegir is gone. The equivalent pipeline needs to be designed. See
 [solr-pipeline-cost-discussion.md](solr-pipeline-cost-discussion.md) for the
 full options and the Dave Goldstein conversation needed before deciding.
 
+> **Update (2026-06-26) — working model, discussion ongoing.** An initial
+> conversation with Dave clarified that his mechanism is a **small-batch (~32-doc)
+> S3 poster with no transform** — the producer writes the *complete, final* add-doc
+> and reprocessing is forced object-level (rewrite/rename a file, or a "regen
+> directory" for larger sets). The emerging shape: a single doc-builder feeding two
+> sinks — a **file sink** (→ S3 → Dave's batch; authoritative) and a
+> **direct-to-master sink** (incremental day-to-day updates + a fast synchronous
+> diagnostic loop for batch failures). The D11 file-sink mechanics (Drupal → S3
+> directly, or relayed via reindeer_x HTTP `/post` per Spike 8 Part A) are an
+> implementation detail, not a transport fork. **Not yet closed with Dave** —
+> notably whether a second (direct) writer to the master is acceptable. Full
+> write-up: [kmasset-solr-doc-contract.md §3](../planning/kmasset-solr-doc-contract.md).
+
 ### 2. KMaps-derived asset sync (kmterms → kmassets)
 
 The `kmaps-solr-sync` service needs to be modernized:
