@@ -25,6 +25,7 @@ Development is driven collaboratively — team members take turns leading sessio
   1. Flush any decisions to `docs/adr/`, findings to `docs/spikes/`, and deferred notes to `docs/deferred/`.
   2. Update the corresponding `.pages` file for every directory you added a doc to (`docs/adr/.pages`, `docs/spikes/.pages`, `docs/deferred/.pages`). New files are invisible in mkdocs until listed there. `docs/session-logs/.pages` uses `...` and self-updates.
   3. Run `scripts/save-session-log.py` for long planning or spike sessions.
+  4. Refresh your local Claude memory so the next session doesn't start stale: update `project-mandala-state` (sprint/spike/ADR status, dates) and add or revise topic memories for anything decided this session, marking superseded framings as superseded. Note: memory is **per-machine and per-driver** — each lead refreshes their own; the committed `docs/` tree remains the team source of truth, and memory only mirrors it.
 - **ADRs are immutable.** Once accepted, don't edit an ADR — write a new one that supersedes it.
 - **Spikes over engineering.** Prove unknowns with the lightest possible demo before building production code.
 
