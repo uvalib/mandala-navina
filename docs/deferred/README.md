@@ -37,6 +37,11 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [images-field-image-binary-migration.md](images-field-image-binary-migration.md) | migration / Images / files | Sprint 1 (1a.7) | Low |
 | [image-descriptions-summary-length.md](image-descriptions-summary-length.md) | migration / Images / content model | Sprint 1 (1a.7) | Low |
 | [images-rotation-field-support.md](images-rotation-field-support.md) | solr / kmassets / Images / write path | Sprint 1 (1a.8) | Medium |
+| [kmassets-uid-identity-across-migration.md](kmassets-uid-identity-across-migration.md) | solr / kmassets / migration / identity | Sprint 1 (1a.8) | High |
+| [kmassets-kmapid-ancestor-id-resolution.md](kmassets-kmapid-ancestor-id-resolution.md) | solr / kmassets / KMaps / write path | Sprint 1 (1a.8) | High |
+| [images-description-text-format-fidelity.md](images-description-text-format-fidelity.md) | migration / Images / text formats | Sprint 1 (1a.8) | Medium |
+| [images-projects-ss-producer-field.md](images-projects-ss-producer-field.md) | solr / kmassets / Images / write path | Sprint 1 (1a.8) | Medium |
+| [images-iiif-thumb-size-format.md](images-iiif-thumb-size-format.md) | IIIF / kmassets / Images / write path | Sprint 1 (1a.8) | Low |
 | [kmassets-sync-error-management.md](kmassets-sync-error-management.md) | solr / kmassets / sync / observability | Session 2026-06-26 | Medium (own downstream sprint; not Sprint 1) |
 | [jira-issue-tracking-integration.md](jira-issue-tracking-integration.md) | process / project tooling / tracking | PM session 2026-06-25 | Medium → High (start after Sprint 1) |
 
