@@ -1,0 +1,25 @@
+services:
+  # The orchestrator: builds the flat kmassets doc from a node by running the
+  # common-core base layer, then every tagged contributor (the D11 equivalent of
+  # D7's drupal_alter('kmaps_fields_solr_doc')), then post-alter normalization.
+  mandala_kmassets_sync.doc_builder:
+    class: Drupal\mandala_kmassets_sync\KmassetDocBuilder
+    arguments:
+      - '@config.factory'
+      - '@entity_type.manager'
+      - !tagged_iterator mandala_kmassets_sync.doc_contributor
+
+  # Image-specific fields (D7 shanti_images_kmaps_fields_solr_doc_alter).
+  mandala_kmassets_sync.contributor.image:
+    class: Drupal\mandala_kmassets_sync\Contributor\ImageFieldContributor
+    arguments:
+      - '@shanti_iiif.url_builder'
+    tags:
+      - { name: mandala_kmassets_sync.doc_contributor, priority: 0 }
+
+  # Collection / access-path fields (D7 shanti_collections_kmaps_fields_solr_doc_alter).
+  # STUB: blocked on 1b Group collections (ADR 011). See class docblock.
+  mandala_kmassets_sync.contributor.collection:
+    class: Drupal\mandala_kmassets_sync\Contributor\CollectionFieldContributor
+    tags:
+      - { name: mandala_kmassets_sync.doc_contributor, priority: 10 }

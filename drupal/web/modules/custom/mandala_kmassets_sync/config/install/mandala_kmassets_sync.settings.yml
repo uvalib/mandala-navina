@@ -1,0 +1,23 @@
+# Per-bundle kmassets document settings.
+#
+# In D7 these lived as site-level variable_get() values (one Drupal install per
+# service). The D11 single-site (ADR 005) hosts every asset type in one install,
+# so the service / asset_type / URL grammar is keyed by node bundle instead.
+#
+# The `uid` document-identity contract is `{service}-{nid}` (e.g. images-1028396)
+# — it is NOT the global site name. reindeer_x and the React app key off these,
+# so `service` MUST stay per-asset-type (images/av/sources/texts), not "mandala".
+#
+# URL templates use the __NID__ token. The exact public-facing scheme for the
+# D11 single-site is a deferred decision (D7 used per-service subdomains, e.g.
+# images.mandala.library.virginia.edu); these defaults preserve the D7 shape so
+# the contract is explicit, and are overridable per-environment.
+bundles:
+  shanti_image:
+    service: images
+    asset_type: images
+    # asset_subtype source field on the node (D7 "extra_fields" map).
+    asset_subtype_field: field_image_type
+    url_html: 'https://images.mandala.library.virginia.edu/image/__NID__'
+    url_ajax: 'https://images.mandala.library.virginia.edu/api/ajax/__NID__'
+    url_json: 'https://images.mandala.library.virginia.edu/api/json/__NID__'

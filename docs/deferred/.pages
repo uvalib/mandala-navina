@@ -17,5 +17,10 @@ nav:
   - "Images field_image binary migration": images-field-image-binary-migration.md
   - "image_descriptions summary length": image-descriptions-summary-length.md
   - "Images rotation_s field support": images-rotation-field-support.md
+  - "kmassets uid identity across migration": kmassets-uid-identity-across-migration.md
+  - "kmapid ancestor-ID resolution": kmassets-kmapid-ancestor-id-resolution.md
+  - "Image description text-format fidelity": images-description-text-format-fidelity.md
+  - "projects_ss producer field": images-projects-ss-producer-field.md
+  - "IIIF thumb size format (^! vs !)": images-iiif-thumb-size-format.md
   - "kmassets sync error-management & resubmit": kmassets-sync-error-management.md
   - "Jira issue-tracking integration": jira-issue-tracking-integration.md
