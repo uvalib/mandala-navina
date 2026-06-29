@@ -1,0 +1,29 @@
+mandala_kmassets_sync.settings:
+  type: config_object
+  label: 'Mandala KMassets Sync settings'
+  mapping:
+    bundles:
+      type: sequence
+      label: 'Per-bundle kmassets document settings'
+      sequence:
+        type: mapping
+        label: 'Bundle settings'
+        mapping:
+          service:
+            type: string
+            label: 'Service (uid prefix / service field)'
+          asset_type:
+            type: string
+            label: 'Asset type'
+          asset_subtype_field:
+            type: string
+            label: 'Field providing asset_subtype'
+          url_html:
+            type: string
+            label: 'HTML URL template (__NID__ token)'
+          url_ajax:
+            type: string
+            label: 'AJAX URL template (__NID__ token)'
+          url_json:
+            type: string
+            label: 'JSON URL template (__NID__ token)'

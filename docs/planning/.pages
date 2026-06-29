@@ -6,4 +6,5 @@ nav:
   - "Images: Content Model Audit": images-content-model-audit.md
   - "KMaps: Migration Mapping (D7 → D11)": kmaps-migration-mapping.md
   - "KMasset Solr Doc Contract (golden doc)": kmasset-solr-doc-contract.md
+  - "1a.8 Open Decisions (next-session prep)": 1a8-open-decisions.md
   - "Collections: Inheritance Decision Brief (RESOLVED → ADR 011)": collections-inheritance-decision-brief.md

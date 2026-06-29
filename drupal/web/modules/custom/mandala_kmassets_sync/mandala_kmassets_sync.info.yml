@@ -1,0 +1,11 @@
+name: 'Mandala KMassets Sync'
+type: module
+description: 'Builds the flat kmassets Solr "golden doc" from D11 nodes (Sprint 1 task 1a.8). Faithful D11 port of the D7 3-layer producer chain (shanti_kmaps_fields base + shanti_images/shanti_collections alters). Emits source/producer fields only — Solr fills copyField aggregates at index time.'
+package: Mandala
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - paragraphs:paragraphs
+  - shanti_kmaps_fields:shanti_kmaps_fields
+  - shanti_iiif:shanti_iiif
+  - shanti_kmaps_admin:shanti_kmaps_admin

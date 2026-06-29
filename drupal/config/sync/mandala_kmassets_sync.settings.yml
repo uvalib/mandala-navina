@@ -1,0 +1,10 @@
+_core:
+  default_config_hash: 3u5QDIgRr0LBVapJGjrd50LgFV8EDk4lQh9vxvursqs
+bundles:
+  shanti_image:
+    service: images
+    asset_type: images
+    asset_subtype_field: field_image_type
+    url_html: 'https://images.mandala.library.virginia.edu/image/__NID__'
+    url_ajax: 'https://images.mandala.library.virginia.edu/api/ajax/__NID__'
+    url_json: 'https://images.mandala.library.virginia.edu/api/json/__NID__'

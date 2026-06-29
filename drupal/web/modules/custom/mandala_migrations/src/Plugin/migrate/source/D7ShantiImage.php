@@ -39,6 +39,23 @@ class D7ShantiImage extends Node {
 
   /**
    * {@inheritdoc}
+   *
+   * Honours an optional `nids` source-config list to restrict the source query
+   * to specific node IDs. Used for fast, scoped imports (e.g. the 1a.8 golden
+   * fixtures) — unlike migrate_tools `--idlist`, which still calls prepareRow()
+   * on every source row. No-op when unset (the normal full-migration path).
+   */
+  public function query() {
+    $query = parent::query();
+    $nids = $this->configuration['nids'] ?? [];
+    if (!empty($nids)) {
+      $query->condition('n.nid', $nids, 'IN');
+    }
+    return $query;
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public function prepareRow(Row $row) {
     if (parent::prepareRow($row) === FALSE) {

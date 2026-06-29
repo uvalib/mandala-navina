@@ -68,3 +68,11 @@ still copy 1:1; only `raw` is reconstructed.
 - **Consider hardening `KmapsItem::isEmpty()`** to key off `id`/`header` rather
   than parsing `raw`, so the field type is robust to raw-format drift. Optional;
   the migration-side rebuild already resolves the data path.
+
+## Related (1a.8) — the `path` column is also not Solr-ready
+
+1a.8 doc-builder validation found a *separate* gap in the same family: the migrated
+`path` column holds the D7 breadcrumb-**name** path (`{{Earth}}{{Asia}}…`), not the
+numeric ancestor IDs the kmassets `kmapid` field needs. That copy is faithful to D7
+but starves the Solr-doc ancestor expansion. Tracked separately in
+[kmassets-kmapid-ancestor-id-resolution](kmassets-kmapid-ancestor-id-resolution.md).
