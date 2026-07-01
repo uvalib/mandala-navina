@@ -5,6 +5,9 @@ mandala_kmassets_sync.settings:
     solr_master_url:
       type: string
       label: 'Solr master core URL (direct sink target, no trailing slash)'
+    base_url:
+      type: string
+      label: 'Base URL for kmassets doc URLs — scheme + host, no trailing slash (token: __BASE_URL__)'
     bundles:
       type: sequence
       label: 'Per-bundle kmassets document settings'

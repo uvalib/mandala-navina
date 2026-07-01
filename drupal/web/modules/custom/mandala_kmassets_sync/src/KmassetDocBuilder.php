@@ -104,6 +104,9 @@ class KmassetDocBuilder {
     // Pattern {service}-11-\d+ distinguishes these docs from D7-era {service}-\d+.
     // See docs/deferred/kmassets-uid-identity-across-migration.md.
     $uid = $service . '-11-' . $nid;
+    $settings = $this->configFactory->get('mandala_kmassets_sync.settings');
+    $base_url = rtrim($settings->get('base_url') ?? '', '/');
+    $tokens = ['__BASE_URL__' => $base_url, '__NID__' => (string) $nid];
     $doc = [
       'id' => $uid,
       'uid' => $uid,
@@ -117,9 +120,9 @@ class KmassetDocBuilder {
       'title' => $node->label(),
       'service' => $service,
       'asset_type' => $bundle_config['asset_type'],
-      'url_html' => str_replace('__NID__', (string) $nid, $bundle_config['url_html'] ?? ''),
-      'url_ajax' => str_replace('__NID__', (string) $nid, $bundle_config['url_ajax'] ?? ''),
-      'url_json' => str_replace('__NID__', (string) $nid, $bundle_config['url_json'] ?? ''),
+      'url_html' => strtr($bundle_config['url_html'] ?? '', $tokens),
+      'url_ajax' => strtr($bundle_config['url_ajax'] ?? '', $tokens),
+      'url_json' => strtr($bundle_config['url_json'] ?? '', $tokens),
       // Stub: real visibility is Group-based (1b). Default public for now.
       'visibility_i' => 1,
       'visibility_s' => 'public',

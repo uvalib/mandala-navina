@@ -20,12 +20,20 @@
 # in settings.php: $config['mandala_kmassets_sync.settings']['solr_master_url']
 solr_master_url: 'http://mandala-solr-master-staging-private.internal.lib.virginia.edu:8080/solr/kmassets'
 
+# Base URL (scheme + host, no trailing slash) used in kmassets doc URLs.
+# Override per-environment in settings.php:
+#   $config['mandala_kmassets_sync.settings']['base_url'] = 'https://mandala.ddev.site';
+# URL templates below use __BASE_URL__ for the host and __NID__ for the node id.
+# NOTE: the D11 single-site URL path scheme is a deferred decision; these
+# templates preserve the D7 path shape and will be updated when the scheme lands.
+base_url: 'https://mandala.library.virginia.edu'
+
 bundles:
   shanti_image:
     service: images
     asset_type: images
     # asset_subtype source field on the node (D7 "extra_fields" map).
     asset_subtype_field: field_image_type
-    url_html: 'https://images.mandala.library.virginia.edu/image/__NID__'
-    url_ajax: 'https://images.mandala.library.virginia.edu/api/ajax/__NID__'
-    url_json: 'https://images.mandala.library.virginia.edu/api/json/__NID__'
+    url_html: '__BASE_URL__/image/__NID__'
+    url_ajax: '__BASE_URL__/api/ajax/__NID__'
+    url_json: '__BASE_URL__/api/json/__NID__'
