@@ -1,0 +1,67 @@
+<?php
+
+declare(strict_types=1);
+
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_node_insert().
+ */
+function mandala_kmassets_sync_node_insert(NodeInterface $node): void {
+  if (!$node->isPublished()) {
+    return;
+  }
+  _mandala_kmassets_sync_index($node);
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function mandala_kmassets_sync_node_update(NodeInterface $node): void {
+  $sink = \Drupal::service('mandala_kmassets_sync.direct_sink');
+  try {
+    if ($node->isPublished()) {
+      $sink->indexNode($node);
+    }
+    else {
+      // Node was unpublished — remove from index.
+      $sink->deleteNode($node);
+    }
+  }
+  catch (\Throwable $e) {
+    \Drupal::logger('mandala_kmassets_sync')->error(
+      'Failed to sync kmassets doc for node @nid on update: @message',
+      ['@nid' => $node->id(), '@message' => $e->getMessage()],
+    );
+  }
+}
+
+/**
+ * Implements hook_node_delete().
+ */
+function mandala_kmassets_sync_node_delete(NodeInterface $node): void {
+  try {
+    \Drupal::service('mandala_kmassets_sync.direct_sink')->deleteNode($node);
+  }
+  catch (\Throwable $e) {
+    \Drupal::logger('mandala_kmassets_sync')->error(
+      'Failed to delete kmassets doc for node @nid: @message',
+      ['@nid' => $node->id(), '@message' => $e->getMessage()],
+    );
+  }
+}
+
+/**
+ * Indexes a published node to the kmassets Solr master, logging any failure.
+ */
+function _mandala_kmassets_sync_index(NodeInterface $node): void {
+  try {
+    \Drupal::service('mandala_kmassets_sync.direct_sink')->indexNode($node);
+  }
+  catch (\Throwable $e) {
+    \Drupal::logger('mandala_kmassets_sync')->error(
+      'Failed to index kmassets doc for node @nid: @message',
+      ['@nid' => $node->id(), '@message' => $e->getMessage()],
+    );
+  }
+}

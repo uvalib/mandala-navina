@@ -52,6 +52,24 @@ class KmassetDirectSink {
   }
 
   /**
+   * Deletes the kmassets doc for a specific node from the master.
+   *
+   * @return bool
+   *   TRUE if a delete was issued; FALSE if the node's bundle is not configured.
+   *
+   * @throws \RuntimeException
+   *   On Solr HTTP or response error.
+   */
+  public function deleteNode(NodeInterface $node): bool {
+    $uid = $this->uidFor($node);
+    if ($uid === NULL) {
+      return FALSE;
+    }
+    $this->deleteByQuery("uid:$uid");
+    return TRUE;
+  }
+
+  /**
    * Deletes all kmassets docs matching a Solr query from the master.
    *
    * Example: deleteByQuery('uid:images-11-*') cleans up all D11 test docs.
@@ -63,6 +81,27 @@ class KmassetDirectSink {
     $this->solrPost(['delete' => ['query' => $query]]);
     $this->loggerFactory->get('mandala_kmassets_sync')
       ->info('Deleted kmassets docs matching: @query', ['@query' => $query]);
+  }
+
+  /**
+   * Returns the versioned uid for a node, or NULL if the bundle is not configured.
+   */
+  public function uidFor(NodeInterface $node): ?string {
+    $bundles = $this->configFactory->get('mandala_kmassets_sync.settings')->get('bundles') ?? [];
+    $config = $bundles[$node->bundle()] ?? NULL;
+    if ($config === NULL) {
+      return NULL;
+    }
+    return $config['service'] . '-11-' . $node->id();
+  }
+
+  /**
+   * Returns the machine names of all configured bundles.
+   */
+  public function configuredBundles(): array {
+    return array_keys(
+      $this->configFactory->get('mandala_kmassets_sync.settings')->get('bundles') ?? []
+    );
   }
 
   /**
