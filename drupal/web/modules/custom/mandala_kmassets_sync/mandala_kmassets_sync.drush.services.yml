@@ -1,8 +1,0 @@
-services:
-  mandala_kmassets_sync.commands:
-    class: Drupal\mandala_kmassets_sync\Commands\KmassetsSyncCommands
-    arguments:
-      - '@entity_type.manager'
-      - '@mandala_kmassets_sync.direct_sink'
-    tags:
-      - { name: drush.command }
