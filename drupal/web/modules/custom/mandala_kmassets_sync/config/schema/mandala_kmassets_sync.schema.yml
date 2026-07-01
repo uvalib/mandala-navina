@@ -2,6 +2,9 @@ mandala_kmassets_sync.settings:
   type: config_object
   label: 'Mandala KMassets Sync settings'
   mapping:
+    solr_master_url:
+      type: string
+      label: 'Solr master core URL (direct sink target, no trailing slash)'
     bundles:
       type: sequence
       label: 'Per-bundle kmassets document settings'

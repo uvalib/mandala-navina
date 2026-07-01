@@ -4,14 +4,22 @@
 # service). The D11 single-site (ADR 005) hosts every asset type in one install,
 # so the service / asset_type / URL grammar is keyed by node bundle instead.
 #
-# The `uid` document-identity contract is `{service}-{nid}` (e.g. images-1028396)
-# — it is NOT the global site name. reindeer_x and the React app key off these,
-# so `service` MUST stay per-asset-type (images/av/sources/texts), not "mandala".
+# The `uid` document-identity contract is `{service}-11-{nid}` (e.g. images-11-5).
+# "11" is a FROZEN generation marker for the D7→D11 migration-era rebuild. It is
+# NOT the Drupal version and must not change on Drupal upgrades (12, 13, …).
+# D7-era entries used the bare format `{service}-{nid}` (no generation infix).
+# See docs/deferred/kmassets-uid-identity-across-migration.md.
 #
 # URL templates use the __NID__ token. The exact public-facing scheme for the
 # D11 single-site is a deferred decision (D7 used per-service subdomains, e.g.
 # images.mandala.library.virginia.edu); these defaults preserve the D7 shape so
 # the contract is explicit, and are overridable per-environment.
+#
+# solr_master_url: URL to the kmassets core root on the Solr master (no trailing
+# slash). The direct sink appends /update?commit=true. Override per-environment
+# in settings.php: $config['mandala_kmassets_sync.settings']['solr_master_url']
+solr_master_url: 'http://mandala-solr-master-staging-private.internal.lib.virginia.edu:8080/solr/kmassets'
+
 bundles:
   shanti_image:
     service: images

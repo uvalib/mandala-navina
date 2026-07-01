@@ -23,3 +23,27 @@ services:
     class: Drupal\mandala_kmassets_sync\Contributor\CollectionFieldContributor
     tags:
       - { name: mandala_kmassets_sync.doc_contributor, priority: 10 }
+
+  # Direct-to-master Solr sink: POSTs the built doc synchronously to the
+  # Solr master update endpoint. URL configured in mandala_kmassets_sync.settings.
+  mandala_kmassets_sync.direct_sink:
+    class: Drupal\mandala_kmassets_sync\KmassetDirectSink
+    arguments:
+      - '@http_client'
+      - '@mandala_kmassets_sync.doc_builder'
+      - '@config.factory'
+      - '@logger.factory'
+  # Class-name alias so AutowireTrait (Drush 13) can resolve KmassetDirectSink
+  # by type hint when instantiating Drush command classes.
+  Drupal\mandala_kmassets_sync\KmassetDirectSink:
+    alias: mandala_kmassets_sync.direct_sink
+    public: true
+
+  # Drush commands for driving the direct sink from the CLI.
+  mandala_kmassets_sync.commands:
+    class: Drupal\mandala_kmassets_sync\Commands\KmassetsSyncCommands
+    arguments:
+      - '@entity_type.manager'
+      - '@mandala_kmassets_sync.direct_sink'
+    tags:
+      - { name: drush.command }

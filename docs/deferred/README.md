@@ -38,6 +38,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [image-descriptions-summary-length.md](image-descriptions-summary-length.md) | migration / Images / content model | Sprint 1 (1a.7) | Low |
 | [images-rotation-field-support.md](images-rotation-field-support.md) | solr / kmassets / Images / write path | Sprint 1 (1a.8) | Medium |
 | [kmassets-uid-identity-across-migration.md](kmassets-uid-identity-across-migration.md) | solr / kmassets / migration / identity | Sprint 1 (1a.8) | High |
+| [kmassets-uid-consumer-analysis.md](kmassets-uid-consumer-analysis.md) | solr / kmassets / migration / identity / clients | Sprint 1 (1a.8) | High |
 | [kmassets-kmapid-ancestor-id-resolution.md](kmassets-kmapid-ancestor-id-resolution.md) | solr / kmassets / KMaps / write path | Sprint 1 (1a.8) | High |
 | [images-description-text-format-fidelity.md](images-description-text-format-fidelity.md) | migration / Images / text formats | Sprint 1 (1a.8) | Medium |
 | [images-projects-ss-producer-field.md](images-projects-ss-producer-field.md) | solr / kmassets / Images / write path | Sprint 1 (1a.8) | Medium |

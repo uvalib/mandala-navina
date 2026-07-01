@@ -97,9 +97,16 @@ class KmassetDocBuilder {
     $nid = (int) $node->id();
     $service = $bundle_config['service'];
 
+    // Generation marker "11" is a FROZEN constant — it identifies the D7→D11
+    // migration-era rebuild, not the running Drupal version. It must not change
+    // on Drupal upgrades (12, 13, …). Only a new wholesale data migration that
+    // warrants a fresh uid space would introduce a new generation number.
+    // Pattern {service}-11-\d+ distinguishes these docs from D7-era {service}-\d+.
+    // See docs/deferred/kmassets-uid-identity-across-migration.md.
+    $uid = $service . '-11-' . $nid;
     $doc = [
-      'id' => (string) $nid,
-      'uid' => $service . '-' . $nid,
+      'id' => $uid,
+      'uid' => $uid,
       // Divergence: uid not migrated yet → owner is uid 0 (Anonymous).
       'node_user' => $node->getOwnerId() == 0 ? 'Anonymous' : $node->getOwner()->getAccountName(),
       'node_user_i' => (int) $node->getOwnerId(),
