@@ -5,8 +5,14 @@ composer_root: drupal
 php_version: "8.3"
 webserver_type: apache-fpm
 database:
-  type: mariadb
-  version: "10.11"
+  # Match the staging/prod RDS engine (MySQL 8.4) so local runs validate under
+  # the same collation (utf8mb4_0900_ai_ci) — critical for NFC/diacritic, sort,
+  # and uniqueness fidelity in the Images migration (Sprint 1 1a.9). Was
+  # mariadb 10.11, which forced a collation rewrite on dump import.
+  # NOTE: changing this is destructive to the existing DDEV DB — `ddev delete`
+  # (or `ddev debug migrate-database mysql:8.4`) then re-import.
+  type: mysql
+  version: "8.4"
 composer_version: "2"
 nodejs_version: "18"
 use_dns_when_possible: true

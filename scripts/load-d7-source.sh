@@ -4,9 +4,12 @@
 #
 # This codifies the otherwise-manual setup discovered in Sprint 1 1a.7/1a.8:
 #   - the prod dump has no CREATE DATABASE / USE, just table DDL
-#   - it carries MySQL 8 collation (utf8mb4_0900_ai_ci) that DDEV's MariaDB
-#     rejects, so it must be stream-rewritten on import (LC_ALL=C keeps sed
-#     byte-safe against the binary content)
+#   - it carries MySQL 8 collation (utf8mb4_0900_ai_ci); DDEV now runs MySQL 8.4
+#     (matching the staging/prod RDS), so the dump imports NATIVELY — no
+#     collation rewrite. Importing under the source's real collation is what
+#     gives 1a.9 its NFC/diacritic/sort/uniqueness fidelity.
+#     (Was previously rewritten to utf8mb4_general_ci for DDEV's MariaDB; that
+#     downgrade is exactly what the MySQL 8.4 switch removes — do not re-add it.)
 #   - the `db` user needs an explicit GRANT on the new database
 #
 # Usage: ./scripts/load-d7-source.sh <path-to-dump.sql.gz>
@@ -28,11 +31,10 @@ if [ ! -f "$DUMP_FILE" ]; then
 fi
 
 echo "Creating secondary database '$SOURCE_DB'..."
-ddev mysql -e "CREATE DATABASE IF NOT EXISTS $SOURCE_DB CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
+ddev mysql -e "CREATE DATABASE IF NOT EXISTS $SOURCE_DB CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
 
-echo "Importing $DUMP_FILE into '$SOURCE_DB' (rewriting MySQL 8 collation for MariaDB)..."
+echo "Importing $DUMP_FILE into '$SOURCE_DB' (native MySQL 8.4 — no collation rewrite)..."
 gzcat "$DUMP_FILE" \
-  | LC_ALL=C sed 's/utf8mb4_0900_ai_ci/utf8mb4_general_ci/g' \
   | ddev mysql "$SOURCE_DB"
 
 echo "Granting the 'db' user access to '$SOURCE_DB'..."
