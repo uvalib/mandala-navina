@@ -105,6 +105,32 @@ class KmassetDirectSink {
   }
 
   /**
+   * Runs a Solr select query against the master core and returns the response.
+   *
+   * Read counterpart to the write path, used by the audit command. Returns the
+   * decoded Solr response body, e.g.
+   *   ['responseHeader' => …, 'response' => ['numFound' => N, 'docs' => [...]],
+   *    'nextCursorMark' => '…']
+   *
+   * @param array $params
+   *   Solr request parameters (q, fl, rows, sort, cursorMark, …). `wt=json` is
+   *   forced.
+   *
+   * @throws \RuntimeException
+   *   On Solr HTTP or transport error.
+   */
+  public function select(array $params): array {
+    $url = rtrim($this->solrCoreUrl(), '/') . '/select';
+    try {
+      $response = $this->httpClient->get($url, ['query' => ['wt' => 'json'] + $params]);
+      return json_decode((string) $response->getBody(), TRUE) ?? [];
+    }
+    catch (RequestException $e) {
+      throw new \RuntimeException('Solr query failed: ' . $e->getMessage(), 0, $e);
+    }
+  }
+
+  /**
    * POSTs a JSON payload to the Solr update endpoint with immediate commit.
    */
   protected function solrPost(array $payload): void {
@@ -125,11 +151,21 @@ class KmassetDirectSink {
    * Returns the full Solr update URL with commit=true.
    */
   protected function masterUpdateUrl(): string {
+    return rtrim($this->solrCoreUrl(), '/') . '/update?commit=true';
+  }
+
+  /**
+   * Returns the configured kmassets core root URL (no trailing slash).
+   *
+   * @throws \RuntimeException
+   *   If solr_master_url is not configured.
+   */
+  protected function solrCoreUrl(): string {
     $url = $this->configFactory->get('mandala_kmassets_sync.settings')->get('solr_master_url');
     if (!$url) {
       throw new \RuntimeException('mandala_kmassets_sync.settings.solr_master_url is not configured.');
     }
-    return rtrim($url, '/') . '/update?commit=true';
+    return rtrim($url, '/');
   }
 
 }

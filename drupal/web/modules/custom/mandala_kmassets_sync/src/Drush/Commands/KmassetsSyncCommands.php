@@ -5,19 +5,23 @@ declare(strict_types=1);
 namespace Drupal\mandala_kmassets_sync\Drush\Commands;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\mandala_kmassets_sync\KmassetAuditor;
 use Drupal\mandala_kmassets_sync\KmassetDirectSink;
 use Drush\Attributes as CLI;
 use Drush\Commands\AutowireTrait;
 use Drush\Commands\DrushCommands;
 
 /**
- * Drush commands for driving the kmassets direct sink (1a.8).
+ * Drush commands for driving the kmassets direct sink (1a.8) and audit (1a.9).
  *
  * Usage:
  *   ddev drush kmassets:index 5                    # index one node
  *   ddev drush kmassets:index-all                  # bulk index all configured bundles
  *   ddev drush kmassets:index-all shanti_image     # bulk index one bundle
  *   ddev drush kmassets:delete "uid:images-11-*"   # clean up all D11 test docs
+ *   ddev drush kmassets:audit                      # report missing + orphaned docs
+ *   ddev drush kmassets:audit --check-stale        # also report stale docs
+ *   ddev drush kmassets:audit --fix                # report and repair
  */
 class KmassetsSyncCommands extends DrushCommands {
 
@@ -26,6 +30,7 @@ class KmassetsSyncCommands extends DrushCommands {
   public function __construct(
     private readonly EntityTypeManagerInterface $entityTypeManager,
     private readonly KmassetDirectSink $sink,
+    private readonly KmassetAuditor $auditor,
   ) {
     parent::__construct();
   }
@@ -122,6 +127,77 @@ class KmassetsSyncCommands extends DrushCommands {
   public function delete(string $query): void {
     $this->sink->deleteByQuery($query);
     $this->logger()->success("Deleted docs matching: {query}", ['query' => $query]);
+  }
+
+  /**
+   * Audit the kmassets index against Drupal node state; optionally repair drift.
+   *
+   * Reports three discrepancy classes — missing (published node, no doc),
+   * orphaned (doc exists, node gone/unpublished), and (with --check-stale)
+   * stale (doc's node_changed lags the node). With --fix, missing/stale nodes
+   * are reindexed and orphaned docs deleted.
+   */
+  #[CLI\Command(name: 'kmassets:audit')]
+  #[CLI\Argument(name: 'bundle', description: 'Bundle machine name to audit (default: all configured bundles).')]
+  #[CLI\Option(name: 'check-stale', description: 'Also check for stale docs (compares node_changed; slower).')]
+  #[CLI\Option(name: 'fix', description: 'Repair drift: reindex missing/stale nodes, delete orphaned docs.')]
+  #[CLI\Option(name: 'batch-size', description: 'Nodes loaded per batch.')]
+  #[CLI\Usage(name: 'drush kmassets:audit', description: 'Report missing + orphaned docs.')]
+  #[CLI\Usage(name: 'drush kmassets:audit --check-stale', description: 'Also report stale docs.')]
+  #[CLI\Usage(name: 'drush kmassets:audit --fix', description: 'Report and repair all drift.')]
+  public function audit(string $bundle = '', array $options = ['check-stale' => FALSE, 'fix' => FALSE, 'batch-size' => 200]): void {
+    $checkStale = (bool) $options['check-stale'];
+    $fix = (bool) $options['fix'];
+    $batchSize = max(1, (int) $options['batch-size']);
+
+    $report = $this->auditor->audit($bundle, $checkStale, $fix, $batchSize);
+
+    $this->logger()->info("Checked {nodes} published nodes, {docs} Solr docs.", [
+      'nodes' => $report['checked_nodes'],
+      'docs' => $report['checked_docs'],
+    ]);
+
+    $this->reportClass('Missing (published node, no Solr doc)', $report['missing']);
+    $this->reportClass('Orphaned (Solr doc, node gone/unpublished)', $report['orphaned']);
+    if ($checkStale) {
+      $this->reportClass('Stale (Solr doc older than node)', array_keys($report['stale']));
+    }
+    else {
+      $this->logger()->notice("Stale check skipped (pass --check-stale to enable).");
+    }
+
+    if ($fix) {
+      $this->logger()->success("Repaired: {indexed} reindexed, {deleted} deleted.", [
+        'indexed' => $report['fixed']['indexed'],
+        'deleted' => $report['fixed']['deleted'],
+      ]);
+    }
+    elseif ($report['missing'] || $report['orphaned'] || $report['stale']) {
+      $this->logger()->notice("Re-run with --fix to repair.");
+    }
+
+    if (!$report['missing'] && !$report['orphaned'] && !$report['stale']) {
+      $this->logger()->success("Index is in sync — no discrepancies found.");
+    }
+  }
+
+  /**
+   * Logs one discrepancy class: a count plus a capped sample of uids.
+   */
+  private function reportClass(string $label, array $uids): void {
+    $count = count($uids);
+    if ($count === 0) {
+      $this->logger()->info("{label}: 0", ['label' => $label]);
+      return;
+    }
+    $sample = array_slice($uids, 0, 20);
+    $suffix = $count > 20 ? ' (first 20 shown)' : '';
+    $this->logger()->warning("{label}: {count}{suffix}\n  {list}", [
+      'label' => $label,
+      'count' => $count,
+      'suffix' => $suffix,
+      'list' => implode("\n  ", $sample),
+    ]);
   }
 
 }

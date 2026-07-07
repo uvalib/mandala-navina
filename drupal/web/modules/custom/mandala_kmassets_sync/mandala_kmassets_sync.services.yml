@@ -39,4 +39,17 @@ services:
     alias: mandala_kmassets_sync.direct_sink
     public: true
 
+  # Audits the kmassets index against Drupal node state (1a.9): detects and
+  # optionally repairs missing / stale / orphaned docs.
+  mandala_kmassets_sync.auditor:
+    class: Drupal\mandala_kmassets_sync\KmassetAuditor
+    arguments:
+      - '@entity_type.manager'
+      - '@mandala_kmassets_sync.direct_sink'
+      - '@config.factory'
+  # Class-name alias for AutowireTrait (Drush 13).
+  Drupal\mandala_kmassets_sync\KmassetAuditor:
+    alias: mandala_kmassets_sync.auditor
+    public: true
+
 
