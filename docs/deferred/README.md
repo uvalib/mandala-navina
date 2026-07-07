@@ -47,6 +47,8 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [jira-issue-tracking-integration.md](jira-issue-tracking-integration.md) | process / project tooling / tracking | PM session 2026-06-25 | Medium → High (start after Sprint 1) |
 | [staging-migration-execution-prerequisites.md](staging-migration-execution-prerequisites.md) | migration / deployment / infrastructure / staging | Session 2026-07-07 (1a.9) | High (blocks 1a.9 staging run) |
 | [kmassets-audit-hardening.md](kmassets-audit-hardening.md) | solr / kmassets / audit / DX | Session 2026-07-07 (1a.9) | Low–Medium |
+| [kmassets-sync-hook-fires-during-migration.md](kmassets-sync-hook-fires-during-migration.md) | solr / kmassets / migration / sync / performance | Session 2026-07-07 (1a.9) | Medium |
+| [load-staging-baseline-false-clean-on-nonzero-schema.md](load-staging-baseline-false-clean-on-nonzero-schema.md) | migration / tooling / DX / scripts | Session 2026-07-07 (1a.9) | Medium |
 
 ## Resolved / superseded
 

@@ -27,3 +27,5 @@ nav:
   - "Jira issue-tracking integration": jira-issue-tracking-integration.md
   - "Staging migration execution prerequisites": staging-migration-execution-prerequisites.md
   - "kmassets:audit hardening follow-ups": kmassets-audit-hardening.md
+  - "kmassets sync hook fires during migration": kmassets-sync-hook-fires-during-migration.md
+  - "load-staging-baseline false-clean guard": load-staging-baseline-false-clean-on-nonzero-schema.md

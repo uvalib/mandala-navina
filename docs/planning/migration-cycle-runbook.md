@@ -50,6 +50,7 @@ before cutover.
 ./scripts/migration-cycle.sh rollback     # migrate:rollback, then assert the graph is clean
 ./scripts/migration-cycle.sh audit        # bulk-index to kmassets + kmassets:audit (needs VPN)
 ./scripts/migration-cycle.sh cycle        # rollback → import → validate  (default)
+./scripts/migration-cycle.sh baseline     # print current counts in EXPECT_LIST format (recalibrate)
 ```
 
 - **`cycle`** is the repeatable test run: it rolls back first (so it is safe to
@@ -74,24 +75,29 @@ arrays, no `lastpipe`), so it runs on teammates' laptops unchanged.
 
 ## Validation baseline
 
-`validate` reconciles these counts against the **2026-06-11 production dump**
-(source of truth: [Images content model audit](images-content-model-audit.md)
-data profile + the 1a.7 full-run reconciliation):
+`validate` reconciles these counts against the **2026-07-07 staging dump**.
+Verified 1:1 against the D7 source this run — every expected value below equals
+its `d7_images` source count exactly, so the migration is faithful and these are
+the correct targets for this dump:
 
-| Key | Expected |
-|---|---|
-| `node:shanti_image` | 111,340 |
-| `paragraph:image_agent` | 111,194 |
-| `paragraph:image_descriptions` | 55,038 |
-| `paragraph:external_classification` | 9 |
-| `term:external_classification_scheme` | 2 |
-| `field:field_subjects` | 79,337 |
-| `field:field_places` | 68,755 |
-| `field:field_kmap_terms` | 61,668 |
-| `field:field_kmap_collections` | 83,494 |
+| Key | Expected | vs 2026-06-11 dump |
+|---|---|---|
+| `node:shanti_image` | 111,343 | +3 |
+| `paragraph:image_agent` | 111,350 | +156 |
+| `paragraph:image_descriptions` | 55,112 | +74 |
+| `paragraph:external_classification` | 9 | — |
+| `term:external_classification_scheme` | 2 | — |
+| `field:field_subjects` | 79,174 | −163 |
+| `field:field_places` | 68,790 | +35 |
+| `field:field_kmap_terms` | 55,553 | **−6,115** |
+| `field:field_kmap_collections` | 83,493 | −1 |
 
-These are **dump-specific**. A newer dump means new expected values — update the
-`EXPECT_LIST` in the script and this table together.
+These are **dump-specific**. The largest shift, `field_kmap_terms` (−6,115), is a
+real source-data change between the two dumps — **not** a migration defect
+(`D7src == D11 migrated` was confirmed for every KMaps field). A newer dump means
+new expected values: load it, run `./scripts/migration-cycle.sh baseline` against
+the imported dataset, and paste its output over the `EXPECT_LIST` in the script
+and this table together.
 
 > Counts are necessary but not sufficient. The full acceptance criteria also
 > require NFC diacritic fidelity, KMaps round-trip, IIIF rendering, and the
