@@ -27,7 +27,9 @@ filtering, which land in 1b.2/1b.3. Note it as **1b-gated** — do not block 1a.
 
 ## A. Prerequisites — resolve BEFORE the run
 
-These two are genuine gaps in the current repo, not just steps. Resolve/confirm first:
+These two are genuine gaps in the current repo, not just steps. Resolve/confirm first.
+Tracked as a deferred item:
+[staging-migration-execution-prerequisites](../deferred/staging-migration-execution-prerequisites.md).
 
 - [ ] **⚠ Migrate source DB in staging.** The `migrate` DB connection is wired *only*
       inside the DDEV block of `settings.php` (`$databases['migrate']['default']` →
