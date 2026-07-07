@@ -37,24 +37,24 @@ GROUP="mandala_images"
 DRUSH="${DRUSH:-ddev drush}"
 
 # ---------------------------------------------------------------------------
-# Baseline reconciliation targets — production Images dump 2026-06-11.
+# Baseline reconciliation targets — staging Images dump 2026-07-07.
 # Source of truth: docs/planning/images-content-model-audit.md (data profile)
-# and the 1a.7 full-run reconciliation. These are DUMP-SPECIFIC; a newer dump
+# and the 1a.9 full-run reconciliation. These are DUMP-SPECIFIC; a newer dump
 # means new expected values (update here and in the runbook together).
 #
 # Plain "key<space>count" lines (not an associative array) so the script runs
 # on the stock macOS /bin/bash 3.2 that teammates invoke it with.
 # ---------------------------------------------------------------------------
 EXPECT_LIST="
-node:shanti_image 111340
-paragraph:image_agent 111194
-paragraph:image_descriptions 55038
+node:shanti_image 111343
+paragraph:image_agent 111350
+paragraph:image_descriptions 55112
 paragraph:external_classification 9
 term:external_classification_scheme 2
-field:field_subjects 79337
-field:field_places 68755
-field:field_kmap_terms 61668
-field:field_kmap_collections 83494
+field:field_subjects 79174
+field:field_places 68790
+field:field_kmap_terms 55553
+field:field_kmap_collections 83493
 "
 
 # A single php:eval that emits "key<TAB>count" lines for every actual count.
@@ -92,7 +92,7 @@ phase_rollback() {
   # Verify the graph is actually clean — rollback of computed/derived rows can
   # leave stragglers, so assert zero rather than trust the exit code.
   local remaining
-  remaining=$($DRUSH php:eval 'echo (int) \Drupal::database()->query("SELECT COUNT(*) FROM node_field_data WHERE type=\"shanti_image\"")->fetchField();')
+  remaining=$($DRUSH php:eval 'echo (int) \Drupal::database()->query("SELECT COUNT(*) FROM node_field_data WHERE type = :t", [":t" => "shanti_image"])->fetchField();')
   if [ "$remaining" -eq 0 ]; then
     info "clean: 0 shanti_image nodes remain."
   else
@@ -107,7 +107,7 @@ phase_import() {
 }
 
 phase_validate() {
-  log "VALIDATE — reconcile counts vs 2026-06-11 baseline"
+  log "VALIDATE — reconcile counts vs 2026-07-07 staging baseline"
   # Actual counts as "key<TAB>count" lines, captured once.
   local actual fail=0 key want got
   actual=$($DRUSH php:eval "$COUNT_EVAL")

@@ -8,7 +8,7 @@ use Drupal\node\NodeInterface;
  * Implements hook_node_insert().
  */
 function mandala_kmassets_sync_node_insert(NodeInterface $node): void {
-  if (!$node->isPublished()) {
+  if (!$node->isPublished() || !_mandala_kmassets_sync_is_configured()) {
     return;
   }
   _mandala_kmassets_sync_index($node);
@@ -18,6 +18,9 @@ function mandala_kmassets_sync_node_insert(NodeInterface $node): void {
  * Implements hook_node_update().
  */
 function mandala_kmassets_sync_node_update(NodeInterface $node): void {
+  if (!_mandala_kmassets_sync_is_configured()) {
+    return;
+  }
   $sink = \Drupal::service('mandala_kmassets_sync.direct_sink');
   try {
     if ($node->isPublished()) {
@@ -40,6 +43,9 @@ function mandala_kmassets_sync_node_update(NodeInterface $node): void {
  * Implements hook_node_delete().
  */
 function mandala_kmassets_sync_node_delete(NodeInterface $node): void {
+  if (!_mandala_kmassets_sync_is_configured()) {
+    return;
+  }
   try {
     \Drupal::service('mandala_kmassets_sync.direct_sink')->deleteNode($node);
   }
@@ -64,4 +70,14 @@ function _mandala_kmassets_sync_index(NodeInterface $node): void {
       ['@nid' => $node->id(), '@message' => $e->getMessage()],
     );
   }
+}
+
+/**
+ * Returns TRUE if the kmassets Solr master URL is configured.
+ *
+ * All node hooks skip silently when FALSE — avoids one error log entry per
+ * node in environments (DDEV, CI) where Solr is intentionally not wired up.
+ */
+function _mandala_kmassets_sync_is_configured(): bool {
+  return !empty(\Drupal::config('mandala_kmassets_sync.settings')->get('solr_master_url'));
 }
