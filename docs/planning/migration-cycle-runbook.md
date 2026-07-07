@@ -116,6 +116,53 @@ touch the D7-era `images-{nid}` entries in the shared staging index.
 
 ---
 
+## Non-destructive & reversibility guarantees
+
+The cycle writes to two targets. Both are non-destructive to pre-existing data
+and reversible to a clean slate. This is a load-bearing property for running
+against the *shared* staging index, so it is stated explicitly here.
+
+**1. kmassets Solr index (shared, holds live/legacy data).** The staging index
+already contains the D7-era entries — **111,506** `images-*` docs as of
+2026-07-07 (`images-{nid}`, `images-collection-{nid}`, …). Migrated D11 content
+indexes under the **versioned** namespace `images-11-{nid}`. Solr's `uniqueKey`
+is `uid`, so a write only ever replaces a doc with the *same* uid; since the two
+namespaces never overlap, **D11 writes cannot overwrite any D7-era entry.**
+Verified:
+
+| Query | Count |
+|---|---|
+| `uid:images-11-*` (D11 namespace) | 0 |
+| `uid:images-*` (all, incl. D7-era) | 111,506 |
+| `uid:images-1028396` (a D7 doc) | 1 |
+| `uid:images-11-*` **AND** `uid:images-1028396` | **0** |
+
+The `-11-` **dash** is the discriminator: `uid:images-11-*` cannot match a D7 uid
+like `images-1128396` (no dash after `11`). Cleanup is therefore exact and
+reversible — `kmassets:delete "uid:images-11-*"` removes only our docs.
+
+**2. D11 content database (the migration).** Migrate tracks every entity it
+creates in `migrate_map_*` (sourceid → destid). `migrate:import` creates **new**
+nodes/paragraphs/terms (Drupal assigns fresh nids) and **skips** already-mapped
+rows — no duplicates, no overwrite — unless `--update` is passed. It never
+references entities it did not create, so pre-existing content is untouched.
+`migrate:rollback` deletes exactly the map-tracked entities and clears the map;
+the `rollback` phase additionally asserts zero `shanti_image` nodes remain.
+
+**⚠ One caveat — reversible to *clean*, not to *identical*.** `migrate:rollback`
+deletes the rows but does **not** reset MySQL `AUTO_INCREMENT`. A re-import
+therefore assigns **different (higher) nids** than the previous run, so the
+derived `images-11-{nid}` uids differ run-to-run. The DB returns to a clean state
+(0 migrated nodes), but nids/uids are **not stable across rollback/re-import**.
+This is the documented "D11 nids are reassigned" reality and is exactly why
+cutover is a **full reindex** (`delete uid:images-11-*` → rebuild), not an
+in-place update — see
+[kmassets uid identity](../deferred/kmassets-uid-identity-across-migration.md).
+For per-run staging validation it is harmless: each cycle is internally
+self-consistent.
+
+---
+
 ## Rollback verification
 
 `migrate:rollback` alone is trusted less than a post-check. The `rollback` phase

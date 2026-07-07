@@ -56,6 +56,21 @@ Then the ordinary prerequisites:
 
 ## B. Safety — before importing 111k rows
 
+**Non-destructive & reversible — the guarantee (full detail + evidence in the
+[runbook](migration-cycle-runbook.md#non-destructive--reversibility-guarantees)):**
+
+- **Solr:** D11 content indexes under the versioned `images-11-{nid}` namespace;
+  since `uid` is the Solr `uniqueKey` and that namespace never overlaps the D7-era
+  `images-{nid}` entries (**111,506** live docs as of 2026-07-07), D11 writes
+  **cannot overwrite** any existing entry. `kmassets:delete "uid:images-11-*"`
+  removes only our docs.
+- **DB:** the migration creates **new** entities only (map-tracked) and skips
+  already-mapped rows; `migrate:rollback` deletes exactly what it created.
+- **⚠ Caveat:** rollback does **not** reset `AUTO_INCREMENT`, so a re-import
+  assigns different (higher) nids → `images-11-{nid}` uids differ run-to-run.
+  Reversible to *clean*, not to *identical*. Harmless per-run; it's why cutover is
+  a full reindex.
+
 - [ ] Confirm the target D11 site is a **dedicated / disposable migration-test
       environment**, OR take a DB snapshot first — a full import loads 111,340 nodes into
       the staging content DB.
