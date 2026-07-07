@@ -18,6 +18,14 @@ process:
   changed: changed
   promote: promote
   sticky: sticky
+
+  # --- Provenance: legacy identity ---
+  # Record the source D7 nid on the node so old→new identity is durable
+  # (survives rollback/reimport, unlike the migrate_map) and can feed the
+  # planned uid_legacy_s kmasset Solr field for old→new uid mapping.
+  # See docs/deferred/kmassets-uid-identity-across-migration.md
+  field_legacy_nid: nid
+
   # uid intentionally not mapped — user migration is a separate concern; nodes
   # default to uid 0 until the user migration lands.
 

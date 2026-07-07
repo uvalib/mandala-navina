@@ -25,6 +25,10 @@ process:
   changed: changed
   promote: promote
   sticky: sticky
+  # Provenance: record the source D7 nid on the node so old→new identity is
+  # durable (survives rollback/reimport) and can feed the planned uid_legacy_s
+  # kmasset Solr field. See docs/deferred/kmassets-uid-identity-across-migration.md
+  field_legacy_nid: nid
   field_iiif_id: i3fid
   field_iiif_mms_id: mmsid
   field_iiif_width: iiif_width

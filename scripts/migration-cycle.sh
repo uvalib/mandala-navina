@@ -21,6 +21,7 @@
 #   ./scripts/migration-cycle.sh rollback     # migrate:rollback the group, verify clean
 #   ./scripts/migration-cycle.sh audit        # index to kmassets + kmassets:audit (needs VPN)
 #   ./scripts/migration-cycle.sh cycle         # rollback → import → validate (a clean test run)
+#   ./scripts/migration-cycle.sh baseline      # print current counts in EXPECT_LIST format (recalibrate)
 #
 # A full round-trip that returns the DB to clean is: `cycle` then `rollback`.
 # "Repeatable" means `cycle` is safe to run again — it rolls back first.
@@ -38,9 +39,17 @@ DRUSH="${DRUSH:-ddev drush}"
 
 # ---------------------------------------------------------------------------
 # Baseline reconciliation targets — staging Images dump 2026-07-07.
-# Source of truth: docs/planning/images-content-model-audit.md (data profile)
-# and the 1a.9 full-run reconciliation. These are DUMP-SPECIFIC; a newer dump
-# means new expected values (update here and in the runbook together).
+# Verified 1:1 against the D7 source (d7_images) this session: every count below
+# equals its D7 source count exactly, so the migration is faithful and these are
+# the correct targets for THIS dump. These are DUMP-SPECIFIC; a newer dump means
+# new expected values — regenerate them with
+#   ./scripts/migration-cycle.sh baseline
+# then paste the output over this list (and update the runbook table).
+#
+# History: supersedes the 2026-06-11 production-dump baseline. The largest change
+# was field_kmap_terms 61668 -> 55553 — a real source-data change between the two
+# dumps, NOT a migration defect (D7src == D11 migrated confirmed for every KMaps
+# field). See docs/planning/migration-cycle-runbook.md.
 #
 # Plain "key<space>count" lines (not an associative array) so the script runs
 # on the stock macOS /bin/bash 3.2 that teammates invoke it with.
@@ -92,6 +101,10 @@ phase_rollback() {
   # Verify the graph is actually clean — rollback of computed/derived rows can
   # leave stragglers, so assert zero rather than trust the exit code.
   local remaining
+
+  # Bound placeholder, not a SQL string literal: Drupal's MySQL connection runs
+  # in ANSI_QUOTES mode, so a double-quoted "shanti_image" is parsed as an
+  # identifier (column) and errors. Matches the COUNT_EVAL pattern below.
   remaining=$($DRUSH php:eval 'echo (int) \Drupal::database()->query("SELECT COUNT(*) FROM node_field_data WHERE type = :t", [":t" => "shanti_image"])->fetchField();')
   if [ "$remaining" -eq 0 ]; then
     info "clean: 0 shanti_image nodes remain."
@@ -107,7 +120,7 @@ phase_import() {
 }
 
 phase_validate() {
-  log "VALIDATE — reconcile counts vs 2026-07-07 staging baseline"
+  log "VALIDATE — reconcile counts vs configured EXPECT_LIST baseline"
   # Actual counts as "key<TAB>count" lines, captured once.
   local actual fail=0 key want got
   actual=$($DRUSH php:eval "$COUNT_EVAL")
@@ -142,6 +155,14 @@ phase_audit() {
   $DRUSH kmassets:audit --check-stale
 }
 
+phase_baseline() {
+  # Emit the current counts in EXPECT_LIST format, for recalibrating the baseline
+  # after loading a new dump. Run against a known-good, fully-imported dataset,
+  # then paste the output over EXPECT_LIST above and into the runbook table.
+  log "BASELINE — current counts in EXPECT_LIST format (paste over EXPECT_LIST)"
+  $DRUSH php:eval "$COUNT_EVAL" | awk -F'\t' 'NF==2 {printf "%s %s\n", $1, $2}'
+}
+
 phase_cycle() {
   # A clean, repeatable test run: guarantee clean → import → validate.
   # Leaves the data imported for follow-on checks (IIIF, KMaps round-trip,
@@ -161,9 +182,10 @@ case "${1:-cycle}" in
   validate) phase_validate ;;
   audit)    phase_audit ;;
   cycle)    phase_cycle ;;
+  baseline) phase_baseline ;;
   *)
     echo "Unknown phase: ${1:-}" >&2
-    echo "Phases: validate | import | rollback | audit | cycle" >&2
+    echo "Phases: validate | import | rollback | audit | cycle | baseline" >&2
     exit 2
     ;;
 esac
