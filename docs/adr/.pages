@@ -12,3 +12,4 @@ nav:
   - "009: Migration sequencing strategy": 009-migration-sequencing-strategy.md
   - "010: ADR 008 scope clarification": 010-adr-008-scope-clarification.md
   - "011: Group collections inheritance": 011-group-collections-inheritance.md
+  - "012: DDEV runs production DB engine (MySQL 8.4)": 012-ddev-production-db-engine.md

@@ -18,3 +18,4 @@ get a new ADR that references the old one, rather than editing in place.
 | [009](009-migration-sequencing-strategy.md) | Migration sequencing: Images pilot → mob → parallel tracks → AV last | Accepted |
 | [010](010-adr-008-scope-clarification.md) | Clarify scope of "migrate, not improve": user-facing features, not internal architecture (refines ADR 008) | Accepted |
 | [011](011-group-collections-inheritance.md) | Group collections inheritance: entity-reference nesting + custom hooks (Option D); lands in Sprint 1 Step 1b | Accepted |
+| [012](012-ddev-production-db-engine.md) | Local DDEV runs the production DB engine (MySQL 8.4), not DDEV's default MariaDB, for migration/collation fidelity | Accepted |

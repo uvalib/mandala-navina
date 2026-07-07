@@ -45,6 +45,8 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [images-iiif-thumb-size-format.md](images-iiif-thumb-size-format.md) | IIIF / kmassets / Images / write path | Sprint 1 (1a.8) | Low |
 | [kmassets-sync-error-management.md](kmassets-sync-error-management.md) | solr / kmassets / sync / observability | Session 2026-06-26 | Medium (own downstream sprint; not Sprint 1) |
 | [jira-issue-tracking-integration.md](jira-issue-tracking-integration.md) | process / project tooling / tracking | PM session 2026-06-25 | Medium → High (start after Sprint 1) |
+| [staging-migration-execution-prerequisites.md](staging-migration-execution-prerequisites.md) | migration / deployment / infrastructure / staging | Session 2026-07-07 (1a.9) | High (blocks 1a.9 staging run) |
+| [kmassets-audit-hardening.md](kmassets-audit-hardening.md) | solr / kmassets / audit / DX | Session 2026-07-07 (1a.9) | Low–Medium |
 
 ## Resolved / superseded
 
