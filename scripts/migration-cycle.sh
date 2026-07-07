@@ -101,6 +101,7 @@ phase_rollback() {
   # Verify the graph is actually clean — rollback of computed/derived rows can
   # leave stragglers, so assert zero rather than trust the exit code.
   local remaining
+
   # Bound placeholder, not a SQL string literal: Drupal's MySQL connection runs
   # in ANSI_QUOTES mode, so a double-quoted "shanti_image" is parsed as an
   # identifier (column) and errors. Matches the COUNT_EVAL pattern below.
