@@ -8,4 +8,5 @@ nav:
   - "KMasset Solr Doc Contract (golden doc)": kmasset-solr-doc-contract.md
   - "1a.8 Open Decisions (next-session prep)": 1a8-open-decisions.md
   - "Migration Cycle Runbook (1a.9)": migration-cycle-runbook.md
+  - "1a.9 Staging Acceptance Checklist": 1a9-staging-acceptance-checklist.md
   - "Collections: Inheritance Decision Brief (RESOLVED → ADR 011)": collections-inheritance-decision-brief.md

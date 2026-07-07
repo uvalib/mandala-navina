@@ -2,6 +2,7 @@
 
 **Task:** Sprint 1, 1a.9 — the "rollback story"
 **Script:** [`scripts/migration-cycle.sh`](https://github.com/uvalib/mandala-navina/blob/main/scripts/migration-cycle.sh)
+**Staging run:** [1a.9 Staging Acceptance Checklist](1a9-staging-acceptance-checklist.md)
 **Related:** [1a.7 migration](../sprints/sprint-01-images-implementation.md), [Images content model audit](images-content-model-audit.md), [kmassets sync](../deferred/kmassets-uid-identity-across-migration.md)
 
 ---
