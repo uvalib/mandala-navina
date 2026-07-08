@@ -6,6 +6,12 @@ copy of the production Images DB **in staging**, and evidence the acceptance cri
 **Script:** `scripts/migration-cycle.sh`
 **Acceptance criteria source:** [sprint doc](../sprints/sprint-01-images-implementation.md) §Acceptance criteria
 
+> **Scheduling note (2026-07-08):** This staging run has been deferred to **end of
+> Sprint 1 (after Step 1b)**. The security criterion (§D) is 1b-gated, the local
+> MySQL 8.4 rehearsal has de-risked migration quality, and the DevOps prerequisites
+> (§A) are needed for 1b staging work in any case. This checklist is unchanged —
+> execute it as written once 1b is complete and the prerequisites are resolved.
+
 > This is an execution checklist for a real staging run, meant to be copied into a
 > session log / PR and ticked off with evidence. The mechanics (phases, baseline
 > counts) live in the runbook; this doc is the *staging-specific* wrapper —
