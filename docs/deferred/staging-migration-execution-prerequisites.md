@@ -2,7 +2,15 @@
 **Area:** migration / deployment / infrastructure / staging
 **Raised during:** Session 2026-07-07 (Sprint 1 1a.9)
 **Jira:** (add when available)
-**Priority:** High — **blocks the 1a.9 staging acceptance run**
+**Priority:** High — **blocks the end-of-Sprint-1 staging acceptance run**
+
+> **Deferral decision (2026-07-08):** The staging acceptance run has been deferred from
+> 1a.9 close to **end of Sprint 1 (after Step 1b)**. Rationale: (1) the security
+> acceptance criterion is already 1b-gated, so a complete run cannot happen until after
+> 1b.3 anyway; (2) the local MySQL 8.4 rehearsal has already de-risked migration quality
+> (ADR 012); (3) these prerequisites need to be resolved for 1b staging work regardless,
+> so resolving them once for a combined 1a+1b acceptance run is more efficient. These
+> prerequisites remain blocking — they just target the post-1b run, not 1a close.
 
 The 1a.9 migrate → validate → rollback cycle (`scripts/migration-cycle.sh`) works locally
 in DDEV, but two pieces of staging plumbing do not yet exist. Both must be resolved before

@@ -13,3 +13,4 @@ nav:
   - "010: ADR 008 scope clarification": 010-adr-008-scope-clarification.md
   - "011: Group collections inheritance": 011-group-collections-inheritance.md
   - "012: DDEV runs production DB engine (MySQL 8.4)": 012-ddev-production-db-engine.md
+  - "013: Drupal is source of truth; Solr client compatibility essential": 013-drupal-source-of-truth-solr-client-compatibility.md

@@ -1,7 +1,7 @@
 # ADR 004: Treat existing Solr infrastructure as source of truth; defer Solr refactor
 
-**Status:** Accepted  
-**Date:** 2026-06-09  
+**Status:** Superseded by [ADR 013](013-drupal-source-of-truth-solr-client-compatibility.md)
+**Date:** 2026-06-09 (superseded 2026-07-08)
 **Deciders:** Yuji Shinozaki (Lead Architect)
 
 ## Context
