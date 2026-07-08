@@ -20,3 +20,4 @@ get a new ADR that references the old one, rather than editing in place.
 | [011](011-group-collections-inheritance.md) | Group collections inheritance: entity-reference nesting + custom hooks (Option D); lands in Sprint 1 Step 1b | Accepted |
 | [012](012-ddev-production-db-engine.md) | Local DDEV runs the production DB engine (MySQL 8.4), not DDEV's default MariaDB, for migration/collation fidelity | Accepted |
 | [013](013-drupal-source-of-truth-solr-client-compatibility.md) | Drupal is the source of truth; Solr/client compatibility is an essential active requirement (supersedes ADR 004) | Accepted |
+| [014](014-hybrid-solr-proxy-design.md) | Hybrid Solr proxy: Drupal writes Redis visibility tokens; lightweight standalone proxy reads them; D11 proxy forked into monorepo | Accepted |
