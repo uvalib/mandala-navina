@@ -1,6 +1,6 @@
 # Sprint 1: Mandala Images implementation (pilot)
 
-**Status:** ◐ In progress
+**Status:** ◐ In progress — Step 1a ✅ complete (2026-07-08); Step 1b unstarted
 **Phase:** [Roadmap](../roadmap.md) Phase 1 — mob-build the Images pilot (the spine)
 **Lead:** Yuji Shinozaki
 **Mode:** Mob-build (whole team), then individuals replicate the pattern
@@ -78,22 +78,21 @@ The Images content model is settled by the
 
 > **Next-session blocker:** ~~Group collections inheritance decision~~ — **resolved 2026-06-18** by [ADR 011](../adr/011-group-collections-inheritance.md) (Option D: entity-reference + custom hooks). Inheritance hooks fold into task **1b.2** below; no collections work lands in Step 1a.
 
-### Step 1a — public plumbing
+### Step 1a — public plumbing ✅ complete (2026-07-08)
 
-| # | Task | Depends on | Owner |
+| # | Task | Depends on | Status |
 |---|------|-----------|-------|
-| 1a.1 | Build `shanti_image` content type: 50-field inventory, types, cardinalities, required flags (per audit) | audit | mob |
-| 1a.2 | Build agents / descriptions / classifications as **Paragraph** types embedded on `shanti_image` (owned, per-image, cascade-deleted) | 1a.1 | mob |
-| 1a.3 | Build `external_classification_scheme` as a **taxonomy vocabulary** referenced from the classification paragraph | 1a.2 | mob |
-| 1a.4 | Productionize the KMaps field (Spike 1 tail): write path, ancestor-path resolution, migration mapping; wire `field_subjects` / `field_places` / `field_kmap_terms` / `field_kmap_collections` to kmassets | [Spike 1](../spikes/spike-01-kmaps-field.md) | mob |
-| 1a.5 | Wire image display to the **existing** IIIF server: confirm endpoints/credentials reachable from D11; port the upload/display path (`shanti_images_*_url`, `shanti_image_formatter`); preserve `i3fid` / `mmsid` / `field_other_ids` linkage | 1a.1 | mob |
-| 1a.6 | Migrate scheme nodes → taxonomy terms (no deps, migrate first) | 1a.3 | mob |
-| 1a.7 | Migrate `shanti_image` with node→paragraph transform for satellites; **source satellites via the image reference field, not the raw node table** (skips ~12k orphan agents, ~17k orphan descriptions); expect shared-agent fan-out (~111k agent paragraphs) | 1a.6 | **mob (the pattern-setting migration)** |
-| 1a.8 | Solr write/sync via reindeer_x (Spike 8 parts A/B), informed by the Phase 0 cost/architecture conversation | [Spike 8](../spikes/spike-08-reindeer-x-consolidation.md) | mob |
-| 1a.9 | Rollback story: repeatable test-run → validate → rollback cycle against a prod-DB copy in staging | 1a.7 | mob |
+| 1a.1 | Build `shanti_image` content type: 50-field inventory, types, cardinalities, required flags (per audit) | audit | ✅ |
+| 1a.2 | Build agents / descriptions / classifications as **Paragraph** types embedded on `shanti_image` (owned, per-image, cascade-deleted) | 1a.1 | ✅ |
+| 1a.3 | Build `external_classification_scheme` as a **taxonomy vocabulary** referenced from the classification paragraph | 1a.2 | ✅ |
+| 1a.4 | Productionize the KMaps field (Spike 1 tail): write path, ancestor-path resolution, migration mapping; wire `field_subjects` / `field_places` / `field_kmap_terms` / `field_kmap_collections` to kmassets | [Spike 1](../spikes/spike-01-kmaps-field.md) | ✅ |
+| 1a.5 | Wire image display to the **existing** IIIF server: confirm endpoints/credentials reachable from D11; port the upload/display path (`shanti_images_*_url`, `shanti_image_formatter`); preserve `i3fid` / `mmsid` / `field_other_ids` linkage | 1a.1 | ✅ |
+| 1a.6 | Migrate scheme nodes → taxonomy terms (no deps, migrate first) | 1a.3 | ✅ |
+| 1a.7 | Migrate `shanti_image` with node→paragraph transform for satellites; **source satellites via the image reference field, not the raw node table** (skips ~12k orphan agents, ~17k orphan descriptions); expect shared-agent fan-out (~111k agent paragraphs) | 1a.6 | ✅ |
+| 1a.8 | Solr write/sync via reindeer_x (Spike 8 parts A/B), informed by the Phase 0 cost/architecture conversation | [Spike 8](../spikes/spike-08-reindeer-x-consolidation.md) | ✅ |
+| 1a.9 | Rollback story: repeatable test-run → validate → rollback cycle; local rehearsal ✅ passed (111,343/111,343; 0 failures); staging acceptance run deferred to end of Sprint 1 (post-1b) — see [staging prerequisites](../deferred/staging-migration-execution-prerequisites.md) | 1a.7 | ✅ |
 
-After 1a.7 establishes the pattern + test + rollback story, individuals replicate it for
-the remaining field/paragraph types.
+All 1a code merged to `main`; migration pattern (Migrate API → KMaps → Solr sync → rollback cycle) established for replication in per-site tracks.
 
 ### Step 1b — auth increment
 
