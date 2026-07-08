@@ -36,7 +36,7 @@ behavior is the floor; internal data remodeling is permitted where it reduces ri
 | 4 KMaps fields wired to kmassets (Spike 1 productionized) | Improving Tibetan/Solr **search quality** ([deferred](../deferred/tibetan-search-quality.md)) |
 | Transliteration diacritic fidelity (NFC/NFD round-trip) | New IIIF stack or `shanti-image-NNN` scheme change (IIIF stays as-is) |
 | Content indexes and is **retrievable via existing query patterns** | JSON/AJAX API parity (`api/json/{nid}`, `api/ajax/{nid}`) — Phase 5 |
-| Proxy-auth access path + Solr-proxy visibility filtering | Auth **redesign** (wire into the existing contract, per ADR 004) |
+| Proxy-auth access path + Solr-proxy visibility filtering | Auth **redesign** (hybrid proxy per [ADR 014](../adr/014-hybrid-solr-proxy-design.md); D11 enforces access natively per [ADR 013](../adr/013-drupal-source-of-truth-solr-client-compatibility.md)) |
 | OG → Group collection membership for Images | Sub-subcollection nesting beyond one level ([deferred](../deferred/group-subgroup-nesting-approach.md)) |
 
 > "Docs land in Solr" (✓) is **not** "Tibetan search works well" (deferred). The Solr
@@ -98,7 +98,7 @@ the remaining field/paragraph types.
 
 | # | Task | Depends on | Owner |
 |---|------|-----------|-------|
-| 1b.1 | Wire D11 into the existing proxy-auth contract (do **not** redesign auth) | [Spike 2](../spikes/spike-02-solr-integration.md) deferred (blocking) | mob |
+| 1b.1 | Hybrid Solr proxy for D11: (1) fork proxy into `solr-proxy/`; wire `$OAUTH_ROOT` to D11 `simple_oauth`; replace `setCollections()` with Redis read of `mandala_solr_fq:{uid}`; (2) install + configure `simple_oauth` in D11; register proxy OAuth2 client; (3) Drupal event hooks — write/invalidate Redis token on login, Group membership change, logout; (4) confirm SAML+OAuth2 coexistence (Spike 10). Design: [ADR 013](../adr/013-drupal-source-of-truth-solr-client-compatibility.md), [ADR 014](../adr/014-hybrid-solr-proxy-design.md) | [Spike 10](../spikes/spike-10-saml-oauth2-coexistence.md) — **blocks implementation** | mob |
 | 1b.2 | Build Group `collection`/`subcollection` bundles + `group_node:shanti_image` relation as CMI config; implement custom inheritance module ([ADR 011](../adr/011-group-collections-inheritance.md) Option D — visibility + membership hooks, `visibility_overridden` flag, sub-only retention); migrate OG → Group: `group_content_access` (Visibility) + `field_og_collection_ref` → Group membership | [Spike 3](../spikes/spike-03-group-collections.md), [ADR 011](../adr/011-group-collections-inheritance.md) | mob |
 | 1b.3 | Solr-proxy visibility filtering; prove access-control coherence (search results agree with node/Group access) | 1b.1, 1b.2 | mob |
 | 1b.4 | Confirm paragraph access inheritance: a private image's satellite paragraphs are not independently retrievable | 1b.3 | mob |
