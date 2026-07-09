@@ -36,6 +36,7 @@ dependencies:
     - field.field.node.shanti_image.field_kmap_collections
     - field.field.node.shanti_image.field_kmap_terms
     - field.field.node.shanti_image.field_latitude
+    - field.field.node.shanti_image.field_legacy_nid
     - field.field.node.shanti_image.field_lens
     - field.field.node.shanti_image.field_license_url
     - field.field.node.shanti_image.field_light_source
@@ -59,7 +60,6 @@ dependencies:
   module:
     - datetime
     - entity_reference_revisions
-    - image
     - link
     - options
     - shanti_iiif
@@ -472,5 +472,6 @@ hidden:
   field_iiif_id: true
   field_iiif_mms_id: true
   field_iiif_width: true
+  field_legacy_nid: true
   langcode: true
   search_api_excerpt: true

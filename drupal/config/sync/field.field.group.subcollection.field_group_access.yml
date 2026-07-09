@@ -1,0 +1,25 @@
+uuid: 57de2648-3f28-4e39-a954-ac08f27e4916
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.group.field_group_access
+    - group.type.subcollection
+id: group.subcollection.field_group_access
+field_name: field_group_access
+entity_type: group
+bundle: subcollection
+label: 'Group access'
+description: '0 = public, 1 = members-only (private), 2 = subscribable. Migrated from D7 group_access_value.'
+required: false
+translatable: true
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

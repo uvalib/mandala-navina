@@ -1,0 +1,34 @@
+id: d7_images_collections
+label: 'D7 Images: collection nodes → Group entities (collection bundle)'
+migration_group: mandala_images
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1b.2'
+
+source:
+  plugin: d7_node
+  node_type: collection
+
+process:
+  label: title
+  status: status
+  created: created
+  changed: changed
+  # Force uid=1 (admin) to avoid Group auto-creating uid=0 memberships on insert.
+  uid:
+    plugin: default_value
+    default_value: 1
+
+  # D7 group_access field: 0=public, 1=private, 2=subscribable.
+  field_group_access: group_access/0/value
+
+  # Preserve D7 nid for lookups and audit trails.
+  field_legacy_nid: nid
+
+destination:
+  plugin: 'entity:group'
+  default_bundle: collection
+
+migration_dependencies:
+  optional: []

@@ -6,7 +6,6 @@ _core:
   default_config_hash: PQoWEQsXjh6knSdHvvFNOOq0G1BGkvwdkPOZUvfPvVA
 id: d7_images_external_classification
 class: null
-idMap: {  }
 field_plugin_method: null
 cck_plugin_method: null
 migration_tags:
@@ -33,6 +32,7 @@ process:
 destination:
   plugin: 'entity_reference_revisions:paragraph'
   default_bundle: external_classification
+idMap: {  }
 migration_dependencies:
   required:
     - d7_images_external_classification_scheme

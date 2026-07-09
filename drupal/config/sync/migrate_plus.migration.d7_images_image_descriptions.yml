@@ -6,7 +6,6 @@ _core:
   default_config_hash: zLn_6BJaZKNuI0AOWiKjujqDM2uxAY4RcWNV47EfkSg
 id: d7_images_image_descriptions
 class: null
-idMap: {  }
 field_plugin_method: null
 cck_plugin_method: null
 migration_tags:
@@ -52,5 +51,6 @@ process:
 destination:
   plugin: 'entity_reference_revisions:paragraph'
   default_bundle: image_descriptions
+idMap: {  }
 migration_dependencies: {  }
 include: null

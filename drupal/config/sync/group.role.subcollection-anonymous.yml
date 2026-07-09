@@ -1,0 +1,18 @@
+uuid: cb7e0cb2-472d-4d2e-b31e-57956add65f7
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.subcollection
+    - user.role.anonymous
+id: subcollection-anonymous
+label: Anonymous
+weight: -100
+admin: false
+scope: outsider
+global_role: anonymous
+group_type: subcollection
+permissions:
+  - 'view group'
+  - 'view group_node:shanti_image entity'
+  - 'view group_node:shanti_image relationship'

@@ -36,6 +36,7 @@ dependencies:
     - field.field.node.shanti_image.field_kmap_collections
     - field.field.node.shanti_image.field_kmap_terms
     - field.field.node.shanti_image.field_latitude
+    - field.field.node.shanti_image.field_legacy_nid
     - field.field.node.shanti_image.field_lens
     - field.field.node.shanti_image.field_license_url
     - field.field.node.shanti_image.field_light_source
@@ -536,5 +537,6 @@ content:
       placeholder: ''
     third_party_settings: {  }
 hidden:
+  field_legacy_nid: true
   promote: true
   sticky: true

@@ -6,7 +6,6 @@ _core:
   default_config_hash: 4bTtFNKITsyT7iqiNEv8r9-WNxDhsj3KJsvt4qG2nyo
 id: d7_images_shanti_image
 class: null
-idMap: {  }
 field_plugin_method: null
 cck_plugin_method: null
 migration_tags:
@@ -25,10 +24,6 @@ process:
   changed: changed
   promote: promote
   sticky: sticky
-  # Provenance: record the source D7 nid on the node so old→new identity is
-  # durable (survives rollback/reimport) and can feed the planned uid_legacy_s
-  # kmasset Solr field. See docs/deferred/kmassets-uid-identity-across-migration.md
-  field_legacy_nid: nid
   field_iiif_id: i3fid
   field_iiif_mms_id: mmsid
   field_iiif_width: iiif_width
@@ -233,6 +228,7 @@ process:
 destination:
   plugin: 'entity:node'
   default_bundle: shanti_image
+idMap: {  }
 migration_dependencies:
   required:
     - d7_images_image_agent

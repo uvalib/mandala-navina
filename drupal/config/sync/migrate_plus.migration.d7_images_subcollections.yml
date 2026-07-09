@@ -1,0 +1,28 @@
+id: d7_images_subcollections
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1b.2'
+migration_group: mandala_images
+label: 'D7 Images: subcollection nodes → Group entities (subcollection bundle)'
+source:
+  plugin: d7_image_subcollection
+  node_type: subcollection
+process:
+  label: title
+  status: status
+  created: created
+  changed: changed
+  uid: uid
+  field_group_access: group_access/0/value
+  field_parent_collection/target_id:
+    plugin: migration_lookup
+    migration: d7_images_collections
+    source: parent_collection_nid
+    no_stub: true
+destination:
+  plugin: 'entity:group'
+  default_bundle: subcollection
+migration_dependencies:
+  required:
+    - d7_images_collections

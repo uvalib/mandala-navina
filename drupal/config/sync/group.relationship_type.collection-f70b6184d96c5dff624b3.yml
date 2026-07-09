@@ -1,0 +1,17 @@
+uuid: 02a2cfbd-5522-42f7-b9d3-c7dbc0d73824
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.collection
+    - node.type.shanti_image
+  module:
+    - gnode
+    - node
+id: collection-f70b6184d96c5dff624b3
+group_type: collection
+content_plugin: 'group_node:shanti_image'
+plugin_config:
+  group_cardinality: 0
+  entity_cardinality: 1
+  use_creation_wizard: false

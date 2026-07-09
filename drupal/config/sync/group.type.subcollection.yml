@@ -1,0 +1,11 @@
+uuid: b3dec0a7-8d1c-49ff-ab44-5adb981bf078
+langcode: en
+status: true
+dependencies: {  }
+id: subcollection
+label: Subcollection
+description: 'Subcollection nested under a collection (migrated from D7 OG subcollection nodes)'
+new_revision: true
+creator_membership: true
+creator_wizard: false
+creator_roles: {  }

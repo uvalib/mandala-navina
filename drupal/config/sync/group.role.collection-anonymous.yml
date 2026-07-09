@@ -1,0 +1,18 @@
+uuid: 3e8cb2e8-55c7-40b0-81fb-8e25376791d4
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.collection
+    - user.role.anonymous
+id: collection-anonymous
+label: Anonymous
+weight: -100
+admin: false
+scope: outsider
+global_role: anonymous
+group_type: collection
+permissions:
+  - 'view group'
+  - 'view group_node:shanti_image entity'
+  - 'view group_node:shanti_image relationship'

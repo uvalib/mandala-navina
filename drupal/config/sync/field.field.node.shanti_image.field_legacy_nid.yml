@@ -1,4 +1,4 @@
-uuid: 21bc5e2f-dbab-472d-b965-02c6c7851919
+uuid: bb8c06ee-fa23-4ef9-8c17-64f0e486dd93
 langcode: en
 status: true
 dependencies:
@@ -9,10 +9,10 @@ id: node.shanti_image.field_legacy_nid
 field_name: field_legacy_nid
 entity_type: node
 bundle: shanti_image
-label: 'Legacy D7 node ID'
-description: 'Source Drupal 7 node ID this asset was migrated from. With the asset service prefix it reconstructs the legacy kmasset uid (images-{nid}); feeds the planned uid_legacy_s Solr field for old→new uid mapping. System/provenance value — not editor-facing.'
+label: 'Legacy NID (D7)'
+description: 'The D7 source node ID. Durable identity for rollback/reimport and uid_legacy_s Solr feed.'
 required: false
-translatable: false
+translatable: true
 default_value: {  }
 default_value_callback: ''
 settings:

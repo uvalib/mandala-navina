@@ -1,0 +1,41 @@
+id: d7_images_image_collection_membership
+label: 'D7 Images: OG image→group memberships → group_node:shanti_image relationships'
+migration_group: mandala_images
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1b.2'
+
+source:
+  plugin: d7_image_group_membership
+
+process:
+  # Resolve D7 group nid → D11 Group id. Checks both collection and
+  # subcollection migrations; whichever finds the nid wins.
+  gid:
+    plugin: migration_lookup
+    migration:
+      - d7_images_collections
+      - d7_images_subcollections
+    source: gid
+    no_stub: true
+
+  # Resolve D7 shanti_image nid → D11 node id.
+  entity_id:
+    plugin: migration_lookup
+    migration: d7_images_shanti_image
+    source: etid
+    no_stub: true
+
+  plugin_id:
+    plugin: default_value
+    default_value: 'group_node:shanti_image'
+
+destination:
+  plugin: mandala_group_relationship
+
+migration_dependencies:
+  required:
+    - d7_images_collections
+    - d7_images_subcollections
+    - d7_images_shanti_image

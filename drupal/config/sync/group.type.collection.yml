@@ -1,0 +1,11 @@
+uuid: 8a489e44-01e9-4681-a064-1163ea1ed89f
+langcode: en
+status: true
+dependencies: {  }
+id: collection
+label: Collection
+description: 'Top-level image collection (migrated from D7 OG collection nodes)'
+new_revision: true
+creator_membership: true
+creator_wizard: false
+creator_roles: {  }

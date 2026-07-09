@@ -1,0 +1,27 @@
+id: d7_images_collection_memberships
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1b.2'
+migration_group: mandala_images
+label: 'D7 Images: OG user memberships → Group membership relationships'
+source:
+  plugin: d7_image_user_group_membership
+process:
+  gid:
+    plugin: migration_lookup
+    migration:
+      - d7_images_collections
+      - d7_images_subcollections
+    source: gid
+    no_stub: true
+  entity_id: etid
+  plugin_id:
+    plugin: default_value
+    default_value: group_membership
+destination:
+  plugin: mandala_group_relationship
+migration_dependencies:
+  required:
+    - d7_images_collections
+    - d7_images_subcollections
