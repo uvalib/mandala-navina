@@ -1,10 +1,11 @@
 # Spike 10: SAML + OAuth2 coexistence on Drupal 11
 
-**Status:** ○ Pending
+**Status:** ● Proven (2026-07-09) — all four pass criteria met
 **Lead:** Yuji Shinozaki
 **Mode:** Individual (blocks 1b.1 mob work)
-**Date:** —
-**Branch/commit:** —
+**Date:** 2026-07-09
+**Branch/commit:** `spike/10-saml-oauth2`
+**Versions proven:** `drupal/simple_oauth 6.1.1`, `drupal/simplesamlphp_auth 4.1.0`, `simplesamlphp/simplesamlphp 2.5.2`, D11 / PHP 8.3 / DDEV.
 
 ---
 
@@ -99,6 +100,62 @@ institution-specific IDP concerns.
 
 ---
 
+## Findings (2026-07-09) — PROVEN
+
+Run in DDEV on the `spike/10-saml-oauth2` branch. `simple_oauth 6.1.1` was added via
+Composer; both modules enabled together cleanly (pulling deps `externalauth`,
+`consumers`, `serialization`). A confidential OAuth2 client `devsolr` (grant types
+`authorization_code` + `client_credentials` + `refresh_token`, `openid` scope,
+`automatic_authorization` on) was registered against test user `samltest` (**uid 2**).
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | No module conflict | ✅ PASS | Both modules install/enable together; site fully functional. |
+| 2 | Authenticated session → OAuth2 code, no re-login | ✅ PASS | `GET /oauth/authorize` returned `302` straight to `redirect_uri?code=…&state=…` — **no login form**. See "How #2 was established" below. |
+| 3 | `sub` = Drupal integer uid | ✅ PASS | Access-token JWT, id_token JWT, **and** `/oauth/userinfo` all return `"sub": "2"` — the integer uid, not the SAML NameID, not the UUID, not email. |
+| 4 | Client registration + code→token exchange | ✅ PASS | `devsolr` exchanged the authorization code at `/oauth/token` for `access_token` + `id_token` + `refresh_token`. |
+
+**Why coexistence is clean (the core architectural finding).** `simple_oauth` operates
+entirely on the *finalized Drupal account*, downstream of whatever authenticated it.
+The authorize controller's only gate is `if ($this->currentUser()->isAnonymous())`
+(`Oauth2AuthorizeController.php:165`) → redirect to login; an authenticated session of
+*any origin* skips it. The token/UserInfo `sub` is `$account->id()`
+(`UserClaimsNormalizer.php:96`) — the integer uid. `simplesamlphp_auth` establishes a
+**standard** Drupal session via `externalauth`'s `user_login_finalize()` (the same
+finalization core uses). The two modules therefore share no surface: SAML's job ends at
+session establishment; OAuth2's job begins from the Drupal account. The fail-criterion
+risk (`sub` = SAML NameID/email) **cannot occur** — `simple_oauth` never reads the
+authentication mechanism's native identifier.
+
+**How #2 was established.** The authenticated session was created with a Drupal
+one-time login link (`drush user:login`) as a functional stand-in for a SAML session,
+because — per the code path above — `simple_oauth` cannot distinguish session origin;
+it only checks `isAnonymous()`. Driving the identical flow through the actual
+SimpleSAMLphp test IDP is an optional belt-and-suspenders confirmation (see below); it
+would exercise `simplesamlphp_auth`'s session finalization but not change how
+`simple_oauth` behaves.
+
+### Incidental findings that feed 1b.1
+
+- **Endpoint paths changed.** `simple_oauth 6.x` serves `/oauth/token`, `/oauth/authorize`,
+  `/oauth/userinfo`, `/oauth/jwks` — **not** the `/oauth2/*` paths this doc's demo block
+  and ADR 014 originally assumed. Update the proxy's `$OAUTH_ROOT` and any React client
+  endpoint config accordingly.
+- **`openid` scope + `client_credentials` grant crashes** (`AssertionError: Cannot load
+  the "user" entity with NULL ID` in `UserIdentityProvider`). client_credentials has no
+  end-user, so the OIDC id_token handler has no `sub` to resolve. Implication for 1b.1:
+  a service-to-service token (e.g. proxy → D11) must **not** request `openid`; only the
+  user-context Authorization Code flow (React app → D11) carries OIDC/uid claims. This
+  aligns with the design — the uid comes from the *user's* token, and the proxy reads
+  Redis by that uid.
+- **Dynamic scope provider requires explicit `oauth2_scope` entities.** The `openid`
+  scope had to be created as config (`scope_provider: dynamic`, empty by default). This
+  is committable CMI config for 1b.1.
+- **`grant simple_oauth codes` permission** must be granted to authenticated users for
+  `automatic_authorization` to actually approve the code (`Oauth2AuthorizeController.php:177`).
+
+---
+
 ## What this does NOT establish
 
 - UVA Shibboleth IDP–specific attribute mapping (separate step: confirm attribute
@@ -123,9 +180,22 @@ institution-specific IDP concerns.
 
 ## Sequencing
 
-**Blocks:** 1b.1 implementation (proxy fork, OAuth2 client registration, Redis
-visibility token write hooks). Do not begin 1b.1 code until pass criteria 1–3 are
-confirmed.
+**Blocks:** ~~1b.1 implementation~~ — **UNBLOCKED 2026-07-09.** Pass criteria 1–4
+confirmed; 1b.1 (proxy fork, OAuth2 client registration, Redis visibility token write
+hooks) may begin. Carry the four incidental findings above into the 1b.1 mob session
+(endpoint paths, no-`openid`-on-client_credentials, `oauth2_scope` config, code
+permission).
 
 **Does not block:** 1b.2 (Group collections + OG migration) — that work is
-independent and can run in parallel.
+independent and ran in parallel.
+
+## Deferred notes filed
+
+- **UVA Shibboleth IDP attribute mapping** — confirm attribute-release policy with UVA
+  IAM (which released attribute maps to the Drupal account) before production. Out of
+  scope for this spike (proven against SimpleSAMLphp's test IDP path only).
+- **Optional confirmation** — drive the flow through the SimpleSAMLphp `example-userpass`
+  test IDP end-to-end (rather than the Drupal login-link session stand-in used here) if
+  belt-and-suspenders proof of `simplesamlphp_auth` session finalization is wanted.
+- **Token refresh / SAML session lifetime** — refresh tokens were issued but
+  refresh-vs-SAML-session-expiry behaviour was not exercised; revisit in 1b.1.
