@@ -10,6 +10,10 @@
 # and sets config_sync_directory. Only the per-machine local override is ignored.
 /drupal/web/sites/*/settings.local.php
 
+# simple_oauth RSA keypair (1b.1 / ADR 014) — per-environment, generated via
+# `drush simple-oauth:generate-keys`, never committed.
+/drupal/keys/
+
 # DDEV — let DDEV manage its own gitignore inside .ddev/
 .ddev/.gitignore
 .ddev/config.*.yaml

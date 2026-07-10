@@ -25,6 +25,7 @@
         "drupal/paragraphs": "^1.18",
         "drupal/search_api": "^1.34",
         "drupal/search_api_solr": "^4.3",
+        "drupal/simple_oauth": "^6.1",
         "drupal/simplesamlphp_auth": "^4.1",
         "drush/drush": "^13"
     },

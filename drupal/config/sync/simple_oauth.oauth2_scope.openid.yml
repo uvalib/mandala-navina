@@ -1,0 +1,18 @@
+uuid: ff179547-02ef-4291-9300-a5b35d0139bd
+langcode: en
+status: true
+dependencies: {  }
+id: openid
+name: openid
+description: 'OpenID Connect: identifies the authenticated Drupal user (sub = uid). User-context flows only (Spike 10: must not be requested on client_credentials).'
+grant_types:
+  authorization_code:
+    status: true
+    description: 'OpenID Connect via Authorization Code (React KMaps app / solr-proxy).'
+  refresh_token:
+    status: true
+    description: 'OpenID Connect on token refresh.'
+umbrella: true
+parent: null
+granularity_id: null
+granularity_configuration: null
