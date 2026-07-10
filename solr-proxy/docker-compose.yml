@@ -1,0 +1,21 @@
+# version: "3.9"
+version: "3.2"
+
+services:
+  php-proxy:
+    build: .
+    ports:
+      - "8765:80"
+    volumes:
+    - ./settings:/usr/local/etc/settings
+    container_name: mandala-solr-proxy
+    restart: always
+    logging:
+       driver: syslog
+       options:
+         tag: mandala-solr-proxy
+    environment:
+       - SOLR_BASEURL=${SOLR_BASEURL}
+       - DEFAULT_RETURL=${DEFAULT_RETURL}
+       - REDIS_HOST=${REDIS_HOST}
+       - REDIS_PORT=${REDIS_PORT}

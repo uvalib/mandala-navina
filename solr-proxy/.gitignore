@@ -1,0 +1,6 @@
+settings/creds.php
+settings/paths.php
+proxy/vendor/
+.idea
+.DS_Store
+.env

@@ -1,0 +1,23 @@
+<?php
+
+if ( getenv("SOLR_BASEURL") === false ) {
+    throw new Exception("Environment variable SOLR_BASEURL must be set!");
+}
+$DEFAULT_RETURL = $_ENV["DEFAULT_RETURL"]; // "https://standalone.kmaps.virginia.edu/home";
+$SOLR_BASE = $_ENV["SOLR_BASEURL"]."/solr";
+
+$SOLR_URLS = array(
+             "/solr/kmassets" => "$SOLR_BASE/kmassets",
+             "/solr/kmterms" => "$SOLR_BASE/kmterms",
+);
+$STATUS_URLS = array(
+	     "/solr/kmassets" => "$SOLR_BASE/admin/cores?action=STATUS&core=kmassets&indexInfo=false",
+	     "/solr/kmterms" => "$SOLR_BASE/admin/cores?action=STATUS&core=kmterms&indexInfo=false",
+	     "/solr/all" => "$SOLR_BASE/admin/cores?action=STATUS&indexInfo=false",
+);
+
+// Shared Redis instance (ADR 014): Drupal writes `mandala_solr_fq:{uid}`
+// visibility tokens here; the proxy only ever reads them. Same instance
+// Drupal's settings.php points at for this environment.
+$REDIS_HOST = $_ENV["REDIS_HOST"] ?? "127.0.0.1";
+$REDIS_PORT = $_ENV["REDIS_PORT"] ?? "6379";
