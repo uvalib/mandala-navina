@@ -24,6 +24,7 @@ process:
   changed: changed
   promote: promote
   sticky: sticky
+  field_legacy_nid: nid
   field_iiif_id: i3fid
   field_iiif_mms_id: mmsid
   field_iiif_width: iiif_width
