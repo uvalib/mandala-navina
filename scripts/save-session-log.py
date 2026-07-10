@@ -20,8 +20,20 @@ most recently modified file:
 
 import json
 import os
+import subprocess
 import sys
 from datetime import datetime
+
+
+def get_driver_name():
+    try:
+        name = subprocess.run(
+            ['git', 'config', 'user.name'],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        return name or 'Unknown'
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return 'Unknown'
 
 
 def extract_turns(jsonl_path):
@@ -78,11 +90,13 @@ def write_markdown(turns, out_path, slug):
     else:
         date_str = datetime.today().strftime('%Y-%m-%d')
 
+    driver = get_driver_name()
+
     lines = [
         f"# Session Log: {title}",
         "",
         f"**Date:** {date_str}  ",
-        "**Participants:** Yuji Shinozaki, Claude Sonnet 4.6  ",
+        f"**Participants:** {driver}, Claude Code  ",
         "**Outcome:** *(add link to relevant spike or planning doc)*",
         "",
         "---",
@@ -139,8 +153,10 @@ def main():
     print(f"Written: {out_path} ({size:,} bytes)")
     print()
     print("Next steps:")
-    print(f"  1. Edit the 'Outcome' line in {filename} to link to the relevant spike/planning doc")
-    print(f"  2. git add docs/session-logs/{filename} && git commit")
+    print(f"  1. Check the 'Participants' line in {filename} — derived from `git config user.name`,")
+    print("     fix it by hand if that isn't your full display name")
+    print(f"  2. Edit the 'Outcome' line in {filename} to link to the relevant spike/planning doc")
+    print(f"  3. git add docs/session-logs/{filename} && git commit")
 
 
 if __name__ == '__main__':
