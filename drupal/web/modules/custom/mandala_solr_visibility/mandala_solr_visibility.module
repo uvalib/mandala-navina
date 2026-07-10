@@ -1,0 +1,109 @@
+<?php
+
+/**
+ * @file
+ * Writes the mandala_solr_fq:{uid} Redis visibility token (ADR 014).
+ *
+ * Implements the three trigger events from ADR 014's 1b.1 breakdown item 3:
+ * write/invalidate on login, on Group membership change, and on logout.
+ * Drupal is the sole writer; the standalone solr-proxy only ever reads
+ * (proxy/Searcher.php). See VisibilityTokenBuilder for the fq shape and
+ * VisibilityTokenStore for the Redis read/write mechanics.
+ */
+
+use Drupal\Core\Session\AccountInterface;
+use Drupal\group\Entity\GroupRelationshipInterface;
+use Drupal\user\UserInterface;
+
+/**
+ * Implements hook_user_login().
+ *
+ * Writes a fresh token on every login so a session never starts without one
+ * (covers the case where a prior token expired or was never written).
+ */
+function mandala_solr_visibility_user_login(UserInterface $account) {
+  _mandala_solr_visibility_write_token($account);
+}
+
+/**
+ * Implements hook_user_logout().
+ *
+ * Deletes the token immediately rather than waiting for TTL expiry — once
+ * logged out, a stale token must not keep granting the proxy access on this
+ * uid (e.g. to another party who later authenticates as the same client
+ * before TTL expiry, or simply as defense in depth).
+ */
+function mandala_solr_visibility_user_logout(AccountInterface $account) {
+  $uid = (int) $account->id();
+  if ($uid === 0) {
+    return;
+  }
+  \Drupal::service('mandala_solr_visibility.token_store')->delete($uid);
+}
+
+/**
+ * Implements hook_group_relationship_insert().
+ *
+ * Recomputes the affected member's token on any collection/subcollection
+ * membership change — not just direct changes but the cascaded rows
+ * mandala_group_inheritance creates too (each cascaded add is its own
+ * group_relationship insert, so this fires naturally for those as well).
+ * Written unconditionally, independent of whether the user currently has a
+ * live session, so access changes are already in place before their next
+ * login rather than racing it.
+ */
+function mandala_solr_visibility_group_relationship_insert(GroupRelationshipInterface $relationship) {
+  _mandala_solr_visibility_handle_membership_change($relationship);
+}
+
+/**
+ * Implements hook_group_relationship_delete().
+ */
+function mandala_solr_visibility_group_relationship_delete(GroupRelationshipInterface $relationship) {
+  _mandala_solr_visibility_handle_membership_change($relationship);
+}
+
+/**
+ * Shared logic for the two group_relationship hooks above.
+ */
+function _mandala_solr_visibility_handle_membership_change(GroupRelationshipInterface $relationship) {
+  if ($relationship->getRelationshipType()->getPluginId() !== 'group_membership') {
+    return;
+  }
+  $group = $relationship->getGroup();
+  if (!in_array($group->bundle(), ['collection', 'subcollection'], TRUE)) {
+    return;
+  }
+
+  $account = $relationship->getEntity();
+  if (!$account instanceof UserInterface || (int) $account->id() === 0) {
+    return;
+  }
+
+  _mandala_solr_visibility_write_token($account);
+}
+
+/**
+ * Builds and writes the current token for an account.
+ *
+ * uid=1 and anonymous both get a NULL fq from the builder (no filter should
+ * apply) — deleting rather than writing a token in that case, since a
+ * missing key is exactly how the proxy already represents "no filter" for
+ * an unrecognised/anonymous uid, and there is nothing for VisibilityTokenBuilder
+ * to encode as "everything" that Redis needs to store.
+ */
+function _mandala_solr_visibility_write_token(UserInterface $account) {
+  $uid = (int) $account->id();
+  if ($uid === 0) {
+    return;
+  }
+
+  $fq = \Drupal::service('mandala_solr_visibility.token_builder')->build($account);
+  $store = \Drupal::service('mandala_solr_visibility.token_store');
+
+  if ($fq === NULL) {
+    $store->delete($uid);
+    return;
+  }
+  $store->write($uid, $fq);
+}

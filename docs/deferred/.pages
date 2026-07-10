@@ -32,3 +32,4 @@ nav:
   - "openid scope on client_credentials crash": oauth-openid-scope-client-credentials-crash.md
   - "field_legacy_nid required migration convention": migration-legacy-nid-required-convention.md
   - "kmassets collection docs & facets (Part B)": kmassets-collection-docs-and-facets.md
+  - "Group membership removal broken (no data field)": group-relationship-delete-broken-no-data-field.md

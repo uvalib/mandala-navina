@@ -52,6 +52,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [oauth-openid-scope-client-credentials-crash.md](oauth-openid-scope-client-credentials-crash.md) | auth / simple_oauth / OAuth2 | Spike 10 | Medium |
 | [migration-legacy-nid-required-convention.md](migration-legacy-nid-required-convention.md) | migration / process / DX | Session 2026-07-10 | High |
 | [kmassets-collection-docs-and-facets.md](kmassets-collection-docs-and-facets.md) | solr / kmassets / Group collections / write path | Session 2026-07-10 (1b.1) | Medium |
+| [group-relationship-delete-broken-no-data-field.md](group-relationship-delete-broken-no-data-field.md) | Group collections / mandala_group_inheritance / access control | Session 2026-07-10 (1b.1) | High — breaks already-merged 1b.2 membership removal |
 
 ## Resolved / superseded
 

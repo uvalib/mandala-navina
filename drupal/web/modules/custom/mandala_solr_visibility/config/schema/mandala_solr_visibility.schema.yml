@@ -1,0 +1,13 @@
+mandala_solr_visibility.settings:
+  type: config_object
+  label: 'Mandala Solr Visibility Token settings'
+  mapping:
+    redis_host:
+      type: string
+      label: 'Redis host (shared with the solr-proxy — ADR 014)'
+    redis_port:
+      type: integer
+      label: 'Redis port'
+    ttl:
+      type: integer
+      label: 'Token TTL in seconds (ADR 014 default: 1 hour)'
