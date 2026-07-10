@@ -23,7 +23,9 @@ process:
   # D7 group_access field: 0=public, 1=private, 2=subscribable.
   field_group_access: group_access/0/value
 
-  # Preserve D7 nid for lookups and audit trails.
+  # Preserve D7 nid for lookups and audit trails. Mandatory on every
+  # content-entity migration — see
+  # docs/deferred/migration-legacy-nid-required-convention.md
   field_legacy_nid: nid
 
   # Parent collection: D7 nid → D11 Group id via migration_lookup.

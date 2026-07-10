@@ -13,8 +13,11 @@ process:
   status: status
   created: created
   changed: changed
-  uid: uid
+  uid:
+    plugin: default_value
+    default_value: 1
   field_group_access: group_access/0/value
+  field_legacy_nid: nid
   field_parent_collection/target_id:
     plugin: migration_lookup
     migration: d7_images_collections

@@ -50,6 +50,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [kmassets-sync-hook-fires-during-migration.md](kmassets-sync-hook-fires-during-migration.md) | solr / kmassets / migration / sync / performance | Session 2026-07-07 (1a.9) | Medium |
 | [load-staging-baseline-false-clean-on-nonzero-schema.md](load-staging-baseline-false-clean-on-nonzero-schema.md) | migration / tooling / DX / scripts | Session 2026-07-07 (1a.9) | Medium |
 | [oauth-openid-scope-client-credentials-crash.md](oauth-openid-scope-client-credentials-crash.md) | auth / simple_oauth / OAuth2 | Spike 10 | Medium |
+| [migration-legacy-nid-required-convention.md](migration-legacy-nid-required-convention.md) | migration / process / DX | Session 2026-07-10 | High |
 
 ## Resolved / superseded
 
