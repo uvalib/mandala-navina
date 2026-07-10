@@ -1,0 +1,94 @@
+# `field_legacy_nid` is mandatory on every content-entity migration
+
+**Area:** migration / process / DX
+**Raised during:** Session 2026-07-10 (post-1b.2, config-sync drift incident)
+**Jira:** (add when available)
+**Priority:** High — every future content migration (Texts, Sources, AV, Mandala Home) must follow this or repeat the incident below
+
+## The convention
+
+Any migration whose destination is a top-level content entity (`node`, `group`,
+and any future bundle that gets its own identity — not paragraphs, not
+relationship/membership entities) **must**:
+
+1. Have a `field_legacy_nid` (integer, optional) field on the destination
+   bundle, added via CMI.
+2. Map it in the migration's `process` pipeline: `field_legacy_nid: nid`
+   (or the appropriate source ID property if not `nid`).
+3. Get verified post-import: row count in `{entity_type}__field_legacy_nid`
+   must equal the migrated entity count, with 0 mismatches against the
+   migration's own `migrate_map_*` table.
+
+This is already established for Images (`shanti_image` nodes, `collection`/
+`subcollection` groups). It must be repeated for every future site migration.
+
+**Why this matters beyond audit trail:** `field_legacy_nid` is the source for
+the planned `uid_legacy_s` kmassets Solr field (old→new uid compatibility
+shim at cutover — see
+[kmassets-uid-identity-across-migration.md](kmassets-uid-identity-across-migration.md)),
+and it's the only durable D7→D11 identity mapping that survives rollback/
+reimport (the `migrate_map_*` tables are migration-run-scoped and get wiped
+on rollback).
+
+## The incident (2026-07-10)
+
+`field_legacy_nid: nid` was correctly added to the `mandala_migrations`
+module's `config/install/*.yml` for `d7_images_shanti_image` (2026-07-07,
+commit `a6c9e78`) and for the new `d7_images_collections` /
+`d7_images_subcollections` migrations (1b.2, PR #27). But **`config/install`
+is a module's default configuration — Drupal only reads it when the config
+doesn't already exist in active storage** (fresh module install, or a
+brand-new config object). It is never read by `drush cim`, which syncs from
+`drupal/config/sync/` only.
+
+Because `d7_images_shanti_image` was already active *before* the
+`field_legacy_nid` line was added, the fix never reached that migration's
+active config or `config/sync` on any already-provisioned machine — the
+line only took effect on a machine where the module was freshly reinstalled
+after the edit. Result: `shanti_image` migrations run on affected machines
+produced 111,343 nodes with an **empty** `field_legacy_nid` field, silently.
+
+The collections/subcollections migrations happened to pick up the fix
+because those config objects were newly created during 1b.2 (so Drupal read
+them straight from the already-corrected `config/install`) — but their
+`uid: default_value: 1` fix (preventing Group's uid=0 auto-membership bug —
+see [[project-1b2-group-collections]] Group 3.x API notes) had the identical
+drift problem: correct in `config/install`, never exported to `config/sync`.
+Discovered when a machine that had *not* freshly reinstalled the module
+showed all 174 migrated groups owned by `uid=0`.
+
+**Fixed in this session** (branch `fix/1b-legacy-nid-migration-config-sync`):
+applied the `config/install` process definitions to active config, ran
+`drush cex` to write them into `config/sync`, backfilled the empty
+`shanti_image.field_legacy_nid` data, and corrected the 174 groups' `uid`
+from 0 → 1. `drush config:status` confirmed no other config had drifted the
+same way.
+
+## Process guardrail (applies beyond migrations)
+
+**Editing a module's `config/install/*.yml` after the module is already
+enabled somewhere does nothing on its own.** It only takes effect for a
+config object that doesn't yet exist in active storage. To actually deploy
+the change:
+
+1. Apply it to active config (`drush config:set`, or a one-off script that
+   merges the corrected keys and saves).
+2. Run `drush cex` and confirm `git diff` only touches the files you intended
+   — `drush config:status` should be empty on a clean environment before you
+   start, so you can trust the post-`cex` diff is exactly your change.
+3. Commit the `config/sync/*.yml` change in the same PR as the
+   `config/install` edit. Never let them land in separate commits/PRs.
+
+This isn't migration-specific — it applies to any CMI config shipped in a
+custom module's `config/install/`. Worth a general callout in module
+development going forward, not just migrations.
+
+## Checklist for future content migrations (Texts, Sources, AV, Mandala Home)
+
+- [ ] `field_legacy_nid` field added to CMI for every top-level destination
+      bundle
+- [ ] `field_legacy_nid: nid` (or equivalent) mapped in the migration process
+- [ ] Config change applied to active config **and** exported via `drush cex`
+      in the same commit — verify with `drush config:status` before and after
+- [ ] Post-import verification: row count + 0 mismatches against
+      `migrate_map_*`

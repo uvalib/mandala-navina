@@ -23,7 +23,9 @@ process:
   # Record the source D7 nid on the node so old→new identity is durable
   # (survives rollback/reimport, unlike the migrate_map) and can feed the
   # planned uid_legacy_s kmasset Solr field for old→new uid mapping.
-  # See docs/deferred/kmassets-uid-identity-across-migration.md
+  # Mandatory on every content-entity migration — see
+  # docs/deferred/kmassets-uid-identity-across-migration.md and
+  # docs/deferred/migration-legacy-nid-required-convention.md
   field_legacy_nid: nid
 
   # uid intentionally not mapped — user migration is a separate concern; nodes
