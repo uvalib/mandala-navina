@@ -29,8 +29,10 @@ use Drupal\node\NodeInterface;
  * Known divergences from the D7 golden fixtures, by design / data availability:
  *  - node_user / node_user_i / node_user_full_s: D11 user migration is deferred,
  *    so migrated nodes are owned by uid 0 until it lands.
- *  - visibility_i / visibility_s + the entire collection/access layer (table B):
- *    Group-based in D11 (ADR 011), owned by 1b. Defaulted/stubbed here.
+ *  - visibility_i / visibility_s: defaulted to public here, overridden by
+ *    CollectionFieldContributor when the node belongs to a Group (ADR 011).
+ *    The rest of table B (breadcrumb/facet fields) is still stubbed -- see
+ *    that class's docblock.
  *  - url_html/url_ajax/url_json: D11 single-site (ADR 005) URL scheme is a
  *    deferred decision; templates are config (settings.yml).
  */
@@ -123,7 +125,7 @@ class KmassetDocBuilder {
       'url_html' => strtr($bundle_config['url_html'] ?? '', $tokens),
       'url_ajax' => strtr($bundle_config['url_ajax'] ?? '', $tokens),
       'url_json' => strtr($bundle_config['url_json'] ?? '', $tokens),
-      // Stub: real visibility is Group-based (1b). Default public for now.
+      // Default; CollectionFieldContributor overrides when the node is in a Group.
       'visibility_i' => 1,
       'visibility_s' => 'public',
       'solrdoc_ts_i' => time(),
