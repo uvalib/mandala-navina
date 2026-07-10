@@ -21,7 +21,8 @@ Week 1–2    Spike 1: KMaps Field Type ───────┐  run in paralle
             Spike 2: Solr Integration ────────┘
 
 Week 2–3    Spike 3: Group / Collections ─────┐
-            Spike 4: CKEditor 5 Footnotes ─────┤  run in parallel
+            Spike 4a: Tibetan Unicode ─────────┤
+            Spike 4b: CKEditor 5 Footnotes ────┤  run in parallel
             Spike 5: bibcite for Sources ───────┤  (needs D11 from Spike 1)
             Spike 6: API Compatibility ─────────┘
 
@@ -160,17 +161,77 @@ In D7, collections use Organic Groups (`og`). Every content type participates in
 
 ---
 
-## Spike 4 — CKEditor 5 Footnotes and Tibetan Unicode
+## Spike 4a — Tibetan Unicode Round-Trip
+
+**Split from Spike 4 on 2026-07-10** (team-ratified — see
+[docs/spikes/spike-04-ckeditor5-footnotes.md](../spikes/spike-04-ckeditor5-footnotes.md)
+for the original combined scope and the rationale for splitting).
+
+**Time-box:** 1–2 days  
+**Priority:** Medium-High — cross-cutting, not Texts-only  
+**Runs in parallel with:** Spikes 3, 4b, 5, and 6
+
+### Theory
+Unicode Tibetan script (Texts bodies, AV transcripts) and Latin transliteration
+(EWTS/Wylie + diacritics, pervasive in metadata across sites including Images)
+survive the full pipeline — Migrate API → MySQL collation → Solr — without
+silent normalization drift (NFC vs NFD) or corruption.
+
+### Background
+This is cross-cutting, not Texts-specific: true Tibetan script lives in Texts
+bodies and AV transcripts, but Latin transliteration of Tibetan terms appears
+in metadata across sites already migrated (e.g. Images KMaps fields). A green
+Images pilot does not by itself retire this risk — it hasn't been explicitly
+checked for normalization drift.
+
+### Work
+1. Insert Tibetan Unicode sample content into the D11 test database and verify it renders correctly
+2. Confirm the D11 database and connection are configured as `utf8mb4` (collation settings included)
+3. Audit already-migrated Images KMaps/metadata fields containing Latin transliteration (EWTS/Wylie diacritics) for normalization-form consistency (NFC vs NFD) — this is retroactive verification, not new migration work
+4. Trace the normalization behavior through each pipeline stage: Migrate API row → MySQL write → Solr index, to find where (if anywhere) silent normalization occurs
+5. Document findings and any required fix (e.g. explicit `Normalizer::normalize()` call at a specific pipeline stage)
+
+### Pass Criteria
+- Tibetan Unicode content round-trips through the D11 database without corruption
+- Latin transliteration (EWTS/Wylie) preserves diacritics at a consistent Unicode normalization form through Migrate API → MySQL → Solr — no silent normalization drift
+- Already-migrated Images data checked and confirmed (or fixed) for normalization consistency
+
+### Fail Criteria and Response
+| Finding | Response |
+|---|---|
+| Tibetan Unicode corrupted in D11 database | Verify utf8mb4 charset on database and connection; investigate collation settings |
+| Normalization drift found between pipeline stages | Add explicit normalization step at the stage where drift occurs; document as a required step for all future migrations |
+| Already-migrated Images data has drift | File a deferred/high-priority remediation item; assess Solr search-quality impact before deciding whether to reindex |
+
+---
+
+## Spike 4b — CKEditor 5 Footnotes
+
+**Split from Spike 4 on 2026-07-10** (team-ratified — see
+[docs/spikes/spike-04-ckeditor5-footnotes.md](../spikes/spike-04-ckeditor5-footnotes.md)
+for the original combined scope and the rationale for splitting).
 
 **Time-box:** 1–2 days  
 **Priority:** Medium — blocks Phase 4 Texts work only  
-**Runs in parallel with:** Spikes 3, 5, and 6
+**Runs in parallel with:** Spikes 3, 4a, 5, and 6
 
 ### Theory
-Existing Texts site content — including CKEditor 4 footnote markup and Unicode Tibetan script — can be reliably transformed and migrated to D11 without data loss.
+Existing Texts site CKEditor 4 footnote markup (`shanti_footnotes`) can be
+reliably transformed to CKEditor 5's footnote markup format without data loss.
 
 ### Background
-The Texts site uses a custom footnotes plugin for CKEditor 4 (`shanti_footnotes`). Drupal 11 ships CKEditor 5 as the only supported editor, and the footnote markup format changed between versions. Additionally, many texts contain Unicode Tibetan script — a complex script that must survive the migration pipeline without corruption. Both issues must be verified before writing the texts migration plugin.
+The Texts site uses a custom footnotes plugin for CKEditor 4 (`shanti_footnotes`).
+Drupal 11 ships CKEditor 5 as the only supported editor, and the footnote
+markup format changed between versions. This must be verified before writing
+the Texts migration plugin.
+
+**Open dependency (unresolved as of the split):** depending on the AV
+transcript format (plain text vs. structured/time-coded/rich markup), this
+spike and the AV transcript work may turn out to be the same underlying proof
+("structured Tibetan rich-text round-trip") — see
+[docs/roadmap.md](../roadmap.md#open-question-resolve-before-phase-3-scoping).
+That determination is still open and independent of the Unicode/CKEditor split
+made here.
 
 ### Work
 1. Extract a representative sample of texts body content from the D7 database (minimum 20–30 nodes; include Tibetan-language nodes specifically)
@@ -180,14 +241,11 @@ The Texts site uses a custom footnotes plugin for CKEditor 4 (`shanti_footnotes`
 5. Run the transformation against the sample content
 6. Verify the output renders correctly in CKEditor 5 with no data loss
 7. Check for inconsistencies or edge cases in the sample (malformed markup, nested footnotes, etc.)
-8. Insert Tibetan Unicode sample content into the D11 test database and verify it renders correctly
-9. Confirm the D11 database is configured as `utf8mb4`
 
 ### Pass Criteria
 - Footnote markup format for both CKEditor 4 and 5 is fully documented
 - A deterministic transformation function handles all patterns found in the sample
 - Transformed content renders correctly in CKEditor 5
-- Tibetan Unicode content round-trips through the D11 database without corruption
 - Edge cases are documented and accounted for
 
 ### Fail Criteria and Response
@@ -196,7 +254,6 @@ The Texts site uses a custom footnotes plugin for CKEditor 4 (`shanti_footnotes`
 | CKEditor 4 markup is inconsistent across the corpus | Plan a content cleanup pass in D7 before migration; script to normalize footnote markup |
 | `footnotes 4.x` uses a fundamentally different storage model | Evaluate alternative footnote modules for D11; assess impact on existing content |
 | Nested or complex footnote patterns cannot be transformed deterministically | Manual content review required for affected nodes; scope the cleanup effort |
-| Tibetan Unicode corrupted in D11 database | Verify utf8mb4 charset on database and connection; investigate collation settings |
 
 ### Outputs
 - Documented CKEditor 4 and CKEditor 5 footnote markup formats

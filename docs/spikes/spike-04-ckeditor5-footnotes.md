@@ -1,5 +1,5 @@
 # Spike 4: CKEditor 5 Footnotes and Tibetan Unicode
-**Status:** Pending
+**Status:** Split (2026-07-10) — see [Spike 4a: Tibetan Unicode round-trip](spike-04a-tibetan-unicode-roundtrip.md) and [Spike 4b: CKEditor 5 footnotes](spike-04b-ckeditor5-footnotes.md)
 **Lead:** Than Grove (built D7 shanti_texts and footnotes)
 **Mode:** Individual
 **Date:** —
@@ -29,6 +29,20 @@ structured / time-coded / rich markup), the footnote work (b) and AV transcript
 handling may be the *same* underlying proof ("structured Tibetan rich-text
 round-trip"). If so, this spike should formally split/merge accordingly — a change
 to be ratified by the team before the work starts.
+
+## Closeout (2026-07-10)
+
+The split proposed above was discussed and ratified by the team. This spike is
+retired in favor of two independent spikes:
+
+- **[Spike 4a — Tibetan Unicode round-trip](spike-04a-tibetan-unicode-roundtrip.md)**
+  (concern (a) above) — cross-cutting, higher priority given it touches
+  already-migrated Images metadata.
+- **[Spike 4b — CKEditor 5 footnotes](spike-04b-ckeditor5-footnotes.md)**
+  (concern (b) above) — Texts-specific; carries forward the AV-transcript-format
+  open question unresolved.
+
+This file is kept for historical context; no further work happens here.
 
 ## Demo
 *To be completed when spike is run.*

@@ -259,7 +259,7 @@ Reinstate all JSON and AJAX API endpoints consumed by the React application and 
 | KMaps field API incompatibility in D11 | High — blocks all content work | Spike 1: prototype field port before committing |
 | React app API URL contract broken by consolidation | High — breaks external application | Spike 6: audit API contracts and design URL strategy before cutover |
 | Group module API instability | Medium — API marked beta | Spike 3: evaluate against collections requirements early |
-| CKEditor 4 → 5 footnotes behavior change | Medium — affects Texts site | Spike 4: validate transformation before migration plugin work |
+| CKEditor 4 → 5 footnotes behavior change | Medium — affects Texts site | Spike 4b: validate transformation before migration plugin work |
 | bibcite feature gap vs. biblio | Medium — affects Sources site | Spike 5: audit bibcite against current Sources usage |
 | Content migration data quality | Medium — D7 data may have inconsistencies | Run migration against staging data early; allow time for cleanup |
 

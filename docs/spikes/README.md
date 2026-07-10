@@ -5,7 +5,9 @@
 | [Spike 1](spike-01-kmaps-field.md) | KMaps field type on Drupal 11 | Yuji | — | ● Proven |
 | [Spike 2](spike-02-solr-integration.md) | Solr index read-only integration | Yuji | Team candidate | ● Proven |
 | [Spike 3](spike-03-group-collections.md) | Group module collections architecture | Than | Team candidate | ● Proven |
-| [Spike 4](spike-04-ckeditor5-footnotes.md) | CKEditor 5 footnotes + Tibetan Unicode | Than | Individual | ○ Pending |
+| [Spike 4](spike-04-ckeditor5-footnotes.md) | ~~CKEditor 5 footnotes + Tibetan Unicode~~ | Than | Individual | ◇ Split (2026-07-10) — see 4a/4b |
+| [Spike 4a](spike-04a-tibetan-unicode-roundtrip.md) | Tibetan Unicode round-trip (NFC/NFD fidelity, cross-cutting) | Than | Individual | ○ Pending |
+| [Spike 4b](spike-04b-ckeditor5-footnotes.md) | CKEditor 5 footnotes (Texts-specific) | Than | Individual | ○ Pending |
 | [Spike 5](spike-05-bibcite-sources.md) | bibcite for Sources site | Xiaoming | Individual | ○ Pending |
 | [Spike 6](spike-06-api-compatibility.md) | API compatibility for React application | Than | Team candidate | ○ Pending |
 | [Spike 7](spike-07-kaltura-av-integration.md) | Kaltura AV integration on Drupal 11 | — | Individual | ○ Pending |
@@ -13,7 +15,7 @@
 | [Spike 9](spike-09-docs-hosting-confluence.md) | Documentation hosting & access control (mkdocs → public + Confluence) | Yuji | Individual | ○ Pending (low priority) |
 | [Spike 10](spike-10-saml-oauth2-coexistence.md) | SAML + OAuth2 coexistence on D11 (`simplesamlphp_auth` + `simple_oauth`) | Yuji | Individual | ● Proven — **1b.1 unblocked** (2026-07-09) |
 
-**Status key:** ● Proven · ◐ Partial / in progress · ○ Pending
+**Status key:** ● Proven · ◐ Partial / in progress · ○ Pending · ◇ Split into sub-spikes
 
 See [docs/planning/spikes-plan.md](../planning/spikes-plan.md) for full spike definitions and pass/fail criteria.
 
