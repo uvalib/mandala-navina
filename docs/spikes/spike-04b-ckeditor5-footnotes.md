@@ -8,6 +8,44 @@
 **Split from [Spike 4](spike-04-ckeditor5-footnotes.md) on 2026-07-10** — team-ratified.
 See that file for the original combined scope and why it was split.
 
+## Recap for the team (2026-07-10)
+
+**Bottom line: `footnotes` 4.x (the D11/CKEditor 5 module already pinned in
+`composer.json`) cannot represent how `shanti_texts` actually uses
+footnotes today, and this isn't an edge case — it's the universal pattern
+across the entire corpus.** Confirmed two ways: by reading the module's
+filter source (no entity storage, no cross-node concept at all) and by an
+empirical render test (a citation with no co-located footnote text renders
+silently empty, no error, no cross-reference).
+
+Every `shanti_texts` book is a D7 Book-module outline (a tree of pages
+sharing one `bid`). Inline footnote *citations* live on content pages;
+their *definitions* are collected on a separate dedicated "Notes" page
+later in the same book. Checked exhaustively — **zero of the 7,633 book
+nodes have even one self-contained citation+definition pair on the same
+page.** `footnotes` 4.x needs both on the same page to work.
+
+**Live examples** (production site) — content page vs. its book's Notes page:
+
+| Book | Content page (citations) | Notes/definitions page |
+|---|---|---|
+| Antiquities (Zhangzhung) | [/node/15274](https://texts.mandala.library.virginia.edu/node/15274) — "Nangchu Doring" | [/node/15581](https://texts.mandala.library.virginia.edu/node/15581) — "Notes" |
+| Tibetan Monastic Education | [/node/16183](https://texts.mandala.library.virginia.edu/node/16183) — "Introduction" | [/node/16200](https://texts.mandala.library.virginia.edu/node/16200) — "Notes" |
+| Monks | [/node/16132](https://texts.mandala.library.virginia.edu/node/16132) — "What is a Monk?" | [/node/16152](https://texts.mandala.library.virginia.edu/node/16152) — "Notes" |
+| Tibetan Literature: Studies in Genre | [/node/15642](https://texts.mandala.library.virginia.edu/node/15642) — "Lo rgyus" | [/node/15718](https://texts.mandala.library.virginia.edu/node/15718) — "Notes" |
+| The Space of Sera (Se ra'i khor yug) | [/node/16096](https://texts.mandala.library.virginia.edu/node/16096) — "En-visioning the Space of Sera" | [/node/16109](https://texts.mandala.library.virginia.edu/node/16109) — "Notes" |
+
+**Three response options identified, no decision made — needs the team:**
+1. Restructure content per-book during migration (merge all pages under one
+   `bid` so citations and definitions co-locate) — likely the *same*
+   underlying question as the still-open AV-transcript-format dependency.
+2. Convert cross-page citations to plain hyperlinks to the Notes page —
+   simpler, loses the footnote popover UX.
+3. Evaluate alternative D11 modules — low expectation this changes the
+   outcome (architectural limitation, not `footnotes`-specific).
+
+Full technical detail below. Branch: `spike/4b-ckeditor5-footnotes`.
+
 ## Theory
 Existing Texts site CKEditor 4 footnote markup (`shanti_footnotes`) can be
 reliably transformed to CKEditor 5's footnote markup format without data loss.
@@ -103,14 +141,26 @@ explicable gap — the original numbers were an artifact of counting against
 escaped mysqldump text rather than actual field content).
 
 **Root cause of the (remaining, smaller) gap: footnote references and their
-definitions are frequently on *different pages of the same book*, not the
+definitions are always on *different pages of the same book*, never the
 same node.** `shanti_texts` books are D7 core Book-module outlines (a tree
-of page-nodes under one `bid`); many books put all footnote *definitions* on
-a single dedicated "Notes" (or "Glossary") page near the end, while the
+of page-nodes under one `bid`); books put all footnote *definitions* on a
+single dedicated "Notes" (or "Glossary") page near the end, while the
 *references* are scattered across many preceding content pages. Confirmed
 concretely: footnote `nb168`'s inline reference is on node 15274
-("Nangchu Doring"), but its definition (`n168`) is on node 15581 — a
-sibling page titled **"Notes"** in the same book (`bid=15256`).
+("Nangchu Doring", visible at
+[/thl/zhangzhung/antiquities](https://texts.mandala.library.virginia.edu/node/15274)),
+but its definition (`n168`) is on node 15581 — a sibling "Notes" page in the
+same book (`bid=15256`).
+
+**Checked exhaustively for a counter-example and found none: across all
+7,633 book nodes, not a single one has even one self-contained
+citation+definition pair on the same page.** Two searches (exact ref-set ==
+def-set match, and any partial overlap) both returned zero hits corpus-wide.
+This isn't "usually" split across pages — it's a site-wide convention
+applied with 100% consistency. That's good news for the migration design
+(one uniform pattern to handle, not a mix of styles) but means there is no
+"normal" same-page example to point to for a sanity check — every real
+example is the cross-page case.
 
 Grouping by `bid` instead of by individual node resolves nearly all of it:
 of 29 distinct books containing footnote content, only **15 still show any
@@ -175,6 +225,26 @@ variants, both real outliers, and Tibetan-script content for 4a's benefit:
 | 16152 | Notes | From `bid=16110`, clean example of the "orphan footnote 1" pattern |
 | 16249, 16271, 16287, 16301, 16311 | Location and Layout (×4), Introduction | More independent "orphan footnote 1" books, to confirm the convention is consistent across unrelated books |
 | 39531, 39536, 39541, 39601, 39606, 39611, 39616 | Tibetan-script glossary entries (e.g. དུང་དཀར།, རྒྱ་གླིང་།) | Tibetan-language (`bo`) content, no footnotes — for 4a / general corpus reference |
+
+### Cross-book confirmation (live production examples, not just the Antiquities book)
+
+Requested during team review, to confirm the cross-page pattern isn't
+specific to one book. Picked the highest-citation-count node from four
+other, unrelated books (`bid` values distinct from the Antiquities book's
+`15256`), each paired with its own book's Notes page:
+
+| Book (`bid`) | Content page | Notes page |
+|---|---|---|
+| Tibetan Monastic Education (`16164`) | nid 16183, "Introduction" — [live](https://texts.mandala.library.virginia.edu/node/16183) | nid 16200, "Notes" — [live](https://texts.mandala.library.virginia.edu/node/16200) |
+| Monks (`16110`) | nid 16132, "What is a Monk?" — [live](https://texts.mandala.library.virginia.edu/node/16132) | nid 16152, "Notes" — [live](https://texts.mandala.library.virginia.edu/node/16152) |
+| Tibetan Literature: Studies in Genre (`15582`) | nid 15642, "Lo rgyus" — [live](https://texts.mandala.library.virginia.edu/node/15642) | nid 15718, "Notes" — [live](https://texts.mandala.library.virginia.edu/node/15718) |
+| The Space of Sera (Se ra'i khor yug) (`16053`) | nid 16096, "En-visioning the Space of Sera" — [live](https://texts.mandala.library.virginia.edu/node/16096) | nid 16109, "Notes" — [live](https://texts.mandala.library.virginia.edu/node/16109) |
+
+Same pattern every time — confirms this is a site-wide editorial
+convention, not particular to any one book. (Note `bid=15582`'s content
+page here, nid 15642 "Lo rgyus", is a different page from the earlier
+def-heavy-outlier examples 15716/15718/15728/15734 from the same book —
+this book has 11 distinct citing pages feeding one Notes page.)
 
 ### D11 side: `footnotes 4.x` architecture — DECISIVE FINDING, spike theory FAILS as originally scoped
 
