@@ -1,5 +1,5 @@
 # Spike 4b: CKEditor 5 Footnotes
-**Status:** In progress — D7 markup pattern + book-outline cross-page structure documented, sample pulled, D11-side work not started
+**Status:** In progress — D7 side fully documented; D11 side confirms `footnotes` 4.x cannot represent the cross-page pattern as-is (Fail Criteria scenario triggered); awaiting team decision on 3 response options before continuing
 **Lead:** Than Grove (built D7 shanti_texts and footnotes)
 **Mode:** Individual
 **Date:** 2026-07-10
@@ -176,28 +176,98 @@ variants, both real outliers, and Tibetan-script content for 4a's benefit:
 | 16249, 16271, 16287, 16301, 16311 | Location and Layout (×4), Introduction | More independent "orphan footnote 1" books, to confirm the convention is consistent across unrelated books |
 | 39531, 39536, 39541, 39601, 39606, 39611, 39616 | Tibetan-script glossary entries (e.g. དུང་དཀར།, རྒྱ་གླིང་།) | Tibetan-language (`bo`) content, no footnotes — for 4a / general corpus reference |
 
+### D11 side: `footnotes 4.x` architecture — DECISIVE FINDING, spike theory FAILS as originally scoped
+
+Installed `footnotes` (already in `composer.json`/`composer.lock` at `^4.0`,
+locked `4.0.0-rc2`, present in `drupal/web/modules/contrib/footnotes` but not
+enabled — `ddev drush en footnotes -y`; pulled in `media` as a dependency).
+
+**Source code (`src/Plugin/Filter/FootnotesFilter.php`) shows there is no
+entity storage, no cross-node concept anywhere in the module.** The entire
+mechanism is a single text filter (`filter_footnotes`) that processes one
+field's rendered text in one pass:
+
+- CKEditor 5 inserts an inline placeholder tag carrying **both** the
+  citation position **and** the footnote body together:
+  `<footnotes data-value="1" data-text="The footnote content itself"></footnotes>`
+- At render time, the filter walks the DOM for that **single text value**,
+  builds the inline citation link in place, and collects `data-text` content
+  into a static, per-request list that gets appended as a footnote list at
+  the end of that **same** text (or at a `<footnotes-placeholder>` marker
+  within it).
+- The only opt-out is `footnotes_footer_disable`, which defers rendering to
+  a `FootnotesGroupBlock` instead of inline — but that block is still scoped
+  to rendering **one entity's own footnotes** (via Twig Tweak node context),
+  not aggregating across sibling nodes.
+
+**Empirically confirmed** (`renderInIsolation()` against the `full_html`
+format with `filter_footnotes` enabled — not enabled on any format by
+default, had to be added for this test):
+
+- A citation with `data-text` populated (definition co-located): renders
+  correctly, full footnote text appears.
+- A citation with `data-value="1"` but **no** `data-text` (simulating the D7
+  pattern where the definition lives on a different page): still renders a
+  numbered citation link and a footnote-list entry, but with the text
+  **silently empty** — `<span class="footnotes__item-text ...">></span>`.
+  No error, no cross-reference resolution, no way to point it at content
+  living in another node's field value.
+
+**Conclusion: `footnotes` 4.x cannot represent the D7 corpus's cross-page
+footnote pattern as-is.** Citation and definition must be co-located in the
+same field value it processes. This is exactly the "Fail Criteria" scenario
+anticipated in this spike's own template ("`footnotes 4.x` uses a
+fundamentally different storage model") — confirmed true, not hypothetical.
+
+### What this means for the Texts migration (not yet decided — options only)
+
+1. **Restructure content during migration**: merge each book's
+   constituent pages (all nodes sharing a `bid`) into a single consolidated
+   field/entity before/during migration, so every citation and its
+   definition end up co-located and the module's per-field model works
+   unmodified. This is very likely **the same underlying reshaping question**
+   as the open AV-transcript-format dependency noted above ("structured
+   Tibetan rich-text round-trip") — strengthens the case that these two
+   should be evaluated together, not independently.
+2. **Convert cross-page citations to plain hyperlinks** to the
+   sibling "Notes" page/anchor instead of true `footnotes` module citations
+   — loses the popover/footnote-list UX but requires no content restructuring
+   and needs no cross-node capability.
+3. **Evaluate alternative D11 footnote modules** — low expectation this
+   changes the outcome; the single-field-scope limitation is an architectural
+   choice already flagged in the fail-criteria table for the same reason
+   before any module was installed. Worth a brief check but not a leading
+   option.
+
+No decision made yet — this needs discussion, likely with the team, since
+option 1 has real content-modeling implications beyond this spike alone.
+
 ### Not yet done
-- `footnotes 4.x` install on D11 test instance + its CKEditor 5 markup format
-- Transformation function (D7 pattern above → CKEditor 5 format) — must be
+- Decide between the three options above (or another) — team input needed
+- Transformation function (D7 pattern → chosen D11 approach) — must be
   **book-outline-aware** (operate across all pages sharing a `bid`, not
-  per-node) and must match both footnote-div markup variants
-- Rendering verification in CKEditor 5
+  per-node) if option 1 is chosen, and must match both D7 footnote-div
+  markup variants either way
+- Rendering verification in CKEditor 5 for whichever approach is chosen
 - Manual confirmation that the "orphan footnote 1" pattern is a benign
   editorial convention (spot-check 1–2 of the 11 books)
 
 ## What this does NOT establish
-- Nothing about the CKEditor 5 / `footnotes 4.x` side yet — D11 module not
-  installed or inspected.
-- Whether `footnotes 4.x` (or any D11 module) can even represent cross-page
-  footnote references within a Book-outline structure — this is now the
-  central open question, not just markup translation.
-- Whether the two real content-quality outlier books need cleanup before
-  migration or can be handled as-is.
-- Whether the AV-transcript-format dependency (noted below) changes this
-  spike's scope.
+- Which of the three response options (above) is right for Mandala — needs
+  team input, not just technical feasibility.
+- Whether the two real content-quality outlier books (`bid=15582`,
+  `bid=15988`) need cleanup before migration or can be handled as-is.
+- Whether the AV-transcript-format dependency and this spike's book-outline
+  reshaping question really are the same underlying proof — strongly
+  suspected now, not confirmed.
+- Full corpus scan for `footnotes`-4.x-incompatible edge cases beyond the
+  22-node sample (e.g., nested footnotes, footnotes inside list items —
+  seen in the D7 sample but not yet stress-tested against the module).
 
 ## Deferred notes
-*To be completed when spike is run.*
+*To be completed when spike is run — likely: a deferred note capturing the
+book-outline/AV-transcript merge question if the team confirms it's the
+same underlying spike, so it's tracked as one decision rather than two.*
 
 ---
 
@@ -211,7 +281,7 @@ variants, both real outliers, and Tibetan-script content for 4a's benefit:
 | Finding | Response |
 |---|---|
 | CKEditor 4 markup is inconsistent across the corpus | Plan a content cleanup pass in D7 before migration |
-| `footnotes 4.x` uses a fundamentally different storage model | Evaluate alternative footnote modules for D11 |
+| `footnotes 4.x` uses a fundamentally different storage model | **TRIGGERED, confirmed 2026-07-10.** Module is single-field-scoped only; no cross-node capability. See "D11 side" findings above — 3 response options identified, team decision needed rather than a single "evaluate alternative modules" response. |
 | Complex footnote patterns cannot be transformed deterministically | Manual content review required; scope the cleanup effort |
 
 *Full spike definition: [docs/planning/spikes-plan.md](../planning/spikes-plan.md#spike-4b--ckeditor-5-footnotes)*
