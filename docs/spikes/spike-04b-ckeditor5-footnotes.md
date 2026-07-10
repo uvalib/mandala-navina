@@ -1,5 +1,5 @@
 # Spike 4b: CKEditor 5 Footnotes
-**Status:** In progress — D7 markup pattern documented, D11-side work not started
+**Status:** In progress — D7 markup pattern + book-outline cross-page structure documented, sample pulled, D11-side work not started
 **Lead:** Than Grove (built D7 shanti_texts and footnotes)
 **Mode:** Individual
 **Date:** 2026-07-10
@@ -27,16 +27,23 @@ work later.
 Source data: `mandala-prod-texts-db_20260710.sql.gz` (90MB, database
 `mandalatextslibv`, downloaded 2026-07-10 — a prior download at the same
 path was silently truncated to a 16-line mysqldump header; re-pulled and
-verified as 10,120 lines / 280 tables before use). Not yet loaded into DDEV.
+verified as 10,120 lines / 280 tables before use).
 
-Analysis so far was done directly against the compressed dump with `grep`/
-`zgrep` (no DB load needed to document the markup pattern):
+Loaded into DDEV as its own database (`d7_texts`, alongside the existing
+`d7_images`) so real SQL/Python analysis could replace the earlier
+regex-over-raw-dump approach, which turned out to be misleading (see below):
 
 ```bash
-gunzip -c mandala-prod-texts-db_20260710.sql.gz \
-  | grep "^INSERT INTO \`field_data_field_book_content\` " \
-  | grep -oP 'name=\\"nb\d+\\"'   # inline reference anchors
+ddev mysql -e "CREATE DATABASE d7_texts CHARACTER SET utf8mb4;"
+gunzip -c mandala-prod-texts-db_20260710.sql.gz | ddev mysql d7_texts
 ```
+
+Field values were exported with MySQL's default batch-mode escaping
+(`ddev mysql d7_texts -e "SELECT entity_id, delta, field_book_content_value
+FROM field_data_field_book_content"` — **not** `--raw`, which disables the
+escaping needed to keep embedded `\r\n` from breaking row boundaries) and
+analyzed per-row with a small Python script using real regexes, not shell
+`grep` against the mysqldump text.
 
 ## Findings
 
@@ -45,16 +52,24 @@ gunzip -c mandala-prod-texts-db_20260710.sql.gz \
   type, analogous to Images' `shanti_image`. Also 65 `collection` + 57
   `subcollection` nodes (same collection pattern as Images/1b.2) and 8
   `asset_link` nodes.
-- Book body text lives in **`field_data_field_book_content`** (91.9MB),
+- Book body text lives in **`field_data_field_book_content`** (91.9MB, 9,013
+  rows across 7,633 book nodes — some nodes have multiple `delta` values),
   *not* `field_data_body` — `field_data_body` only has rows for
   `collection`/`subcollection` bundles. `field_data_field_split_text` /
   `field_data_field_split_headings` (from `shanti_texts_splitter`) are much
   smaller (117KB/229KB) — appear to be derived/cached split output, not the
   primary source.
-- 1,138 book nodes are tagged `field_dc_lang_code = 'bo'` (ISO 639 Tibetan) —
-  confirms a large enough Tibetan-language subset exists to satisfy the
-  spike's sampling requirement (min 20–30 nodes, Tibetan-language nodes
-  specifically).
+- 1,138 book nodes are tagged `field_dc_lang_code = 'bo'` (ISO 639 Tibetan).
+  **None of them contain footnote markup** — checked directly (`JOIN`
+  against `field_data_field_book_content ... LIKE '%footnote%'` returned
+  zero rows). Footnotes appear to be an English-scholarly-apparatus
+  convention in this corpus, not used in pure Tibetan-script primary texts.
+  Tibetan-language nodes are still in the sample below (for 4a's benefit /
+  general corpus familiarity) but don't exercise the footnote transform.
+- **All 7,633 book nodes sit in the D7 core Book module's outline table**
+  (`book`: `mlid`, `nid`, `bid`) — every book is a tree of page-nodes sharing
+  a `bid`. This turned out to be load-bearing for the footnote structure
+  (next section).
 
 ### D7 `shanti_footnotes` markup pattern (confirmed from live data, not assumed)
 
@@ -78,42 +93,106 @@ The pairing is symmetric: inline anchor `nb{N}` links forward to `#n{N}`;
 definition anchor `n{N}` links back to `#nb{N}`. Visible marker is the bare
 number in the inline case, `[N]` in the definition case.
 
-### Corpus-wide markup counts (against the full 90MB dump)
+### RESOLVED: the ref/definition count discrepancy
+
+**The earlier "839 vs 1,015" corpus-wide `grep`-against-raw-dump counts were
+themselves unreliable and are superseded by these numbers**, measured with
+Python regex against clean field values pulled from the loaded DB:
+**552 inline references, 579 definitions** (a much smaller, much more
+explicable gap — the original numbers were an artifact of counting against
+escaped mysqldump text rather than actual field content).
+
+**Root cause of the (remaining, smaller) gap: footnote references and their
+definitions are frequently on *different pages of the same book*, not the
+same node.** `shanti_texts` books are D7 core Book-module outlines (a tree
+of page-nodes under one `bid`); many books put all footnote *definitions* on
+a single dedicated "Notes" (or "Glossary") page near the end, while the
+*references* are scattered across many preceding content pages. Confirmed
+concretely: footnote `nb168`'s inline reference is on node 15274
+("Nangchu Doring"), but its definition (`n168`) is on node 15581 — a
+sibling page titled **"Notes"** in the same book (`bid=15256`).
+
+Grouping by `bid` instead of by individual node resolves nearly all of it:
+of 29 distinct books containing footnote content, only **15 still show any
+ref/def mismatch after grouping by book** (down from "every node mismatches"
+when checked per-node in isolation). Of those 15:
+
+- **Most (11) show the identical narrow pattern**: exactly one extra
+  definition, numbered `1`, with no matching inline reference. This is
+  consistent enough across independent, unrelated books that it reads as an
+  **editorial convention** — an unmarked introductory/translator's note used
+  as "footnote 1" — rather than a data-quality bug. Worth a quick manual
+  check on 1–2 examples to confirm, but not expected to block the
+  transformation design.
+- **2 real outliers** worth flagging as genuine content-quality cases for
+  manual review, not markup-pattern problems:
+  - `bid=15582`: 25 refs vs. 56 defs — a book with far more footnote
+    definitions than citations (`def_only` includes numbers 8, 9, 10, 18,
+    19, and more).
+  - `bid=15988`: 21 refs vs. only 1 def — the reverse: many inline citations
+    (`nb2` through `nb6`+) with almost no corresponding definitions present
+    at all.
+
+### A second markup variant found: XML-namespaced footnote divs
+
+**299 of the 9,013 `field_book_content` rows (~3.3%) use a different,
+namespaced footnote div**, not the plain `<div class="footnote">` form:
+
+```html
+<div xmlns:i18n="http://apache.org/cocoon/i18n/2.1" xmlns:str="http://exslt.org/strings" class="footnote">
+```
+
+Same `class="footnote"` and same `n{N}`/`nb{N}` anchor convention inside,
+just with extra namespace attributes on the wrapping `div` — almost
+certainly residue from a Cocoon/XSLT-based import pipeline (consistent with
+the "imported from the Tibetan and Himalayan Library" provenance noted in
+some collection descriptions). **The transformation function must not
+assume a bare `<div class="footnote">` opening tag** — needs to match on
+the `class="footnote"` attribute regardless of what else is on the div.
+
+### Corpus-wide markup counts (final, from DB-backed analysis)
 | Pattern | Count |
 |---|---|
-| Inline reference anchors (`name="nb{N}"`) | 839 |
-| Footnote definition divs (`<div class="footnote">`) | 1,015 |
-| Footnote dividers (`<hr class="footnote-divider"/>`) | 21 |
-| Inline refs missing `class="note"` | 132 (subset of the 839 above) |
+| Inline reference anchors (`name="nb{N}"`) | 552 |
+| Footnote definition divs (incl. namespaced variant) | 579 |
+| Distinct books (`bid`) with any footnote content | 29 |
+| Books with a ref/def mismatch after grouping by book | 15 (11 = likely benign "orphan footnote 1" convention, 2 = real outliers, 2 more minor) |
+| Nodes using the `xmlns:i18n` namespaced div variant | 299 |
 
-### Open edge case: definitions outnumber references by 176
+### Representative sample pulled (22 nodes)
 
-1,015 definitions vs. 839 inline references is not 1:1 — 176 more
-definitions than references. Not yet root-caused; candidate explanations to
-check against the actual node sample:
-- Orphaned footnote definitions (content edited, inline citation removed,
-  definition left behind) — plausible content-quality issue, not a markup
-  format problem.
-- A second inline-reference variant not matched by the `name="nb\d+"` regex
-  (would need a broader pattern pass to rule out).
-- Duplicate/copy-pasted definition blocks within the same node.
+Selected from the DB-backed analysis above to cover every pattern found —
+standard same-page pairs, cross-page (book-outline) pairs, both markup
+variants, both real outliers, and Tibetan-script content for 4a's benefit:
 
-This needs the formal 20–30 node sample (not just corpus-wide regex counts)
-to resolve — can't tell from aggregate counts alone whether it's a
-markup-pattern gap or a content-quality issue in the D7 source.
+| nid | Title | Why included |
+|---|---|---|
+| 15274 | Nangchu Doring (Nang chu rdo ring) | Inline ref whose definition is on a different page (15581) |
+| 15580 | Glossary | Same book (`bid=15256`), standard pattern |
+| 15581 | Notes | The dedicated "Notes" page holding cross-page definitions; also has the `xmlns:i18n` variant |
+| 16094 | Notes | From `bid=15988`, the ref-heavy/def-missing outlier |
+| 15716, 15718, 15728, 15734 | Approaches to the bKa' 'gyur / Notes | From `bid=15582`, the def-heavy outlier |
+| 16152 | Notes | From `bid=16110`, clean example of the "orphan footnote 1" pattern |
+| 16249, 16271, 16287, 16301, 16311 | Location and Layout (×4), Introduction | More independent "orphan footnote 1" books, to confirm the convention is consistent across unrelated books |
+| 39531, 39536, 39541, 39601, 39606, 39611, 39616 | Tibetan-script glossary entries (e.g. དུང་དཀར།, རྒྱ་གླིང་།) | Tibetan-language (`bo`) content, no footnotes — for 4a / general corpus reference |
 
 ### Not yet done
-- Formal representative sample extraction (20–30 nodes incl. Tibetan-language)
 - `footnotes 4.x` install on D11 test instance + its CKEditor 5 markup format
-- Transformation function (D7 pattern above → CKEditor 5 format)
+- Transformation function (D7 pattern above → CKEditor 5 format) — must be
+  **book-outline-aware** (operate across all pages sharing a `bid`, not
+  per-node) and must match both footnote-div markup variants
 - Rendering verification in CKEditor 5
-- Resolving the 839-vs-1,015 discrepancy above
+- Manual confirmation that the "orphan footnote 1" pattern is a benign
+  editorial convention (spot-check 1–2 of the 11 books)
 
 ## What this does NOT establish
 - Nothing about the CKEditor 5 / `footnotes 4.x` side yet — D11 module not
   installed or inspected.
-- Whether the 839-vs-1,015 mismatch is a markup gap or a content-quality
-  issue in D7.
+- Whether `footnotes 4.x` (or any D11 module) can even represent cross-page
+  footnote references within a Book-outline structure — this is now the
+  central open question, not just markup translation.
+- Whether the two real content-quality outlier books need cleanup before
+  migration or can be handled as-is.
 - Whether the AV-transcript-format dependency (noted below) changes this
   spike's scope.
 
