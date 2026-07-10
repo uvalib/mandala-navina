@@ -18,9 +18,12 @@ services:
       - { name: mandala_kmassets_sync.doc_contributor, priority: 0 }
 
   # Collection / access-path fields (D7 shanti_collections_kmaps_fields_solr_doc_alter).
-  # STUB: blocked on 1b Group collections (ADR 011). See class docblock.
+  # Security-critical subset only (visibility_i/visibility_s, collection_uid_s);
+  # see class docblock for what's deliberately out of scope.
   mandala_kmassets_sync.contributor.collection:
     class: Drupal\mandala_kmassets_sync\Contributor\CollectionFieldContributor
+    arguments:
+      - '@entity_type.manager'
     tags:
       - { name: mandala_kmassets_sync.doc_contributor, priority: 10 }
 

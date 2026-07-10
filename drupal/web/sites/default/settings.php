@@ -904,6 +904,12 @@ $settings['migrate_node_migrate_type_classic'] = FALSE;
 $settings['devops_label'] = getenv('DEVOPS_LABEL') ?: 'unknown';
 $settings['config_sync_directory'] = '../config/sync';
 
+// simple_oauth RSA keypair (1b.1 / ADR 014): generated per-environment via
+// `drush simple-oauth:generate-keys ../keys` (gitignored, never committed).
+// Same '../<dir>' convention as config_sync_directory above.
+$config['simple_oauth.settings']['public_key'] = '../keys/public.key';
+$config['simple_oauth.settings']['private_key'] = '../keys/private.key';
+
 // Automatically generated include for settings managed by ddev.
 if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev.php')) {
   include __DIR__ . '/settings.ddev.php';
@@ -946,3 +952,8 @@ if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev
 # if (file_exists($app_root . '/' . $site_path . '/settings.local.php')) {
 #   include $app_root . '/' . $site_path . '/settings.local.php';
 # }
+
+// Include settings required for Redis cache.
+if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev.redis.php')) {
+  include __DIR__ . '/settings.ddev.redis.php';
+}

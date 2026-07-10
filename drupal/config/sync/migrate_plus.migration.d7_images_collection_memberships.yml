@@ -1,4 +1,11 @@
+uuid: 39a0d838-c3c7-4cfb-9dd0-13ffe05235de
+langcode: en
+status: true
+dependencies: {  }
 id: d7_images_collection_memberships
+class: null
+field_plugin_method: null
+cck_plugin_method: null
 migration_tags:
   - 'Drupal 7'
   - 'Mandala Images'
@@ -21,7 +28,9 @@ process:
     default_value: group_membership
 destination:
   plugin: mandala_group_relationship
+idMap: {  }
 migration_dependencies:
   required:
     - d7_images_collections
     - d7_images_subcollections
+include: null

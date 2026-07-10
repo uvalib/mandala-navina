@@ -1,0 +1,22 @@
+{
+    "name": "mandala/solr-proxy",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "mandala\\oauth\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "ThanGrove",
+            "email": "than@virginia.edu"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "league/oauth2-client": "dev-master",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-redis": "*"
+    }
+}

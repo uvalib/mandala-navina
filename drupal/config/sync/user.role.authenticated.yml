@@ -11,6 +11,7 @@ dependencies:
     - filter
     - search
     - shortcut
+    - simple_oauth
     - system
 _core:
   default_config_hash: cFrlqjtkTfvY3RGccjJkPf1SGIfJ942IrxTLWAO4mgA
@@ -24,6 +25,7 @@ permissions:
   - 'access shortcuts'
   - 'access site-wide contact form'
   - 'delete own files'
+  - 'grant simple_oauth codes'
   - 'post comments'
   - 'search content'
   - 'skip comment approval'

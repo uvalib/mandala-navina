@@ -1,0 +1,5 @@
+_core:
+  default_config_hash: ReprD_Jz4aX_m9ti31m9qayF1HJuf2iSzOeLTFYMD2s
+redis_host: redis
+redis_port: 6379
+ttl: 3600

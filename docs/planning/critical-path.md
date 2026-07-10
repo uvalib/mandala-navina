@@ -263,7 +263,7 @@ The Drupal `migrate` module (core in D11) with `migrate_drupal` provides a base 
 - `zotero_feed` nodes → bibcite feed configuration
 - CKEditor 4 footnote markup transformation (in the texts body field migration)
 - Tibetan Unicode content — verify character encoding is preserved
-- User shared-table configuration (D7 uses a table prefix for the shared user database; the D11 migration source must be pointed at the correct tables)
+- User shared-table configuration — D7's five sites share one user base via a MySQL cross-database table-prefix kludge (`users`/`users_roles`/`role`/`authmap`/`sessions`/name fields all redirect to `mandala_shared`); the per-site dumps used elsewhere in this migration (e.g. `d7_images`) do **not** contain real user data. See [deferred: D7 shared user database](../deferred/d7-shared-user-database.md).
 
 ### Migration Sequencing
 

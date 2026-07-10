@@ -1,0 +1,14 @@
+<?php
+
+// D11 simple_oauth server. NOTE (Spike 10): D11 uses /oauth/* paths, not the
+// D7 proxy's /oauth2/* -- simple_oauth does not use the "2" segment.
+$OAUTH_ROOT = "https://mandala-dev.internal.lib.virginia.edu/oauth";
+$CREDS = array(
+             'clientId'                => 'solrproxy',      // OAuth2 client registered in D11 (simple_oauth consumer)
+             'clientSecret'            => 'SECRET_SUPER_SECRET_SECRET', // The client password assigned to you by the provider
+             'redirectUri'             => 'https://mandala-index-dev.internal.lib.virginia.edu/auth',  // This is the url for the /proxy/auth.php script in this repo
+             'urlAuthorize'            => $OAUTH_ROOT.'/authorize',
+             'urlAccessToken'          => $OAUTH_ROOT.'/token',
+             'urlResourceOwnerDetails' => $OAUTH_ROOT.'/UserInfo',
+             'scopes'                  => 'openid',
+);

@@ -1,0 +1,8 @@
+name: 'Mandala Solr Visibility Tokens'
+type: module
+description: 'Writes the per-user Solr proxy visibility token to Redis on login, Group membership change, and logout (ADR 014).'
+package: Mandala
+core_version_requirement: ^11
+dependencies:
+  - drupal:group
+  - drupal:user

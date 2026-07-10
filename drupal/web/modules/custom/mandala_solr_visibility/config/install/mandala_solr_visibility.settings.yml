@@ -1,0 +1,11 @@
+# Redis connection (ADR 014: same instance the solr-proxy reads from).
+# DDEV's ddev-redis add-on names the service "redis"; override per-environment
+# in settings.php: $config['mandala_solr_visibility.settings']['redis_host'].
+redis_host: redis
+redis_port: 6379
+
+# Token TTL in seconds. Explicit invalidation on membership change/logout
+# means access changes take effect immediately regardless of TTL — this only
+# bounds how stale an *un-invalidated* token (e.g. after a crashed write) can
+# get before it naturally expires.
+ttl: 3600

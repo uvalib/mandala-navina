@@ -1,0 +1,11 @@
+services:
+  mandala_solr_visibility.token_builder:
+    class: Drupal\mandala_solr_visibility\VisibilityTokenBuilder
+    arguments:
+      - '@group.membership_loader'
+
+  mandala_solr_visibility.token_store:
+    class: Drupal\mandala_solr_visibility\VisibilityTokenStore
+    arguments:
+      - '@config.factory'
+      - '@logger.factory'

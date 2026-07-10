@@ -1,0 +1,6 @@
+RewriteEngine ON
+RewriteRule select search.php
+RewriteRule status status.php
+RewriteRule auth auth.php
+RewriteRule logout logout.php
+RewriteRule ping ping.php

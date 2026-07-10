@@ -10,6 +10,7 @@ module:
   ckeditor5: 0
   comment: 0
   config: 0
+  consumers: 0
   contact: 0
   contextual: 0
   datetime: 0
@@ -34,6 +35,7 @@ module:
   mandala_group_inheritance: 0
   mandala_kmassets_sync: 0
   mandala_migrations: 0
+  mandala_solr_visibility: 0
   menu_link_content: 0
   menu_ui: 0
   migrate: 0
@@ -51,10 +53,12 @@ module:
   search_api: 0
   search_api_solr: 0
   search_api_solr_devel: 0
+  serialization: 0
   shanti_iiif: 0
   shanti_kmaps_admin: 0
   shanti_kmaps_fields: 0
   shortcut: 0
+  simple_oauth: 0
   spike_solr_demo: 0
   system: 0
   taxonomy: 0
