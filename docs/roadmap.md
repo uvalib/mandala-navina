@@ -119,9 +119,11 @@ Now the deliberate parallelism earns its keep — each owner takes an independen
 ## Open question (resolve before Phase 3 scoping)
 
 **AV transcript format** — plain text vs. structured / time-coded / rich markup. If
-structured, [Spike 4](spikes/spike-04-ckeditor5-footnotes.md) (footnotes) and the AV
-transcript work are the *same* underlying spike ("structured Tibetan rich-text
-round-trip") and should share a proof.
+structured, [Spike 4b](spikes/spike-04b-ckeditor5-footnotes.md) (footnotes; split
+from the original Spike 4 on 2026-07-10 — see
+[spike-04-ckeditor5-footnotes.md](spikes/spike-04-ckeditor5-footnotes.md) for why)
+and the AV transcript work are the *same* underlying spike ("structured Tibetan
+rich-text round-trip") and should share a proof.
 
 ## Decisions to ratify (ratified ADRs)
 
