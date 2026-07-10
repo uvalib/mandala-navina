@@ -4,7 +4,7 @@
 |---|-------|------|------|--------|
 | [Spike 1](spike-01-kmaps-field.md) | KMaps field type on Drupal 11 | Yuji | — | ● Proven |
 | [Spike 2](spike-02-solr-integration.md) | Solr index read-only integration | Yuji | Team candidate | ● Proven |
-| [Spike 3](spike-03-group-collections.md) | Group module collections architecture | Than | Team candidate | ◐ Partial |
+| [Spike 3](spike-03-group-collections.md) | Group module collections architecture | Than | Team candidate | ● Proven |
 | [Spike 4](spike-04-ckeditor5-footnotes.md) | CKEditor 5 footnotes + Tibetan Unicode | Than | Individual | ○ Pending |
 | [Spike 5](spike-05-bibcite-sources.md) | bibcite for Sources site | Xiaoming | Individual | ○ Pending |
 | [Spike 6](spike-06-api-compatibility.md) | API compatibility for React application | Than | Team candidate | ○ Pending |
