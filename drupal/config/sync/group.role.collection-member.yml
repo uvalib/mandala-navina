@@ -1,0 +1,23 @@
+uuid: 0b4019a2-9672-4661-93d0-4aecf7e1888b
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.collection
+    - user.role.authenticated
+id: collection-member
+label: Member
+weight: 0
+admin: false
+scope: insider
+global_role: authenticated
+group_type: collection
+permissions:
+  - 'create group_node:shanti_image relationship'
+  - 'delete own group_node:shanti_image relationship'
+  - 'leave group'
+  - 'update own group_node:shanti_image relationship'
+  - 'view group'
+  - 'view group_membership relationship'
+  - 'view group_node:shanti_image entity'
+  - 'view group_node:shanti_image relationship'

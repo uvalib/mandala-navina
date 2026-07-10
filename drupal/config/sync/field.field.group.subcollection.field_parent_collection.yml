@@ -1,0 +1,24 @@
+uuid: 48efef4b-9898-4548-ae34-995abd0ea4cf
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.group.field_parent_collection
+    - group.type.collection
+    - group.type.subcollection
+id: group.subcollection.field_parent_collection
+field_name: field_parent_collection
+entity_type: group
+bundle: subcollection
+label: 'Parent collection'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:group'
+  handler_settings:
+    target_bundles:
+      collection: collection
+field_type: entity_reference

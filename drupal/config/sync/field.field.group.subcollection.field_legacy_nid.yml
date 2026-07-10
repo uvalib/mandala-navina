@@ -1,0 +1,23 @@
+uuid: 4a46b28c-e482-4a8c-854b-8d3ecfc47a07
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.group.field_legacy_nid
+    - group.type.subcollection
+id: group.subcollection.field_legacy_nid
+field_name: field_legacy_nid
+entity_type: group
+bundle: subcollection
+label: 'Legacy D7 Node ID'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

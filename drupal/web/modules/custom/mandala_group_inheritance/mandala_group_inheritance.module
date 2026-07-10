@@ -1,0 +1,316 @@
+<?php
+
+/**
+ * @file
+ * Visibility and membership inheritance for collection/subcollection groups.
+ *
+ * Implements the five hooks required by ADR 011 (Option D):
+ *   1. hook_entity_access     — deny access to private-group content for non-members
+ *   2. hook_group_presave     — copy parent visibility when subcollection is created
+ *   3. hook_group_update      — propagate collection visibility change to subcollections
+ *   4. hook_group_relationship_insert — cascade new members and backfill on subcollection create
+ *   5. hook_group_relationship_delete — cascade member removal (with sub-only retention guard)
+ */
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\group\Entity\GroupInterface;
+use Drupal\group\Entity\GroupRelationshipInterface;
+
+// ---------------------------------------------------------------------------
+// Access control
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_entity_access().
+ *
+ * Denies view access to shanti_image nodes and group entities that belong to
+ * a private group (field_group_access = 1) for users who are not members.
+ * The type-level outsider roles grant view by default; this hook restricts
+ * that grant for private groups so per-group visibility is enforced.
+ */
+function mandala_group_inheritance_entity_access(EntityInterface $entity, $operation, AccountInterface $account) {
+  if ($operation !== 'view') {
+    return AccessResult::neutral();
+  }
+
+  // Restrict access to private groups themselves.
+  if ($entity->getEntityTypeId() === 'group' && in_array($entity->bundle(), ['collection', 'subcollection'])) {
+    return _mandala_group_inheritance_group_access($entity, $account);
+  }
+
+  // Restrict access to shanti_image nodes that belong to private groups.
+  if ($entity->getEntityTypeId() === 'node' && $entity->bundle() === 'shanti_image') {
+    return _mandala_group_inheritance_node_access($entity, $account);
+  }
+
+  return AccessResult::neutral();
+}
+
+/**
+ * Returns forbidden() for private group entities when user is not a member.
+ */
+function _mandala_group_inheritance_group_access(GroupInterface $group, AccountInterface $account) {
+  if ((int) $group->get('field_group_access')->value !== 1) {
+    return AccessResult::neutral()->addCacheableDependency($group);
+  }
+
+  // Let superadmins and accounts with bypass group access through.
+  if ($account->hasPermission('bypass group access')) {
+    return AccessResult::neutral()->cachePerPermissions();
+  }
+
+  // Private group: deny non-members.
+  $membership = $group->getMember($account);
+  if ($membership) {
+    return AccessResult::neutral()->addCacheableDependency($group);
+  }
+
+  return AccessResult::forbidden('Group is private; user is not a member.')
+    ->addCacheableDependency($group)
+    ->cachePerUser();
+}
+
+/**
+ * Returns forbidden() for nodes in private groups when user is not a member.
+ */
+function _mandala_group_inheritance_node_access(EntityInterface $node, AccountInterface $account) {
+  // Let superadmins and bypass-capable accounts through immediately.
+  if ($account->hasPermission('bypass group access') || $account->hasPermission('bypass node access')) {
+    return AccessResult::neutral()->cachePerPermissions();
+  }
+
+  /** @var \Drupal\group\Entity\Storage\GroupRelationshipStorageInterface $rel_storage */
+  $rel_storage = \Drupal::entityTypeManager()->getStorage('group_relationship');
+  $relationships = $rel_storage->loadByEntity($node);
+
+  foreach ($relationships as $relationship) {
+    $group = $relationship->getGroup();
+    if (!in_array($group->bundle(), ['collection', 'subcollection'])) {
+      continue;
+    }
+    if ((int) $group->get('field_group_access')->value !== 1) {
+      continue;
+    }
+    // Node is in a private group — deny unless the user is a member.
+    $membership = $group->getMember($account);
+    if (!$membership) {
+      return AccessResult::forbidden('Node belongs to a private group; user is not a member.')
+        ->addCacheableDependency($group)
+        ->addCacheableDependency($node)
+        ->cachePerUser();
+    }
+  }
+
+  return AccessResult::neutral()->addCacheableDependency($node);
+}
+
+// ---------------------------------------------------------------------------
+// Visibility inheritance
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_group_presave().
+ *
+ * When a subcollection is created with a parent_collection, copy the parent's
+ * field_group_access value as the default visibility.
+ */
+function mandala_group_inheritance_group_presave(GroupInterface $group) {
+  if ($group->bundle() !== 'subcollection' || !$group->isNew()) {
+    return;
+  }
+
+  $parent_ref = $group->get('field_parent_collection');
+  if ($parent_ref->isEmpty()) {
+    return;
+  }
+
+  /** @var \Drupal\group\Entity\GroupInterface $parent */
+  $parent = $parent_ref->entity;
+  if (!$parent) {
+    return;
+  }
+
+  $group->set('field_group_access', $parent->get('field_group_access')->value);
+}
+
+/**
+ * Implements hook_group_update().
+ *
+ * When a collection's field_group_access changes, propagate to subcollections
+ * that have not independently overridden their visibility.
+ */
+function mandala_group_inheritance_group_update(GroupInterface $group) {
+  if ($group->bundle() !== 'collection') {
+    return;
+  }
+
+  $old = (int) $group->original->get('field_group_access')->value;
+  $new = (int) $group->get('field_group_access')->value;
+  if ($old === $new) {
+    return;
+  }
+
+  _mandala_group_inheritance_propagate_visibility($group, $new);
+}
+
+/**
+ * Propagates a visibility value from a collection to its non-overridden subcollections.
+ */
+function _mandala_group_inheritance_propagate_visibility(GroupInterface $collection, int $new_access) {
+  $subcollections = \Drupal::entityTypeManager()
+    ->getStorage('group')
+    ->loadByProperties([
+      'type' => 'subcollection',
+      'field_parent_collection' => $collection->id(),
+    ]);
+
+  foreach ($subcollections as $sub) {
+    if ($sub->get('field_visibility_overridden')->value) {
+      continue;
+    }
+    $sub->set('field_group_access', $new_access);
+    $sub->save();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Membership inheritance
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_group_relationship_insert().
+ *
+ * Handles two cases:
+ *   A. Subcollection created with a parent → backfill parent's existing members.
+ *   B. User added to a collection → cascade-add to all its subcollections.
+ */
+function mandala_group_inheritance_group_relationship_insert(GroupRelationshipInterface $relationship) {
+  $group = $relationship->getGroup();
+  $plugin_id = $relationship->getRelationshipType()->getPluginId();
+
+  // Case A: subcollection's parent_collection entity reference was saved.
+  // Group relationships don't cover field changes, so backfill is triggered
+  // in hook_group_presave (already done for new subcollections by field save).
+  // Here we handle the membership cascade from the GROUP MEMBERSHIP plugin.
+
+  // Case B: a user membership in a collection → cascade to subcollections.
+  if ($plugin_id === 'group_membership' && $group->bundle() === 'collection') {
+    $uid = $relationship->getEntity()->id();
+    _mandala_group_inheritance_cascade_member_add($group, $uid);
+    return;
+  }
+}
+
+/**
+ * Implements hook_group_relationship_delete().
+ *
+ * When a member is removed from a collection, remove them from subcollections
+ * unless they were added to the subcollection directly (sub-only retention).
+ */
+function mandala_group_inheritance_group_relationship_delete(GroupRelationshipInterface $relationship) {
+  $group = $relationship->getGroup();
+  $plugin_id = $relationship->getRelationshipType()->getPluginId();
+
+  if ($plugin_id !== 'group_membership' || $group->bundle() !== 'collection') {
+    return;
+  }
+
+  $account = $relationship->getEntity();
+  _mandala_group_inheritance_cascade_member_remove($group, $account);
+}
+
+/**
+ * Adds a user to all subcollections of a collection (cascade on collection add).
+ */
+function _mandala_group_inheritance_cascade_member_add(GroupInterface $collection, int $uid) {
+  $subcollections = \Drupal::entityTypeManager()
+    ->getStorage('group')
+    ->loadByProperties([
+      'type' => 'subcollection',
+      'field_parent_collection' => $collection->id(),
+    ]);
+
+  $account = \Drupal::entityTypeManager()->getStorage('user')->load($uid);
+  if (!$account) {
+    return;
+  }
+
+  foreach ($subcollections as $sub) {
+    if (!$sub->getMember($account)) {
+      $sub->addMember($account, ['_inherited' => TRUE]);
+    }
+  }
+}
+
+/**
+ * Removes a user from subcollections of a collection, preserving sub-only members.
+ *
+ * A user is a "sub-only member" if they were added directly to the subcollection
+ * rather than via cascade from the parent. We track this via the _inherited flag
+ * stored in the group membership's data field.
+ */
+function _mandala_group_inheritance_cascade_member_remove(GroupInterface $collection, $account) {
+  $subcollections = \Drupal::entityTypeManager()
+    ->getStorage('group')
+    ->loadByProperties([
+      'type' => 'subcollection',
+      'field_parent_collection' => $collection->id(),
+    ]);
+
+  foreach ($subcollections as $sub) {
+    $membership = $sub->getMember($account);
+    if (!$membership) {
+      continue;
+    }
+
+    // Retain if the member was added directly (not via cascade).
+    $relationship = $membership->getGroupRelationship();
+    $data = $relationship->get('data') && !$relationship->get('data')->isEmpty()
+      ? json_decode($relationship->get('data')->value, TRUE)
+      : [];
+
+    if (empty($data['_inherited'])) {
+      // Direct subcollection member — retain.
+      continue;
+    }
+
+    $relationship->delete();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Subcollection creation: backfill members from parent
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_group_insert().
+ *
+ * When a new subcollection is created with a parent, backfill the parent's
+ * existing members into the subcollection (so new subcollections start with
+ * inherited membership, not just future additions).
+ */
+function mandala_group_inheritance_group_insert(GroupInterface $group) {
+  if ($group->bundle() !== 'subcollection') {
+    return;
+  }
+
+  $parent_ref = $group->get('field_parent_collection');
+  if ($parent_ref->isEmpty()) {
+    return;
+  }
+
+  /** @var \Drupal\group\Entity\GroupInterface $parent */
+  $parent = $parent_ref->entity;
+  if (!$parent) {
+    return;
+  }
+
+  foreach ($parent->getMembers() as $member) {
+    $account = $member->getUser();
+    if ($account && !$group->getMember($account)) {
+      $group->addMember($account, ['_inherited' => TRUE]);
+    }
+  }
+}

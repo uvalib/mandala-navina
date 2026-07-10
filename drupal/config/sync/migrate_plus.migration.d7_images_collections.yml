@@ -1,0 +1,22 @@
+id: d7_images_collections
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1b.2'
+migration_group: mandala_images
+label: 'D7 Images: collection nodes → Group entities (collection bundle)'
+source:
+  plugin: d7_node
+  node_type: collection
+process:
+  label: title
+  status: status
+  created: created
+  changed: changed
+  uid: uid
+  field_group_access: group_access/0/value
+destination:
+  plugin: 'entity:group'
+  default_bundle: collection
+migration_dependencies:
+  optional: {  }

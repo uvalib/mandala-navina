@@ -1,0 +1,18 @@
+uuid: c5089077-579f-4cc8-b9b1-3955554902ed
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.subcollection
+    - user.role.authenticated
+id: subcollection-outsider
+label: Non-member
+weight: -90
+admin: false
+scope: outsider
+global_role: authenticated
+group_type: subcollection
+permissions:
+  - 'view group'
+  - 'view group_node:shanti_image entity'
+  - 'view group_node:shanti_image relationship'

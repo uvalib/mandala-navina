@@ -1,0 +1,15 @@
+uuid: f9c24b35-f9e4-40c2-a6e4-575d356606e6
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.subcollection
+  module:
+    - user
+id: subcollection-group_membership
+group_type: subcollection
+content_plugin: group_membership
+plugin_config:
+  group_cardinality: 0
+  entity_cardinality: 1
+  use_creation_wizard: false

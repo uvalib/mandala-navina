@@ -1,0 +1,42 @@
+id: d7_images_subcollections
+label: 'D7 Images: subcollection nodes → Group entities (subcollection bundle)'
+migration_group: mandala_images
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'Sprint 1 1b.2'
+
+source:
+  plugin: d7_image_subcollection
+  node_type: subcollection
+
+process:
+  label: title
+  status: status
+  created: created
+  changed: changed
+  # Force uid=1 (admin) to avoid Group auto-creating uid=0 memberships on insert.
+  uid:
+    plugin: default_value
+    default_value: 1
+
+  # D7 group_access field: 0=public, 1=private, 2=subscribable.
+  field_group_access: group_access/0/value
+
+  # Preserve D7 nid for lookups and audit trails.
+  field_legacy_nid: nid
+
+  # Parent collection: D7 nid → D11 Group id via migration_lookup.
+  field_parent_collection/target_id:
+    plugin: migration_lookup
+    migration: d7_images_collections
+    source: parent_collection_nid
+    no_stub: true
+
+destination:
+  plugin: 'entity:group'
+  default_bundle: subcollection
+
+migration_dependencies:
+  required:
+    - d7_images_collections

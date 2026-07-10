@@ -1,12 +1,12 @@
-uuid: 9b5aa061-56f2-4332-8e5c-4a71bafd3ff4
+uuid: 99653293-1734-41e7-bc99-1a8fefa02f43
 langcode: en
 status: true
 dependencies:
   module:
-    - node
-id: node.field_legacy_nid
-field_name: field_legacy_nid
-entity_type: node
+    - group
+id: group.field_group_access
+field_name: field_group_access
+entity_type: group
 type: integer
 settings:
   unsigned: true

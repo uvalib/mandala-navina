@@ -6,7 +6,6 @@ _core:
   default_config_hash: TDeS5fc3e6WOAO5nkIsZgiU90M5AuDquqpI2bOD7IkE
 id: d7_images_external_classification_scheme
 class: null
-idMap: {  }
 field_plugin_method: null
 cck_plugin_method: null
 migration_tags:
@@ -34,5 +33,6 @@ process:
 destination:
   plugin: 'entity:taxonomy_term'
   default_bundle: external_classification_scheme
+idMap: {  }
 migration_dependencies: {  }
 include: null
