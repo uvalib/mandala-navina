@@ -47,10 +47,29 @@ also the D7 legacy config at
 
 In `terraform-infrastructure/mandala/drupal/<env>/`:
 
-1. **Correct the ALB routing path patterns** from `/user/netbadge` + `/Shibboleth.sso/*`
-   to the SimpleSAMLphp paths: `/saml_login`, `/saml_logout`, and `/simplesaml/*`
-   (SP ACS is `/simplesaml/module.php/saml/sp/saml2-acs.php/default-sp`).
-   Confirm what target group / behavior those rules attach before editing.
+1. **Rework the ALB auth rules — this is a target-group decision, not a path rename.**
+   `mandala/drupal/production/alb-routing.tf` has 5 `aws_alb_listener_rule`
+   resources (`public-0-auth-0`…`-4`, one per public CNAME group) that match
+   `/user/netbadge` + `/Shibboleth.sso/*` and **forward to
+   `module.lb-visibility.authproxy_target_arn`**. That `authproxy` is a *separate,
+   shared Apache proxy component* (its own `${env}/authproxy/terraform.tfstate`,
+   also used by the Solr proxies) — scaffolded for a mod_shib SP.
+   Under SimpleSAMLphp there is **no separate SP container**: `/simplesaml/*` and
+   `/saml_login` are served by the Drupal container itself. Confirmed by the
+   reference site: `dsf.library.virginia.edu/*/alb-routing.tf` has **zero**
+   SAML-specific rules — every path (incl. `/simplesaml/*`) hits the single Drupal
+   app target group (`aws_alb_target_group.target.arn`).
+   → So the fix is to **retarget these rules to the Drupal app target group (or
+   delete them entirely, DSF-style)** — *and* update the paths to `/saml_login`,
+   `/saml_logout`, `/simplesaml/*` (SP ACS `/simplesaml/module.php/saml/sp/saml2-acs.php/default-sp`)
+   if any rule is retained. Requires a `terraform plan` + knowledge of what
+   `lb-visibility` exposes as the Drupal app target; do NOT blind-edit.
+
+   **Env notes:** these auth rules currently exist **only in `production`**, not
+   `staging`. There is no separate `dev` terraform env — `dev` is a *second
+   environment configured within the staging configs* (per Yuji, 2026-07-13);
+   the current-development target is that dev env. Whoever does this work should
+   confirm which env(s) the corrected rules belong in.
 2. **Add the SimpleSAMLphp Ansible assets** the fleet pattern expects (cloned from
    `dsf.library.virginia.edu` and re-pointed): `files/var/simplesamlphp/config/{authsources,config}.php`,
    `metadata/saml20-idp-remote.php`, `drupal-config/simplesamlphp_auth.settings.yml`,
