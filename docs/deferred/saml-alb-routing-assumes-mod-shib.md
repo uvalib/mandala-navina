@@ -47,29 +47,41 @@ also the D7 legacy config at
 
 In `terraform-infrastructure/mandala/drupal/<env>/`:
 
-1. **Rework the ALB auth rules — this is a target-group decision, not a path rename.**
+1. **DECISION (2026-07-13): delete the obsolete Drupal auth rules — do NOT retarget or rename paths.**
    `mandala/drupal/production/alb-routing.tf` has 5 `aws_alb_listener_rule`
    resources (`public-0-auth-0`…`-4`, one per public CNAME group) that match
-   `/user/netbadge` + `/Shibboleth.sso/*` and **forward to
-   `module.lb-visibility.authproxy_target_arn`**. That `authproxy` is a *separate,
-   shared Apache proxy component* (its own `${env}/authproxy/terraform.tfstate`,
-   also used by the Solr proxies) — scaffolded for a mod_shib SP.
-   Under SimpleSAMLphp there is **no separate SP container**: `/simplesaml/*` and
-   `/saml_login` are served by the Drupal container itself. Confirmed by the
-   reference site: `dsf.library.virginia.edu/*/alb-routing.tf` has **zero**
-   SAML-specific rules — every path (incl. `/simplesaml/*`) hits the single Drupal
-   app target group (`aws_alb_target_group.target.arn`).
-   → So the fix is to **retarget these rules to the Drupal app target group (or
-   delete them entirely, DSF-style)** — *and* update the paths to `/saml_login`,
-   `/saml_logout`, `/simplesaml/*` (SP ACS `/simplesaml/module.php/saml/sp/saml2-acs.php/default-sp`)
-   if any rule is retained. Requires a `terraform plan` + knowledge of what
-   `lb-visibility` exposes as the Drupal app target; do NOT blind-edit.
+   `/user/netbadge` + `/Shibboleth.sso/*` and forward to
+   `module.lb-visibility.authproxy_target_arn`. That `authproxy` is a *separate,
+   shared Apache proxy component* (its own `${env}/authproxy/terraform.tfstate`)
+   scaffolded for a mod_shib SP — it was there to hand SAML traffic off to a
+   separate Shibboleth-handling proxy.
+
+   Under SimpleSAMLphp there is **no separate SP container**: the SP lives *inside
+   the Drupal container* (and the dev-side `drupal-netbadge` container), so
+   `/simplesaml/*` and `/saml_login` are served as ordinary app paths on the normal
+   Drupal target. Evidence these rules are already **dead weight**, not load-bearing:
+   - `dsf.library.virginia.edu/*/alb-routing.tf` (the SimpleSAMLphp reference) has
+     **zero** SAML-specific rules — every path hits the single Drupal app target
+     (`aws_alb_target_group.target.arn`).
+   - On live production (`mandala.library.virginia.edu`), `/Shibboleth.sso/*` **404s**
+     yet NetBadge login works — the rules are already non-functional.
+
+   → **Fix = delete the 5 `public-0-auth-*` rules.** The `authproxy` *component*
+   stays (it's still used by the Solr proxies — `mandala/solr/*/alb-routing.tf`
+   forward to `authproxy_target_arn` for the ADR 014 visibility proxy); only the
+   **Drupal** auth rules that route to it are removed. At execution, run
+   `terraform plan` to confirm the deletion doesn't disturb listener-rule
+   priorities other rules depend on, and check nothing else (healthcheck/redirect)
+   relies on `/user/netbadge`. Any resultant cleanup can be handled later — most
+   naturally folded into the env-var pass (item 2), which has to be built regardless
+   and will touch how SimpleSAMLphp is configured across the Drupal +
+   `drupal-netbadge` containers.
 
    **Env notes:** these auth rules currently exist **only in `production`**, not
    `staging`. There is no separate `dev` terraform env — `dev` is a *second
    environment configured within the staging configs* (per Yuji, 2026-07-13);
-   the current-development target is that dev env. Whoever does this work should
-   confirm which env(s) the corrected rules belong in.
+   the current-development target is that dev env.
+
 2. **Add the SimpleSAMLphp Ansible assets** the fleet pattern expects (cloned from
    `dsf.library.virginia.edu` and re-pointed): `files/var/simplesamlphp/config/{authsources,config}.php`,
    `metadata/saml20-idp-remote.php`, `drupal-config/simplesamlphp_auth.settings.yml`,
