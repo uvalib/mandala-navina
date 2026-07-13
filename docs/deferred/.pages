@@ -34,3 +34,4 @@ nav:
   - "kmassets collection docs & facets (Part B)": kmassets-collection-docs-and-facets.md
   - "Group membership removal broken (no data field)": group-relationship-delete-broken-no-data-field.md
   - "D7 shared user database": d7-shared-user-database.md
+  - "SAML ALB routing assumes mod_shib": saml-alb-routing-assumes-mod-shib.md
