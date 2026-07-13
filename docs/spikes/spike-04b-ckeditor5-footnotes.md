@@ -1,31 +1,37 @@
 # Spike 4b: CKEditor 5 Footnotes
-**Status:** In progress — D7 side fully documented; D11 side confirms `footnotes` 4.x cannot represent the cross-page pattern as-is (Fail Criteria scenario triggered); awaiting team decision on 3 response options before continuing
+**Status:** In progress — D7 side fully documented; D11 side confirms `footnotes` 4.x cannot represent the cross-page pattern as-is (Fail Criteria scenario triggered). **2026-07-13 correction: the "cross-page" framing understated how D7 already solves this at render time — see correction section below.** Awaiting team decision, now leaning toward Option 1.
 **Lead:** Than Grove (built D7 shanti_texts and footnotes)
 **Mode:** Individual
-**Date:** 2026-07-10
-**Branch/commit:** `spike/4b-ckeditor5-footnotes`
+**Date:** 2026-07-10 (D7/D11 findings); 2026-07-13 (book-display-model correction)
+**Branch/commit:** `spike/4b-ckeditor5-footnotes` (findings merged via PR #31); continued on `spike/4b-book-display-model`
 
 **Split from [Spike 4](spike-04-ckeditor5-footnotes.md) on 2026-07-10** — team-ratified.
 See that file for the original combined scope and why it was split.
 
-## Recap for the team (2026-07-10)
+## Recap for the team (updated 2026-07-13)
 
 **Bottom line: `footnotes` 4.x (the D11/CKEditor 5 module already pinned in
-`composer.json`) cannot represent how `shanti_texts` actually uses
-footnotes today, and this isn't an edge case — it's the universal pattern
-across the entire corpus.** Confirmed two ways: by reading the module's
-filter source (no entity storage, no cross-node concept at all) and by an
-empirical render test (a citation with no co-located footnote text renders
-silently empty, no error, no cross-reference).
+`composer.json`) cannot represent D7's citation/definition storage split
+as-is — that finding stands.** But the practical impact is smaller than
+originally framed: **D7 already concatenates a whole book into one rendered
+document at display time** (a Views query keyed on the book's `bid`, with
+per-page anchors — see `node--book.tpl.php` + the `single_text_body`/
+`single_text_toc` views), so readers never experience a "cross-page" problem
+today. Replicating that same concatenation in D11 (Option 1) is not novel
+content-modeling risk, it's matching an already-proven decade-old D7
+pattern — this substantially favors Option 1 over Options 2/3 (see the
+2026-07-13 correction section below for the full evidence trail).
 
-Every `shanti_texts` book is a D7 Book-module outline (a tree of pages
-sharing one `bid`). Inline footnote *citations* live on content pages;
-their *definitions* are collected on a separate dedicated "Notes" page
-later in the same book. Checked exhaustively — **zero of the 7,633 book
-nodes have even one self-contained citation+definition pair on the same
-page.** `footnotes` 4.x needs both on the same page to work.
+Storage-level finding, unchanged: every `shanti_texts` book is a D7
+Book-module outline (a tree of pages sharing one `bid`). Inline footnote
+*citations* live in one page-node's field; their *definitions* are collected
+on a separate dedicated "Notes" page-node later in the same book — zero of
+7,633 book nodes have a self-contained citation+definition pair in their own
+field. `footnotes` 4.x needs both in the same field to work.
 
-**Live examples** (production site) — content page vs. its book's Notes page:
+**Live examples** (production site) — content page vs. its book's Notes page
+(remember: both actually render together on one URL, e.g.
+[/thl/sera/space#shanti-texts-16099](https://texts.mandala.library.virginia.edu/thl/sera/space#shanti-texts-16099)):
 
 | Book | Content page (citations) | Notes/definitions page |
 |---|---|---|
@@ -35,16 +41,22 @@ page.** `footnotes` 4.x needs both on the same page to work.
 | Tibetan Literature: Studies in Genre | [/node/15642](https://texts.mandala.library.virginia.edu/node/15642) — "Lo rgyus" | [/node/15718](https://texts.mandala.library.virginia.edu/node/15718) — "Notes" |
 | The Space of Sera (Se ra'i khor yug) | [/node/16096](https://texts.mandala.library.virginia.edu/node/16096) — "En-visioning the Space of Sera" | [/node/16109](https://texts.mandala.library.virginia.edu/node/16109) — "Notes" |
 
-**Three response options identified, no decision made — needs the team:**
+**Three response options, now leaning toward #1 — still needs team sign-off:**
 1. Restructure content per-book during migration (merge all pages under one
-   `bid` so citations and definitions co-locate) — likely the *same*
-   underlying question as the still-open AV-transcript-format dependency.
+   `bid` so citations and definitions co-locate) — **de-risked as of
+   2026-07-13**: this replicates D7's own existing render-time behavior, and
+   is no longer coupled to the unresolved AV-transcript-format question.
+   Still needs: the citation/definition transform, and an answer to a new
+   open question (CKEditor editing UX for very large concatenated books).
 2. Convert cross-page citations to plain hyperlinks to the Notes page —
-   simpler, loses the footnote popover UX.
+   simpler, loses the footnote popover UX. Fallback if #1's large-book UX
+   question is a blocker.
 3. Evaluate alternative D11 modules — low expectation this changes the
-   outcome (architectural limitation, not `footnotes`-specific).
+   outcome; further deprioritized now that #1 no longer carries AV-transcript
+   coupling risk.
 
-Full technical detail below. Branch: `spike/4b-ckeditor5-footnotes`.
+Full technical detail below. Branch: `spike/4b-ckeditor5-footnotes` (merged
+via PR #31); this correction continued on `spike/4b-book-display-model`.
 
 ## Theory
 Existing Texts site CKEditor 4 footnote markup (`shanti_footnotes`) can be
@@ -289,35 +301,100 @@ same field value it processes. This is exactly the "Fail Criteria" scenario
 anticipated in this spike's own template ("`footnotes 4.x` uses a
 fundamentally different storage model") — confirmed true, not hypothetical.
 
-### What this means for the Texts migration (not yet decided — options only)
+### Correction (2026-07-13): D7 already concatenates a whole book at render time — Option 1 is not novel reshaping, it's replicating existing behavior
 
-1. **Restructure content during migration**: merge each book's
-   constituent pages (all nodes sharing a `bid`) into a single consolidated
-   field/entity before/during migration, so every citation and its
-   definition end up co-located and the module's per-field model works
-   unmodified. This is very likely **the same underlying reshaping question**
-   as the open AV-transcript-format dependency noted above ("structured
-   Tibetan rich-text round-trip") — strengthens the case that these two
-   should be evaluated together, not independently.
+**Than (original D7 developer of `shanti_texts`) flagged that the framing above
+is based on an incomplete model of D7's display layer.** The DB-level finding
+— citation and definition live in separate nodes' `field_book_content` values
+— is accurate and unchanged. But it describes *storage*, not what a reader
+actually sees. **D7 never displays a book page-by-page.** At render time it
+concatenates every page sharing a `bid` into one HTML document with a
+TOC, and citation/definition anchors resolve within that single concatenated
+view. Example: [https://texts.mandala.library.virginia.edu/thl/sera/space#shanti-texts-16099](https://texts.mandala.library.virginia.edu/thl/sera/space#shanti-texts-16099)
+lands on one section's anchor within the whole essay, not a standalone page.
+
+Verified directly against the D7 source (`mandala-drupal` repo, not just
+taken on description):
+- `themes/shanti_sarvaka_texts/templates/node--book.tpl.php:15` —
+  `views_embed_view('single_text_body', 'panel_pane_default', $bid)`: the book
+  template renders a **Views query keyed on `bid`**, not a single node.
+- `modules/custom/shanti_texts_features/shanti_texts_features.views_default.inc` —
+  the `single_text_body` view wraps **every** page-node sharing that `bid` in
+  `<a name="shanti-texts-[nid]"></a><div id="shanti-texts-[nid]" ...>`, and the
+  companion `single_text_toc` view emits `<a href="#shanti-texts-[nid]">`
+  links to those same anchors — this is exactly the anchor pattern in Than's
+  example URL.
+- So the "Notes" page's content and its citing page's content **are already
+  concatenated into one HTML document** by D7, every time a book is viewed.
+  "Zero of 7,633 nodes have a self-contained pair" (above) is still literally
+  true at the *field/node* level — but at the *rendered-page* level D7 has
+  never had a cross-page footnote problem at all; it solved this over a
+  decade ago by treating the whole book, not the node, as the unit of display.
+
+**What this changes:** Option 1 ("merge pages sharing a `bid` into one
+field/entity so the module's per-field model works") is not an open,
+uncertain content-modeling decision on par with the AV-transcript question —
+it is **replicating a well-understood, already-working D7 pattern**, not
+inventing a new one. That decouples it from the AV-transcript-format
+dependency (that link was speculative "likely the same reshaping question";
+Texts' reshaping is now known-precedented, AV's is not) and substantially
+de-risks it as the leading option.
+
+**What this does NOT change:** `footnotes` 4.x's markup unit is still the
+*citation tag itself* — `<footnotes data-value="N" data-text="...">` carries
+the footnote body as an attribute of the same inline element, not a
+same-field-but-separate-element reference. Concatenating a book's pages into
+one field does not, by itself, make citation and definition co-located in
+the sense the module needs — a transformation step is still required to
+resolve each D7 `nb{N}`/`n{N}` anchor pair (now guaranteed co-located within
+one concatenated field, wherever in the book they originally lived) and
+rewrite the citation into a single self-contained `<footnotes>` tag carrying
+the resolved text. That transformation was already anticipated as necessary
+work under Option 1; what's changed is confidence in the *feasibility* of
+producing the concatenated field it operates on, not the transform itself.
+
+**New open question this raises:** some books have many pages (`bid=15582`
+has 25 refs/56 defs across 11 citing pages + 3 Notes pages) — a concatenated
+field for a book like that could be very large. Whether that's an editing
+UX problem in CKEditor 5 (single huge field vs. D7's per-page edit units) is
+not yet evaluated and should be part of resolving Option 1, not assumed away.
+
+### What this means for the Texts migration (leaning toward Option 1, pending team sign-off)
+
+1. **Restructure content during migration** *(now the leading option, per
+   the correction above)*: merge each book's constituent pages (all nodes
+   sharing a `bid`) into a single consolidated field/entity — this replicates
+   D7's own existing render-time behavior rather than inventing new content
+   modeling, and is no longer coupled to the unresolved AV-transcript
+   question. Still needs: the anchor-pair resolution + inline-`<footnotes>`
+   transform, and an answer to the large-book CKEditor-editing-UX question
+   above.
 2. **Convert cross-page citations to plain hyperlinks** to the
    sibling "Notes" page/anchor instead of true `footnotes` module citations
    — loses the popover/footnote-list UX but requires no content restructuring
-   and needs no cross-node capability.
+   and needs no cross-node capability. Still viable as a fallback if Option 1's
+   large-book UX question turns out to be a blocker.
 3. **Evaluate alternative D11 footnote modules** — low expectation this
    changes the outcome; the single-field-scope limitation is an architectural
    choice already flagged in the fail-criteria table for the same reason
-   before any module was installed. Worth a brief check but not a leading
-   option.
+   before any module was installed. Deprioritized further by the correction
+   above, since Option 1 no longer carries the AV-transcript-coupled risk
+   that motivated considering alternatives.
 
-No decision made yet — this needs discussion, likely with the team, since
-option 1 has real content-modeling implications beyond this spike alone.
+No final decision made yet — still needs team sign-off — but the correction
+above substantially changes the risk calculus in Option 1's favor.
 
 ### Not yet done
-- Decide between the three options above (or another) — team input needed
+- Decide between the three options above (or another) — team input needed,
+  now leaning toward Option 1 per the 2026-07-13 correction
+- **New (2026-07-13): evaluate CKEditor 5 editing UX for large concatenated
+  books** — e.g. `bid=15582` (11 citing pages + 3 Notes pages, 25 refs/56
+  defs) — before treating Option 1 as fully de-risked
 - Transformation function (D7 pattern → chosen D11 approach) — must be
   **book-outline-aware** (operate across all pages sharing a `bid`, not
-  per-node) if option 1 is chosen, and must match both D7 footnote-div
-  markup variants either way
+  per-node) if option 1 is chosen, resolving each `nb{N}`/`n{N}` anchor pair
+  into a single self-contained `<footnotes data-value data-text>` tag, and
+  must match both D7 footnote-div markup variants either way
 - Rendering verification in CKEditor 5 for whichever approach is chosen
 - Manual confirmation that the "orphan footnote 1" pattern is a benign
   editorial convention (spot-check 1–2 of the 11 books)
