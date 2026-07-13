@@ -1,31 +1,37 @@
 # Spike 4b: CKEditor 5 Footnotes
-**Status:** In progress — D7 side fully documented; D11 side confirms `footnotes` 4.x cannot represent the cross-page pattern as-is (Fail Criteria scenario triggered); awaiting team decision on 3 response options before continuing
+**Status:** In progress — D7 side fully documented; D11 side confirms `footnotes` 4.x cannot bridge D7's citation/definition field split unaided (Fail Criteria scenario triggered). **2026-07-13: D7 already concatenates a whole book at render time, and a migration-time cross-node transform reproduces D7's citation-popup behavior without merging any node's storage — but the end-of-book Notes list needs a mitigation: the module's stock aggregation mechanism is empirically confirmed broken under Drupal's default entity render cache (near-certain in production, not a rare edge case).** Awaiting team sign-off: refined Option 1 (with a caching mitigation) vs. Option 2 (plain hyperlinks, no open risk).
 **Lead:** Than Grove (built D7 shanti_texts and footnotes)
 **Mode:** Individual
-**Date:** 2026-07-10
-**Branch/commit:** `spike/4b-ckeditor5-footnotes`
+**Date:** 2026-07-10 (D7/D11 findings); 2026-07-13 (book-display-model correction)
+**Branch/commit:** `spike/4b-ckeditor5-footnotes` (findings merged via PR #31); continued on `spike/4b-book-display-model`
 
 **Split from [Spike 4](spike-04-ckeditor5-footnotes.md) on 2026-07-10** — team-ratified.
 See that file for the original combined scope and why it was split.
 
-## Recap for the team (2026-07-10)
+## Recap for the team (updated 2026-07-13)
 
 **Bottom line: `footnotes` 4.x (the D11/CKEditor 5 module already pinned in
-`composer.json`) cannot represent how `shanti_texts` actually uses
-footnotes today, and this isn't an edge case — it's the universal pattern
-across the entire corpus.** Confirmed two ways: by reading the module's
-filter source (no entity storage, no cross-node concept at all) and by an
-empirical render test (a citation with no co-located footnote text renders
-silently empty, no error, no cross-reference).
+`composer.json`) cannot represent D7's citation/definition storage split
+as-is — that finding stands.** But the practical impact is smaller than
+originally framed: **D7 already concatenates a whole book into one rendered
+document at display time** (a Views query keyed on the book's `bid`, with
+per-page anchors — see `node--book.tpl.php` + the `single_text_body`/
+`single_text_toc` views), so readers never experience a "cross-page" problem
+today. Replicating that same concatenation in D11 (Option 1) is not novel
+content-modeling risk, it's matching an already-proven decade-old D7
+pattern — this substantially favors Option 1 over Options 2/3 (see the
+2026-07-13 correction section below for the full evidence trail).
 
-Every `shanti_texts` book is a D7 Book-module outline (a tree of pages
-sharing one `bid`). Inline footnote *citations* live on content pages;
-their *definitions* are collected on a separate dedicated "Notes" page
-later in the same book. Checked exhaustively — **zero of the 7,633 book
-nodes have even one self-contained citation+definition pair on the same
-page.** `footnotes` 4.x needs both on the same page to work.
+Storage-level finding, unchanged: every `shanti_texts` book is a D7
+Book-module outline (a tree of pages sharing one `bid`). Inline footnote
+*citations* live in one page-node's field; their *definitions* are collected
+on a separate dedicated "Notes" page-node later in the same book — zero of
+7,633 book nodes have a self-contained citation+definition pair in their own
+field. `footnotes` 4.x needs both in the same field to work.
 
-**Live examples** (production site) — content page vs. its book's Notes page:
+**Live examples** (production site) — content page vs. its book's Notes page
+(remember: both actually render together on one URL, e.g.
+[/thl/sera/space#shanti-texts-16099](https://texts.mandala.library.virginia.edu/thl/sera/space#shanti-texts-16099)):
 
 | Book | Content page (citations) | Notes/definitions page |
 |---|---|---|
@@ -35,16 +41,34 @@ page.** `footnotes` 4.x needs both on the same page to work.
 | Tibetan Literature: Studies in Genre | [/node/15642](https://texts.mandala.library.virginia.edu/node/15642) — "Lo rgyus" | [/node/15718](https://texts.mandala.library.virginia.edu/node/15718) — "Notes" |
 | The Space of Sera (Se ra'i khor yug) | [/node/16096](https://texts.mandala.library.virginia.edu/node/16096) — "En-visioning the Space of Sera" | [/node/16109](https://texts.mandala.library.virginia.edu/node/16109) — "Notes" |
 
-**Three response options identified, no decision made — needs the team:**
-1. Restructure content per-book during migration (merge all pages under one
-   `bid` so citations and definitions co-locate) — likely the *same*
-   underlying question as the still-open AV-transcript-format dependency.
+**Three response options — decision now genuinely open between #1 and #2,
+not a clear lean:**
+1. **Migration-time cross-node transform, per-page storage** (refined
+   2026-07-13, see "Follow-up" section below): for each citation, resolve
+   its matching definition anywhere in the book (via `bid`) and inline the
+   resolved text into that citation's own field as a self-contained
+   `<footnotes>` tag — D11 keeps one node per page, exactly matching D7's
+   granularity, so no node-size/CKEditor-editing-UX risk, and per-citation
+   popups work unconditionally. **But the end-of-book Notes list is not a
+   solved problem**: empirically confirmed (`drush scr` test against real
+   D11, not just source-reading) that the module's stock
+   `footnotes_footer_disable` + `FootnotesGroupBlock` mechanism silently
+   drops footnotes from any page-node whose render output is already cached
+   — which, given Drupal's entity render cache persists indefinitely and
+   isn't scoped to "only within a book view," is close to guaranteed to
+   happen in production the first time any book page has ever been viewed
+   standalone. Needs one of 4 mitigations (see "CONFIRMED" section below)
+   before this is viable as specified.
 2. Convert cross-page citations to plain hyperlinks to the Notes page —
-   simpler, loses the footnote popover UX.
+   simpler, loses the footnote popover UX, but **carries zero open technical
+   risk** now that #1's Notes-list mechanism has a confirmed problem to
+   solve. More competitive against #1 than before.
 3. Evaluate alternative D11 modules — low expectation this changes the
-   outcome (architectural limitation, not `footnotes`-specific).
+   outcome; further deprioritized now that #1 carries neither node-size nor
+   AV-transcript coupling risk.
 
-Full technical detail below. Branch: `spike/4b-ckeditor5-footnotes`.
+Full technical detail below. Branch: `spike/4b-ckeditor5-footnotes` (merged
+via PR #31); this correction continued on `spike/4b-book-display-model`.
 
 ## Theory
 Existing Texts site CKEditor 4 footnote markup (`shanti_footnotes`) can be
@@ -289,35 +313,249 @@ same field value it processes. This is exactly the "Fail Criteria" scenario
 anticipated in this spike's own template ("`footnotes 4.x` uses a
 fundamentally different storage model") — confirmed true, not hypothetical.
 
-### What this means for the Texts migration (not yet decided — options only)
+### Correction (2026-07-13): D7 already concatenates a whole book at render time — Option 1 is not novel reshaping, it's replicating existing behavior
 
-1. **Restructure content during migration**: merge each book's
-   constituent pages (all nodes sharing a `bid`) into a single consolidated
-   field/entity before/during migration, so every citation and its
-   definition end up co-located and the module's per-field model works
-   unmodified. This is very likely **the same underlying reshaping question**
-   as the open AV-transcript-format dependency noted above ("structured
-   Tibetan rich-text round-trip") — strengthens the case that these two
-   should be evaluated together, not independently.
+**Than (original D7 developer of `shanti_texts`) flagged that the framing above
+is based on an incomplete model of D7's display layer.** The DB-level finding
+— citation and definition live in separate nodes' `field_book_content` values
+— is accurate and unchanged. But it describes *storage*, not what a reader
+actually sees. **D7 never displays a book page-by-page.** At render time it
+concatenates every page sharing a `bid` into one HTML document with a
+TOC, and citation/definition anchors resolve within that single concatenated
+view. Example: [https://texts.mandala.library.virginia.edu/thl/sera/space#shanti-texts-16099](https://texts.mandala.library.virginia.edu/thl/sera/space#shanti-texts-16099)
+lands on one section's anchor within the whole essay, not a standalone page.
+
+Verified directly against the D7 source (`mandala-drupal` repo, not just
+taken on description):
+- `themes/shanti_sarvaka_texts/templates/node--book.tpl.php:15` —
+  `views_embed_view('single_text_body', 'panel_pane_default', $bid)`: the book
+  template renders a **Views query keyed on `bid`**, not a single node.
+- `modules/custom/shanti_texts_features/shanti_texts_features.views_default.inc` —
+  the `single_text_body` view wraps **every** page-node sharing that `bid` in
+  `<a name="shanti-texts-[nid]"></a><div id="shanti-texts-[nid]" ...>`, and the
+  companion `single_text_toc` view emits `<a href="#shanti-texts-[nid]">`
+  links to those same anchors — this is exactly the anchor pattern in Than's
+  example URL.
+- So the "Notes" page's content and its citing page's content **are already
+  concatenated into one HTML document** by D7, every time a book is viewed.
+  "Zero of 7,633 nodes have a self-contained pair" (above) is still literally
+  true at the *field/node* level — but at the *rendered-page* level D7 has
+  never had a cross-page footnote problem at all; it solved this over a
+  decade ago by treating the whole book, not the node, as the unit of display.
+
+**What this changes:** Option 1 ("merge pages sharing a `bid` into one
+field/entity so the module's per-field model works") is not an open,
+uncertain content-modeling decision on par with the AV-transcript question —
+it is **replicating a well-understood, already-working D7 pattern**, not
+inventing a new one. That decouples it from the AV-transcript-format
+dependency (that link was speculative "likely the same reshaping question";
+Texts' reshaping is now known-precedented, AV's is not) and substantially
+de-risks it as the leading option.
+
+**What this does NOT change:** `footnotes` 4.x's markup unit is still the
+*citation tag itself* — `<footnotes data-value="N" data-text="...">` carries
+the footnote body as an attribute of the same inline element, not a
+same-field-but-separate-element reference. Concatenating a book's pages into
+one field does not, by itself, make citation and definition co-located in
+the sense the module needs — a transformation step is still required to
+resolve each D7 `nb{N}`/`n{N}` anchor pair (now guaranteed co-located within
+one concatenated field, wherever in the book they originally lived) and
+rewrite the citation into a single self-contained `<footnotes>` tag carrying
+the resolved text. That transformation was already anticipated as necessary
+work under Option 1; what's changed is confidence in the *feasibility* of
+producing the concatenated field it operates on, not the transform itself.
+
+**New open question this raised:** some books have many pages (`bid=15582`
+has 25 refs/56 defs across 11 citing pages + 3 Notes pages) — a concatenated
+field for a book like that could be very large. Whether that's an editing
+UX problem in CKEditor 5 (single huge field vs. D7's per-page edit units) —
+**resolved below, by not merging pages into one field at all.**
+
+### Follow-up (2026-07-13, same day): refined transform avoids the node-merge entirely, and the D7 end-of-book layout is fully reproducible
+
+Than raised the large-book editing-UX risk directly: concatenating pages
+into one node/field risks hitting slow-editing territory in CKEditor for the
+long tail of big books. Checked the actual numbers first rather than
+guessing (D7 dump, `d7_texts` DB, `field_data_field_book_content` is
+`longtext` — MySQL/D11 storage ceiling is 4GB, not a real constraint at any
+observed size): corpus is 1,046 books, median size **5.7 KB**, only **20
+books (1.9%) exceed 1 MB**, largest is `bid=14158` at **4.46 MB across 294
+pages**. So a full-corpus merge would only meaningfully risk editing
+performance for that ~2% long tail — but the better fix is to not need the
+merge at all.
+
+**The migration transform does not require merging pages into one
+node.** The earlier framing conflated two different things: the transform
+needs *read* access across a whole book's pages (to match each D7 `nb{N}`
+citation to its `n{N}` definition, wherever it lives) — that part is
+unavoidable — but it does **not** need to *write* everything into one
+merged field. `footnotes` 4.x's actual requirement is only that the
+citation's own tag carries the resolved text
+(`<footnotes data-value="N" data-text="...">`). So the transform can:
+for each citing page, look up its citations' definitions anywhere in the
+book (via `bid`), and rewrite *that page's own field* to inline the
+resolved text — while D11 keeps exactly D7's granularity, one node per
+page. No field grows beyond its own original content plus the (typically
+short) inlined footnote text. The large-book editing-UX risk disappears
+because nothing is ever concatenated into a single node — the cross-book
+lookup happens transiently at migration time, not in stored content.
+
+**The D7 "all notes at one end section" layout is fully reproducible**,
+confirmed by reading `FootnotesFilter.php` (`modules/contrib/footnotes/src/
+Plugin/Filter/FootnotesFilter.php`) line by line, not assumed from docs:
+- The module keeps a **static PHP accumulator** (`self::$storedFootnotes`,
+  `self::$counter`) that persists across every call to `process()` within
+  one PHP request. Confirmed it *appends*, not overwrites —
+  `self::$storedFootnotes[$key][...] = $footnote` (line 417) — and
+  `self::$counter++` (line ~371) increments continuously across calls.
+- Behavior forks on one setting, `footnotes_footer_disable` (lines 178–202):
+  **off** (default) renders each field's own footnote list inline right
+  after that field's text, then resets the accumulator to empty — this is
+  the "per-section notes" behavior from the earlier discussion. **On**:
+  no inline list renders at all; instead each call feeds the running
+  accumulator into a `FootnotesGroup` service with **no reset**
+  (`$this->footnotesGroup->setFootnotes(self::$storedFootnotes)`, line 182).
+- So: turn `footnotes_footer_disable` on for the format used on book pages,
+  render each page-node's own field independently (matching D7's
+  `single_text_body`-view concatenation approach exactly — see the
+  correction above), and the accumulator holds the union of every page's
+  footnotes by the time the last page in the book has rendered. One
+  `FootnotesGroupBlock` (calls `FootnotesGroup::buildFooter()`) placed once
+  at the true end of the concatenated view then dumps the complete,
+  correctly-numbered list — reproducing D7's dedicated Notes page exactly.
+  Per-citation popups (the `<dialog>`/`title` mechanism, confirmed in
+  `templates/footnote-link.html.twig`) work regardless of this setting,
+  since the resolved text is already embedded in each citation's own tag.
+
+### CONFIRMED (2026-07-13, empirical): stock `footnotes_footer_disable` aggregation is broken by Drupal's default entity render cache — near-certain to fail in production, not a rare edge case
+
+The residual risk flagged above was verified empirically against the real
+D11 DDEV instance (`drush scr`, `page` content type, `full_html` format with
+`filter_footnotes` temporarily enabled — same pattern as the earlier
+`renderInIsolation()` test, reverted after), not left as a theoretical
+worry.
+
+**Test:** created node A with a footnote and rendered it *standalone*
+(`$viewBuilder->view($nodeA, 'full')` + `renderer->render()`), confirming
+this populates both the page HTML and the static accumulator
+(`self::$storedFootnotes`, verified via reflection — held key `"1"`
+afterward). Node A's render array carried
+`#cache => ['keys' => ['entity_view','node','111344','full'], 'bin' =>
+'render', ...]` — Drupal's standard, on-by-default entity render cache.
+
+**Then, in a fresh PHP process** (fresh static state, simulating a new
+HTTP request), rendered node A (now a **render-cache HIT** from the prior
+process) together with a brand-new node C (**cache MISS**, never rendered
+before) in one composite array — simulating exactly how a book view would
+assemble multiple page-nodes. Both nodes' citation links displayed
+correctly in the HTML (A's from its cached markup, C's freshly rendered).
+But inspecting the accumulator immediately after: **it contained only
+node C's entry — node A's footnote was completely absent.** Building the
+footer via the real `FootnotesGroup::buildFooter()` (the same call
+`FootnotesGroupBlock` makes) confirmed this: the resulting Notes list
+contained node C's footnote text but **silently omitted node A's**, with
+no error, no warning, no cache-miss indicator — a reader would see a
+citation number that resolves to nothing in the notes list.
+
+**Why this makes the risk near-certain in production, not a rare edge
+case:** entity render cache in Drupal is keyed only on
+`(entity, view mode, language, ...)` — *not* on which page/context it's
+being rendered from — and persists indefinitely (`max-age: -1`, until an
+invalidating event). So the failure isn't "sometimes, under unlucky
+timing" — it's "the first time any page-node in a book has ever been
+rendered anywhere (a direct `/node/X` visit, a crawler, a search result, a
+prior view of that same book), all of its later appearances in the
+composite book view use the cached fragment and silently drop out of the
+aggregation." Given the whole point of the concatenated book view is
+displaying already-published pages readers may also reach individually,
+this is closer to guaranteed than incidental.
+
+**What this does NOT invalidate:** the per-citation transform (resolving
+each `nb{N}`/`n{N}` pair and inlining `data-text` into the citation's own
+tag) is unaffected — citation popups work fine from cached markup, since
+the resolved text is baked into the tag itself, not dependent on the
+accumulator. **What it does invalidate:** using the module's stock
+`footnotes_footer_disable` + `FootnotesGroupBlock` mechanism, as originally
+proposed just above, to reproduce the end-of-book Notes list. That specific
+mechanism is validated by the module's own test suite only for the
+single-entity, multiple-fields-on-one-node case (`FootnotesGroupBlockTest`
+— every test creates one node with 1–2 body fields, never a multi-entity
+composite view) — it was never designed for or tested against aggregating
+across sibling nodes, and this confirms it does not hold up there under
+Drupal's default caching.
+
+**Options going forward (not yet decided):**
+1. Disable render caching (`#cache => ['max-age' => 0]` or equivalent) on
+   the book-body view specifically — guarantees correctness, costs real
+   performance for large/popular books (the same ~20-book long tail
+   flagged earlier for a different reason).
+2. Cache the whole assembled book view as one atomic unit, keyed on the
+   book (`bid`) + a content hash, so a cache MISS for the book always
+   re-renders every page together (correct aggregation) and a cache HIT
+   serves the already-correct combined HTML wholesale — needs the
+   composite view's own cache entry to be checked *before* any per-page
+   entity cache lookups happen, which is not how Drupal's default rendering
+   order works and would need custom render logic to enforce.
+3. Skip the stock accumulator/block mechanism entirely: build the Notes
+   list via a dedicated step that reads each page's *resolved* footnote
+   data directly (e.g., from the migration-time transform's own output, or
+   a stored field), independent of whatever Drupal's entity cache is doing
+   for the citation markup — more custom code, but sidesteps the caching
+   interaction altogether.
+4. Fall back to Option 2 (plain hyperlinks to a Notes section) if a robust
+   fix for the aggregation proves too costly relative to its value.
+
+This doesn't kill the refined Option 1 approach, but it does mean the
+end-of-book Notes list can no longer be treated as "solved by a config
+flag" — it needs one of the above, and that decision should happen before
+committing to Option 1 as final.
+
+### What this means for the Texts migration (leaning toward Option 1, pending team sign-off)
+
+1. **Migration-time cross-node transform, per-page storage (refined Option
+   1, 2026-07-13)**: for each citing page, resolve its citations' matching
+   definitions anywhere in the book (via `bid`) and rewrite that page's own
+   field to inline the resolved text into a self-contained `<footnotes>`
+   tag — D11 keeps one node per page, exactly matching D7's granularity, so
+   no node-size or CKEditor-editing-UX risk. Per-citation popups work
+   unconditionally. **The end-of-book Notes list needs one of the 4
+   mitigations above (CONFIRMED section)** — the stock
+   `footnotes_footer_disable` + `FootnotesGroupBlock` mechanism alone is
+   empirically confirmed broken under Drupal's default render caching, not
+   just theoretically risky. No longer coupled to the unresolved
+   AV-transcript question either way.
 2. **Convert cross-page citations to plain hyperlinks** to the
    sibling "Notes" page/anchor instead of true `footnotes` module citations
-   — loses the popover/footnote-list UX but requires no content restructuring
-   and needs no cross-node capability.
+   — loses the popover/footnote-list UX but requires no transform, no
+   cross-node capability, and no caching mitigation at all. More attractive
+   now than before the caching finding, as the lowest-effort option that
+   has no open technical risk.
 3. **Evaluate alternative D11 footnote modules** — low expectation this
-   changes the outcome; the single-field-scope limitation is an architectural
-   choice already flagged in the fail-criteria table for the same reason
-   before any module was installed. Worth a brief check but not a leading
-   option.
+   changes the outcome; deprioritized further now that Option 1 carries
+   neither the node-size risk nor the AV-transcript coupling that originally
+   motivated considering alternatives.
 
-No decision made yet — this needs discussion, likely with the team, since
-option 1 has real content-modeling implications beyond this spike alone.
+No final decision made yet — still needs team sign-off. The 2026-07-13
+corrections strengthen Option 1's core transform (citation/definition
+resolution, per-page storage) but the caching finding means Option 1's
+end-of-book Notes list is no longer a solved problem — it carries real,
+confirmed implementation cost (one of the 4 mitigations above), which
+should factor into the team's choice between Option 1 and Option 2.
 
 ### Not yet done
-- Decide between the three options above (or another) — team input needed
+- Decide between the three options above (or another) — team input needed;
+  Option 1's core transform is de-risked, but the end-of-book Notes-list
+  mitigation (4 choices above) adds real cost that should weigh into the
+  decision against Option 2
+- **Choose and implement a Notes-list aggregation mitigation** if Option 1
+  is chosen (see the 4 options in the CONFIRMED caching section above) —
+  this is now confirmed-necessary work, not a "verify and maybe fix" item
 - Transformation function (D7 pattern → chosen D11 approach) — must be
   **book-outline-aware** (operate across all pages sharing a `bid`, not
-  per-node) if option 1 is chosen, and must match both D7 footnote-div
-  markup variants either way
+  per-node, to resolve `nb{N}`/`n{N}` anchor pairs) but writes back
+  **per-page**, not merged, resolving each pair into a single self-contained
+  `<footnotes data-value data-text>` tag inline in the citing page's own
+  field; must match both D7 footnote-div markup variants
 - Rendering verification in CKEditor 5 for whichever approach is chosen
 - Manual confirmation that the "orphan footnote 1" pattern is a benign
   editorial convention (spot-check 1–2 of the 11 books)
