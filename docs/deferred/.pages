@@ -35,3 +35,5 @@ nav:
   - "Group membership removal broken (no data field)": group-relationship-delete-broken-no-data-field.md
   - "D7 shared user database": d7-shared-user-database.md
   - "SAML ALB routing assumes mod_shib": saml-alb-routing-assumes-mod-shib.md
+  - "Plan production D7→D11 migration (future)": production-migration-planning.md
+  - "SAML SP cert expired — renew + re-register": saml-sp-cert-expired-renewal.md
