@@ -59,6 +59,7 @@ module:
   shanti_kmaps_fields: 0
   shortcut: 0
   simple_oauth: 0
+  simplesamlphp_auth: 0
   spike_solr_demo: 0
   system: 0
   taxonomy: 0
@@ -67,6 +68,7 @@ module:
   update: 0
   user: 0
   views_ui: 0
+  externalauth: 10
   views: 10
   paragraphs: 11
   standard: 1000

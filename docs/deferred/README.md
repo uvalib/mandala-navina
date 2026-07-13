@@ -54,6 +54,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [kmassets-collection-docs-and-facets.md](kmassets-collection-docs-and-facets.md) | solr / kmassets / Group collections / write path | Session 2026-07-10 (1b.1) | Medium |
 | [group-relationship-delete-broken-no-data-field.md](group-relationship-delete-broken-no-data-field.md) | Group collections / mandala_group_inheritance / access control | Session 2026-07-10 (1b.1) | High — breaks already-merged 1b.2 membership removal |
 | [d7-shared-user-database.md](d7-shared-user-database.md) | migration / users / infrastructure | Session 2026-07-10 (1b.1 planning) | High — blocks user migration + everything gated on it |
+| [saml-alb-routing-assumes-mod-shib.md](saml-alb-routing-assumes-mod-shib.md) | deployment / infrastructure / SAML / NetBadge / terraform | Session 2026-07-13 (1b.1 part 4) | High — mandala ALB routing assumes mod_shib but SP is SimpleSAMLphp; blocks NetBadge on AWS deploy |
 
 ## Resolved / superseded
 
