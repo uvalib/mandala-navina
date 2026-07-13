@@ -9,4 +9,5 @@ nav:
   - "1a.8 Open Decisions (next-session prep)": 1a8-open-decisions.md
   - "Migration Cycle Runbook (1a.9)": migration-cycle-runbook.md
   - "1a.9 Staging Acceptance Checklist": 1a9-staging-acceptance-checklist.md
+  - "1b.1 part 4: D11 Backend Deploy Scope (SAML/NetBadge)": 1b1-part4-d11-backend-deploy-scope.md
   - "Collections: Inheritance Decision Brief (RESOLVED → ADR 011)": collections-inheritance-decision-brief.md
