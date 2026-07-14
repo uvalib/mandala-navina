@@ -3,7 +3,16 @@
 **Area:** deployment / infrastructure / SAML / NetBadge / terraform-infrastructure
 **Raised during:** Session 2026-07-13 (1b.1 part 4 — scoping NetBadge/SAML outside DDEV)
 **Jira:** (add when available)
-**Priority:** High — blocks NetBadge auth on any AWS deploy (dev/staging/prod); part of 1b.1 part 4
+**Priority:** High — part of 1b.1 part 4
+**Status (2026-07-14):** ALB-rule deletion **POSTPONED** — Yuji to forward the
+request to Dave Goldstein (needs `terraform plan` / AWS access). This does **not**
+hold up the rest of part 4: the deletion is hygiene, not a prerequisite. The 5
+rules exist only in the `production` terraform env (part 4's target is the dev
+env configured within the *staging* configs), they match `/user/netbadge` +
+`/Shibboleth.sso/*` — paths the SimpleSAMLphp SP does not use (it serves
+`/simplesaml/*` and `/saml_login`) — and live production already 404s
+`/Shibboleth.sso` while NetBadge works, i.e. they are already inert. So part-4
+validation (§4 item 7) can proceed with the rules still in place.
 
 ## What we found
 

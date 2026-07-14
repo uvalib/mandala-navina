@@ -137,9 +137,10 @@ Single Drupal container, SP embedded — verified from `dsf.library.virginia.edu
    (committed 2026-07-13).
 5. **Test-IdP sidecar** — `deploy_netbadge.yml` for dev (example-userpass), so
    validation (part-4 §"outside-DDEV") can run without real NetBadge.
-6. **ALB cleanup (task 1)** — delete the 5 `public-0-auth-*` rules in
-   `production/alb-routing.tf`; `terraform plan` to confirm listener-rule
-   priorities; `authproxy` component stays (Solr proxies use it).
+6. **ALB cleanup (task 1)** — ⏸ **POSTPONED 2026-07-14; Yuji forwarding to Dave.**
+   Delete the 5 `public-0-auth-*` rules in `production/alb-routing.tf`;
+   `terraform plan` to confirm listener-rule priorities; `authproxy` component
+   stays (Solr proxies use it). Not a prerequisite for item 7 — see §4a.
 7. **Validation** — the part-4 §"outside-DDEV" run + the 5-row provisioning matrix
    from the deferred note (NetBadge/test-IdP → session → `/oauth/authorize`
    no-reprompt → token `sub`=uid → proxy Redis read; `register_users` false/true).
@@ -157,8 +158,16 @@ access). Item 1 landed in this repo; items 2–5 are files in
 | 3. Container env 3-file split | ✅ drafted — terraform templating hook still pending (§5.2) |
 | 4. SP assets | ✅ drafted — PHP `-l` clean; SAML keys already done |
 | 5. `deploy_netbadge.yml` sidecar | ✅ drafted — `--syntax-check` passes |
-| 6. ALB cleanup | ⬜ needs `terraform plan` |
+| 6. ALB cleanup | ⏸ **POSTPONED (2026-07-14)** — Yuji forwarding to Dave; not a prerequisite for item 7, see below |
 | 7. Validation run | ⬜ needs a deployed env |
+
+**Item 6 is postponed and does not gate item 7.** Deleting the 5 `public-0-auth-*`
+rules is hygiene rather than a prerequisite: they live only in the `production`
+terraform env (part 4 targets the dev env inside the *staging* configs), they match
+`/user/netbadge` + `/Shibboleth.sso/*` — paths the SimpleSAMLphp SP never uses, since
+it serves `/simplesaml/*` and `/saml_login` — and live production already 404s
+`/Shibboleth.sso` while NetBadge works, so they are demonstrably inert. Validation can
+run with them still in place. See the deferred note for the full evidence.
 
 **Verified, not assumed:** the vhost mechanism was checked by building the
 COPY+sed layers and confirming the docroot rewrite, `apache2ctl configtest`
