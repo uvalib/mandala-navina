@@ -144,6 +144,70 @@ Single Drupal container, SP embedded — verified from `dsf.library.virginia.edu
    from the deferred note (NetBadge/test-IdP → session → `/oauth/authorize`
    no-reprompt → token `sub`=uid → proxy Redis read; `register_users` false/true).
 
+### 4a. Build-pass status (2026-07-14)
+
+Items 1–5 are **drafted and statically verified**; items 6–7 remain (both need AWS
+access). Item 1 landed in this repo; items 2–5 are files in
+`terraform-infrastructure/mandala/drupal/staging/`.
+
+| §4 item | Status |
+|---|---|
+| 1. App image `/simplesaml/` vhost | ✅ done — `package/data/files/etc/apache2/sites-available/000-default.conf` + `package/Dockerfile` |
+| 2. `ansible/deploy_backend.yml` | ✅ drafted — `--syntax-check` passes |
+| 3. Container env 3-file split | ✅ drafted — terraform templating hook still pending (§5.2) |
+| 4. SP assets | ✅ drafted — PHP `-l` clean; SAML keys already done |
+| 5. `deploy_netbadge.yml` sidecar | ✅ drafted — `--syntax-check` passes |
+| 6. ALB cleanup | ⬜ needs `terraform plan` |
+| 7. Validation run | ⬜ needs a deployed env |
+
+**Verified, not assumed:** the vhost mechanism was checked by building the
+COPY+sed layers and confirming the docroot rewrite, `apache2ctl configtest`
+(`Syntax OK`) and the loaded proxy modules; PHP assets pass `php -l`; both
+playbooks pass `ansible-playbook --syntax-check`; the env files parse as flat
+YAML scalars and satisfy every `required_env_vars`; `SIMPLESAML_PROJECT`/`_ENV`
+resolve to the committed `mandala-drupal-saml-staging.{crt,pem.cpt}`.
+
+**Where mandala must diverge from dsf — do not "fix" these back to the dsf shape:**
+
+1. **The vhost goes in `sites-available/`, not `sites-enabled/`.** The stock image
+   ships `sites-enabled/000-default.conf` as a *symlink* into `sites-available/`,
+   and our Dockerfile's `sed` (which sets the docroot) only globs
+   `sites-available/*.conf`. Writing dsf's file to `sites-enabled/` replaces the
+   symlink with a regular file the sed never sees, stranding `DocumentRoot` at the
+   literal `/var/www/html`. dsf gets away with it only because it *symlinks*
+   `/var/www/html → /opt/drupal/web`; we use `APACHE_DOCUMENT_ROOT` instead.
+2. **`DRUPAL_HASH_SALT`, not dsf's `HASH_SALT`.** Our committed `settings.php`
+   reads `getenv('DRUPAL_HASH_SALT')` and silently falls back to
+   `'temporary-local-dev-only'`. Cloning dsf's variable name would leave that dev
+   fallback live in a deployed environment.
+3. **`global/playbooks` is four levels up, not three** — mandala sits at
+   `mandala/drupal/<env>/ansible`, one deeper than dsf's `<site>/<env>/ansible`.
+   (The existing `configure_backend.yml`/`idle_backend.yml` already use `../../../../`.)
+4. **No `config` bind mount.** dsf mounts a host config dir because its image
+   symlinks config out of a git checkout. Mandala bakes the committed CMI baseline
+   into the image at `/opt/drupal/app/drupal/config/sync`; a bind mount would
+   shadow it.
+5. **Redis must be genuinely env-driven.** dsf's `config.php` *hardcodes*
+   `store.redis.host` and `store.redis.database => 8`, which makes its
+   `SIMPLESAML_REDIS_DATABASE` env var dead code. Mandala has three Redis
+   consumers (§5.3), so ours reads both from the environment.
+6. **Build-tag SSM parameter mismatch.** The app repo's `buildspec.yml` publishes
+   to `/mandala/drupal/build_tag`; dsf's playbook reads the house
+   `/containers/<image>/latest`. `deploy_backend.yml` currently follows the app
+   repo (the thing that exists), and this is only the `deploy_tag=latest` fallback
+   since `deployspec.yml` passes an explicit tag — but the two conventions should
+   be reconciled deliberately.
+7. **Added `mandala/.gitignore` with `*.secret`.** dsf is protected by its own
+   `dsf.library.virginia.edu/.gitignore`; the root patterns (`*/*.secret`,
+   `*/*/*.secret`) do not reach mandala's deeper path, so a plaintext
+   `container_0.env.secret` holding real salts would otherwise be committable.
+
+Remaining `CHANGE_ME` placeholders before any deploy: `SIMPLESAML_SECRET_SALT`,
+`SIMPLESAML_ADMIN_PASSWORD`, `DRUPAL_HASH_SALT` (fill + encrypt to
+`.secret.cpt` via `crypt-key.ksh`), and `MYSQL_PASSWORD` (terraform, §5.2). Both
+playbooks assert on `CHANGE_ME`, so a premature deploy fails loudly rather than
+coming up against the wrong database or a dev hash salt.
+
 ## 5. Open decisions (need Yuji + Dave Goldstein) — the real blockers
 
 These gate the terraform half and are **not** ours to default:

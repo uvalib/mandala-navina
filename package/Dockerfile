@@ -24,6 +24,14 @@ WORKDIR /opt/drupal/app/drupal
 # Install dependencies (composer.json is in the drupal/ subdir)
 RUN composer install --no-dev --prefer-dist --optimize-autoloader
 
+# Mount SimpleSAMLphp under the same host as Drupal (ProxyPass /simplesaml/ → sp:80).
+# Installed to sites-available, NOT sites-enabled: the stock image ships
+# sites-enabled/000-default.conf as a symlink into sites-available, and the sed
+# below only rewrites sites-available/*.conf. Writing to sites-enabled would
+# replace the symlink with a regular file the sed never sees, stranding
+# DocumentRoot at the literal /var/www/html.
+COPY package/data/files/etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/000-default.conf
+
 # Set webroot. config_sync_directory ('../config/sync' in settings.php) resolves
 # from here to /opt/drupal/app/drupal/config/sync — the committed CMI baseline.
 ENV APACHE_DOCUMENT_ROOT /opt/drupal/app/drupal/web
