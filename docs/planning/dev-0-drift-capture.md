@@ -63,7 +63,7 @@ docker inspect <container> --format '{{json .Config.Env}}'
 
 | Item | Where it lives now | Disposition | Notes |
 |---|---|---|---|
-| **`fail2ban-rework` branch** (`shanti-uva/mandala_drupal_docker`) | `/usr/local/dockerfiles`, **not `main`**; possibly unpushed | **CARRY — highest priority** | **D11's IaC already depends on it.** See below. |
+| **`fail2ban-rework` branch** (`shanti-uva/mandala_drupal_docker`) | `/usr/local/dockerfiles`, **not `main`**; possibly unpushed | **OUT OF SCOPE for D11** — but **push the branch** so the work isn't lost | Separate track (Yuji, 2026-07-14). Not a cutover gate. See below. |
 | untracked `docker-compose-dev.yml` | `/usr/local/dockerfiles` | triage | Aegir-era; likely drop, but diff first |
 | `volumes/aegir-sites-logs/` | `/usr/local/dockerfiles` | **dir already in IaC**; contents transient | `configure_backend.yml` creates `aegir_sites_logs_dir` |
 | **solr-proxy uncommitted `docker-compose.yml` edit** | `/usr/local/mandala-solr-proxy` (on `main`) | **CARRY or consciously drop** | Diff against the monorepo's `solr-proxy/docker-compose.yml` — the 1b.1 part-1 fork may already supersede it |
@@ -75,28 +75,43 @@ docker inspect <container> --format '{{json .Config.Env}}'
 | `var-aegir` + mariadb volumes | `/mnt/docker` | DROP | Aegir control DB, retired |
 | `workqueue` redis-data | `/mnt/docker` | verify empty, then DROP | a work queue; KMaps is static so it should be idle |
 
-### The `fail2ban-rework` branch is load-bearing — not legacy cruft
+### fail2ban is a SEPARATE track — decoupled from D11 (Yuji, 2026-07-14)
 
-`mandala/drupal/staging/ansible/configure_backend.yml` is **already committed** and
-already builds the host half of this design: `mandala-banlist-reload.sh` +
-`mandala-banlist-reload.timer`, batching reloads to avoid a storm during a scraper
-burst. Its own comment names the files it expects:
+**Decision: completely separate the fail2ban work from the D11 work.** Whether
+fail2ban is needed at all is a future question — see deferred
+[`fail2ban-need-and-ownership.md`](../deferred/fail2ban-need-and-ownership.md).
+**It does not gate the cutover.**
 
-> *"See mandala_drupal_docker's fail2ban `action.d/apache-deny*.conf` and
-> `build/files/etc/apache2/conf-available/scraper-blocklist.conf`."*
+This reverses an earlier framing in this doc. The reasoning that made it look
+load-bearing was:
 
-Those live on the **`fail2ban-rework`** branch. If dev-0 is replaced and that branch
-was never pushed, **D11's provisioning references configuration that exists nowhere.**
-Verify `git log @{u}..HEAD` on that checkout first — everything else follows from
-whether it is pushed.
+- `mandala/drupal/staging/ansible/configure_backend.yml` is already committed and
+  already builds the **host half** — `mandala-banlist-reload.sh` +
+  `mandala-banlist-reload.timer`, batching reloads to survive a scraper burst — and
+  its comment names the **container half** it expects: *"See mandala_drupal_docker's
+  fail2ban `action.d/apache-deny*.conf` and
+  `build/files/etc/apache2/conf-available/scraper-blocklist.conf`"*, which live on the
+  `fail2ban-rework` branch.
+- **D11's `package/Dockerfile` installs no fail2ban** (mentions: 0).
 
-**A gap this exposes, worth deciding separately:** the design has fail2ban running
-*inside the app container*, writing `/etc/apache2/banned-ips.conf`, with the host only
-batching reloads (iptables can't block by real client IP — the ALB terminates every
-connection). **D11's `package/Dockerfile` installs no fail2ban at all** (mentions: 0).
-So the host half is in IaC while the container half has no D11 equivalent. Either the
-D11 image gains fail2ban, or the banlist machinery in `configure_backend.yml` is dead
-code on the new box.
+Under the decoupling, that mismatch is **not a gap to close but the intended state**:
+the D11 image is not expected to run fail2ban, so `configure_backend.yml`'s banlist
+machinery is simply **dead code on the D11 box**. When §4's item 2 adapts
+`configure_backend.yml` for D11 (dropping the Aegir/hostmaster bits), drop the
+banlist script/timer with them rather than porting them. Do not treat their presence
+as a requirement on the image.
+
+**The one thing that still matters — and it is hygiene, not a D11 dependency:**
+if `fail2ban-rework` was never pushed and dev-0 is replaced, **that work is gone**.
+Check and push it:
+
+```bash
+git -C /usr/local/dockerfiles log --oneline @{u}..HEAD   # unpushed?
+git -C /usr/local/dockerfiles push origin fail2ban-rework
+```
+
+That preserves someone's in-progress work regardless of whether fail2ban is ever
+adopted. It blocks nothing.
 
 ### reindeer_x — capture now, decide later
 
@@ -109,8 +124,9 @@ it is what the pipeline needs. Either way, losing it is strictly worse.
 
 ## Phase 3 — land each item in its home
 
-- **fail2ban work** → push the branch to `shanti-uva/mandala_drupal_docker`; then
-  decide its D11 home (the container-half question above).
+- **fail2ban work** → push the branch to `shanti-uva/mandala_drupal_docker` so it
+  isn't lost, and stop there. It is a **separate track** with no D11 home to decide —
+  see `fail2ban-need-and-ownership.md`.
 - **solr-proxy compose edit** → the monorepo's `solr-proxy/` (ADR 014 fork), or a
   recorded decision to drop it.
 - **solr-proxy env values** → `terraform-infrastructure` `container_0.env.managed` /
