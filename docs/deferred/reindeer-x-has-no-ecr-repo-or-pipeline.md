@@ -54,17 +54,37 @@ Checked, because "we're rebuilding anyway" invites the question:
   React front-end, and different routing for subject/place/term pages. That is a
   front-end architecture decision (Than + Andres), not a deployment simplification.
 
-## Related: the terraform ALB targets for it are already stale
+## Related: the rdx ALB target is DOWN — in production as well as dev
 
-`mandala/drupal/staging/variables.tf` declares:
+Not merely stale. Measured live 2026-07-14 (the staging aws-vault profile reaches
+production too):
 
-- `rdx_service_port = 9001` → `alb-mandala-drupal-staging-rdx-0`, health check `/`
-- `index_service_port = 8765` → `alb-mandala-drupal-staging-idx-0`, health check
-  `/solr/kmassets/status`
+| | dev (dev-0) | "staging" (dev-1) | production |
+|---|---|---|---|
+| target group | `alb-mandala-drupal-staging-rdx-0` | — | `mandala-drupal-production-rdx-0` |
+| **rdx (9001)** | **unhealthy** — `Target.FailedHealthChecks` | n/a | **unhealthy** — `Target.FailedHealthChecks` |
+| **index (8765)** | healthy | n/a | healthy |
 
-But reindeer_x listens on **9000** on the live box. So the `rdx` target group points at
-a port nothing serves. Reconcile at cutover — and settle the **push-vs-pull** question
-with Than and Andres at the same time (already flagged in the scope doc §6).
+Both envs declare `rdx_service_port = 9001`, but reindeer_x listens on **9000** on the
+live box. So `mandala-rdx.internal.lib.virginia.edu` (production) and
+`mandala-rdx-dev...` (dev) have **no healthy target** — this is an existing production
+defect, not cutover cleanup. It has evidently been that way long enough to go
+unnoticed, which is itself worth understanding: **who actually consumes rdx over the
+ALB?** The `index` target is healthy in both, so the fault is specific to the
+reindeer_x-facing target.
+
+**dev-1 has no reindeer_x target at all** — `rdx-attach-0` uses
+`element(aws_instance.backend.*.id, 0)`, i.e. instance 0 only. Consistent with dev-1
+being the D7 migration source rather than an HA peer.
+
+**The two envs' terraform has also drifted apart on naming**, which will bite anyone
+scripting across environments:
+
+- staging: `name = "alb-${var.application}-${var.environment}-rdx-0"`
+- production: `name = "${var.application}-${var.environment}-rdx-0"` — **no `alb-` prefix**
+
+Reconcile the port at cutover, and settle the **push-vs-pull** question with Than and
+Andres at the same time (already flagged in the scope doc §6).
 
 ## What needs to happen
 
