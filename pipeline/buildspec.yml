@@ -1,32 +1,38 @@
 version: 0.2
 
-# Builds Docker image and pushes to ECR
-# Follows drupal-dsf/pipeline/buildspec.yml pattern
-
-env:
-  variables:
-    CONTAINER_IMAGE: "uvalib/mandala-drupal"
-  parameter-store:
-    AWS_ACCOUNT_ID: "/this/aws/accountid"
+# Builds the Docker image and pushes it to ECR.
+# Follows drupal-dsf/pipeline/buildspec.yml.
+#
+# No env block on purpose: CONTAINER_IMAGE and CONTAINER_REGISTRY are injected by the
+# codepipeline module (aws_cicd/pipelines/mandala-drupal), as are GITHUB_*/GITLAB_*.
+# An earlier version read the account id from the SSM parameter /this/aws/accountid
+# and rebuilt the registry URL by hand — that parameter does not exist, and CodeBuild
+# refuses to start a build when a parameter-store variable cannot be resolved, so the
+# Build phase could never have run. Use $CONTAINER_REGISTRY, as dsf does.
 
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - BUILD_TAG=$(date +%Y%m%d%H%M%S)
-      - GIT_COMMIT=$(git rev-parse --short HEAD)
-      - IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $CONTAINER_REGISTRY
+      # Derived from CODEBUILD_START_TIME rather than `date`, so every phase and retry
+      # of one build agrees on the tag.
+      - BUILD_VERSION=$(date --date="@$(echo $CODEBUILD_START_TIME | cut -c1-10)" +"%Y%m%d%H%M%S")
+      # CODEBUILD_RESOLVED_SOURCE_VERSION, not `git rev-parse`: the source is a
+      # CodePipeline artifact, not a git checkout.
+      - COMMIT_TAG=gitcommit-$CODEBUILD_RESOLVED_SOURCE_VERSION
 
   build:
     commands:
-      - echo Building Docker image...
-      - docker build -f package/Dockerfile -t $IMAGE_URI:$BUILD_TAG -t $IMAGE_URI:latest .
-
-  post_build:
-    commands:
-      - echo Pushing image to ECR...
-      - docker push $IMAGE_URI:$BUILD_TAG
-      - docker push $IMAGE_URI:latest
-      - aws ssm put-parameter --name "/mandala/drupal/build_tag" --value "$BUILD_TAG" --type String --overwrite
-      - echo Build complete. Tag $BUILD_TAG
+      - docker build -f package/Dockerfile -t $CONTAINER_IMAGE:latest .
+      - docker tag $CONTAINER_IMAGE:latest $CONTAINER_REGISTRY/$CONTAINER_IMAGE:latest
+      - docker tag $CONTAINER_IMAGE:latest $CONTAINER_REGISTRY/$CONTAINER_IMAGE:build-$BUILD_VERSION
+      - docker tag $CONTAINER_IMAGE:latest $CONTAINER_REGISTRY/$CONTAINER_IMAGE:$COMMIT_TAG
+      - docker push $CONTAINER_REGISTRY/$CONTAINER_IMAGE:latest
+      - docker push $CONTAINER_REGISTRY/$CONTAINER_IMAGE:build-$BUILD_VERSION
+      - docker push $CONTAINER_REGISTRY/$CONTAINER_IMAGE:$COMMIT_TAG
+      # The tag deploy_backend.yml resolves when no -e deploy_tag is passed. NB this
+      # is mandala's own path, not the house /containers/$CONTAINER_IMAGE/latest that
+      # dsf and drupal-library use — deploy_backend.yml's build_tag_ssm_param matches
+      # it, so the two are self-consistent, but the conventions should be reconciled
+      # deliberately at some point.
+      - aws --region=$AWS_REGION ssm put-parameter --name /mandala/drupal/build_tag --value build-$BUILD_VERSION --type String --overwrite
