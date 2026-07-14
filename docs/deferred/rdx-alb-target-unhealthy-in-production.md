@@ -52,8 +52,8 @@ the box.
 
 ### 2. Move rdx to the staging environment
 
-> **Interpretation to confirm.** Read as: move rdx off **dev-0** — which scope doc
-> §5.1 replaces **in place** with D11 — and onto **dev-1**, the *staging* logical
+> **CONFIRMED (Yuji, 2026-07-14).** Move rdx off **dev-0** — which scope doc §5.1
+> replaces **in place** with D11 — and onto **dev-1**, the *staging* logical
 > environment, which today has **no rdx target at all**. `rdx-attach-0` uses
 > `target_id = element(aws_instance.backend.*.id, 0)`, i.e. instance 0 only, so
 > dev-1 is not wired to rdx in any way.
