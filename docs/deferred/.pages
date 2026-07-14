@@ -41,4 +41,4 @@ nav:
   - "D11 app has no CI/CD pipeline": d11-app-has-no-cicd-pipeline.md
   - "reindeer_x has no ECR repo or pipeline": reindeer-x-has-no-ecr-repo-or-pipeline.md
   - "rdx ALB target unhealthy in production": rdx-alb-target-unhealthy-in-production.md
-  - "fail2ban: needed at all? (decoupled from D11)": fail2ban-need-and-ownership.md
+  - "fail2ban: emergency measure, still needed? (decoupled from D11)": fail2ban-need-and-ownership.md

@@ -1,9 +1,20 @@
-# fail2ban: is it needed at all? — separate track, decoupled from D11
+# fail2ban: an emergency measure, not an architecture — is it still needed?
 
 **Area:** infrastructure / security / scraper mitigation
 **Raised during:** Session 2026-07-14 (1b.1 part 4 — dev-0 drift capture)
 **Jira:** (add when available)
-**Priority:** Low for now — explicitly **not** a D11 blocker; revisit as its own piece of work
+**Priority:** Low **while the load problem is quiet** — explicitly not a D11 blocker. **Would become urgent immediately if scraper load returns**; this note is the prior art for that day.
+
+## What this actually was (Yuji, 2026-07-14) — read this first
+
+**fail2ban was an emergency measure — a bulwark thrown up against an active load
+problem. It was never an architectural decision.** Do not evaluate it as one, and do
+not "finish" it on the assumption that someone designed it to be finished.
+
+That framing explains everything odd about its current state: half-built, on an
+unmerged branch, with a container-level design forced by circumstance (the ALB
+terminates every connection, so iptables cannot see real client IPs). It is what
+incident response looks like after the incident passes.
 
 ## Decision (Yuji, 2026-07-14)
 
@@ -63,14 +74,23 @@ to a file nothing writes.
 
 ## The actual question, for whenever this is picked up
 
-1. **Is scraper mitigation needed at all** for D11, and at what layer? The ALB
-   terminates every connection, which is what pushed the original design into the
-   container in the first place.
-2. **If yes, is fail2ban-in-the-container the right shape**, or does it belong at the
-   ALB / WAF layer? Note `global/waf-v2/` exists and is actively maintained — that may
-   be the natural home, and would make the container-level design moot.
-3. **If no**, delete the host-side banlist machinery from `configure_backend.yml` and
-   close out the `fail2ban-rework` branch.
+The question is **not** "is this the right architecture" — it was never proposed as
+one. It is:
+
+1. **Is the load problem still there?** That is the only thing that decides whether
+   any bulwark is needed. The measure was aimed at a specific active problem; if that
+   problem is gone, so is the reason.
+2. **Did it work?** Nobody appears to have established whether the half-built measure
+   actually mitigated anything before attention moved on. Worth knowing before
+   reaching for it again.
+3. **If load returns, is this still the fastest bulwark to hand?** — not "is it
+   elegant". `global/waf-v2/` exists and is actively maintained, and may now be the
+   quicker lever than reviving a half-finished container-level design. But under
+   pressure, the thing that already half-exists has real value; that is why this note
+   records the prior art rather than just deleting it.
+4. **If the answer is a settled no:** delete the host-side banlist machinery from
+   `configure_backend.yml` and close out the `fail2ban-rework` branch — so the next
+   person does not mistake an abandoned emergency for an unfinished design.
 
 ## Cross-references
 
