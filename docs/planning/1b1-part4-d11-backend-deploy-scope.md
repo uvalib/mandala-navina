@@ -271,7 +271,34 @@ These gate the terraform half and are **not** ours to default:
    > **production migration must be planned as future work** (D7 prod → D11 prod
    > cutover) — see deferred `production-migration-planning.md`.
 
-3. **Redis — now THREE consumers, confirm topology.** (a) ADR 014
+3. **Redis — DEV RESOLVED 2026-07-14; enterprise/production deferred.**
+   > **Correction + decision (2026-07-14).** This item was listed as "settle with
+   > Dave". The dev half needed nobody. **Dev = a `redis:alpine` container on
+   > `drupalnet`** (`deploy_redis.yml`), network alias `redis` — a development box
+   > does not need an enterprise instance (Yuji), and reindeer_x already runs its own
+   > Redis on the box. **Where the enterprise/production store resides is explicitly
+   > deferred** (Yuji) — see deferred `redis-enterprise-store-location.md`.
+   >
+   > Two things this correction fixed:
+   > - Mandala defines **no Redis at all** in terraform, and nothing under `mandala/`
+   >   referenced `ha-redis-staging` — that host was **wrongly copied from dsf** into
+   >   `container_0.env.managed` during the build pass, then removed. The fleet
+   >   cluster is real (dsf / library.virginia.edu / avalon use it) but was never
+   >   mandala's.
+   > - ADR 014's visibility-token Redis had **no production host** either:
+   >   `mandala_solr_visibility` ships `redis_host: redis` (DDEV's service name) with
+   >   a comment to override per-environment, and that override was never written.
+   >
+   > **The alias is deliberately `redis`** — matching DDEV *and* the module's
+   > installed default — so the dev box mirrors local DDEV and ADR 014 needs **no**
+   > `settings.php` override. Database separation is genuine because two consumers
+   > share the instance: **db 0** = ADR 014 tokens (`VisibilityTokenStore` never
+   > calls `->select()`), **db 4** = SimpleSAMLphp sessions (`SIMPLESAML_MANDALA:`).
+   > reindeer_x's `workqueue` is a separate container on its own network — untouched.
+   > `solr-proxy` still defaults `REDIS_HOST=127.0.0.1` and must be set to `redis`
+   > when it is deployed to this box.
+
+   *(Original framing:)* (a) ADR 014
    `mandala_solr_fq:{uid}` visibility token; (b) SimpleSAMLphp session store
    (`SIMPLESAML_STORE_TYPE=redis`); (c) **reindeer_x's `workqueue`** (live on the
    box as its own redis container). Decide per-consumer: shared cluster with
