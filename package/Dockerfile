@@ -10,6 +10,11 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# bcmath is required by simplesamlphp/xml-common (pulled in by simplesamlphp_auth);
+# it is not in the base image, and without it `composer install` below fails to
+# resolve. Not needed before SAML was added.
+RUN docker-php-ext-install bcmath
+
 # Enable Apache modules
 RUN a2enmod proxy proxy_http headers rewrite
 
