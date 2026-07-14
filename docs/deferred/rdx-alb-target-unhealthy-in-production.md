@@ -24,20 +24,38 @@ so the fault is specific to the reindeer_x-facing target, not the Solr one.
 separately from [reindeer-x-has-no-ecr-repo-or-pipeline.md](reindeer-x-has-no-ecr-repo-or-pipeline.md)
 for that reason — that note is about the rebuild; this one is broken right now.
 
-## The question this raises
+## Why nobody noticed — ANSWERED (Yuji, 2026-07-14)
 
-It has been failing long enough that nobody noticed. Before fixing, work out **who
-actually consumes rdx over the ALB**. Two possibilities, both worth knowing:
+**rdx exists to pick up changes in KMaps in a timely fashion.** Development on KMaps
+data has slowed to the point where **nobody expects updates any more** — so nobody
+noticed that updates were not happening. The outage is real but has had no felt
+impact, because there has been nothing to propagate.
 
-- Something *is* silently broken for real users/clients, or
-- Nothing consumes `mandala-rdx.*` over the ALB — consumers reach reindeer_x directly
-  on its port — in which case the target groups, CNAMEs and listener rules are dead
-  weight and the honest fix is deletion, not repair.
+**Consequence: Yuji is reviewing the need for rdx in general** (2026-07-14). Do not
+fix the port, move it, or build it a pipeline until that review lands — all three
+respects below may be moot.
 
-Do not fix the port before answering this; repairing a target nobody uses just
-re-hides the question.
+> **Important distinction, and a correction.** An earlier framing in
+> [reindeer-x-has-no-ecr-repo-or-pipeline.md](reindeer-x-has-no-ecr-repo-or-pipeline.md)
+> said reindeer_x is "not droppable". That conflated two separate claims:
+>
+> - **The kmassets shadow docs must exist** (ADR 006) and Drupal cannot generate them
+>   (ADR 013 carves kmterms out; the ~79k/~69k shadow population dwarfs the ~55k terms
+>   Drupal references). **This still holds.**
+> - **A continuously-running, push-fed sync service must exist.** This does **not**
+>   follow. If kmterms is effectively static, the shadow docs already sit in Solr and
+>   stay there; the sync has nothing to do.
+>
+> So retiring rdx / the always-on service is **not** superseding ADR 006. It is the
+> **push-vs-pull** question (scope doc §6, Than + Andres), and "no push endpoint;
+> re-sync in batch when KMaps actually changes" is a legitimate answer to it. What
+> must not happen is losing the *ability* to re-sync when KMaps does change.
 
-## Three respects to address (Yuji, 2026-07-14)
+## Three respects to address (Yuji, 2026-07-14) — GATED on the review above
+
+Listed as they occurred to Yuji; **not a sequence**. If rdx is retained, note that
+(3) likely has to precede (1): choosing a direction for the port fix depends on
+config that is currently only on the box.
 
 ### 1. Fix the 9000/9001 port mismatch
 

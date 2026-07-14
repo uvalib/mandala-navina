@@ -33,9 +33,24 @@ rebuild it from. **Replacing dev-0 destroys the only copy of that deployment.** 
 already requires accounting for every unique component before cutover; this is one,
 and it currently has no reproducible path back.
 
-## reindeer_x is NOT droppable — do not treat this as a chance to delete it
+## What is and is not droppable — REFINED (Yuji, 2026-07-14)
 
-Checked, because "we're rebuilding anyway" invites the question:
+> **Yuji is reviewing the need for rdx in general** (2026-07-14): rdx exists to pick
+> up KMaps changes *in a timely fashion*, but KMaps data development has slowed to the
+> point where nobody expects updates — which is why the broken rdx target went
+> unnoticed. **Hold the pipeline/ECR work below until that review lands.**
+>
+> **The distinction that matters** (an earlier version of this note ran the two
+> together):
+> - **The kmassets shadow docs must exist** — this still holds, see below.
+> - **A continuously-running, push-fed sync service must exist** — this does NOT
+>   follow. If kmterms is static, the shadow docs already sit in Solr; the sync has
+>   nothing to do. Retiring the always-on service is the **push-vs-pull** question
+>   (§6, Than + Andres), *not* a supersession of ADR 006. The requirement is to keep
+>   the *ability* to re-sync when KMaps changes — not necessarily a live endpoint.
+
+Why the shadow docs themselves cannot simply be dropped, since "we're rebuilding
+anyway" invites the question:
 
 - **ADR 013 explicitly carves kmterms out.** *"kmterms is unchanged. The `kmterms`
   index is owned and maintained by the Rails KMaps application (Andres Montano).
@@ -49,10 +64,12 @@ Checked, because "we're rebuilding anyway" invites the question:
 - **Scale confirms it.** The shadow population is ~79,174 subjects and ~68,790 places
   — every kmterm. Drupal only knows the ~55,553 terms actually referenced by nodes
   (`field_kmap_terms`). Drupal could not generate the rest even in principle.
-- Dropping the shadow pattern would mean **superseding ADR 006** and paying its stated
-  costs: a separate query path for taxonomy vs. content, two document schemas in the
-  React front-end, and different routing for subject/place/term pages. That is a
-  front-end architecture decision (Than + Andres), not a deployment simplification.
+- Dropping the shadow pattern **entirely** — i.e. removing the docs from kmassets —
+  would mean **superseding ADR 006** and paying its stated costs: a separate query
+  path for taxonomy vs. content, two document schemas in the React front-end, and
+  different routing for subject/place/term pages. That is a front-end architecture
+  decision (Than + Andres), not a deployment simplification. **Retiring the always-on
+  sync service is a different, much cheaper question** — see the box above.
 
 ## Related: the rdx ALB target is DOWN — in production as well as dev
 
