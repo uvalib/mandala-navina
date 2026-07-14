@@ -55,7 +55,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [group-relationship-delete-broken-no-data-field.md](group-relationship-delete-broken-no-data-field.md) | Group collections / mandala_group_inheritance / access control | Session 2026-07-10 (1b.1) | High — breaks already-merged 1b.2 membership removal |
 | [d7-shared-user-database.md](d7-shared-user-database.md) | migration / users / infrastructure | Session 2026-07-10 (1b.1 planning) | High — blocks user migration + everything gated on it |
 | [saml-alb-routing-assumes-mod-shib.md](saml-alb-routing-assumes-mod-shib.md) | deployment / infrastructure / SAML / NetBadge / terraform | Session 2026-07-13 (1b.1 part 4) | High — mandala ALB routing assumes mod_shib but SP is SimpleSAMLphp; blocks NetBadge on AWS deploy |
-| [redis-enterprise-store-location.md](redis-enterprise-store-location.md) | infrastructure / Redis / ADR 014 / SAML session store | Session 2026-07-14 (1b.1 part 4) | Medium — dev settled (on-box container); production/enterprise location deferred |
+| [redis-enterprise-store-location.md](redis-enterprise-store-location.md) | infrastructure / Redis / ADR 014 / SAML session store / Drupal object cache | Session 2026-07-14 (1b.1 part 4) | Medium — TWO stores required (sessions + bigger object cache); dev settled on-box, enterprise location deferred |
 | [d11-app-has-no-cicd-pipeline.md](d11-app-has-no-cicd-pipeline.md) | deployment / CI-CD / ECR / CodePipeline | Session 2026-07-14 (1b.1 part 4) | High — no ECR repo, no CodePipeline; buildspec/deployspec are orphaned, blocks part-4 validation |
 
 ## Resolved / superseded

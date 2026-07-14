@@ -1,9 +1,65 @@
-# Where the enterprise (production) Redis store resides is unresolved
+# Redis: TWO stores required; enterprise/production location unresolved
 
-**Area:** infrastructure / Redis / ADR 014 / SAML session store
+**Area:** infrastructure / Redis / ADR 014 / SAML session store / Drupal object cache
 **Raised during:** Session 2026-07-14 (1b.1 part 4 — D11 backend deploy)
 **Jira:** (add when available)
 **Priority:** Medium — not blocking dev/validation; blocks production cutover
+
+## Requirement: TWO Redis stores, not one (Yuji, 2026-07-14)
+
+1. **SimpleSAMLphp session store** — small.
+2. **Drupal object cache** — a separate, **bigger** instance.
+
+**This must be two instances, not two databases on one instance.** `maxmemory` and
+`maxmemory-policy` are **instance-wide, not per-database**. An object cache sized to
+fill memory under `allkeys-lru` evicts keys from *every* database on that instance —
+so co-tenanting it with the session store would silently evict SAML sessions (logging
+users out) and, if they shared it, ADR 014 visibility tokens. Separate instances is a
+correctness requirement, not just sizing.
+
+### Open: where do ADR 014's visibility tokens live?
+
+Not yet decided, and it does not follow automatically from the two-store split.
+Tokens are Drupal-written / solr-proxy-read with a TTL. They are cache-shaped, but
+**eviction is not harmless**: losing a user's `mandala_solr_fq:{uid}` silently
+degrades them to public-only results until their next login (fail-closed, so not a
+security hole — but confusing and hard to diagnose). That argues for the
+**noeviction** session-side instance rather than the `allkeys-lru` object cache.
+
+Naming tension to resolve with it: `mandala_solr_visibility` ships `redis_host: redis`
+as its installed default, and DDEV's `ddev-redis` add-on serves the object cache *and*
+the tokens from the single service named `redis`. If `redis` becomes the object cache
+in production, ADR 014's default silently points at the evicting instance and needs a
+per-environment `settings.php` override.
+
+### Status: the object cache does not exist yet
+
+Nothing to migrate — it has never been built for production:
+
+- **`drupal/redis` is not in `drupal/composer.json`** at all.
+- `settings.php`'s only Redis-cache hook is **DDEV-gated**:
+  `if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(.../settings.ddev.redis.php))`.
+  So the object cache is currently a DDEV-only convenience.
+
+So this is a requirement to design, not a deployment to move.
+
+### Related: phpredis was missing from the production image (FIXED 2026-07-14)
+
+Found while investigating the above and worth keeping visible, because it hid a real
+defect in **merged** 1b.1 part 3 code:
+
+`VisibilityTokenStore::getConnection()` does `new \Redis()` (phpredis) but the
+production image never installed the extension. A missing extension raises
+`Error: Class "Redis" not found` — an `\Error`, **not** a `\RedisException` — and the
+method only catches `\RedisException`. So `hook_user_login` would have **fatalled on
+every login in the deployed image**, while passing in DDEV (where `ddev-redis`
+supplies the extension). Verified empirically in the built image.
+
+Fixed by `pecl install redis && docker-php-ext-enable redis` in `package/Dockerfile`
+(also a prerequisite for the object cache). **The catch remains fragile** — it still
+only intercepts `\RedisException`, so any future build without the extension fatals
+the same way rather than degrading as the module intends. Consider guarding with
+`extension_loaded('redis')` or widening the catch.
 
 ## Decision so far
 

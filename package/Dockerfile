@@ -15,6 +15,14 @@ RUN apt-get update && apt-get install -y \
 # resolve. Not needed before SAML was added.
 RUN docker-php-ext-install bcmath
 
+# phpredis. mandala_solr_visibility's VisibilityTokenStore does `new \Redis()` to
+# write the ADR 014 visibility tokens, and it only catches \RedisException — a
+# missing extension raises \Error ("Class \"Redis\" not found"), which that catch
+# does NOT intercept, so hook_user_login fatals on every login. This works in DDEV
+# only because the ddev-redis add-on supplies the extension, which is why it was
+# never caught. Also a prerequisite for the planned Drupal object cache.
+RUN pecl install redis && docker-php-ext-enable redis
+
 # Enable Apache modules
 RUN a2enmod proxy proxy_http headers rewrite
 
