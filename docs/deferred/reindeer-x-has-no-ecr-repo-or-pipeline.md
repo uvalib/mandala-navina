@@ -56,6 +56,8 @@ Checked, because "we're rebuilding anyway" invites the question:
 
 ## Related: the rdx ALB target is DOWN — in production as well as dev
 
+> **Filed separately as [rdx-alb-target-unhealthy-in-production.md](rdx-alb-target-unhealthy-in-production.md)** — it is a live production defect, independent of this rebuild. Summary retained here for context.
+
 Not merely stale. Measured live 2026-07-14 (the staging aws-vault profile reaches
 production too):
 

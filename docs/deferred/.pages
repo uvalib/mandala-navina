@@ -40,3 +40,4 @@ nav:
   - "Redis: two stores required; enterprise location deferred": redis-enterprise-store-location.md
   - "D11 app has no CI/CD pipeline": d11-app-has-no-cicd-pipeline.md
   - "reindeer_x has no ECR repo or pipeline": reindeer-x-has-no-ecr-repo-or-pipeline.md
+  - "rdx ALB target unhealthy in production": rdx-alb-target-unhealthy-in-production.md
