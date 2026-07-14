@@ -39,3 +39,4 @@ nav:
   - "SAML SP cert expired — renew + re-register": saml-sp-cert-expired-renewal.md
   - "Redis: two stores required; enterprise location deferred": redis-enterprise-store-location.md
   - "D11 app has no CI/CD pipeline": d11-app-has-no-cicd-pipeline.md
+  - "reindeer_x has no ECR repo or pipeline": reindeer-x-has-no-ecr-repo-or-pipeline.md
