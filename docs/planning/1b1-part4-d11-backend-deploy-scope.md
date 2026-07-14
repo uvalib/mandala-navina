@@ -226,7 +226,33 @@ These gate the terraform half and are **not** ours to default:
    dev instance** to keep. We edit the existing `mandala/drupal/staging` terraform
    env into the D11 shape (not a new env). **Requirement: audit the old Aegir dev
    env for every *unique* component and account for each before cutover** — see §6.
-2. **RDS — reuse the shared instance (verified via `drush sql-connect`).** The
+2. **RDS — RESOLVED 2026-07-14: nothing to provision, and NOT a Dave dependency.**
+   > **Correction (2026-07-14).** This item was listed as "settle with Dave (RDS
+   > provisioning)". That was wrong, on evidence:
+   > - The secret terraform needs — **`staging/rds/standard/mandala_drupal`** — has
+   >   **existed since 2021** and is **readable by Yuji's aws-vault `staging`
+   >   profile** (verified via `aws secretsmanager describe-secret`). Note the path
+   >   is `rds/standard/`, not dsf's `rds/mysql8/` — that segment is just naming
+   >   drift; `staging/datastores/databases/` applies against one `mysql_endpoint`.
+   > - **`staging/datastores/databases/mandala_drupal.tf` is the Aegir pattern:** its
+   >   `mysql_database` resource is **commented out** (Aegir created databases on
+   >   demand), and the `mandala_drupal` account instead holds **`ALL` on
+   >   `mandala%`** and `site_%`, plus `CREATE USER`/`GRANT OPTION`. So **a D11
+   >   database named `mandala_drupal_0` is already covered by the existing grant** —
+   >   no new user, no new secret, no new grant, no DBA request. Creating the
+   >   database is self-serve with those credentials.
+   > - The wiring is done: `ansible.tf` now renders `container_0.env.generated` from
+   >   the secret (`count = 1` — node 0 only, since dev-1 is the D7 migration
+   >   source). Proven with a real `terraform plan`: *1 to add, 0 to change, 0 to
+   >   destroy*, `content = (sensitive value)`.
+   > - `MYSQL_USER` is **`mandala_drupal`**, not the database name. dsf's convention
+   >   has user and database share a name; mandala's is one account across many
+   >   `mandala%` databases. Do not align them.
+   >
+   > What *is* still open here: §5.6 (ALB target port/health check) and §5.3 (Redis).
+
+   The
+
    durable fact: mandala already lives on **`rds-mysql8-staging.internal.lib.virginia.edu`**
    (MySQL 8, the same RDS dsf uses; matches ADR 012), user `mandala_sites_dev`.
    **No new RDS needed** — D11 just needs a database on it. The specific `*_dev`
@@ -264,7 +290,18 @@ These gate the terraform half and are **not** ours to default:
 6. **ALB target port.** Repurposing target-0 to the D11 container's `8080` — confirm
    the target group / health check path is right for D11.
 
-**Recommended next step:** settle §5.2–5.3 with Dave (RDS/Redis) before
+**Recommended next step — SUPERSEDED 2026-07-14.** §5.2 turned out to need nobody
+(see the correction above), and §5.5/ITS is not required for validation at all —
+the `example-userpass` test IdP exists precisely so item 7 can run without real
+NetBadge. The remaining path to a validating dev env is largely self-serve: create
+the `mandala_drupal_0` database, fill the three `CHANGE_ME` secrets and encrypt to
+`.secret.cpt`, `terraform apply`, then run `deploy_backend.yml` +
+`deploy_netbadge.yml`. Dave is genuinely needed only for §5.3 Redis sign-off
+(confirm db `4` is unclaimed on `ha-redis-staging`) and the postponed production
+ALB deletion. The one substantial piece still unwritten is the **D11 terraform
+host/target rework** (§3's biggest open item, §5.1/§5.6) — ours, not his.
+
+*(Original, now historical:)* settle §5.2–5.3 with Dave (RDS/Redis) before
 writing terraform; the Ansible + SP assets (§4 items 2–5) and the image work
 (§4.1) can be drafted in parallel since they're env-value-driven and don't depend
 on those. §5.1 (host strategy) is decided — replace in place (see §6).
