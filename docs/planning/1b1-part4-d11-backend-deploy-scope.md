@@ -137,12 +137,85 @@ Single Drupal container, SP embedded — verified from `dsf.library.virginia.edu
    (committed 2026-07-13).
 5. **Test-IdP sidecar** — `deploy_netbadge.yml` for dev (example-userpass), so
    validation (part-4 §"outside-DDEV") can run without real NetBadge.
-6. **ALB cleanup (task 1)** — delete the 5 `public-0-auth-*` rules in
-   `production/alb-routing.tf`; `terraform plan` to confirm listener-rule
-   priorities; `authproxy` component stays (Solr proxies use it).
+6. **ALB cleanup (task 1)** — ⏸ **POSTPONED 2026-07-14; Yuji forwarding to Dave.**
+   Delete the 5 `public-0-auth-*` rules in `production/alb-routing.tf`;
+   `terraform plan` to confirm listener-rule priorities; `authproxy` component
+   stays (Solr proxies use it). Not a prerequisite for item 7 — see §4a.
 7. **Validation** — the part-4 §"outside-DDEV" run + the 5-row provisioning matrix
    from the deferred note (NetBadge/test-IdP → session → `/oauth/authorize`
    no-reprompt → token `sub`=uid → proxy Redis read; `register_users` false/true).
+
+### 4a. Build-pass status (2026-07-14)
+
+Items 1–5 are **drafted and statically verified**; items 6–7 remain (both need AWS
+access). Item 1 landed in this repo; items 2–5 are files in
+`terraform-infrastructure/mandala/drupal/staging/`.
+
+| §4 item | Status |
+|---|---|
+| 1. App image `/simplesaml/` vhost | ✅ done — `package/data/files/etc/apache2/sites-available/000-default.conf` + `package/Dockerfile` |
+| 2. `ansible/deploy_backend.yml` | ✅ drafted — `--syntax-check` passes |
+| 3. Container env 3-file split | ✅ drafted — terraform templating hook still pending (§5.2) |
+| 4. SP assets | ✅ drafted — PHP `-l` clean; SAML keys already done |
+| 5. `deploy_netbadge.yml` sidecar | ✅ drafted — `--syntax-check` passes |
+| 6. ALB cleanup | ⏸ **POSTPONED (2026-07-14)** — Yuji forwarding to Dave; not a prerequisite for item 7, see below |
+| 7. Validation run | ⬜ needs a deployed env |
+
+**Item 6 is postponed and does not gate item 7.** Deleting the 5 `public-0-auth-*`
+rules is hygiene rather than a prerequisite: they live only in the `production`
+terraform env (part 4 targets the dev env inside the *staging* configs), they match
+`/user/netbadge` + `/Shibboleth.sso/*` — paths the SimpleSAMLphp SP never uses, since
+it serves `/simplesaml/*` and `/saml_login` — and live production already 404s
+`/Shibboleth.sso` while NetBadge works, so they are demonstrably inert. Validation can
+run with them still in place. See the deferred note for the full evidence.
+
+**Verified, not assumed:** the vhost mechanism was checked by building the
+COPY+sed layers and confirming the docroot rewrite, `apache2ctl configtest`
+(`Syntax OK`) and the loaded proxy modules; PHP assets pass `php -l`; both
+playbooks pass `ansible-playbook --syntax-check`; the env files parse as flat
+YAML scalars and satisfy every `required_env_vars`; `SIMPLESAML_PROJECT`/`_ENV`
+resolve to the committed `mandala-drupal-saml-staging.{crt,pem.cpt}`.
+
+**Where mandala must diverge from dsf — do not "fix" these back to the dsf shape:**
+
+1. **The vhost goes in `sites-available/`, not `sites-enabled/`.** The stock image
+   ships `sites-enabled/000-default.conf` as a *symlink* into `sites-available/`,
+   and our Dockerfile's `sed` (which sets the docroot) only globs
+   `sites-available/*.conf`. Writing dsf's file to `sites-enabled/` replaces the
+   symlink with a regular file the sed never sees, stranding `DocumentRoot` at the
+   literal `/var/www/html`. dsf gets away with it only because it *symlinks*
+   `/var/www/html → /opt/drupal/web`; we use `APACHE_DOCUMENT_ROOT` instead.
+2. **`DRUPAL_HASH_SALT`, not dsf's `HASH_SALT`.** Our committed `settings.php`
+   reads `getenv('DRUPAL_HASH_SALT')` and silently falls back to
+   `'temporary-local-dev-only'`. Cloning dsf's variable name would leave that dev
+   fallback live in a deployed environment.
+3. **`global/playbooks` is four levels up, not three** — mandala sits at
+   `mandala/drupal/<env>/ansible`, one deeper than dsf's `<site>/<env>/ansible`.
+   (The existing `configure_backend.yml`/`idle_backend.yml` already use `../../../../`.)
+4. **No `config` bind mount.** dsf mounts a host config dir because its image
+   symlinks config out of a git checkout. Mandala bakes the committed CMI baseline
+   into the image at `/opt/drupal/app/drupal/config/sync`; a bind mount would
+   shadow it.
+5. **Redis must be genuinely env-driven.** dsf's `config.php` *hardcodes*
+   `store.redis.host` and `store.redis.database => 8`, which makes its
+   `SIMPLESAML_REDIS_DATABASE` env var dead code. Mandala has three Redis
+   consumers (§5.3), so ours reads both from the environment.
+6. **Build-tag SSM parameter mismatch.** The app repo's `buildspec.yml` publishes
+   to `/mandala/drupal/build_tag`; dsf's playbook reads the house
+   `/containers/<image>/latest`. `deploy_backend.yml` currently follows the app
+   repo (the thing that exists), and this is only the `deploy_tag=latest` fallback
+   since `deployspec.yml` passes an explicit tag — but the two conventions should
+   be reconciled deliberately.
+7. **Added `mandala/.gitignore` with `*.secret`.** dsf is protected by its own
+   `dsf.library.virginia.edu/.gitignore`; the root patterns (`*/*.secret`,
+   `*/*/*.secret`) do not reach mandala's deeper path, so a plaintext
+   `container_0.env.secret` holding real salts would otherwise be committable.
+
+Remaining `CHANGE_ME` placeholders before any deploy: `SIMPLESAML_SECRET_SALT`,
+`SIMPLESAML_ADMIN_PASSWORD`, `DRUPAL_HASH_SALT` (fill + encrypt to
+`.secret.cpt` via `crypt-key.ksh`), and `MYSQL_PASSWORD` (terraform, §5.2). Both
+playbooks assert on `CHANGE_ME`, so a premature deploy fails loudly rather than
+coming up against the wrong database or a dev hash salt.
 
 ## 5. Open decisions (need Yuji + Dave Goldstein) — the real blockers
 
@@ -153,7 +226,33 @@ These gate the terraform half and are **not** ours to default:
    dev instance** to keep. We edit the existing `mandala/drupal/staging` terraform
    env into the D11 shape (not a new env). **Requirement: audit the old Aegir dev
    env for every *unique* component and account for each before cutover** — see §6.
-2. **RDS — reuse the shared instance (verified via `drush sql-connect`).** The
+2. **RDS — RESOLVED 2026-07-14: nothing to provision, and NOT a Dave dependency.**
+   > **Correction (2026-07-14).** This item was listed as "settle with Dave (RDS
+   > provisioning)". That was wrong, on evidence:
+   > - The secret terraform needs — **`staging/rds/standard/mandala_drupal`** — has
+   >   **existed since 2021** and is **readable by Yuji's aws-vault `staging`
+   >   profile** (verified via `aws secretsmanager describe-secret`). Note the path
+   >   is `rds/standard/`, not dsf's `rds/mysql8/` — that segment is just naming
+   >   drift; `staging/datastores/databases/` applies against one `mysql_endpoint`.
+   > - **`staging/datastores/databases/mandala_drupal.tf` is the Aegir pattern:** its
+   >   `mysql_database` resource is **commented out** (Aegir created databases on
+   >   demand), and the `mandala_drupal` account instead holds **`ALL` on
+   >   `mandala%`** and `site_%`, plus `CREATE USER`/`GRANT OPTION`. So **a D11
+   >   database named `mandala_drupal_0` is already covered by the existing grant** —
+   >   no new user, no new secret, no new grant, no DBA request. Creating the
+   >   database is self-serve with those credentials.
+   > - The wiring is done: `ansible.tf` now renders `container_0.env.generated` from
+   >   the secret (`count = 1` — node 0 only, since dev-1 is the D7 migration
+   >   source). Proven with a real `terraform plan`: *1 to add, 0 to change, 0 to
+   >   destroy*, `content = (sensitive value)`.
+   > - `MYSQL_USER` is **`mandala_drupal`**, not the database name. dsf's convention
+   >   has user and database share a name; mandala's is one account across many
+   >   `mandala%` databases. Do not align them.
+   >
+   > What *is* still open here: §5.6 (ALB target port/health check) and §5.3 (Redis).
+
+   The
+
    durable fact: mandala already lives on **`rds-mysql8-staging.internal.lib.virginia.edu`**
    (MySQL 8, the same RDS dsf uses; matches ADR 012), user `mandala_sites_dev`.
    **No new RDS needed** — D11 just needs a database on it. The specific `*_dev`
@@ -172,7 +271,34 @@ These gate the terraform half and are **not** ours to default:
    > **production migration must be planned as future work** (D7 prod → D11 prod
    > cutover) — see deferred `production-migration-planning.md`.
 
-3. **Redis — now THREE consumers, confirm topology.** (a) ADR 014
+3. **Redis — DEV RESOLVED 2026-07-14; enterprise/production deferred.**
+   > **Correction + decision (2026-07-14).** This item was listed as "settle with
+   > Dave". The dev half needed nobody. **Dev = a `redis:alpine` container on
+   > `drupalnet`** (`deploy_redis.yml`), network alias `redis` — a development box
+   > does not need an enterprise instance (Yuji), and reindeer_x already runs its own
+   > Redis on the box. **Where the enterprise/production store resides is explicitly
+   > deferred** (Yuji) — see deferred `redis-enterprise-store-location.md`.
+   >
+   > Two things this correction fixed:
+   > - Mandala defines **no Redis at all** in terraform, and nothing under `mandala/`
+   >   referenced `ha-redis-staging` — that host was **wrongly copied from dsf** into
+   >   `container_0.env.managed` during the build pass, then removed. The fleet
+   >   cluster is real (dsf / library.virginia.edu / avalon use it) but was never
+   >   mandala's.
+   > - ADR 014's visibility-token Redis had **no production host** either:
+   >   `mandala_solr_visibility` ships `redis_host: redis` (DDEV's service name) with
+   >   a comment to override per-environment, and that override was never written.
+   >
+   > **The alias is deliberately `redis`** — matching DDEV *and* the module's
+   > installed default — so the dev box mirrors local DDEV and ADR 014 needs **no**
+   > `settings.php` override. Database separation is genuine because two consumers
+   > share the instance: **db 0** = ADR 014 tokens (`VisibilityTokenStore` never
+   > calls `->select()`), **db 4** = SimpleSAMLphp sessions (`SIMPLESAML_MANDALA:`).
+   > reindeer_x's `workqueue` is a separate container on its own network — untouched.
+   > `solr-proxy` still defaults `REDIS_HOST=127.0.0.1` and must be set to `redis`
+   > when it is deployed to this box.
+
+   *(Original framing:)* (a) ADR 014
    `mandala_solr_fq:{uid}` visibility token; (b) SimpleSAMLphp session store
    (`SIMPLESAML_STORE_TYPE=redis`); (c) **reindeer_x's `workqueue`** (live on the
    box as its own redis container). Decide per-consumer: shared cluster with
@@ -191,7 +317,18 @@ These gate the terraform half and are **not** ours to default:
 6. **ALB target port.** Repurposing target-0 to the D11 container's `8080` — confirm
    the target group / health check path is right for D11.
 
-**Recommended next step:** settle §5.2–5.3 with Dave (RDS/Redis) before
+**Recommended next step — SUPERSEDED 2026-07-14.** §5.2 turned out to need nobody
+(see the correction above), and §5.5/ITS is not required for validation at all —
+the `example-userpass` test IdP exists precisely so item 7 can run without real
+NetBadge. The remaining path to a validating dev env is largely self-serve: create
+the `mandala_drupal_0` database, fill the three `CHANGE_ME` secrets and encrypt to
+`.secret.cpt`, `terraform apply`, then run `deploy_backend.yml` +
+`deploy_netbadge.yml`. Dave is genuinely needed only for §5.3 Redis sign-off
+(confirm db `4` is unclaimed on `ha-redis-staging`) and the postponed production
+ALB deletion. The one substantial piece still unwritten is the **D11 terraform
+host/target rework** (§3's biggest open item, §5.1/§5.6) — ours, not his.
+
+*(Original, now historical:)* settle §5.2–5.3 with Dave (RDS/Redis) before
 writing terraform; the Ansible + SP assets (§4 items 2–5) and the image work
 (§4.1) can be drafted in parallel since they're env-value-driven and don't depend
 on those. §5.1 (host strategy) is decided — replace in place (see §6).

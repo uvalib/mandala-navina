@@ -4,24 +4,79 @@ version: 0.2
 # Follows drupal-dsf/pipeline/deployspec.yml pattern
 
 env:
+  variables:
+    terraform_version: 1.11.1
+    #ansible_debug: -vvvv
   parameter-store:
     TF_VAR_access_key: "/terraform/aws/accesskey"
     TF_VAR_secret_key: "/terraform/aws/secretkey"
     TF_VAR_region: "/terraform/aws/region"
 
 phases:
+  install:
+    runtime-versions:
+      python: 3.x
+      golang: 1.x
+    commands:
+      # ccrypt, needed to decrypt the committed *.cpt keys and container secrets
+      - dnf install -y http://ccrypt.sourceforge.net/download/1.11/ccrypt-1.11-1.x86_64.rpm
+      - pip3 install ansible
+      - wget https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_amd64.zip
+      - unzip terraform_${terraform_version}_linux_amd64.zip
+      - mv terraform /usr/local/bin
+
   pre_build:
     commands:
-      - echo Cloning terraform-infrastructure...
-      - git clone https://github.com/uvalib/terraform-infrastructure.git
+      # NB: terraform-infrastructure lives on GitLab, not GitHub.
+      - git clone https://${GITLAB_USER}:${GITLAB_TOKEN}@gitlab.com/uvalib/terraform-infrastructure.git
+      - TF_INFRA=${CODEBUILD_SRC_DIR}/terraform-infrastructure
+
+      # Everything below is committed to git only in ccrypt-encrypted .cpt form; the
+      # decryption passphrase for each is itself an AWS Secrets Manager entry, named
+      # by the second argument to decrypt-key.ksh. Nothing here is a plaintext
+      # secret in the repo.
+
+      # bastion private key (its own secret name)
+      - BASTION_KEY_NAME=${ENVIRONMENT}/bastion/keys/bastion_${ENVIRONMENT}.pem
+      - ${TF_INFRA}/scripts/decrypt-key.ksh ${TF_INFRA}/${BASTION_KEY_NAME}.cpt ${BASTION_KEY_NAME}
+      - chmod 600 ${TF_INFRA}/${BASTION_KEY_NAME}
+
+      # instance private key. Its secret name is ALSO the passphrase for the SAML key
+      # and the container secrets below — the fleet convention is one passphrase per
+      # environment, reused across that environment's encrypted assets.
+      - PRIVATE_KEY_NAME=mandala/drupal/${ENVIRONMENT}/keys/mandala-drupal-${ENVIRONMENT}.pem
+      - ${TF_INFRA}/scripts/decrypt-key.ksh ${TF_INFRA}/${PRIVATE_KEY_NAME}.cpt ${PRIVATE_KEY_NAME}
+      - chmod 600 ${TF_INFRA}/${PRIVATE_KEY_NAME}
+
+      # SAML SP private key. deploy_backend.yml / deploy_netbadge.yml copy this to the
+      # host, but guard the copy with `when: saml_key.stat.exists` — so if it is not
+      # decrypted here the SP silently deploys with its certificate and NO private
+      # key, and only a warning is logged. (dsf's deployspec omits this step.)
+      - SAML_KEY=${TF_INFRA}/mandala/drupal/${ENVIRONMENT}/keys/mandala-drupal-saml-${ENVIRONMENT}.pem
+      - ${TF_INFRA}/scripts/decrypt-key.ksh ${SAML_KEY}.cpt ${PRIVATE_KEY_NAME}
+      - chmod 600 ${SAML_KEY}
+
+      # container secrets (SIMPLESAML_SECRET_SALT, SIMPLESAML_ADMIN_PASSWORD,
+      # DRUPAL_HASH_SALT). The playbooks include_vars the *plaintext* file, which is
+      # gitignored — without this step a fresh clone has nothing to read.
+      - CONTAINER_SECRET=${TF_INFRA}/mandala/drupal/${ENVIRONMENT}/ansible/container_0.env.secret
+      - ${TF_INFRA}/scripts/decrypt-key.ksh ${CONTAINER_SECRET}.cpt ${PRIVATE_KEY_NAME}
+      - chmod 600 ${CONTAINER_SECRET}
 
   build:
     commands:
-      - cd terraform-infrastructure/mandala/drupal/$ENVIRONMENT
-      - terraform init
-      - terraform apply -auto-approve
-      - echo Running Ansible deployment...
-      - ansible-playbook ansible/deploy_backend.yml -e deploy_tag=$DEPLOY_TAG
+      - cd ${CODEBUILD_SRC_DIR}/terraform-infrastructure/mandala/drupal/${ENVIRONMENT}
+      - terraform init -no-color
+      # TARGETED deliberately. An untargeted `apply -auto-approve` here would try to
+      # converge the whole legacy Aegir stack unattended — including EC2 instances and
+      # ALB rules whose prior state no longer decodes against current provider schemas.
+      # The pipeline only needs terraform to render the ansible input files.
+      - terraform apply -auto-approve -no-color --target=local_file.inventory --target=local_file.tfvars --target=local_file.environment
+      - cd ansible
+      # netbadge-0 (alias "sp") serves /simplesaml/* for the Drupal container's
+      # ProxyPass, so it must be up first — and in every environment, not just dev.
+      - ansible-playbook ${ansible_debug} deploy_netbadge.yml
+      - ansible-playbook ${ansible_debug} deploy_backend.yml -e deploy_tag=$DEPLOY_TAG
 
   post_build:
     commands:
