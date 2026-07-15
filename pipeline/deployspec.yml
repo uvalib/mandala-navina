@@ -13,8 +13,13 @@ version: 0.2
 # aws_cicd/pipelines/mandala-drupal/codepipeline.tf.
 env:
   variables:
-    terraform_version: 1.11.1
+    terraform_version: 1.15.8
     #ansible_debug: -vvvv
+    ENVIRONMENT: staging
+#  parameter-store:
+#    TF_VAR_access_key: "/terraform/aws/accesskey"
+#    TF_VAR_secret_key: "/terraform/aws/secretkey"
+#    TF_VAR_region: "/terraform/aws/region"
 
 phases:
   install:
