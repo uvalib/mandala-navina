@@ -1,0 +1,32 @@
+# Keep the monorepo out of the Drupal image.
+#
+# package/Dockerfile does `COPY . /opt/drupal/app`, so without this file the whole
+# repo lands in the image: the deployed container currently carries docs/ (2.1M),
+# mkdocs/, scripts/, s3-sync/ and solr-proxy/, none of which the running app reads.
+# solr-proxy/ in particular is a SEPARATE container with its own Dockerfile — it has
+# no business inside the Drupal image.
+#
+# Only two things in the build context are actually needed:
+#   drupal/  — the Composer project (composer.json), the webroot, and config/sync
+#   package/ — package/data/files/.../000-default.conf, copied explicitly at line 46
+#
+# Verified before excluding: drupal/composer.json declares no `path` repositories and
+# nothing under drupal/ symlinks outside it, so Composer never reaches up out of the
+# subdirectory.
+#
+# See docs/deferred/pipeline-triggers-on-every-monorepo-commit.md — the same monorepo
+# shape drives the missing trigger_paths filter on the pipeline.
+
+.git
+.gitignore
+.github
+.ddev
+.claude
+
+docs
+mkdocs
+mkdocs.yml
+
+scripts
+s3-sync
+solr-proxy
