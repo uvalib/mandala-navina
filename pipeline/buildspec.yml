@@ -12,20 +12,20 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $CONTAINER_REGISTRY
-      - BUILD_TAG=$(date +%Y%m%d%H%M%S)
-      - GIT_COMMIT=$(git rev-parse --short HEAD)
       #- BUILD_VERSION=$(date --date="@$(echo $CODEBUILD_START_TIME | cut -c1-10)" +"%Y%m%d%H%M%S")
-      #- COMMIT_TAG=gitcommit-$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - BUILD_VERSION=$(date +%Y%m%d%H%M%S)
+      - COMMIT_TAG=gitcommit-$CODEBUILD_RESOLVED_SOURCE_VERSION
 
   build:
     commands:
       - echo Building Docker image...
-      - docker build -f package/Dockerfile -t $CONTAINER_IMAGE:$BUILD_TAG -t $CONTAINER_IMAGE:latest .
+      - docker build -f package/Dockerfile -t $CONTAINER_IMAGE:$BUILD_VERSION -t $CONTAINER_IMAGE:$COMMIT_TAG -t $CONTAINER_IMAGE:latest.
 
   post_build:
     commands:
       - echo Pushing image to ECR...
-      - docker push $CONTAINER_IMAGE:$BUILD_TAG
+      - docker push $CONTAINER_IMAGE:$BUILD_VERSION
+      - docker push $CONTAINER_IMAGE:$COMMIT_TAG
       - docker push $CONTAINER_IMAGE:latest
-      - aws ssm put-parameter --name "/mandala/drupal/build_tag" --value "$BUILD_TAG" --type String --overwrite
-      - echo Build complete. Tag $BUILD_TAG
+      - aws ssm put-parameter --name "/mandala/drupal/build_tag" --value "$BUILD_VERSION" --type String --overwrite
+      - echo Build complete. Tag $BUILD_VERSION
