@@ -9,8 +9,13 @@ version: 0.2
 # resolved, so this phase could never have run. They are also redundant: the
 # codepipeline module already injects all three (the two keys from Secrets Manager,
 # the region as plaintext), which is why dsf's deployspec has no such block either.
-# ENVIRONMENT comes from the module too, via deploy_env_variables in
-# aws_cicd/pipelines/mandala-drupal/codepipeline.tf.
+# ENVIRONMENT is set below rather than taken from the module. It is ALSO injected via
+# deploy_env_variables in aws_cicd/pipelines/mandala-drupal/codepipeline.tf, but a
+# buildspec `variables` entry overrides a project-level environment variable, so the
+# value below is the one that wins. Both say "staging", so this is redundant rather
+# than conflicting — worth collapsing to one source once a second environment exists
+# (which needs a separate pipeline anyway: the module names every resource from
+# var.application alone).
 env:
   variables:
     terraform_version: 1.15.8
@@ -93,8 +98,8 @@ phases:
       # an empty string — which is not "latest", so the playbook would build an image
       # tag of "uvalib/mandala-drupal:" and fail. Omitting it lets deploy_backend.yml
       # use its own default of "latest" and resolve the real tag from
-      # /mandala/drupal/build_tag, which the Build phase has just written. Pass
-      # `-e deploy_tag=<tag>` by hand to pin a specific version.
+      # /containers/uvalib/mandala-drupal/latest, which the Build phase has just
+      # written. Pass `-e deploy_tag=<tag>` by hand to pin a specific version.
       - ansible-playbook ${ansible_debug} deploy_backend.yml
 
   post_build:
