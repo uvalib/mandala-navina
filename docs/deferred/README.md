@@ -60,6 +60,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [reindeer-x-has-no-ecr-repo-or-pipeline.md](reindeer-x-has-no-ecr-repo-or-pipeline.md) | reindeer_x / deployment / CI-CD / ECR / cutover | Session 2026-07-14 (1b.1 part 4) | High — hand-built on dev-0 with no ECR/pipeline/specs; does not survive the in-place dev-0 replacement |
 | [rdx-alb-target-unhealthy-in-production.md](rdx-alb-target-unhealthy-in-production.md) | reindeer_x / rdx / ALB / production defect | Session 2026-07-14 (1b.1 part 4) | High — rdx target unhealthy in PRODUCTION and dev (9001 vs live 9000); live defect, independent of the D11 rebuild |
 | [fail2ban-need-and-ownership.md](fail2ban-need-and-ownership.md) | infrastructure / security / scraper mitigation | Session 2026-07-14 (1b.1 part 4) | Low while quiet — an emergency measure vs an active load problem, NOT an architecture; decoupled from D11; urgent again if load returns |
+| [pipeline-triggers-on-every-monorepo-commit.md](pipeline-triggers-on-every-monorepo-commit.md) | deployment / CI-CD / CodePipeline / monorepo | Session 2026-07-15 (1b.1 part 4) | Medium — no `trigger_paths`, so every commit to `main` (incl. docs-only) rebuilds and redeploys; deferred by decision until a green run |
 
 ## Resolved / superseded
 
