@@ -77,7 +77,12 @@ phases:
       # netbadge-0 (alias "sp") serves /simplesaml/* for the Drupal container's
       # ProxyPass, so it must be up first — and in every environment, not just dev.
       - ansible-playbook ${ansible_debug} deploy_netbadge.yml
-      - ansible-playbook ${ansible_debug} deploy_backend.yml -e deploy_tag=$DEPLOY_TAG
+      # No -e deploy_tag: nothing in the pipeline sets DEPLOY_TAG, and passing an empty
+      # one resolves the image to "<registry>/uvalib/mandala-drupal:" and fails. Both
+      # playbooks default deploy_tag to "latest", which makes them read the build tag
+      # from /containers/<image>/latest in SSM. dsf passes no tag here either; the -e
+      # override stays available for a human deploying a specific build by hand.
+      - ansible-playbook ${ansible_debug} deploy_backend.yml
 
   post_build:
     commands:
