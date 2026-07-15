@@ -13,6 +13,94 @@ consciously drop)"*.
 > **The EBS is `BackupPolicy=none`** (`/mnt/docker`, ~70 G of 100 G). There is no
 > snapshot under any of this today.
 
+## ⚠ STATUS 2026-07-15 — the Aegir stack on dev-0 is STOPPED
+
+**This is no longer a hypothetical cutover plan. Part of it has happened.**
+
+The D11 deploy could not bind port **8080** — `dockerfiles-hostmaster-1` (Aegir) had held
+it for 7 days. Yuji authorised stopping everything non-D11, and the pipeline then reached
+its first fully green run. See the
+[session log](../session-logs/2026-07-15-sprint-01-1b1-part4-first-green-pipeline.md).
+
+**Host identity, confirmed:** `mandala-drupal-dev-0.internal.lib.virginia.edu` =
+`uva-mandala-drupal-staging-0` = `10.130.109.110` = `i-0e44bb9d8ea864ff3`. Reachable
+directly over the UVA VPN (no bastion hop needed). `staging-1` is `10.130.109.188`.
+
+| container | state | restart policy | recreatable? |
+|---|---|---|---|
+| `mandala-drupal-0` | **running** | `unless-stopped` | yes — pipeline |
+| `netbadge-0` (8081→80) | **running** | `unless-stopped` | yes — `deploy_netbadge.yml` |
+| `mandala-redis-0` | **running** | `unless-stopped` | yes — `deploy_redis.yml` |
+| `dockerfiles-hostmaster-1` (held 8080) | stopped | **`no`** | compose: `/usr/local/dockerfiles` |
+| `dockerfiles-database-1` | stopped | **`no`** | compose: `/usr/local/dockerfiles` |
+| `mandala-solr-proxy` (8765) | stopped | **`no`** | compose: `/usr/local/mandala-solr-proxy` |
+| **`reindeer_x`** (9000/tcp, 9001/**udp**) | stopped | **`no`** | ❌ **NO — bare `docker run`** |
+| **`workqueue`** | stopped | **`no`** | ❌ **NO — bare `docker run`** |
+
+**Nothing was removed.** Every container still exists; `docker start <name>` restores any
+of them.
+
+### Restart policies were changed — and why that mattered
+
+All five legacy containers were `restart: always`. Docker honours a manual `docker stop`
+**only until the daemon restarts** — so dev-0's nightly reboot would have brought Aegir
+back onto 8080 and **raced `mandala-drupal-0` for the port**, nondeterministically. They
+are now `--restart=no`, so the stop survives reboots. Reverse with
+`docker update --restart=always <name>`.
+
+The three D11 containers are `unless-stopped` and running, so they *do* come back on
+reboot — correct, and deliberately different: `unless-stopped` honours a deliberate stop,
+`always` would override the operator. Verified by configuration; not yet observed through
+an actual reboot.
+
+### Consequences that are live right now
+
+- **The kmterms→kmassets shadow sync is NOT running.** `reindeer_x` is stopped and will
+  not self-start. `docker start reindeer_x` restores it. See
+  [reindeer-x-has-no-ecr-repo-or-pipeline.md](../deferred/reindeer-x-has-no-ecr-repo-or-pipeline.md).
+- **The `index` ALB target (8765) is failing health checks** — `mandala-solr-proxy` served it.
+- **`reindeer_x` publishes 9001 as UDP, not TCP** (observed on the box). The production
+  rdx ALB failure is therefore a **protocol** mismatch, not the port-number mismatch
+  previously recorded. Sharpens
+  [rdx-alb-target-unhealthy-in-production.md](../deferred/rdx-alb-target-unhealthy-in-production.md).
+
+### ✅ Phase 0 — DONE 2026-07-15. Both volumes snapshotted.
+
+The stack was stopped *before* the snapshot rather than after, which inverted Phase 0's
+order. Corrected the same evening — and the accident worked in our favour: the snapshots
+were taken with the legacy containers **stopped**, so their filesystems were quiesced.
+A snapshot of a *running* `mariadb` is only crash-consistent; this one caught it cleanly
+shut down.
+
+| snapshot | volume | device | what is on it |
+|---|---|---|---|
+| `snap-07b3e67aba47e2149` | `vol-07fd75bf2b774b738` | `/dev/xvdf` | `/mnt/docker` — images, container state, **`reindeer_x`** |
+| `snap-09b06d6d55e554afe` | `vol-00e6087cb04e1238c` | `/dev/xvda` | **root** — `/usr/local/dockerfiles`, `/usr/local/mandala-solr-proxy` |
+
+Tagged `Purpose=pre-D11-cutover-drift-capture`, `DeleteAfter=D11-cutover-complete`,
+`SourceInstance=i-0e44bb9d8ea864ff3`. **They are one-off rescue copies, not a backup
+schedule** — deliberately, since the box is slated for replacement. Delete them once
+cutover is complete and verified.
+
+**Both volumes mattered, and the doc previously only flagged one.** `/dev/xvdf`
+(`BackupPolicy=none`) is the one described below — but the **root volume has no
+BackupPolicy tag at all**, and it holds the hand-placed `/usr/local` checkouts whose drift
+is the entire point of this document. Snapshotting only the data volume would have missed
+them.
+
+Context worth keeping: AWS Backup **is** running in this account and snapshotting other
+volumes — dev-0's two are simply excluded by tag. This box is not un-backed-up because
+backups don't exist; it opted out.
+
+An EBS snapshot is point-in-time from the moment of the API call, so both were logically
+complete at ~16:56 on 2026-07-15 even while the background copy to S3 continued. Check
+with:
+
+```
+aws ec2 describe-snapshots --snapshot-ids snap-07b3e67aba47e2149 snap-09b06d6d55e554afe \
+  --query 'Snapshots[].{snap:SnapshotId,state:State,pct:Progress}' --output table
+```
+
 ## What is NOT at risk (established 2026-07-13/14 — don't re-litigate)
 
 - **D7 site data is not on the box.** It lives on the shared `rds-mysql8-staging`

@@ -52,8 +52,13 @@ verifiably gone from `/opt/drupal/app`.
 - `reindeer_x` publishes **9001/udp**, not tcp — so the production rdx ALB health check is
   a *protocol* mismatch, not a port-number one. Sharpens
   [rdx-alb-target-unhealthy-in-production.md](../deferred/rdx-alb-target-unhealthy-in-production.md).
-- All five stopped containers are `restart: always` — a Docker daemon restart puts Aegir
-  back on 8080 and silently breaks the deploy again.
+- All five stopped containers *were* `restart: always` — which Docker honours a manual
+  stop for only until the daemon restarts, so dev-0's nightly reboot would have put Aegir
+  back on 8080 and raced `mandala-drupal-0` for the port. **Set to `--restart=no` at the
+  end of the session**, so the stop survives reboots; the D11 containers are
+  `unless-stopped` and do come back. (The transcript below records this as an open
+  landmine — it was closed after that exchange.) See
+  [dev-0-drift-capture.md](../planning/dev-0-drift-capture.md) for the current state.
 - CodeBuild has no layer cache, so every build re-resolves apt/pecl/composer: the image
   *grew* 303.8 → 317.9 MB despite the `.dockerignore`. **Builds are not reproducible.**
 - Three docs-only merges (#39, #40, #41) each triggered a full rebuild and deploy — the
