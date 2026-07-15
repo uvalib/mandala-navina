@@ -5,12 +5,12 @@ version: 0.2
 
 env:
   variables:
-    terraform_version: 1.11.1
+    terraform_version: 1.15.8
     #ansible_debug: -vvvv
-  parameter-store:
-    TF_VAR_access_key: "/terraform/aws/accesskey"
-    TF_VAR_secret_key: "/terraform/aws/secretkey"
-    TF_VAR_region: "/terraform/aws/region"
+#  parameter-store:
+#    TF_VAR_access_key: "/terraform/aws/accesskey"
+#    TF_VAR_secret_key: "/terraform/aws/secretkey"
+#    TF_VAR_region: "/terraform/aws/region"
 
 phases:
   install:
