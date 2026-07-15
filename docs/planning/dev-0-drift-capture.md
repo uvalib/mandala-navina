@@ -64,13 +64,42 @@ an actual reboot.
   previously recorded. Sharpens
   [rdx-alb-target-unhealthy-in-production.md](../deferred/rdx-alb-target-unhealthy-in-production.md).
 
-### ⚠ Phase 0 was skipped — the snapshot is now MORE urgent, not less
+### ✅ Phase 0 — DONE 2026-07-15. Both volumes snapshotted.
 
-The stack was stopped **without** the EBS snapshot Phase 0 asks for below. Stopping
-destroys no data, so nothing is lost today — but the box now sits in a state nobody has
-captured, and **`reindeer_x` / `workqueue` cannot be rebuilt from any repo**. With
-`BackupPolicy=none`, losing that volume loses them permanently. Take the snapshot before
-the cutover proper.
+The stack was stopped *before* the snapshot rather than after, which inverted Phase 0's
+order. Corrected the same evening — and the accident worked in our favour: the snapshots
+were taken with the legacy containers **stopped**, so their filesystems were quiesced.
+A snapshot of a *running* `mariadb` is only crash-consistent; this one caught it cleanly
+shut down.
+
+| snapshot | volume | device | what is on it |
+|---|---|---|---|
+| `snap-07b3e67aba47e2149` | `vol-07fd75bf2b774b738` | `/dev/xvdf` | `/mnt/docker` — images, container state, **`reindeer_x`** |
+| `snap-09b06d6d55e554afe` | `vol-00e6087cb04e1238c` | `/dev/xvda` | **root** — `/usr/local/dockerfiles`, `/usr/local/mandala-solr-proxy` |
+
+Tagged `Purpose=pre-D11-cutover-drift-capture`, `DeleteAfter=D11-cutover-complete`,
+`SourceInstance=i-0e44bb9d8ea864ff3`. **They are one-off rescue copies, not a backup
+schedule** — deliberately, since the box is slated for replacement. Delete them once
+cutover is complete and verified.
+
+**Both volumes mattered, and the doc previously only flagged one.** `/dev/xvdf`
+(`BackupPolicy=none`) is the one described below — but the **root volume has no
+BackupPolicy tag at all**, and it holds the hand-placed `/usr/local` checkouts whose drift
+is the entire point of this document. Snapshotting only the data volume would have missed
+them.
+
+Context worth keeping: AWS Backup **is** running in this account and snapshotting other
+volumes — dev-0's two are simply excluded by tag. This box is not un-backed-up because
+backups don't exist; it opted out.
+
+An EBS snapshot is point-in-time from the moment of the API call, so both were logically
+complete at ~16:56 on 2026-07-15 even while the background copy to S3 continued. Check
+with:
+
+```
+aws ec2 describe-snapshots --snapshot-ids snap-07b3e67aba47e2149 snap-09b06d6d55e554afe \
+  --query 'Snapshots[].{snap:SnapshotId,state:State,pct:Progress}' --output table
+```
 
 ## What is NOT at risk (established 2026-07-13/14 — don't re-litigate)
 
