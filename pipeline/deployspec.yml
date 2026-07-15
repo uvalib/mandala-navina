@@ -9,13 +9,11 @@ version: 0.2
 # resolved, so this phase could never have run. They are also redundant: the
 # codepipeline module already injects all three (the two keys from Secrets Manager,
 # the region as plaintext), which is why dsf's deployspec has no such block either.
-# ENVIRONMENT is set below rather than taken from the module. It is ALSO injected via
-# deploy_env_variables in aws_cicd/pipelines/mandala-drupal/codepipeline.tf, but a
+# ENVIRONMENT is set below, and only below. terraform used to inject it as well, but a
 # buildspec `variables` entry overrides a project-level environment variable, so the
-# value below is the one that wins. Both say "staging", so this is redundant rather
-# than conflicting — worth collapsing to one source once a second environment exists
-# (which needs a separate pipeline anyway: the module names every resource from
-# var.application alone).
+# injected copy never won — it was removed (terraform-infrastructure 48a6014f6). It is
+# always "staging" here: a production pipeline must be a separate application, because
+# the codepipeline module derives every resource name from var.application alone.
 env:
   variables:
     terraform_version: 1.15.8
