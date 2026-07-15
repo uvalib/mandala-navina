@@ -2,10 +2,13 @@ version: 0.2
 
 # Builds Docker image and pushes to ECR
 # Follows drupal-dsf/pipeline/buildspec.yml pattern
-
-#env:
-#  variables:
-#    name: value
+#
+# No env block on purpose: CONTAINER_IMAGE and CONTAINER_REGISTRY are injected by the
+# codepipeline module (aws_cicd/pipelines/mandala-drupal), as are GITHUB_*/GITLAB_*.
+# An earlier version read the account id from the SSM parameter /this/aws/accountid
+# and rebuilt the registry URL by hand — that parameter does not exist, and CodeBuild
+# refuses to start a build when a parameter-store variable cannot be resolved, so the
+# Build phase could never have run. Use $CONTAINER_REGISTRY, as dsf does.
 
 phases:
   pre_build:
