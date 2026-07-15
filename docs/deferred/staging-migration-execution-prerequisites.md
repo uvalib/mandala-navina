@@ -38,14 +38,30 @@ Two sub-parts:
 production-data-handling decision). Related:
 [Images prod packaging](images-prod-packaging-monorepo-pass.md).
 
-## 2. Drush execution path in staging
+## 2. Drush execution path in staging — ✅ RESOLVED 2026-07-15
 
 The whole cycle is driven by `drush` (`migrate:import`, `kmassets:index-all`,
 `kmassets:audit`, and the script's `DRUSH` override). The CodePipeline
-(`pipeline/buildspec.yml`, `deployspec.yml`) runs **no** migrate/drush steps — deployment
-only builds and ships the image; migrations are manual. So the open question is *how* a
-drush command is invoked against the running staging container (ECS `execute-command` /
-one-off ECS task / Ansible), and that whoever runs the acceptance test has that access.
+(`pipeline/buildspec.yml`, `deployspec.yml`) runs **no** migrate steps — deployment only
+builds and ships the image; migrations are manual. The open question was *how* a drush
+command gets invoked against the running container.
+
+**Answered by the first green pipeline run (2026-07-15).** The deploy is Ansible over
+SSH onto an EC2 instance — not ECS — so the answer is plain `docker exec`, and
+`deploy_backend.yml` already does it:
+
+```
+docker exec mandala-drupal-0 {{ drupal_home }}/vendor/bin/drush cr
+```
+
+That task ran green against dev-0, so the path is proven, not theoretical. No ECS
+`execute-command`, no one-off task, no new IAM. Anyone with the instance key can run
+`drush` in the container; the pipeline can too.
+
+The deploy does also run `drush cim -y --partial --source=/var/simplesamlphp/drupal-config`
+— but only the SimpleSAMLphp settings. There is still **no** `updb` and no full
+`config:import` on deploy (dsf is the same). That is a separate open decision, tracked
+in [d11-dev-database-bootstrap-and-migration-source.md](d11-dev-database-bootstrap-and-migration-source.md).
 
 **Owner:** DevOps / Yuji (deployment + AWS/IAM plumbing).
 
