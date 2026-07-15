@@ -3,6 +3,14 @@ version: 0.2
 # Deploys via Terraform + Ansible
 # Follows drupal-dsf/pipeline/deployspec.yml pattern
 
+# No parameter-store block on purpose. An earlier version read TF_VAR_access_key /
+# TF_VAR_secret_key / TF_VAR_region from /terraform/aws/*, which do not exist —
+# CodeBuild refuses to start a build when a parameter-store variable cannot be
+# resolved, so this phase could never have run. They are also redundant: the
+# codepipeline module already injects all three (the two keys from Secrets Manager,
+# the region as plaintext), which is why dsf's deployspec has no such block either.
+# ENVIRONMENT comes from the module too, via deploy_env_variables in
+# aws_cicd/pipelines/mandala-drupal/codepipeline.tf.
 env:
   variables:
     terraform_version: 1.15.8
@@ -74,10 +82,20 @@ phases:
       # The pipeline only needs terraform to render the ansible input files.
       - terraform apply -auto-approve -no-color --target=local_file.inventory --target=local_file.tfvars --target=local_file.environment
       - cd ansible
-      # netbadge-0 (alias "sp") serves /simplesaml/* for the Drupal container's
-      # ProxyPass, so it must be up first — and in every environment, not just dev.
+      # Order matters. Redis first: both netbadge-0 and the Drupal container use it —
+      # netbadge/SimpleSAMLphp for the session store (db 4) and Drupal for the ADR 014
+      # visibility tokens (db 0). Then netbadge-0 (alias "sp"), which serves
+      # /simplesaml/* for the Drupal container's ProxyPass — required in every
+      # environment, not just dev. Then the app.
+      - ansible-playbook ${ansible_debug} deploy_redis.yml
       - ansible-playbook ${ansible_debug} deploy_netbadge.yml
-      - ansible-playbook ${ansible_debug} deploy_backend.yml -e deploy_tag=$DEPLOY_TAG
+      # No -e deploy_tag: the module injects no DEPLOY_TAG, so passing it resolved to
+      # an empty string — which is not "latest", so the playbook would build an image
+      # tag of "uvalib/mandala-drupal:" and fail. Omitting it lets deploy_backend.yml
+      # use its own default of "latest" and resolve the real tag from
+      # /mandala/drupal/build_tag, which the Build phase has just written. Pass
+      # `-e deploy_tag=<tag>` by hand to pin a specific version.
+      - ansible-playbook ${ansible_debug} deploy_backend.yml
 
   post_build:
     commands:
