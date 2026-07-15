@@ -27,9 +27,9 @@ phases:
   post_build:
     commands:
       - echo Pushing image to ECR...
-      - docker push $CONTAINER_IMAGE:$BUILD_VERSION
-      - docker push $CONTAINER_IMAGE:$COMMIT_TAG
-      - docker push $CONTAINER_IMAGE:latest
+      - docker push $CONTAINER_REGISTRY/$CONTAINER_IMAGE:$BUILD_VERSION
+      - docker push $CONTAINER_REGISTRY/$CONTAINER_IMAGE:$COMMIT_TAG
+      - docker push $CONTAINER_REGISTRY/$CONTAINER_IMAGE:latest
       #- aws ssm put-parameter --name "/mandala/drupal/build_tag" --value "$BUILD_VERSION" --type String --overwrite
       - aws --region=$AWS_REGION ssm put-parameter --name /containers/$CONTAINER_IMAGE/latest --value build-$BUILD_VERSION --type String --overwrite
       - echo Build complete. Tag $BUILD_VERSION
