@@ -5,6 +5,25 @@
 **Jira:** (add when available)
 **Priority:** Medium — noise and wasted deploys, not a correctness bug. Deliberately deferred until a green run.
 
+## ✅ RESOLVED 2026-07-16 (Yuji)
+
+Fixed once the green run made the deferral condition true. `trigger_paths`
+(`drupal/**`, `package/**`, `pipeline/**`) + `source_artifact_format =
+"CODEBUILD_CLONE_REF"` added to `aws_cicd/pipelines/mandala-drupal/codepipeline.tf`
+— terraform-infrastructure commit **`8b753bff1`** on `master`. `terraform apply`:
+`0 added, 2 changed, 0 destroyed` (both **in-place** — `aws_codepipeline` +
+`aws_codebuild_project.deploy-phase[0]`; no replacement). Verified live via
+`codepipeline get-pipeline` — the trigger filters `main` pushes to the three
+image-defining paths. `solr-proxy/` deliberately excluded (separate container,
+not built here). `.dockerignore` already landed (PR #41). Remaining detail
+below is kept for the record.
+
+**Apply-access note:** the `staging` aws-vault profile (plain `ys2n` IAM user)
+lacks `iam:GetRolePolicy`, so a normal refresh-then-plan 403s on this pipeline
+dir; the apply went through via a `-refresh=false` saved plan because the two
+changing resources don't touch IAM. An IAM permission gap to raise with Dave if
+routine local plans here are wanted.
+
 ## What we found
 
 `aws_cicd/pipelines/mandala-drupal/codepipeline.tf` does not set `trigger_paths`,
