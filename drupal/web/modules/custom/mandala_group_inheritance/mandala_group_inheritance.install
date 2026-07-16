@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * @file
+ * Install/update hooks for mandala_group_inheritance.
+ */
+
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Install the `mandala_inherited` base field on group relationships.
+ *
+ * Registers the field storage the membership-cascade logic needs to tell an
+ * inherited subcollection membership from a direct one. Existing memberships
+ * default to FALSE (not inherited), which is correct: every migrated D7
+ * og_membership was an explicit, direct membership.
+ * See docs/deferred/group-relationship-delete-broken-no-data-field.md.
+ */
+function mandala_group_inheritance_update_9001() {
+  $field = BaseFieldDefinition::create('boolean')
+    ->setLabel(t('Inherited membership'))
+    ->setDescription(t('TRUE if this membership was cascaded from a parent collection rather than added directly.'))
+    ->setDefaultValue(FALSE)
+    ->setInternal(TRUE);
+
+  \Drupal::entityDefinitionUpdateManager()
+    ->installFieldStorageDefinition('mandala_inherited', 'group_relationship', 'mandala_group_inheritance', $field);
+}
