@@ -1,0 +1,44 @@
+id: d7_user_authmap
+label: 'D7 SAML/Shibboleth authmap → D11 externalauth (NetBadge account linking)'
+migration_group: mandala_users
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Users'
+
+# This is what makes Part 4's "match existing account" path work: it links each
+# migrated D11 account to the external NetBadge identity it authenticates with,
+# so a SimpleSAMLphp login finds the existing account instead of auto-provisioning
+# a duplicate. Without it, every NetBadge login creates a new account.
+#
+# D7 stores these in the shared `authmap` table; production auth is
+# simplesamlphp_auth/Shibboleth, so rows carry module = 'simplesamlphp_auth'.
+# D11 simplesamlphp_auth stores its links through externalauth under the same
+# provider name.
+source:
+  plugin: authmap
+  # ⚠ VERIFY ON THE REAL DUMP (the crux unknown from the deferred doc):
+  #   1. Filter — confirm the D7 authmap `module` value. If it is not
+  #      'simplesamlphp_auth', change `constants.provider` below to match.
+  #   2. Authname format — `SELECT authname FROM authmap LIMIT 20;` on
+  #      mandala_shared_dev, and confirm it is the SAME string SimpleSAMLphp
+  #      presents on D11 (bare NetBadge computing-id vs. scoped eppn like
+  #      `abc1d@virginia.edu`). If the formats differ, add a process transform
+  #      here — otherwise match-existing silently fails.
+  constants:
+    provider: simplesamlphp_auth
+
+process:
+  # uid preserved by d7_users, so a straight lookup returns the same uid.
+  uid:
+    plugin: migration_lookup
+    migration: d7_users
+    source: uid
+  authname: authname
+  provider: constants/provider
+
+destination:
+  plugin: 'entity:authmap'
+
+migration_dependencies:
+  required:
+    - d7_users

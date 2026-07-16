@@ -1,0 +1,67 @@
+id: d7_users
+label: 'D7 shared users → D11 user accounts (uid-preserving)'
+migration_group: mandala_users
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Users'
+
+# Reads the shared user base (mandala_shared / mandala_shared_dev) via the
+# group's `migrate_shared` connection. The d7_user source plugin excludes the
+# anonymous user (uid 0) automatically.
+source:
+  plugin: d7_user
+
+process:
+  # ── uid preservation is MANDATORY — do not remove. ─────────────────────────
+  # d7_images_collection_memberships maps `entity_id: etid` (the raw D7 uid)
+  # with NO migration_lookup and NO stub. If this migration lets D11 assign new
+  # uids, all ~111k membership references point at the wrong (or nonexistent)
+  # accounts. D7 uid 1 (admin) maps onto D11 uid 1 (admin) — an accepted
+  # overwrite; the source plugin already drops uid 0.
+  # See docs/deferred/d7-shared-user-database.md.
+  uid: uid
+
+  name: name
+  # phpass hashes carry over cleanly, but production auth is SAML/NetBadge
+  # (see d7_user_authmap) — local passwords are a fallback path only.
+  pass: pass
+  mail: mail
+  init: init
+  status: status
+  created: created
+  changed: created
+  access: access
+  login: login
+  timezone: timezone
+
+  # Single-language site — pin to English rather than depending on a D7
+  # language migration.
+  langcode:
+    plugin: default_value
+    default_value: en
+  preferred_langcode:
+    plugin: default_value
+    default_value: en
+  preferred_admin_langcode:
+    plugin: default_value
+    default_value: en
+
+  # Array of D7 rids → D11 role ids (migration_lookup handles the array).
+  roles:
+    plugin: migration_lookup
+    migration: d7_user_role
+    source: roles
+
+  # NOTE: user_picture intentionally omitted — no d7_file/user-picture migration
+  # exists yet and Mandala accounts don't rely on avatars. Add later if needed.
+  # NOTE: field_first_name / field_last_name / realname live in the shared DB too
+  # (see the deferred doc's prefix list). D11 has no realname module by default;
+  # decide during laptop migration-dev whether to add core name fields + map them
+  # here, or bring in the realname module.
+
+destination:
+  plugin: 'entity:user'
+
+migration_dependencies:
+  required:
+    - d7_user_role

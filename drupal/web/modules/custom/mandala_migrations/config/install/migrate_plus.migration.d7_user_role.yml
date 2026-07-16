@@ -1,0 +1,36 @@
+id: d7_user_role
+label: 'D7 shared roles → existing D11 roles (name remap, NOT permission migration)'
+migration_group: mandala_users
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Users'
+
+# We do NOT migrate D7 permissions. D11 roles and their permissions are defined
+# in committed config (user.role.*.yml). This migration exists only so that
+# `d7_users` can migration_lookup a D7 role → the matching D11 role id (the
+# array-friendly way to resolve a user's role set). The `id` process maps each
+# D7 role NAME to an ALREADY-EXISTING D11 role machine name, so the entity:user_role
+# save loads-and-updates the existing role (label only) and leaves its permissions
+# intact rather than creating a bare, permission-less role.
+source:
+  plugin: d7_user_role
+
+process:
+  id:
+    plugin: static_map
+    source: name
+    map:
+      'anonymous user': anonymous
+      'authenticated user': authenticated
+      administrator: administrator
+    # TODO(laptop migration-dev): the D7 shared DB has custom roles beyond these
+    # three. Load mandala_shared_dev, run `SELECT rid, name FROM role;`, and add
+    # each D7 role name → its D11 role id here. Until then, unmapped roles fail
+    # the map (surfaced as skipped rows) rather than silently mismapping.
+  label: name
+
+destination:
+  plugin: 'entity:user_role'
+
+migration_dependencies:
+  optional: []

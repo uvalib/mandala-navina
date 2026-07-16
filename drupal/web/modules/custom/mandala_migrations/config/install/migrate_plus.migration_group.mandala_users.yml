@@ -1,0 +1,15 @@
+id: mandala_users
+label: 'Mandala Users (D7 shared → D11)'
+description: >
+  Cross-cutting user migration. D7 Mandala did NOT keep per-site user tables —
+  all five sites (AV, Images, Sources, Texts, Home) share one user base via a
+  MySQL cross-database table-prefix kludge, so the authoritative users/roles/
+  authmap live only in `mandala_shared` (prod) / `mandala_shared_dev` (dev),
+  NOT in any per-site dump like d7_images. This group therefore reads from its
+  OWN source connection (`migrate_shared`), separate from mandala_images'
+  `migrate` connection. See docs/deferred/d7-shared-user-database.md.
+source_type: 'Drupal 7'
+module: null
+shared_configuration:
+  source:
+    key: migrate_shared
