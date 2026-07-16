@@ -5,8 +5,49 @@
 **Jira:** (add when available)
 **Priority:** High — dev serves `/core/install.php` until this is decided; blocks 1a.9 staging execution and part-4 item 7 validation
 
-**Status: FLAGGED FOR TEAM DISCUSSION — 2026-07-16.** Raised by Yuji. Nothing here is
-decided. The findings below are verified; the options and recommendation are not.
+**Status: DECIDED — 2026-07-16 team session** (Yuji, Xiaoming, Than). Raised by Yuji.
+The verified findings below still stand; the open decisions are now resolved — see
+**Decisions (2026-07-16)** immediately below. Implementation of the `deploy_install.yml`
+playbook is deferred to a session driven by someone with terraform-infrastructure access.
+
+## Decisions (2026-07-16)
+
+**A — Bootstrap is a playbook, not a runbook.** A new `deploy_install.yml` (in
+terraform-infrastructure, `mandala/drupal/staging/ansible/`, modeled on
+`deploy_backend.yml`) runs the create-DB → `site:install` → set-uuid → delete-shortcuts →
+`config:import` sequence. Two properties make it different from `deploy_backend.yml` and
+are mandatory: (1) a **hard idempotency guard** that refuses/skips if `mandala_drupal_0`
+already bootstraps, so a re-run never wipes canonical dev; (2) it is **kept out of the
+deployspec `build` phase** — invoked by hand once at bootstrap, never per-deploy.
+*Implementation deferred* to a terraform-infrastructure-access driver (Yuji/Xiaoming).
+Steps 3–4 (uuid set, shortcut delete) exist only because `site:install --existing-config`
+is broken on the standard profile — which motivates fixing `rebuild.sh` so laptop and
+server share one honest path.
+
+**B — dev's deploy DOES run `updb` + full `cim`, snapshot-guarded.** A deliberate
+divergence from the dsf house pattern (which abstains as a *prod* default; prod keeps
+`updb`/`cim` as deliberate, backed-up, human steps). On dev it is wanted: it enforces
+config-is-code, kills drift, and makes a merged branch's new config (e.g. migration YAMLs)
+go live without hand-running. The one real risk is that dev now holds the **canonical
+migrated content**, and `updb` / a field-dropping `cim` will mutate or destroy it
+automatically on a bad commit — so the deploy **takes a DB snapshot (RDS snapshot or
+`drush sql:dump`) immediately before the mutating steps**. That guard is what makes
+auto-`updb`/`cim` safe on a content-bearing dev.
+
+**C — the D7 source DBs live on the dev RDS instance; user-migration dev happens ON DEV.**
+Load both sources onto the (already-up, otherwise-idle) staging RDS: `mandala_d7_images`
+(image content; renamed from the DDEV `d7_images` to satisfy the `mandala%` grant) and
+`mandala_shared_dev` (users). The authoritative migration runs on dev. The shared user DB
+is **real PII and is never replicated to a laptop** — the user migration is developed on
+dev against the RDS source, not locally. Since images migration is already done, laptops
+no longer need a local `d7_images` at all; they pull the migrated result from dev. Draft
+user migration: branch `feat/user-migration` (held, unpushed). Loaders need a non-DDEV
+path to reach RDS.
+
+**Standing prerequisite (unchanged, now sharper):** before the FIRST dev migration, the
+1a.8 direct-to-master kmassets sink must be disabled/redirected — an on-dev image run
+would otherwise write ~111k docs into the real kmassets index. See
+`kmassets-sync-hook-fires-during-migration.md`.
 
 ## Why now
 
@@ -75,7 +116,7 @@ Steps 3–4 exist only because `site:install --existing-config` is broken (the s
 profile has a `hook_install`) — dev inherits that wart, which is an argument for fixing
 `rebuild.sh` rather than hand-running the workaround on a server.
 
-## Open decisions
+## Open decisions (resolved 2026-07-16 — see Decisions above; original framing kept for history)
 
 **A. Bootstrap: runbook or playbook?** A `deploy_install.yml` makes dev rebuildable on
 demand and forces the sequence to stay honest; a runbook is faster today. Related: fixing
