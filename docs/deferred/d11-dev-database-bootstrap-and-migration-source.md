@@ -5,8 +5,67 @@
 **Jira:** (add when available)
 **Priority:** High — dev serves `/core/install.php` until this is decided; blocks 1a.9 staging execution and part-4 item 7 validation
 
-**Status: FLAGGED FOR TEAM DISCUSSION — 2026-07-16.** Raised by Yuji. Nothing here is
-decided. The findings below are verified; the options and recommendation are not.
+**Status: DECIDED — 2026-07-16 (Yuji).** Worked through the three open decisions
+below. Verified findings unchanged. Decision C points at the **shared** D7 dev DB (a
+team resource, not anyone's personal copy); its connection details are self-contained
+on dev-0 (see below), so execution is not gated on any one person — though a heads-up
+to Than as the original D7 dev is still worthwhile. Execution still pending; the ⚠
+kmassets-sink prerequisite gates the first migration regardless.
+
+## Decisions (2026-07-16)
+
+**A — Bootstrap: `deploy_install.yml` playbook.** Codify the create-DB → `site:install`
+→ uuid set → shortcut delete → `config:import` sequence as an Ansible playbook so dev
+is rebuildable on demand and the sequence stays honest, rather than a one-off runbook.
+(Fixing `rebuild.sh`'s broken `site:install --existing-config` so laptop + dev share
+one path is the follow-on that removes the uuid/shortcut workaround steps.)
+
+**B — dev's deploy runs `updb` + full `cim`, gated on a fresh RDS snapshot.** A
+deliberate divergence from dsf (which only does the partial SimpleSAMLphp `cim`), so
+that config shipped in a commit actually reaches dev. The mitigation (Yuji): take a
+full **RDS snapshot of `mandala_drupal_0`** before the run — self-serve, cheap on
+`rds-mysql8-staging`, gives a rollback point each deploy. Fold the snapshot in as a
+pre-`cim` task in `deploy_install.yml`. **Scope limit:** the snapshot only protects the
+Drupal DB; it does **not** roll back the kmassets Solr index (see the ⚠ below), so the
+two risks need two separate mitigations.
+
+**C — Point migration at the shared, stable D7 dev DB (option b, reframed).** *Not*
+the `dockerfiles-database-1` container stopped on dev-0 (that stays retired), *not* a
+laptop dump, and *not* anyone's personal copy — the **shared** D7 dev database, a team
+resource, on the **staging RDS estate** (`rds-standard-staging` /
+`rds-mysql8-staging.internal.lib.virginia.edu`), the same VPC as dev's own
+`mandala_drupal_0`, so the D11 dev container can reach it. This satisfies the "stable,
+reproducible, non-laptop source" principle without the RDS-load work of option (a). The
+Aegir-recoupling and moving-target objections to (b) do **not** apply: the source is a
+stable RDS DB, decoupled from the stopped container.
+
+Execution details for C:
+- **Host = `rds-mysql8-staging.internal.lib.virginia.edu` — the SAME server as dev's own
+  `mandala_drupal_0`.** `rds-standard-staging` (MySQL 5) is the **OLD** server the mandala
+  DBs were moved off; do not point at it. This means the D7 source is reachable on the
+  exact host/subnet dev already talks to — **no cross-host question**.
+- **Password source = AWS Secrets Manager `${env}/rds/standard/mandala_drupal`**, reused
+  as-is. The secret *name* keeps "standard" for historical reasons, but it holds the
+  current `mandala_drupal` user password, and that same user/password was recreated on
+  the mysql8 server. Proof: the live D11 app reads exactly this secret
+  (`mandala/drupal/staging/ansible.tf` →
+  `data "aws_secretsmanager_secret_version" "database_password" { secret_id =
+  "${var.environment}/rds/standard/mandala_drupal" }`) while connecting to the mysql8
+  host (`container_0.env.generated: MYSQL_HOST: rds-mysql8-staging…`). So **no new
+  secret and no literal in the repo** — resolve at runtime as the app already does.
+- **User = `mandala_drupal`** (`ALL on mandala%`). The migrate source is therefore just a
+  **second Drupal DB connection with the SAME host/user/password as dev's own DB,
+  differing only in the database name.** That D7 dev DB name must match `mandala%` for
+  the existing grant to cover it (finding 4) — confirm the actual name (visible in the
+  stopped Aegir `hostmaster` container's per-app Apache vhost confs under
+  `/var/aegir/config/server_master/apache/vhost.d/`, retrievable via `docker cp` without
+  starting it), and parameterise it — not the DDEV-hardcoded `d7_images`.
+- **Users don't come with the content.** The D7 `mandala_shared` prefix kludge
+  (`build/files/platform.settings.php`) keeps user/role/authmap/session tables in a
+  separate shared DB (on `rds-standard-production`), so the image migration brings
+  content but **no real users** — dev can only test the auto-provision path of part 4's
+  matrix until the user migration is unblocked. See [[project-d7-shared-user-database]]
+  and `d7-shared-user-database.md`.
 
 ## Why now
 
@@ -75,7 +134,10 @@ Steps 3–4 exist only because `site:install --existing-config` is broken (the s
 profile has a `hook_install`) — dev inherits that wart, which is an argument for fixing
 `rebuild.sh` rather than hand-running the workaround on a server.
 
-## Open decisions
+## Open decisions — RESOLVED 2026-07-16 (see "Decisions" section above)
+
+The analysis below is retained for the record; the outcomes are A = playbook,
+B = yes (snapshot-gated), C = separate stable D7 dev DB.
 
 **A. Bootstrap: runbook or playbook?** A `deploy_install.yml` makes dev rebuildable on
 demand and forces the sequence to stay honest; a runbook is faster today. Related: fixing
