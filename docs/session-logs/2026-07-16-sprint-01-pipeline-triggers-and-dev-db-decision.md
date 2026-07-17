@@ -1,16 +1,19 @@
-# Session Log: Pipeline `trigger_paths`, the dev-database decision, and migration readiness
+# Session Log: Pipeline `trigger_paths`, the dev-database decision, and clearing the migration blockers
 
-**Date:** 2026-07-16  
+**Date:** 2026-07-16 (ran past midnight into 2026-07-17)  
 **Participants:** Yuji Shinozaki, Claude Code  
-**Outcome:** Cleared both items from the 2026-07-16 handoff and set up the next morning's work.
-(1) **Fixed `trigger_paths`** — the monorepo pipeline no longer rebuilds/redeploys on
-docs-only merges (terraform `8b753bff1`, applied in-place and verified live; PR #47).
-(2) **Decided the dev database** — bootstrap, deploy `cim`, and D7 source all settled
+**Outcome:** Cleared both items from the 2026-07-16 handoff **and** both hard blockers
+that stood between the team and running migrations on dev. In order:
+(1) **`trigger_paths`** — the monorepo pipeline no longer rebuilds/redeploys on docs-only
+merges (terraform `8b753bff1`, applied in-place and verified live; PR #47).
+(2) **Dev-database decision** — bootstrap, deploy `cim`, and D7 source all settled
 ([`d11-dev-database-bootstrap-and-migration-source.md`](../deferred/d11-dev-database-bootstrap-and-migration-source.md),
-FLAGGED → DECIDED; PR #48). Then, prepping the morning's work, produced a
-[readiness runbook](../planning/dev-0-database-and-user-migration-readiness.md) for the
-dev-0 database + user migration and drafted the env-driven migrate connection
-(PR #49, draft, for Xiaoming). ALB cleanup ([`saml-alb-routing-assumes-mod-shib.md`](../deferred/saml-alb-routing-assumes-mod-shib.md))
+FLAGGED → DECIDED; PR #48).
+(3) **Readiness prep** — a [runbook](../planning/dev-0-database-and-user-migration-readiness.md)
+for the dev-0 DB + user migration, then the two blockers it named:
+the **env-driven migrate connection** (PR #49, merged) and the **kmassets sink migration
+guard** (PR #51, merged). ALB cleanup
+([`saml-alb-routing-assumes-mod-shib.md`](../deferred/saml-alb-routing-assumes-mod-shib.md))
 deliberately left parked with Dave.
 
 ---
@@ -35,31 +38,51 @@ docs-only merge (PR #47) that recorded it. Both gotchas captured in
 - **A — bootstrap = `deploy_install.yml` playbook** (rebuildable on demand), not a runbook.
 - **B — dev's deploy runs `updb` + full `cim`** (a deliberate divergence from dsf's
   partial-only), gated on a fresh **RDS snapshot** of `mandala_drupal_0` as the rollback
-  mitigation (Yuji's point). Noted the snapshot covers only the Drupal DB, not the
-  kmassets Solr index.
+  mitigation (Yuji's point). The snapshot covers only the Drupal DB, not the kmassets
+  Solr index.
 - **C — migrate source = the shared, stable D7 dev DB**, iterated through three
   corrections from Yuji: it's *shared* (not Than's), the connection details are in the
   stopped Aegir `hostmaster` container at `/var/aegir/config/server_master/apache/vhost.d/`,
   and the host is **`rds-mysql8-staging`** (the old `rds-standard`/MySQL-5 box is retired).
   The mandala D11 terraform proved the pattern: the live app reads the password from
-  Secrets Manager `${env}/rds/standard/mandala_drupal` (the name keeps "standard" for
-  history) while connecting to the mysql8 host. Net: the source reuses dev's own
-  host/user/password, differing only in database name — no new secret, nothing secret
-  committed.
+  Secrets Manager `${env}/rds/standard/mandala_drupal` (name keeps "standard" for history)
+  while connecting to the mysql8 host. Net: the source reuses dev's own host/user/password,
+  differing only in database name — no new secret, nothing secret committed.
 
-**3. Morning prep.** With the decision made, assessed readiness for the next session and
-found the honest gaps: one shared blocker (no `migrate` DB connection outside DDEV — it's
-hardcoded inside the `IS_DDEV_PROJECT` block), one landmine (the kmassets sink fires and
-writes to the *real* index on dev-0, and the migration-in-progress guard isn't built),
-and the user migration being greenfield (no user migration exists; the real user data
-lives only in `mandala_shared`). Captured it as a planning doc and drafted the shared
-blocker: env-driven `migrate` + `migrate_users` connections in `settings.php` (PR #49,
-draft, flagged for Xiaoming — who uses she/her).
+**3. Readiness assessment + the shared blocker (PR #49, merged).** Assessed both tracks
+and found the honest gaps: the `migrate` DB connection existed **only inside** the
+`IS_DDEV_PROJECT` block of `settings.php`, so nothing could run on dev-0. Added an
+env-driven block mirroring the primary DB's `getenv('MYSQL_*')` pattern —
+`MIGRATE_SOURCE_DATABASE` → `migrate` key (content) and `MIGRATE_USERS_DATABASE` →
+`migrate_users` key (the shared `mandala_shared` user DB, which the user migration must
+read instead of a per-site DB). Placed before the DDEV include so DDEV still wins locally;
+each key activates only when its env var is set, so an unset var is a safe no-op rather
+than a silently-wrong source. Opened as a draft for Xiaoming (she/her), then merged on
+Yuji's go-ahead.
 
-**Recurring theme:** each dev-database fact took a couple of Yuji corrections to land
-(source ownership, credential location, RDS engine) — the value was in reconciling the
-committed terraform/settings against what Yuji knew about the live estate, not in any one
-lookup.
+**4. The kmassets sink guard — the landmine (PR #51, merged).** On dev-0 the sink is
+*live* (the committed `solr_master_url` is the real staging master; the only prior guard,
+the empty-URL check, protects DDEV only), so a full Images migration would fire ~111k
+inline Solr writes to the real kmassets index — and ~111k inline deletes on rollback.
+Built `MigrateSyncSubscriber`: an in-memory flag flipped on the migrate PRE/POST import
+**and rollback** events; the node insert/update/delete hooks consult it and no-op while
+set. Deliberately process-scoped (a plain property, not persistent `State`) so an aborted
+migration lets the flag die with the process rather than silently disabling sync forever.
+Verified in DDEV — the flag toggles, the notices log, and the subscriber binds to all four
+migrate lifecycle events. Not yet exercised by a live `migrate:import`; that is tomorrow's
+first dev migration and the real-world confirmation. Post-migration indexing stays on the
+sanctioned bulk path (`kmassets:index-all` + `kmassets:audit`).
+
+**Recurring theme:** most of the value was in reconciling committed
+terraform/settings/module code against what Yuji knew about the live estate — the
+dev-database facts (source ownership, credential location, RDS engine) each took a couple
+of corrections to land, and the two "blockers" were latent because nothing outside DDEV
+had ever run the code path.
+
+**PRs this session:** #47 (trigger_paths note), #48 (dev-db decision), #49 (env-driven
+migrate connection), #50 (mid-session log), #51 (kmassets sink guard) — all merged; plus
+terraform-infrastructure `8b753bff1`. ALB cleanup and the `iam:GetRolePolicy` read gap
+parked with Dave.
 
 ---
 
@@ -966,5 +989,267 @@ Time to run the session-end ritual. Let me check the session-log script and the 
 ## Claude — 2026-07-16 21:31
 
 Found it — current session is `949a1c19-…jsonl`. Let me generate the transcript log, then curate its header.
+
+---
+
+## Claude — 2026-07-16 21:31
+
+Now let me curate the header — fix Participants and replace the placeholder Outcome with a proper summary, matching the house style. Let me read the generated top.
+
+---
+
+## Claude — 2026-07-16 21:31
+
+Session log curated. Let me check what's uncommitted and commit the documentation (branch + PR, consistent with this session's flow).
+
+---
+
+## Claude — 2026-07-16 21:32
+
+Session log merged; `main` clean and up to date. Let me do the final ritual step — refresh the memory so tomorrow starts cleanly, pointing at the session log, the readiness doc, and PR #49.
+
+---
+
+## Claude — 2026-07-16 21:33
+
+Session wrapped up and documented. Everything's landed.
+
+## Session-end ritual — complete
+
+| Ritual step | Status |
+|---|---|
+| Decisions → `docs/deferred/` | ✅ dev-database note FLAGGED→DECIDED (PR #48, merged) |
+| Findings/plan → `docs/planning/` | ✅ readiness runbook (PR #49) |
+| `.pages` updated | ✅ planning `.pages`; session-logs `.pages` self-updates via `...` |
+| Session log | ✅ `2026-07-16-sprint-01-pipeline-triggers-and-dev-db-decision.md` — curated header + transcript (PR #50, merged) |
+| Memory refresh | ✅ `project-mandala-state` (both items done + a 2026-07-17 pickup block), `reference-terraform-local-invocation`, new `feedback-xiaoming-pronouns` |
+
+`main` is clean and up to date. The only open PR is **#49** (the draft migrate connection, for Xiaoming) — intentionally left for her review.
+
+## What landed today
+- **`trigger_paths`** fix applied + verified idle (terraform `8b753bff1`; PR #47).
+- **Dev-database decision** recorded — bootstrap playbook, snapshot-gated full `cim`, D7 source on `rds-mysql8-staging` reusing dev's own creds (PR #48).
+- **Readiness runbook** + **draft migrate connection** for tomorrow (PR #49).
+
+## First things in the morning (also in the memory pickup block)
+1. Merge **PR #49** → the shared blocker clears.
+2. ⚠ Build the **kmassets sink guard** — the one landmine, before any dev migration.
+3. Confirm the D7 dev DB name from the Aegir vhost confs; add it to dev's `container_0.env`.
+4. `deploy_install.yml` → bootstrap dev → first Images migration → then the greenfield user migration.
+
+Have a good evening — everything's in a clean state to pick up cold tomorrow.
+
+---
+
+## User — 2026-07-17 01:12
+
+go ahead and merge the PR
+
+---
+
+## Claude — 2026-07-17 01:13
+
+PR #49 merged (`87974a8`), `main` synced and clean.
+
+That clears **the shared blocker** — the env-driven `migrate` / `migrate_users` connections are now on `main`, so migrations can read a source outside DDEV once the env var is set.
+
+Let me update the memory pickup block so it doesn't tell tomorrow's session to merge an already-merged PR.
+
+---
+
+## Claude — 2026-07-17 01:13
+
+Done. All PRs from today are merged; `main` is clean and up to date; memory reflects the merge.
+
+## Final state for tomorrow
+- **Shared blocker: cleared** ✅ — env-driven migrate connections merged (`87974a8`).
+- **Next up** (from the memory pickup block):
+  1. Add `MIGRATE_SOURCE_DATABASE` (confirmed D7 dev DB name) to dev's `container_0.env` in terraform-infra.
+  2. ⚠ Build the **kmassets sink guard** — the one landmine, before any dev migration.
+  3. Confirm the DB names from the Aegir vhost confs.
+  4. `deploy_install.yml` → bootstrap dev → first Images migration → then the user migration.
+- **Parked:** Fix B (prod ALB rules) and the `iam:GetRolePolicy` gap → both Dave.
+
+Everything's committed and in a clean state to pick up cold in the morning. Have a good evening!
+
+---
+
+## User — 2026-07-17 01:14
+
+You can go ahead and build the kmassets guard
+
+---
+
+## Claude — 2026-07-17 01:14
+
+Let me study the module before writing anything.
+
+---
+
+## Claude — 2026-07-17 01:14
+
+Now let me read the `.module` file (the hooks) and the sink's write path to place the guard correctly.
+
+---
+
+## Claude — 2026-07-17 01:17
+
+The module's clear. Let me check an existing class's header style for consistency, and confirm `migrate` is an available dependency.
+
+---
+
+## Claude — 2026-07-17 01:17
+
+`migrate` is enabled. Now I'll build the guard — an event subscriber that holds an in-memory suppression flag toggled by the migrate import/rollback events.
+
+---
+
+## Claude — 2026-07-17 01:18
+
+Now register the service and wire the hooks to consult it.
+
+---
+
+## Claude — 2026-07-17 01:18
+
+Now wire the hooks to consult the suppressor.
+
+---
+
+## Claude — 2026-07-17 01:18
+
+Now add the `_mandala_kmassets_sync_is_suppressed()` helper and the `migrate` dependency.
+
+---
+
+## Claude — 2026-07-17 01:18
+
+Let me lint the PHP and validate the YAML.
+
+---
+
+## Claude — 2026-07-17 01:19
+
+PHP is clean. Let me validate the YAML and — best verification — check whether DDEV is up so I can actually confirm the service registers and the subscriber wires to the migrate events.
+
+---
+
+## Claude — 2026-07-17 01:19
+
+The parse error is from the pre-existing `!tagged_iterator` custom tag (a Symfony DI tag, not plain YAML) — not my additions. Let me confirm with the custom-tags flag.
+
+---
+
+## Claude — 2026-07-17 01:19
+
+YAML valid; both new services registered. DDEV is stopped — let me bring it up and functionally verify the wiring (service resolves, subscriber is bound to the migrate events, flag toggles), which is the meaningful check short of a full migration.
+
+---
+
+## Claude — 2026-07-17 01:20
+
+DDEV's coming up in the background — I won't block on it. The change is complete and statically validated (PHP lint clean, YAML valid, both services registered, hooks wired). Let me commit it via a PR, then note the verification status.
+
+---
+
+## Claude — 2026-07-17 01:20
+
+DDEV's up. Let me verify the wiring for real — rebuild the container (proves the service definitions compile) and exercise the flag + event binding via drush.
+
+---
+
+## Claude — 2026-07-17 01:21
+
+Verified end-to-end at the wiring level:
+- Flag defaults **false**, flips **true** on `suppress()`, back to **false** on `resume()` (with the notice logs).
+- The subscriber is **bound to all four** migrate events (`pre/post_import`, `pre/post_rollback`).
+
+The only thing left unexercised is an actual `migrate:import` toggling it live — that needs the D7 source loaded and is tomorrow's first migration, which becomes the real-world confirmation. Let me commit via PR.
+
+---
+
+## Claude — 2026-07-17 01:22
+
+Main's back to clean (the guard lives on PR #51). Let me update the morning pickup block, then report.
+
+---
+
+## Claude — 2026-07-17 01:22
+
+Built, verified, and PR'd. **PR #51** — https://github.com/uvalib/mandala-navina/pull/51
+
+## What the guard does
+`MigrateSyncSubscriber` flips an in-memory flag on the migrate **PRE/POST import and rollback** events; the `mandala_kmassets_sync` node insert/update/delete hooks now no-op while it's set. So a full migration writes to the DB only, and docs reach Solr deliberately afterward via `kmassets:index-all` + `kmassets:audit`.
+
+Two deliberate design choices:
+- **Process-scoped flag** (a plain property, not persistent `State`) — a `drush migrate` runs in one process so the hooks see it, and an *aborted* migration lets the flag die with the process instead of silently disabling sync forever.
+- **Covers rollback too** — otherwise `migration-cycle.sh`'s rollback would fire ~111k inline *deletes* against the real index.
+
+## Verification
+- PHP lint clean, YAML valid, `drush cr` compiles the new services.
+- In DDEV: flag `false → true → false` across `suppress()`/`resume()` (notices log), and the subscriber is bound to **all four** migrate events.
+- **Not yet** exercised by a live `migrate:import` — that's tomorrow's first dev migration, which is the real-world confirmation (same pattern as the trigger_paths fix).
+
+Memory pickup block updated: item 2 is now "guard built, merge PR #51, confirm on the live migration."
+
+That's the landmine handled. **PR #51 is open** — want me to merge it, or leave it for review? And that was the last hard blocker before the dev-0 database + migration work can actually run tomorrow.
+
+---
+
+## User — 2026-07-17 01:22
+
+merge it
+
+---
+
+## Claude — 2026-07-17 01:23
+
+PR #51 merged (`ce761d8`), `main` synced and clean. Let me flip the memory item to reflect it's merged.
+
+---
+
+## Claude — 2026-07-17 01:24
+
+Done. The kmassets sink guard is merged to `main` (`ce761d8`) — **the landmine is defused.**
+
+## Where today ended
+
+Everything from the handoff plus the morning-prep is landed:
+
+| Work | Status |
+|---|---|
+| Pipeline `trigger_paths` | ✅ applied + verified (terraform `8b753bff1`; PR #47) |
+| Dev-database decision | ✅ recorded (PR #48) |
+| Session log | ✅ (PR #50) |
+| Env-driven migrate connection (shared blocker) | ✅ merged (PR #49) |
+| **kmassets sink guard (landmine)** | ✅ **merged, DDEV-verified (PR #51)** |
+
+## Left for the morning (in the memory pickup block)
+1. Add `MIGRATE_SOURCE_DATABASE` (confirmed D7 dev DB name) to dev's `container_0.env` in terraform-infra.
+2. Confirm the D7 dev / `mandala_shared` DB names from the Aegir vhost confs.
+3. Build `deploy_install.yml` → bootstrap dev off `/core/install.php` → **first Images migration** (which is where the guard gets its live confirmation — watch for the "sync suppressed / re-enabled" notices) → then the greenfield user migration.
+4. Parked with Dave: Fix B (prod ALB rules) and the `iam:GetRolePolicy` gap.
+
+`main` is clean, no open PRs. Both hard blockers that stood between here and running migrations on dev are now cleared. Good place to stop — have a good evening!
+
+---
+
+## User — 2026-07-17 01:28
+
+See you in the morning
+
+---
+
+## Claude — 2026-07-17 01:28
+
+Have a great evening! 🌙
+
+Everything's in a clean state — `main` up to date, no open PRs, and the morning's plan is waiting in the pickup block. See you then.
+
+---
+
+## User — 2026-07-17 01:28
+
+please document everything from this session and push the documentation in branch for a PR
 
 ---
