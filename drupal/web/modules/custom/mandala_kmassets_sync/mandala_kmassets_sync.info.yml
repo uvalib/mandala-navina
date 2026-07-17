@@ -5,6 +5,7 @@ package: Mandala
 core_version_requirement: ^10 || ^11
 dependencies:
   - drupal:node
+  - drupal:migrate
   - paragraphs:paragraphs
   - shanti_kmaps_fields:shanti_kmaps_fields
   - shanti_iiif:shanti_iiif

@@ -42,6 +42,23 @@ services:
     alias: mandala_kmassets_sync.direct_sink
     public: true
 
+  # Suppresses per-node Solr sync while a migration import/rollback runs, so a
+  # 111k-node migration does not fan out one inline write per node to the real
+  # kmassets master (index deliberately afterwards via kmassets:index-all). The
+  # node hooks consult this service's isSuppressed().
+  mandala_kmassets_sync.migrate_suppressor:
+    class: Drupal\mandala_kmassets_sync\EventSubscriber\MigrateSyncSubscriber
+    arguments:
+      - '@logger.channel.mandala_kmassets_sync'
+    tags:
+      - { name: event_subscriber }
+
+  # Dedicated logger channel for the module.
+  logger.channel.mandala_kmassets_sync:
+    parent: logger.channel_base
+    arguments:
+      - 'mandala_kmassets_sync'
+
   # Audits the kmassets index against Drupal node state (1a.9): detects and
   # optionally repairs missing / stale / orphaned docs.
   mandala_kmassets_sync.auditor:
