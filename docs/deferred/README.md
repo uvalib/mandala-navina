@@ -52,7 +52,6 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [oauth-openid-scope-client-credentials-crash.md](oauth-openid-scope-client-credentials-crash.md) | auth / simple_oauth / OAuth2 | Spike 10 | Medium |
 | [migration-legacy-nid-required-convention.md](migration-legacy-nid-required-convention.md) | migration / process / DX | Session 2026-07-10 | High |
 | [kmassets-collection-docs-and-facets.md](kmassets-collection-docs-and-facets.md) | solr / kmassets / Group collections / write path | Session 2026-07-10 (1b.1) | Medium |
-| [group-relationship-delete-broken-no-data-field.md](group-relationship-delete-broken-no-data-field.md) | Group collections / mandala_group_inheritance / access control | Session 2026-07-10 (1b.1) | High — breaks already-merged 1b.2 membership removal |
 | [d7-shared-user-database.md](d7-shared-user-database.md) | migration / users / infrastructure | Session 2026-07-10 (1b.1 planning) | High — blocks user migration + everything gated on it |
 | [saml-alb-routing-assumes-mod-shib.md](saml-alb-routing-assumes-mod-shib.md) | deployment / infrastructure / SAML / NetBadge / terraform | Session 2026-07-13 (1b.1 part 4) | High — mandala ALB routing assumes mod_shib but SP is SimpleSAMLphp; blocks NetBadge on AWS deploy |
 | [redis-enterprise-store-location.md](redis-enterprise-store-location.md) | infrastructure / Redis / ADR 014 / SAML session store / Drupal object cache | Session 2026-07-14 (1b.1 part 4) | Medium — TWO stores required (sessions + bigger object cache); dev settled on-box, enterprise location deferred |
@@ -69,3 +68,4 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [pipeline-triggers-on-every-monorepo-commit.md](pipeline-triggers-on-every-monorepo-commit.md) | terraform-infrastructure commit `8b753bff1`, applied 2026-07-16 (`trigger_paths` added) |
 | [group-subgroup-nesting-approach.md](group-subgroup-nesting-approach.md) | [ADR 011](../adr/011-group-collections-inheritance.md) (2026-06-18) |
 | [group-access-inheritance-subcollections.md](group-access-inheritance-subcollections.md) | [ADR 011](../adr/011-group-collections-inheritance.md) (2026-06-18) |
+| [group-relationship-delete-broken-no-data-field.md](group-relationship-delete-broken-no-data-field.md) | `fix/group-relationship-delete-inherited-field` (2026-07-16) — `mandala_inherited` base field |

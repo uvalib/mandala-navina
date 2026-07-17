@@ -14,9 +14,39 @@
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\group\Entity\GroupInterface;
 use Drupal\group\Entity\GroupRelationshipInterface;
+
+// ---------------------------------------------------------------------------
+// Membership metadata
+// ---------------------------------------------------------------------------
+
+/**
+ * Implements hook_entity_base_field_info().
+ *
+ * Adds a boolean `mandala_inherited` flag to group relationships so the
+ * membership-cascade logic can distinguish an inherited (cascaded-from-parent)
+ * subcollection membership from one added directly to the subcollection.
+ *
+ * Group 3.x's group_relationship entity has no generic `data` field, so the
+ * flag needs its own typed field — an earlier version stored it in a
+ * non-existent `data` field, which silently dropped it on write and threw on
+ * read. See docs/deferred/group-relationship-delete-broken-no-data-field.md.
+ */
+function mandala_group_inheritance_entity_base_field_info(EntityTypeInterface $entity_type) {
+  $fields = [];
+  if ($entity_type->id() === 'group_relationship') {
+    $fields['mandala_inherited'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Inherited membership'))
+      ->setDescription(t('TRUE if this membership was cascaded from a parent collection rather than added directly.'))
+      ->setDefaultValue(FALSE)
+      ->setInternal(TRUE);
+  }
+  return $fields;
+}
 
 // ---------------------------------------------------------------------------
 // Access control
@@ -239,7 +269,7 @@ function _mandala_group_inheritance_cascade_member_add(GroupInterface $collectio
 
   foreach ($subcollections as $sub) {
     if (!$sub->getMember($account)) {
-      $sub->addMember($account, ['_inherited' => TRUE]);
+      $sub->addMember($account, ['mandala_inherited' => TRUE]);
     }
   }
 }
@@ -248,8 +278,8 @@ function _mandala_group_inheritance_cascade_member_add(GroupInterface $collectio
  * Removes a user from subcollections of a collection, preserving sub-only members.
  *
  * A user is a "sub-only member" if they were added directly to the subcollection
- * rather than via cascade from the parent. We track this via the _inherited flag
- * stored in the group membership's data field.
+ * rather than via cascade from the parent. We track this via the boolean
+ * mandala_inherited flag on the group membership relationship.
  */
 function _mandala_group_inheritance_cascade_member_remove(GroupInterface $collection, $account) {
   $subcollections = \Drupal::entityTypeManager()
@@ -265,13 +295,11 @@ function _mandala_group_inheritance_cascade_member_remove(GroupInterface $collec
       continue;
     }
 
-    // Retain if the member was added directly (not via cascade).
+    // Retain if the member was added directly (not via cascade). Migrated
+    // memberships have no flag set, which is correct — every D7 og_membership
+    // was an explicit (direct) membership.
     $relationship = $membership->getGroupRelationship();
-    $data = $relationship->get('data') && !$relationship->get('data')->isEmpty()
-      ? json_decode($relationship->get('data')->value, TRUE)
-      : [];
-
-    if (empty($data['_inherited'])) {
+    if (!$relationship->get('mandala_inherited')->value) {
       // Direct subcollection member — retain.
       continue;
     }
@@ -310,7 +338,7 @@ function mandala_group_inheritance_group_insert(GroupInterface $group) {
   foreach ($parent->getMembers() as $member) {
     $account = $member->getUser();
     if ($account && !$group->getMember($account)) {
-      $group->addMember($account, ['_inherited' => TRUE]);
+      $group->addMember($account, ['mandala_inherited' => TRUE]);
     }
   }
 }

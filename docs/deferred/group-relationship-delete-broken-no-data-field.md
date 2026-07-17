@@ -5,6 +5,17 @@
 **Jira:** (add when available)
 **Priority:** High — affects already-merged 1b.2 functionality (PR #27), not just 1b.1
 
+**Status: RESOLVED — 2026-07-16** (branch `fix/group-relationship-delete-inherited-field`).
+Fixed via the doc's second option: a dedicated boolean base field `mandala_inherited`
+on `group_relationship` (installed by `mandala_group_inheritance_update_9001()`),
+replacing the non-existent `data`-field read/write in both directions. Verified end to
+end in DDEV (Group 3.3.5): cascade-add flags inherited, direct sub-members flag as
+non-inherited, `removeMember()` on a collection with subcollections no longer throws,
+inherited sub-memberships cascade-remove, and direct sub-members are retained. No data
+backfill needed — existing migrated memberships default to `FALSE` (direct), which is
+correct since every D7 `og_membership` was explicit. Automated test coverage for the
+removal path deferred as a follow-up (see below).
+
 ## What we found
 
 `Group::removeMember($account)` — and therefore any code path that removes a
