@@ -111,6 +111,54 @@ if (($envDbName = getenv('MYSQL_DATABASE')) !== false && $envDbName !== '') {
   ];
 }
 
+// Migrate API source connection(s) for infrastructure (non-DDEV) environments.
+//
+// Locally, DDEV's block near the bottom of this file defines the 'migrate'
+// connection (the secondary 'd7_images' DDEV database) and — because it is
+// included AFTER this block — still wins in DDEV. Outside DDEV that block is
+// skipped, so without the code here dev-0 / staging have no 'migrate'
+// connection and `migrate:import` has nothing to read.
+//
+// Per the dev-database decision (2026-07-16,
+// docs/deferred/d11-dev-database-bootstrap-and-migration-source.md), the D7
+// migration source lives on the SAME RDS host, with the SAME mandala_drupal
+// user/password, as the primary connection above — it differs only in database
+// NAME. So the source DB name is the one required input; host/user/password
+// default to the primary MYSQL_* env vars, with optional per-var overrides for
+// a future source that sits elsewhere. Each connection is only opened when a
+// migration actually names its key, so an unset var is a safe no-op (the
+// migration simply cannot run — never a silently-wrong source).
+//
+//   MIGRATE_SOURCE_DATABASE  -> 'migrate' key: the per-site D7 content DB
+//                               (e.g. the stable D7 dev images DB, matching
+//                               the mandala% grant).
+//   MIGRATE_USERS_DATABASE   -> 'migrate_users' key: the shared D7 user DB
+//                               (mandala_shared / mandala_shared_dev). See
+//                               docs/deferred/d7-shared-user-database.md — the
+//                               real user data lives ONLY here, never in a
+//                               per-site DB. The user migration must point at
+//                               this key, not 'migrate'.
+$mandala_migrate_sources = [
+  'migrate'       => getenv('MIGRATE_SOURCE_DATABASE'),
+  'migrate_users' => getenv('MIGRATE_USERS_DATABASE'),
+];
+foreach ($mandala_migrate_sources as $mandala_migrate_key => $mandala_migrate_db) {
+  if ($mandala_migrate_db === false || $mandala_migrate_db === '') {
+    continue;
+  }
+  $databases[$mandala_migrate_key]['default'] = [
+    'database' => $mandala_migrate_db,
+    'username' => (getenv('MIGRATE_SOURCE_USER') ?: getenv('MYSQL_USER')),
+    'password' => (getenv('MIGRATE_SOURCE_PASSWORD') ?: getenv('MYSQL_PASSWORD')),
+    'host'     => (getenv('MIGRATE_SOURCE_HOST') ?: getenv('MYSQL_HOST')),
+    'port'     => 3306,
+    'prefix'   => '',
+    'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
+    'driver'   => 'mysql',
+  ];
+}
+unset($mandala_migrate_sources, $mandala_migrate_key, $mandala_migrate_db);
+
 /**
  * Customizing database settings.
  *
