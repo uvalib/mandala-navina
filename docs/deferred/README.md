@@ -60,6 +60,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [fail2ban-need-and-ownership.md](fail2ban-need-and-ownership.md) | infrastructure / security / scraper mitigation | Session 2026-07-14 (1b.1 part 4) | Low while quiet — an emergency measure vs an active load problem, NOT an architecture; decoupled from D11; urgent again if load returns |
 | [d11-dev-database-bootstrap-and-migration-source.md](d11-dev-database-bootstrap-and-migration-source.md) | deployment / database / migration / dev environment | Session 2026-07-15 (1b.1 part 4) | **High — bootstrap (A) + D7 source dump/load DONE 2026-07-17**; migrate:import now running on dev-0; `MIGRATE_SOURCE_DATABASE`/`MIGRATE_USERS_DATABASE` still need persisting into dev-0's container env (currently ad-hoc per-invocation) |
 | [migrate-group-import-aborts-on-partial-failure.md](migrate-group-import-aborts-on-partial-failure.md) | migration / DX / tooling | Session 2026-07-17 (first live dev-0 migrate:import) | Medium — `--group` aborts the whole remaining sequence on any migration's partial failure; blocks a full `--group` run every time until user migration lands |
+| [migrate-shared-vs-migrate-users-connection-duplication.md](migrate-shared-vs-migrate-users-connection-duplication.md) | migration / users / infrastructure / DX | Session 2026-07-17 (PR sweep) | **High — blocks PR #45 from merging as-is**; PR #45's `migrate_shared` connection duplicates PR #49's already-merged `migrate_users` mechanism; flagged to Than on the PR |
 
 ## Resolved / superseded
 
