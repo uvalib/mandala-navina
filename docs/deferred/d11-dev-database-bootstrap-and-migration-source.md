@@ -5,12 +5,107 @@
 **Jira:** (add when available)
 **Priority:** High — dev serves `/core/install.php` until this is decided; blocks 1a.9 staging execution and part-4 item 7 validation
 
-**Status: DECIDED — 2026-07-16 (Yuji).** Worked through the three open decisions
-below. Verified findings unchanged. Decision C points at the **shared** D7 dev DB (a
-team resource, not anyone's personal copy); its connection details are self-contained
-on dev-0 (see below), so execution is not gated on any one person — though a heads-up
-to Than as the original D7 dev is still worthwhile. Execution still pending; the ⚠
-kmassets-sink prerequisite gates the first migration regardless.
+**Status: DECIDED 2026-07-16, Decision C's source location CORRECTED and EXECUTED
+2026-07-17 (Yuji).** The migration source dump+load is done; dev bootstrap (A) is
+still outstanding. See the correction block immediately below before reading
+Decision C's original text — several of its host/credential claims turned out
+to be wrong when checked against the live systems.
+
+## ⚠ CORRECTION + EXECUTION UPDATE (2026-07-17)
+
+Decision C below claims the D7 source is reachable "on the exact host/subnet dev
+already talks to — no cross-host question" (same host as `mandala_drupal_0`,
+i.e. `rds-mysql8-staging`). **That's wrong.** Checked live by SSHing both the
+production and dev-0 nodes:
+
+- **Live D7 production (all 5 sites + the shared user DB) actually runs on
+  `rds-mysql8-production`** (user `mandala_sites`), not on `rds-mysql8-staging`
+  and not on `rds-standard-production` (that estate is **stopped/retired** —
+  every site vhost already has it commented out in favor of mysql8).
+- **dev-0 cannot reach `rds-mysql8-production`** (network/SG isolation) — only
+  a VPN-connected workstation, or dev/staging themselves, can reach
+  `rds-mysql8-staging`. So there genuinely IS a cross-host question, and the
+  source has to be dumped from production and loaded onto staging — it was
+  never "the same DB dev already talks to."
+- The shared user DB (finding below, §"Users don't come with the content")
+  said it lives on `rds-standard-production`. **Corrected: it's `mandala_shared`
+  on `rds-mysql8-production`** (1,543 rows in `.users`, confirmed via a live
+  query — do not trust `sites/all/platform.settings.php`'s
+  `$shared = 'mandala_shared_dev.'`, which is stale/inert on the disabled site).
+
+### RDS instances (`aws rds describe-db-instances`, 2026-07-17)
+
+| Identifier | Engine | Status | Role |
+|---|---|---|---|
+| `rds-mysql8-production` | MySQL 8.4.8 | available | Live D7 production (all 5 sites + `mandala_shared`) |
+| `rds-mysql8-staging` | MySQL 8.4.8 | available | dev-0's own D11 DB (`mandala_drupal_0`) + the loaded D7 migration source DBs |
+| `rds-standard-production` | MySQL 5.7.44 | **stopped** | RETIRED — do not use for anything new |
+
+### Network reachability matrix — confirmed by direct testing, 2026-07-17
+
+**This is the fact that drives the whole dump/load design — don't re-derive it, it cost real time to pin down:**
+
+| From ↓ / To → | `rds-mysql8-production` | `rds-mysql8-staging` |
+|---|---|---|
+| **production node** (`mandala-drupal-0`) | ✅ reachable (its own DB) | ❌ UNREACHABLE — confirmed via TCP test from the node's mariadb container (silent SG drop/timeout, not a fast refusal) |
+| **dev-0 / staging-0 nodes** | ❌ UNREACHABLE — confirmed via TCP test from dev-0 | ✅ reachable (dev's own DB host) |
+| **VPN-connected workstation** | ✅ reachable — confirmed via direct TCP test | ✅ reachable — confirmed via direct TCP test |
+
+`rds-mysql8-staging` is deliberately scoped to be reachable **only from dev,
+staging, and the VPN** (confirmed live, matches the SG intent). Practical
+consequence: **any prod↔staging data transfer must run from a VPN-connected
+workstation** — there is no direct node-to-node path, so don't try to relay
+the dump through `ssh`+`docker exec` on either box.
+
+**✅ Dump + load executed 2026-07-17, row counts verified source==target:**
+
+| Source (rds-mysql8-production) | Target (rds-mysql8-staging) | Rows |
+|---|---|---|
+| `mandalaimageslib` | `mandala_d7_images` | 287,939 (`node`) |
+| `mandala_shared` | `mandala_d7_shared` | 1,543 (`users`) |
+
+The verified run above used **manual, tmpdir-based commands** (since cleaned
+up). Those were then rewritten into **`scripts/refresh-d7-staging-source.sh`**
+for repeat refreshes, per a security requirement to never write credentials to
+disk: passwords are held only in shell variables (never a file, not even a
+restricted tmpdir), and the dump is streamed directly `mysqldump | mysql`
+through a pipe rather than landing as a `.sql` file on disk, since the
+shared-user dump carries real PII. **⚠ The script itself is UNTESTED** — only
+`bash -n` syntax-checked, never run end-to-end. Treat it as a draft: run it
+once for real and re-confirm the row counts above before relying on it for a
+production-data refresh. See the script's header comment for the full account
+of gotchas hit along the way (stale duplicate `db_passwd` lines in the Aegir
+vhosts; Homebrew's `mysql` 9.x client can't auth to these RDS accounts, worked
+around via a `mysql:8.0` Docker image). Staging RDS already held several
+older, unidentified `mandala*` DBs from prior sessions (`mandala_images_dev`,
+`mandala_shared_dev`, etc.) — deliberately left untouched; new non-colliding
+names were used instead.
+
+**✅ Decision A (bootstrap) EXECUTED 2026-07-17** — dev-0 no longer serves
+`/core/install.php`. Ran by hand (the documented `deploy_install.yml` playbook
+itself is still not built — see Decision A below): fresh `drush site:install
+standard` (`--existing-config` is still broken, now errors on the flag syntax
+too) → `config:set system.site uuid dfc3f060-3fa3-4a1e-b081-dbc07bdc4323` →
+`cache:rebuild` (needed before `entity:delete shortcut`/`shortcut_set` would
+recognize the entity types, even though `pm:list` already showed the module
+enabled) → `config:import`. Result: `Drupal bootstrap: Successful`, DB
+connected, HTTP 200, zero `config:status` drift.
+
+**Bonus find while verifying:** `core.entity_form_display.user.user.default`
+kept re-diverging after every `config:import`. Root cause: live config had a
+`simplesamlphp_auth_user_enable` form-display component (added when that
+module was enabled for 1b.1 part 4) that had **never been captured in the
+committed YAML** — a real config/sync gap, not an install artifact. Fixed by
+adding the component to the file (verified against live `drush config:get`
+first) — see that file's diff in this same commit.
+
+**Still open:** wire `MIGRATE_SOURCE_DATABASE=mandala_d7_images` /
+`MIGRATE_USERS_DATABASE=mandala_d7_shared` (host `rds-mysql8-staging`, user/pass
+= dev's own `mandala_drupal` — no new secret) onto dev-0's container env;
+disable the kmassets sink before the first `migrate:import` (unchanged
+prerequisite, see below); still no `deploy_install.yml` playbook (Decision A's
+automation), so this bootstrap won't survive a rebuild without being re-run
+by hand or the playbook getting built.
 
 ## Decisions (2026-07-16)
 
@@ -62,8 +157,9 @@ Execution details for C:
   starting it), and parameterise it — not the DDEV-hardcoded `d7_images`.
 - **Users don't come with the content.** The D7 `mandala_shared` prefix kludge
   (`build/files/platform.settings.php`) keeps user/role/authmap/session tables in a
-  separate shared DB (on `rds-standard-production`), so the image migration brings
-  content but **no real users** — dev can only test the auto-provision path of part 4's
+  separate shared DB ~~(on `rds-standard-production`)~~ **[CORRECTED 2026-07-17: on
+  `rds-mysql8-production`, see the correction block above]**, so the image migration
+  brings content but **no real users** — dev can only test the auto-provision path of part 4's
   matrix until the user migration is unblocked. See [[project-d7-shared-user-database]]
   and `d7-shared-user-database.md`.
 
