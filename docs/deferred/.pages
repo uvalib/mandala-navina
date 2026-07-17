@@ -44,3 +44,4 @@ nav:
   - "fail2ban: emergency measure, still needed? (decoupled from D11)": fail2ban-need-and-ownership.md
   - "Pipeline triggers on every monorepo commit (no trigger_paths)": pipeline-triggers-on-every-monorepo-commit.md
   - "Dev database: bootstrap + migration source (DISCUSS 2026-07-16)": d11-dev-database-bootstrap-and-migration-source.md
+  - "migrate:import --group aborts on partial failure": migrate-group-import-aborts-on-partial-failure.md

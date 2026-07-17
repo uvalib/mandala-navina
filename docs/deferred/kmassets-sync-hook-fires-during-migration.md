@@ -4,6 +4,21 @@
 **Jira:** (add when available)
 **Priority:** Medium — not a correctness bug, but a real efficiency + cutover-load concern
 
+**Status: FIXED (PR #51, `MigrateSyncSubscriber`) and VERIFIED LIVE 2026-07-17.**
+The recommendation below was implemented as `mandala_kmassets_sync.migrate_suppressor`,
+an event subscriber on `MigrateEvents::PRE_IMPORT`/`POST_IMPORT`/`PRE_ROLLBACK`/`POST_ROLLBACK`
+that flips an in-memory flag the node hooks consult. This was only DDEV-verified
+until today; the first live `migrate:import` on dev-0 (against the newly-loaded
+`mandala_d7_images` source, see `d11-dev-database-bootstrap-and-migration-source.md`)
+confirmed the guard fires correctly outside DDEV too — `[notice] kmassets per-node
+Solr sync suppressed for the duration of the migration...` / `...re-enabled after
+migration.` appeared around every migration in the run. See
+`migrate-group-import-aborts-on-partial-failure.md` for the rest of that session's
+findings. Also separately confirmed: `solr_master_url` is currently unset on dev-0
+(no environment override exists yet), so writes were doubly safe — both no-configured
+*and* suppressed. The moment that URL gets configured for dev, this guard becomes
+the only thing standing between a migration and real inline writes to shared Solr.
+
 ## Observation
 
 During `migrate:import` of the `mandala_images` group, **every `shanti_image` node
