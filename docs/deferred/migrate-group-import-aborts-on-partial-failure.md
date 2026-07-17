@@ -42,22 +42,55 @@ assumed — the naming is genuinely easy to mix up mid-conversation.
 
 ## Workaround used (2026-07-17)
 
-Ran the remaining six migrations individually, in dependency order, chained
-with `;` (not `&&`) so one migration's own exit code can't block the next:
+Ran the remaining six migrations individually, in dependency order, as **one
+single shell script** handed to a single `docker exec` call — not six separate
+invocations. Each line runs plain (no `&&`) so one migration's exit code can't
+block the next, and everything appends to one log file inside the container:
 
 ```bash
-drush migrate:import d7_images_external_classification_scheme --verbose
-drush migrate:import d7_images_external_classification --verbose
-drush migrate:import d7_images_image_agent --verbose
-drush migrate:import d7_images_image_descriptions --verbose
-drush migrate:import d7_images_shanti_image --verbose
-drush migrate:import d7_images_image_collection_membership --verbose
+docker exec -e MIGRATE_SOURCE_DATABASE=mandala_d7_images mandala-drupal-0 sh -c '
+cd /opt/drupal/app/drupal
+vendor/bin/drush migrate:import d7_images_external_classification_scheme --verbose >> /tmp/migrate_import2.log 2>&1
+vendor/bin/drush migrate:import d7_images_external_classification --verbose >> /tmp/migrate_import2.log 2>&1
+vendor/bin/drush migrate:import d7_images_image_agent --verbose >> /tmp/migrate_import2.log 2>&1
+vendor/bin/drush migrate:import d7_images_image_descriptions --verbose >> /tmp/migrate_import2.log 2>&1
+vendor/bin/drush migrate:import d7_images_shanti_image --verbose >> /tmp/migrate_import2.log 2>&1
+vendor/bin/drush migrate:import d7_images_image_collection_membership --verbose >> /tmp/migrate_import2.log 2>&1
+echo ALL_DONE >> /tmp/migrate_import2.log
+'
 ```
 
 Migrate API resolves each migration's own dependencies via its migration map
 tables regardless of how the ID was invoked (not only via `--group`), so
 running them individually in the right order works the same as the group run
 would have — it just doesn't abort partway.
+
+**This matters operationally, not just as a workaround:** because it's one
+script, not six separate commands, **nothing external needs to trigger the
+next migration once the current one finishes** — no cron, no re-invocation,
+no orchestrator watching for completion. It's a single `sh` process on dev-0
+(see the `containerd-shim-runc-v2` note below) that simply advances to its own
+next line when the current `drush` call returns, exactly like running any
+shell script and walking away. That single process is what needs to still be
+alive for the sequence to continue — and per the note below, it doesn't depend
+on any SSH/VPN session, so it survives this Claude Code session ending too.
+
+**To check on / resume a run like this:**
+
+```bash
+ssh -i ~/.ssh/id_rsa ys2n@mandala-drupal-dev-0.internal.lib.virginia.edu \
+  'sudo docker exec mandala-drupal-0 sh -c "tail -40 /tmp/migrate_import2.log"'
+```
+
+- `ALL_DONE` at the end of the log = the whole sequence finished (check each
+  migration's `Processed N items (...)` line for failures).
+- An `Exception`/error partway with no `ALL_DONE` = that one script instance
+  stopped (or the box/container restarted). Nothing is lost — Migrate API
+  tracks completed rows per migration in its map tables — just re-run the
+  specific migration ID that didn't finish (with the same
+  `-e MIGRATE_SOURCE_DATABASE=mandala_d7_images`), then continue down the
+  remaining list by hand.
+- Still advancing with no `ALL_DONE` yet = still running normally, nothing to do.
 
 ## Recommendation
 
