@@ -8,7 +8,7 @@ use Drupal\node\NodeInterface;
  * Implements hook_node_insert().
  */
 function mandala_kmassets_sync_node_insert(NodeInterface $node): void {
-  if (!$node->isPublished() || !_mandala_kmassets_sync_is_configured()) {
+  if (!$node->isPublished() || !_mandala_kmassets_sync_is_configured() || _mandala_kmassets_sync_is_suppressed()) {
     return;
   }
   _mandala_kmassets_sync_index($node);
@@ -18,7 +18,7 @@ function mandala_kmassets_sync_node_insert(NodeInterface $node): void {
  * Implements hook_node_update().
  */
 function mandala_kmassets_sync_node_update(NodeInterface $node): void {
-  if (!_mandala_kmassets_sync_is_configured()) {
+  if (!_mandala_kmassets_sync_is_configured() || _mandala_kmassets_sync_is_suppressed()) {
     return;
   }
   $sink = \Drupal::service('mandala_kmassets_sync.direct_sink');
@@ -43,7 +43,7 @@ function mandala_kmassets_sync_node_update(NodeInterface $node): void {
  * Implements hook_node_delete().
  */
 function mandala_kmassets_sync_node_delete(NodeInterface $node): void {
-  if (!_mandala_kmassets_sync_is_configured()) {
+  if (!_mandala_kmassets_sync_is_configured() || _mandala_kmassets_sync_is_suppressed()) {
     return;
   }
   try {
@@ -80,4 +80,17 @@ function _mandala_kmassets_sync_index(NodeInterface $node): void {
  */
 function _mandala_kmassets_sync_is_configured(): bool {
   return !empty(\Drupal::config('mandala_kmassets_sync.settings')->get('solr_master_url'));
+}
+
+/**
+ * Returns TRUE while a migration import/rollback is running in this process.
+ *
+ * The node hooks skip the inline Solr write when TRUE — a full migration writes
+ * ~111k docs the bulk index (kmassets:index-all) is going to write anyway, and
+ * on staging/dev those inline writes hit the real kmassets master. Toggled by
+ * \Drupal\mandala_kmassets_sync\EventSubscriber\MigrateSyncSubscriber on the
+ * migrate PRE/POST import and rollback events.
+ */
+function _mandala_kmassets_sync_is_suppressed(): bool {
+  return \Drupal::service('mandala_kmassets_sync.migrate_suppressor')->isSuppressed();
 }
