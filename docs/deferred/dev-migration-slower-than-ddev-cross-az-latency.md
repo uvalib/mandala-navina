@@ -202,6 +202,35 @@ outside DDEV:
 - Heavily-fielded node entities: expect as much as **~9x** the DDEV baseline
   time. A "~1 hour in DDEV" migration can mean most of a day on dev-0.
 
+## Aside: none of the remaining sites are close to Images' scale
+
+While investigating whether AV (raised as "the next biggie") might be a
+disproportionately slow future migration, checked actual D7 source sizes for
+every remaining site (read-only, `rds-mysql8-production`):
+
+| Site | Nodes | Files | File volume |
+|---|---|---|---|
+| Images (done) | 287,939 | 55,117 | 1,471.7 GB |
+| Sources | 28,599 | 1,541 | 2.20 GB |
+| AV | 11,894 | 8,357 | 2.73 GB |
+| Texts | 7,763 | 537 | 0.34 GB |
+| Home | 1,971 | 21 | 0.004 GB |
+
+AV isn't the biggest by node count (Sources is) or file volume (roughly tied
+with Sources) or per-entity field complexity (`video` has 30 fields attached
+vs. `shanti_image`'s 50). "Transcripts" turned out to be a file-reference
+field, not inline text — the actual files behind it are mostly small WebVTT
+caption files (39 MB total across 3,264 files). Notably, **no actual
+video/audio media exists in Drupal's `file_managed` table at all** — it must
+be hosted externally, outside the scope of a database-level content
+migration.
+
+**Conclusion: Images was the outlier.** All four remaining sites combined
+(~50,227 nodes, ~5.3 GB of files) are a rounding error next to what Images
+alone required. The slow, multi-hour dev-0 experience this weekend is very
+likely the worst of it for the whole rebuild, not a preview of four more
+rounds like it.
+
 ## Related
 
 - `docs/deferred/migrate-large-migration-oom-and-resume-behavior.md` — the
