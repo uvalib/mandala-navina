@@ -5,10 +5,16 @@
 **Jira:** (add when available)
 **Priority:** Low — a known, understood limitation the team is consciously living with, not a blocker; revisit only if migration time becomes a recurring real problem
 
-**Decision (2026-07-18, Yuji): live with it.** Not worth acting on before
-vacation, and the two candidate fixes investigated both turned out to be
-non-starters (see below). Documented so the next person who notices "why is
-this so slow" doesn't have to re-derive it.
+**Decision (2026-07-18, Yuji): live with it for the current Images migration.**
+Not worth acting on before vacation, and the two candidate fixes investigated
+both turned out to be non-starters (see below). Documented so the next person
+who notices "why is this so slow" doesn't have to re-derive it.
+
+**Open discussion topic for when Yuji is back:** a disciplined one-time
+"landmark migration" variant of the laptop idea — see below — may be worth
+using for the **next** large content migration (Texts, Sources, AV, Home).
+Explicitly **not** recommended for the upcoming user migration (PR #45),
+which Than will likely tackle next — see the earmarked section below for why.
 
 ## Observation
 
@@ -96,6 +102,63 @@ Would recover the DDEV speed for the compute itself, but:
   this session already solved the hard way (see `scripts/
   refresh-d7-staging-source.sh` and `docs/dev-notes/howto-access-mandala-
   nodes.md`), just relocated rather than eliminated.
+
+## Reconsidered 2026-07-18: a disciplined "landmark migration" variant might work
+
+The laptop idea above was rejected in the form of *ongoing ad hoc development
+against laptop dumps* — that's a real problem (drift, unreproducible state).
+But a narrower, one-time variant is worth keeping on the table for the
+**next** large migration: run the big, mostly-static historical bulk import
+once on fast local hardware (DDEV), validate it against the same row-count
+baseline discipline `migration-cycle.sh` already uses, then push that
+validated result to dev as a single "landmark" checkpoint — rather than
+re-deriving it in place over many slow hours.
+
+This is meaningfully different from the rejected version because the
+*process* stays disciplined even though the *hardware* changes:
+
+- Same committed migration code, same source dump — not divergent/ad hoc.
+  Validated against baseline counts, so "ran on a laptop" is provably
+  identical to "ran on dev," not just assumed to be.
+- Transfer must move the migrated **content tables together with their
+  `migrate_map_*` tables** as one unit, not a whole-database dump — dev also
+  holds config, UUIDs, kmassets sync state, and (eventually) real users that
+  a blind restore would clobber. Keeping map and content bundled preserves
+  the internal consistency later migrations rely on (e.g. anything doing a
+  `migration_lookup` against the landmark migration's map).
+- Only works cleanly while the target is **still clean of that content
+  type** — straightforward for a dev-0 that's freshly bootstrapped now, but
+  would need dev clear of that content again before the *next* landmark
+  restore if people have been creating test content in the meantime.
+- **Dev/lower-environment pattern only** — not a substitute for a real
+  production-migration decision (see `production-migration-planning.md`).
+
+### Earmarked discussion topic: is the user migration a fit? (probably not, and for a different reason than performance)
+
+Than will likely pick up the user migration (PR #45) next while Yuji is out.
+It's tempting to slot it into this pattern, but two things cut against it —
+one of which is a much harder line than the performance question that
+motivated this whole idea:
+
+1. **It's real PII, and there's an existing policy specifically against
+   putting it on a laptop.** Decision C(b) (`d7-shared-user-database.md`)
+   mandated that the shared user DB — real names, emails, password hashes —
+   is deliberately **never replicated to a laptop**; user-migration
+   development was designed to happen on dev *specifically* to keep that
+   data off laptops. Running the migration *on* a laptop means the raw D7
+   source data has to be present there, at least transiently — in direct
+   tension with that policy, not just a performance tradeoff to weigh.
+2. **The performance case is weak anyway.** The shared user DB is ~1,543
+   rows — roughly 70x smaller than `image_agent`. Even at the worst observed
+   ratio from this session (~9x slower on dev than DDEV), that's a
+   difference of minutes, not hours. The problem this pattern exists to
+   solve (multi-hour dev-0 runs) barely applies here.
+
+So: worth discussing explicitly when Yuji is back, but the honest framing
+going in is that the user migration is a **weak candidate** for this
+pattern — save it for the next genuinely large one (Texts, Sources, AV,
+Home), where both the performance case is real and there's no PII-on-laptop
+conflict.
 
 ## Considered and rejected: relax RDS commit durability for the bulk-import window
 
