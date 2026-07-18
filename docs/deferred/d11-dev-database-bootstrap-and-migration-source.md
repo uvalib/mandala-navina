@@ -16,6 +16,13 @@ to be wrong when checked against the live systems.
 A `mandala_images` migration is running on dev-0 right now, unattended, kicked
 off 2026-07-17. **Read this whole section before touching anything.**
 
+**⚠ dev-0 shuts down every night 11pm–6am (cost saving) — this migration will
+almost certainly get cut off by that, sit idle overnight, and need a manual
+restart.** It does not resume on its own when the instance comes back up. See
+`docs/dev-notes/howto-long-running-jobs-on-dev-staging.md` and the "no error at
+all, log just stops" case below — that's very likely what you'll find if
+you're reading this after an overnight gap, not a new bug.
+
 **Check status first:** see `docs/dev-notes/howto-access-mandala-nodes.md` for
 how to SSH in. Then:
 
@@ -47,17 +54,33 @@ the earlier log was superseded after a crash-and-resume, see below.)
   `migrate-group-import-aborts-on-partial-failure.md` for the full
   disambiguation).
 
-**If you find an `Exception` with no forward progress:** it's very likely the
-same OOM pattern. The fix is documented step by step in
-`migrate-large-migration-oom-and-resume-behavior.md` — short version:
-`drush migrate:reset-status <migration_id>`, then re-run with
-`php -d memory_limit=1024M vendor/bin/drush.php migrate:import <migration_id>`
-(note: `vendor/bin/drush.php`, **not** `vendor/bin/drush` — the latter is a
-bash wrapper, not a PHP file, and silently no-ops if you pass `-d` flags to it).
+**If you find an `Exception` with no forward progress:** check which kind first:
 
-**It is safe either way** — nothing needs to be running for the already-imported
-rows to be safe; Migrate API tracks progress per-row in its map tables, so any
-interruption is resumable, never a data-loss event.
+1. **`drush migrate:reset-status`-shaped problem** (e.g. `is busy with another
+   operation: Importing`, or a memory-exhaustion fatal error above it) — it's
+   very likely the same OOM pattern. The fix is documented step by step in
+   `migrate-large-migration-oom-and-resume-behavior.md` — short version:
+   `drush migrate:reset-status <migration_id>`, then re-run with
+   `php -d memory_limit=1024M vendor/bin/drush.php migrate:import <migration_id>`
+   (note: `vendor/bin/drush.php`, **not** `vendor/bin/drush` — the latter is a
+   bash wrapper, not a PHP file, and silently no-ops if you pass `-d` flags to it).
+2. **No error at all, log just stops mid-progress-bar with no `Exception` and
+   no `ALL_DONE`** — the instance almost certainly went through its **nightly
+   11pm–6am shutdown** mid-run (see `docs/dev-notes/
+   howto-long-running-jobs-on-dev-staging.md`). This is a full EC2 stop, not
+   just a container restart — the `docker exec`'d migration process does
+   **not** auto-resume when the instance comes back, even though the
+   container itself does. **Expect this to have happened at least once** if
+   you're reading this Monday — the ETA when this was written (2026-07-18
+   ~10am) had the run finishing well past 11pm that same night. Same recovery
+   as above: check `migrate:status` for the migration's actual state
+   (`Importing` needs `reset-status` first; `Idle` with rows still
+   `unprocessed` can just be re-run directly), then re-launch.
+
+**Either way, nothing is lost** — Migrate API tracks progress per-row in its
+map tables, so any interruption (OOM, nightly shutdown, or otherwise) is
+resumable, never a data-loss event. It just needs a human to notice and
+re-launch it — neither failure mode resolves itself.
 
 **Once everything's done:** run `drush kmassets:index-all` + `drush
 kmassets:audit` (the per-node Solr sync was deliberately suppressed during
