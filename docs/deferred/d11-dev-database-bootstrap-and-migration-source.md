@@ -82,11 +82,23 @@ map tables, so any interruption (OOM, nightly shutdown, or otherwise) is
 resumable, never a data-loss event. It just needs a human to notice and
 re-launch it — neither failure mode resolves itself.
 
-**Once everything's done:** run `drush kmassets:index-all` + `drush
-kmassets:audit` (the per-node Solr sync was deliberately suppressed during
-migration — see `kmassets-sync-hook-fires-during-migration.md`) and merge
-PR #45 only after Than has rebased it per the comment on that PR (see
-`migrate-shared-vs-migrate-users-connection-duplication.md`).
+**Once the Images migration is done — next steps:**
+
+1. Run `drush kmassets:index-all` + `drush kmassets:audit` (the per-node Solr
+   sync was deliberately suppressed during migration — see
+   `kmassets-sync-hook-fires-during-migration.md`).
+2. Merge PR #45 only after Than has rebased it per the comment on that PR
+   (see `migrate-shared-vs-migrate-users-connection-duplication.md` — it
+   currently duplicates a connection PR #49 already built).
+3. **Run the user migration (`mandala_users` group) the same way as Images**
+   — directly on dev-0 via `drush migrate:import`, same drill as everything
+   above. It's small (~1,543 users, ~3,300 rows total including roles and
+   authmap) and will **not** hit the multi-hour scale problems Images did —
+   no special handling, no landmark/laptop approach needed, just run it.
+4. Once real users exist, **re-run `d7_images_collection_memberships`** to
+   pick up the ~210 rows that failed earlier for lack of a matching D11 user
+   (`drush migrate:import d7_images_collection_memberships` — Migrate API
+   will only reprocess what's still unresolved).
 
 All four deferred docs referenced above, plus the full session transcript, are
 on `main` as of PR #55 (or on its branch if not yet merged when you read this —
