@@ -46,3 +46,4 @@ nav:
   - "Dev database: bootstrap + migration source (DISCUSS 2026-07-16)": d11-dev-database-bootstrap-and-migration-source.md
   - "migrate:import --group aborts on partial failure": migrate-group-import-aborts-on-partial-failure.md
   - "migrate_shared vs migrate_users connection duplication (PR #45)": migrate-shared-vs-migrate-users-connection-duplication.md
+  - "Large migration OOM + resume behavior": migrate-large-migration-oom-and-resume-behavior.md
