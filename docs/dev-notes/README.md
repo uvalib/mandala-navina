@@ -32,4 +32,5 @@ until added there) and add a row to the index below.
 | [howto-local-dev.md](howto-local-dev.md) | How-to | Local development & rebuilds with DDEV; config workflow |
 | [howto-run-docs-locally.md](howto-run-docs-locally.md) | How-to | Preview and build this docs site locally |
 | [howto-access-mandala-nodes.md](howto-access-mandala-nodes.md) | How-to | SSH into dev/staging/production EC2 nodes; docker/DB inspection |
+| [howto-long-running-jobs-on-dev-staging.md](howto-long-running-jobs-on-dev-staging.md) | How-to | Dev/staging's nightly 11pm–6am shutdown window; what survives it and what doesn't |
 | [howto-template.md](howto-template.md) | Template | Starting point for new how-to guides |

@@ -48,6 +48,11 @@ back onto 8080 and **raced `mandala-drupal-0` for the port**, nondeterministical
 are now `--restart=no`, so the stop survives reboots. Reverse with
 `docker update --restart=always <name>`.
 
+*(2026-07-18 addendum: "dev-0's nightly reboot" here is the scheduled 11pm–6am
+cost-saving shutdown of the dev/staging instances — see
+`docs/dev-notes/howto-long-running-jobs-on-dev-staging.md` for the full
+constraint, including what does and doesn't survive it.)*
+
 The three D11 containers are `unless-stopped` and running, so they *do* come back on
 reboot — correct, and deliberately different: `unless-stopped` honours a deliberate stop,
 `always` would override the operator. Verified by configuration; not yet observed through
