@@ -31,4 +31,5 @@ until added there) and add a row to the index below.
 | [rituals-session-workflow.md](rituals-session-workflow.md) | Ritual | Session start/end rituals and shared-context discipline |
 | [howto-local-dev.md](howto-local-dev.md) | How-to | Local development & rebuilds with DDEV; config workflow |
 | [howto-run-docs-locally.md](howto-run-docs-locally.md) | How-to | Preview and build this docs site locally |
+| [howto-access-mandala-nodes.md](howto-access-mandala-nodes.md) | How-to | SSH into dev/staging/production EC2 nodes; docker/DB inspection |
 | [howto-template.md](howto-template.md) | Template | Starting point for new how-to guides |

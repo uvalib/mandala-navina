@@ -4,4 +4,5 @@ nav:
   - "Session rituals": rituals-session-workflow.md
   - "How-to: Local dev (DDEV)": howto-local-dev.md
   - "How-to: Run docs locally": howto-run-docs-locally.md
+  - "How-to: Access Mandala nodes (SSH)": howto-access-mandala-nodes.md
   - "How-to template": howto-template.md

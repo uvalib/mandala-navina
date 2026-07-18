@@ -11,6 +11,64 @@ still outstanding. See the correction block immediately below before reading
 Decision C's original text — several of its host/credential claims turned out
 to be wrong when checked against the live systems.
 
+## 🔴 HANDOFF — Yuji is out starting 2026-07-18; Than/Xiaoming picking up Monday
+
+A `mandala_images` migration is running on dev-0 right now, unattended, kicked
+off 2026-07-17. **Read this whole section before touching anything.**
+
+**Check status first:** see `docs/dev-notes/howto-access-mandala-nodes.md` for
+how to SSH in. Then:
+
+```bash
+sudo docker exec mandala-drupal-0 sh -c "tail -60 /tmp/migrate_import3.log"
+```
+
+(Note the file name — it's `migrate_import3.log`, not `migrate_import2.log`;
+the earlier log was superseded after a crash-and-resume, see below.)
+
+**What you'll likely find, as of 2026-07-18 ~10:04 EDT:**
+- `d7_images_collections`, `d7_images_subcollections`,
+  `d7_images_external_classification_scheme`, `d7_images_external_classification`,
+  `d7_images_image_agent` (111,194 rows), `d7_images_image_descriptions`
+  (55,041 rows) — **all done, 100% clean.**
+- `d7_images_collection_memberships` — **36/246, 210 "failed."** This is
+  **expected**, not a bug — it maps D7 users to D11 users, and the user
+  migration (PR #45) hasn't landed. Do not "fix" this.
+- `d7_images_shanti_image` (111,340 rows) — **crashed once on a PHP memory
+  limit, was reset and resumed**, running as of last check. See
+  `migrate-large-migration-oom-and-resume-behavior.md` for exactly what
+  happened and how it was fixed, in case it happens again (it very well might
+  — a resume re-processes the full row count, so it's a multi-hour operation
+  each time).
+- `d7_images_image_collection_membership` (~111,304 rows) — queued after
+  `shanti_image`, not yet started as of the last check. Should be clean (it's
+  image↔collection, not user-dependent — don't confuse it with
+  `d7_images_collection_memberships` above; see
+  `migrate-group-import-aborts-on-partial-failure.md` for the full
+  disambiguation).
+
+**If you find an `Exception` with no forward progress:** it's very likely the
+same OOM pattern. The fix is documented step by step in
+`migrate-large-migration-oom-and-resume-behavior.md` — short version:
+`drush migrate:reset-status <migration_id>`, then re-run with
+`php -d memory_limit=1024M vendor/bin/drush.php migrate:import <migration_id>`
+(note: `vendor/bin/drush.php`, **not** `vendor/bin/drush` — the latter is a
+bash wrapper, not a PHP file, and silently no-ops if you pass `-d` flags to it).
+
+**It is safe either way** — nothing needs to be running for the already-imported
+rows to be safe; Migrate API tracks progress per-row in its map tables, so any
+interruption is resumable, never a data-loss event.
+
+**Once everything's done:** run `drush kmassets:index-all` + `drush
+kmassets:audit` (the per-node Solr sync was deliberately suppressed during
+migration — see `kmassets-sync-hook-fires-during-migration.md`) and merge
+PR #45 only after Than has rebased it per the comment on that PR (see
+`migrate-shared-vs-migrate-users-connection-duplication.md`).
+
+All four deferred docs referenced above, plus the full session transcript, are
+on `main` as of PR #55 (or on its branch if not yet merged when you read this —
+check).
+
 ## ⚠ CORRECTION + EXECUTION UPDATE (2026-07-17)
 
 Decision C below claims the D7 source is reachable "on the exact host/subnet dev
