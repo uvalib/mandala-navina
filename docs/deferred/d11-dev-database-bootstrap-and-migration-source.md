@@ -11,98 +11,64 @@ still outstanding. See the correction block immediately below before reading
 Decision C's original text — several of its host/credential claims turned out
 to be wrong when checked against the live systems.
 
-## 🔴 HANDOFF — Yuji is out starting 2026-07-18; Than/Xiaoming picking up Monday
+## ✅ Images migration COMPLETE (confirmed live 2026-07-19) — Than/Xiaoming picking up this week
 
-A `mandala_images` migration is running on dev-0 right now, unattended, kicked
-off 2026-07-17. **Read this whole section before touching anything.**
+The `mandala_images` migration Yuji left running unattended on dev-0
+(2026-07-17) **finished cleanly and nothing is currently importing.** Verified
+directly against dev-0 (`migrate:status` + `/tmp/migrate_import3.log`, which
+ends with the `ALL_DONE_ROUND3` marker) — no need to re-check this, just
+start from here:
 
-**⚠ dev-0 shuts down every night 11pm–6am (cost saving) — this migration will
-almost certainly get cut off by that, sit idle overnight, and need a manual
-restart.** It does not resume on its own when the instance comes back up. See
-`docs/dev-notes/howto-long-running-jobs-on-dev-staging.md` and the "no error at
-all, log just stops" case below — that's very likely what you'll find if
-you're reading this after an overnight gap, not a new bug.
+| Migration | Total | Imported | Failed | Status |
+|---|---|---|---|---|
+| `d7_images_collections` | 55 | 55 | 0 | ✅ |
+| `d7_images_subcollections` | 116 | 116 | 0 | ✅ |
+| `d7_images_external_classification_scheme` | 2 | 2 | 0 | ✅ |
+| `d7_images_external_classification` | 9 | 9 | 0 | ✅ |
+| `d7_images_image_agent` | 111,194 | 111,345* | 0 | ✅ |
+| `d7_images_image_descriptions` | 55,041 | 55,041 | 0 | ✅ |
+| `d7_images_shanti_image` (nodes) | 111,340 | 111,340 | 0 | ✅ — OOM'd once, reset+resumed cleanly, finished 2026-07-18 11:10 EDT |
+| `d7_images_image_collection_membership` (image↔collection) | 111,304 | 111,304 | 0 | ✅ — finished 2026-07-18 19:32 EDT, last in the queue |
+| `d7_images_collection_memberships` (**user**↔collection) | 246 | 36 | 210 | ⚠ **expected partial** — maps D7 users to D11 users; PR #45 (user migration) hasn't landed. Do not "fix" this — see next steps below. |
 
-**Check status first:** see `docs/dev-notes/howto-access-mandala-nodes.md` for
-how to SSH in. Then:
+*`image_agent`'s imported count (111,345) slightly exceeds total (111,194) —
+cosmetic count drift, not a failure (0 failed, 0 messages); not investigated
+further.
 
-```bash
-sudo docker exec mandala-drupal-0 sh -c "tail -60 /tmp/migrate_import3.log"
-```
+The OOM-and-resume episode (`migrate-large-migration-oom-and-resume-behavior.md`)
+and the nightly-shutdown risk (`docs/dev-notes/howto-long-running-jobs-on-dev-staging.md`)
+both happened as anticipated during the run, but resolved cleanly — no open
+issue from either.
 
-(Note the file name — it's `migrate_import3.log`, not `migrate_import2.log`;
-the earlier log was superseded after a crash-and-resume, see below.)
+**Next steps (in order):**
 
-**What you'll likely find, as of 2026-07-18 ~10:04 EDT:**
-- `d7_images_collections`, `d7_images_subcollections`,
-  `d7_images_external_classification_scheme`, `d7_images_external_classification`,
-  `d7_images_image_agent` (111,194 rows), `d7_images_image_descriptions`
-  (55,041 rows) — **all done, 100% clean.**
-- `d7_images_collection_memberships` — **36/246, 210 "failed."** This is
-  **expected**, not a bug — it maps D7 users to D11 users, and the user
-  migration (PR #45) hasn't landed. Do not "fix" this.
-- `d7_images_shanti_image` (111,340 rows) — **crashed once on a PHP memory
-  limit, was reset and resumed**, running as of last check. See
-  `migrate-large-migration-oom-and-resume-behavior.md` for exactly what
-  happened and how it was fixed, in case it happens again (it very well might
-  — a resume re-processes the full row count, so it's a multi-hour operation
-  each time).
-- `d7_images_image_collection_membership` (~111,304 rows) — queued after
-  `shanti_image`, not yet started as of the last check. Should be clean (it's
-  image↔collection, not user-dependent — don't confuse it with
-  `d7_images_collection_memberships` above; see
-  `migrate-group-import-aborts-on-partial-failure.md` for the full
-  disambiguation).
-
-**If you find an `Exception` with no forward progress:** check which kind first:
-
-1. **`drush migrate:reset-status`-shaped problem** (e.g. `is busy with another
-   operation: Importing`, or a memory-exhaustion fatal error above it) — it's
-   very likely the same OOM pattern. The fix is documented step by step in
-   `migrate-large-migration-oom-and-resume-behavior.md` — short version:
-   `drush migrate:reset-status <migration_id>`, then re-run with
-   `php -d memory_limit=1024M vendor/bin/drush.php migrate:import <migration_id>`
-   (note: `vendor/bin/drush.php`, **not** `vendor/bin/drush` — the latter is a
-   bash wrapper, not a PHP file, and silently no-ops if you pass `-d` flags to it).
-2. **No error at all, log just stops mid-progress-bar with no `Exception` and
-   no `ALL_DONE`** — the instance almost certainly went through its **nightly
-   11pm–6am shutdown** mid-run (see `docs/dev-notes/
-   howto-long-running-jobs-on-dev-staging.md`). This is a full EC2 stop, not
-   just a container restart — the `docker exec`'d migration process does
-   **not** auto-resume when the instance comes back, even though the
-   container itself does. **Expect this to have happened at least once** if
-   you're reading this Monday — the ETA when this was written (2026-07-18
-   ~10am) had the run finishing well past 11pm that same night. Same recovery
-   as above: check `migrate:status` for the migration's actual state
-   (`Importing` needs `reset-status` first; `Idle` with rows still
-   `unprocessed` can just be re-run directly), then re-launch.
-
-**Either way, nothing is lost** — Migrate API tracks progress per-row in its
-map tables, so any interruption (OOM, nightly shutdown, or otherwise) is
-resumable, never a data-loss event. It just needs a human to notice and
-re-launch it — neither failure mode resolves itself.
-
-**Once the Images migration is done — next steps:**
-
-1. Run `drush kmassets:index-all` + `drush kmassets:audit` (the per-node Solr
-   sync was deliberately suppressed during migration — see
-   `kmassets-sync-hook-fires-during-migration.md`).
-2. Merge PR #45 only after Than has rebased it per the comment on that PR
-   (see `migrate-shared-vs-migrate-users-connection-duplication.md` — it
-   currently duplicates a connection PR #49 already built).
+1. `drush kmassets:index-all` + `drush kmassets:audit` — currently a **no-op**,
+   confirmed `solr_master_url` is still unset on dev-0 (nothing to index
+   against yet). Skip until Solr is actually wired up; not a blocker for
+   anything below.
+2. Merge PR #45 only after Than has rebased it per the review comment on that
+   PR (still open/draft as of 2026-07-19) — see
+   `migrate-shared-vs-migrate-users-connection-duplication.md` — it currently
+   duplicates a connection PR #49 already built.
 3. **Run the user migration (`mandala_users` group) the same way as Images**
    — directly on dev-0 via `drush migrate:import`, same drill as everything
    above. It's small (~1,543 users, ~3,300 rows total including roles and
    authmap) and will **not** hit the multi-hour scale problems Images did —
    no special handling, no landmark/laptop approach needed, just run it.
+   **Note:** `MIGRATE_SOURCE_DATABASE`/`MIGRATE_USERS_DATABASE` are still
+   **not** wired into dev-0's persistent container env (checked
+   `terraform-infrastructure` 2026-07-19, nothing there) — keep passing them
+   ad-hoc via `docker exec -e MIGRATE_SOURCE_DATABASE=mandala_d7_images -e
+   MIGRATE_USERS_DATABASE=mandala_d7_shared ...` as before, or wire it in
+   properly first (safe to do now — the migration that made restarting risky
+   is finished).
 4. Once real users exist, **re-run `d7_images_collection_memberships`** to
    pick up the ~210 rows that failed earlier for lack of a matching D11 user
    (`drush migrate:import d7_images_collection_memberships` — Migrate API
    will only reprocess what's still unresolved).
 
-All four deferred docs referenced above, plus the full session transcript, are
-on `main` as of PR #55 (or on its branch if not yet merged when you read this —
-check).
+All deferred docs referenced above, plus the full session transcript, are on
+`main` (PR #55 and later).
 
 ## ⚠ CORRECTION + EXECUTION UPDATE (2026-07-17)
 
