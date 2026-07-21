@@ -20,7 +20,7 @@ source:
   #   1. Filter — confirm the D7 authmap `module` value. If it is not
   #      'simplesamlphp_auth', change `constants.provider` below to match.
   #   2. Authname format — `SELECT authname FROM authmap LIMIT 20;` on
-  #      mandala_shared_dev, and confirm it is the SAME string SimpleSAMLphp
+  #      mandala_d7_shared, and confirm it is the SAME string SimpleSAMLphp
   #      presents on D11 (bare NetBadge computing-id vs. scoped eppn like
   #      `abc1d@virginia.edu`). If the formats differ, add a process transform
   #      here — otherwise match-existing silently fails.

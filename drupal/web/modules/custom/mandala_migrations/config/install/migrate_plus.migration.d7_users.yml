@@ -5,8 +5,8 @@ migration_tags:
   - 'Drupal 7'
   - 'Mandala Users'
 
-# Reads the shared user base (mandala_shared / mandala_shared_dev) via the
-# group's `migrate_shared` connection. The d7_user source plugin excludes the
+# Reads the shared user base (mandala_shared / mandala_d7_shared) via the
+# group's `migrate_users` connection. The d7_user source plugin excludes the
 # anonymous user (uid 0) automatically.
 source:
   plugin: d7_user

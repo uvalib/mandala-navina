@@ -109,27 +109,6 @@ if (($envDbName = getenv('MYSQL_DATABASE')) !== false && $envDbName !== '') {
     'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
     'driver' => 'mysql',
   ];
-
-  // Migrate source connection for the CROSS-CUTTING user migration, used only
-  // where that migration RUNS — on the dev SERVER (decision C(b), 2026-07-16).
-  // The shared D7 user DB lives on the SAME RDS instance as the D11 site and is
-  // reached by the SAME account (the `mandala%` grant covers it), so we derive
-  // this from the default connection and swap only the database name — no new
-  // secret. The shared DB is real PII and is deliberately NOT replicated to
-  // laptops; user-migration development happens on dev. The `mandala_users`
-  // migration group reads this `migrate_shared` key. DB name is overridable so
-  // staging/prod can point at `mandala_shared` instead of the dev copy.
-  // See docs/deferred/d7-shared-user-database.md and
-  // docs/deferred/d11-dev-database-bootstrap-and-migration-source.md.
-  $databases['migrate_shared']['default'] = [
-    'database' => getenv('MIGRATE_SHARED_DATABASE') ?: 'mandala_shared_dev',
-    'username' => getenv('MYSQL_USER'),
-    'password' => getenv('MYSQL_PASSWORD'),
-    'host' => getenv('MYSQL_HOST'),
-    'port' => 3306,
-    'prefix' => '',
-    'driver' => 'mysql',
-  ];
 }
 
 // Migrate API source connection(s) for infrastructure (non-DDEV) environments.
@@ -1002,9 +981,9 @@ if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev
     'driver'   => 'mysql',
     'prefix'   => '',
   ];
-  // NOTE: no DDEV `migrate_shared` connection — the shared user DB is PII and
+  // NOTE: no DDEV `migrate_users` connection — the shared user DB is PII and
   // is NOT replicated to laptops. The user migration runs on the dev server;
-  // its `migrate_shared` connection is defined in the env-driven block above.
+  // its `migrate_users` connection is defined in the env-driven block above.
 }
 
 /**

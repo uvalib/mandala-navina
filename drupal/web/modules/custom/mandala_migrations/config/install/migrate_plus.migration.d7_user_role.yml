@@ -23,8 +23,8 @@ process:
       'anonymous user': anonymous
       'authenticated user': authenticated
       administrator: administrator
-    # TODO(laptop migration-dev): the D7 shared DB has custom roles beyond these
-    # three. Load mandala_shared_dev, run `SELECT rid, name FROM role;`, and add
+    # TODO(on-dev migration-dev): the D7 shared DB has custom roles beyond these
+    # three. Against mandala_d7_shared, run `SELECT rid, name FROM role;`, and add
     # each D7 role name → its D11 role id here. Until then, unmapped roles fail
     # the map (surfaced as skipped rows) rather than silently mismapping.
   label: name
