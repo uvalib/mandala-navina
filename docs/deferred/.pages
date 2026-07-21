@@ -48,4 +48,5 @@ nav:
   - "migrate_shared vs migrate_users connection duplication (PR #45)": migrate-shared-vs-migrate-users-connection-duplication.md
   - "Large migration OOM + resume behavior": migrate-large-migration-oom-and-resume-behavior.md
   - "Dev migration slower than DDEV (cross-AZ latency)": dev-migration-slower-than-ddev-cross-az-latency.md
+  - "Deliver code/config to dev-0: rebuild vs pipeline (open)": dev-0-code-config-delivery-rebuild-or-pipeline.md
   - "d7_user_role wipes committed role permissions": d7-user-role-migration-wipes-committed-role-permissions.md
