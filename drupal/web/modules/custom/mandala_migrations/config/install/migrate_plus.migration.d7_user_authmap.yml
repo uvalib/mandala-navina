@@ -16,14 +16,16 @@ migration_tags:
 # provider name.
 source:
   plugin: authmap
-  # ⚠ VERIFY ON THE REAL DUMP (the crux unknown from the deferred doc):
-  #   1. Filter — confirm the D7 authmap `module` value. If it is not
-  #      'simplesamlphp_auth', change `constants.provider` below to match.
-  #   2. Authname format — `SELECT authname FROM authmap LIMIT 20;` on
-  #      mandala_d7_shared, and confirm it is the SAME string SimpleSAMLphp
-  #      presents on D11 (bare NetBadge computing-id vs. scoped eppn like
-  #      `abc1d@virginia.edu`). If the formats differ, add a process transform
-  #      here — otherwise match-existing silently fails.
+  # ✓ VERIFIED 2026-07-21 against mandala_d7_shared (the crux unknown from the
+  # deferred doc), both assumptions hold — no transform needed:
+  #   1. Filter — all 1,384 authmap rows carry module = 'simplesamlphp_auth'
+  #      (SELECT module, COUNT(*) FROM authmap GROUP BY module), so
+  #      `constants.provider` below is correct.
+  #   2. Authname format — samples are bare NetBadge computing-ids (ys2n, twm4g,
+  #      wnm…), NOT scoped eppn. This matches what SimpleSAMLphp presents on D11:
+  #      simplesamlphp_auth.settings.yml unique_id = the bare `uid` OID
+  #      (0.9.2342.19200300.100.1.1), not eduPersonPrincipalName. authname
+  #      therefore carries over verbatim and match-existing works.
   constants:
     provider: simplesamlphp_auth
 
