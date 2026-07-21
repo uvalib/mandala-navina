@@ -17,13 +17,17 @@ source:
     provider: simplesamlphp_auth
 process:
   uid:
-    plugin: migration_lookup
-    migration: d7_users
-    source: uid
+    -
+      plugin: migration_lookup
+      migration: d7_users
+      source: uid
+    -
+      plugin: skip_on_empty
+      method: row
   authname: authname
   provider: constants/provider
 destination:
-  plugin: 'entity:authmap'
+  plugin: authmap
 idMap: {  }
 migration_dependencies:
   required:
