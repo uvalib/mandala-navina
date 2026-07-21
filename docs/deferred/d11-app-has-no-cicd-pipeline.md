@@ -59,8 +59,19 @@ while the house convention (dsf, drupal-library) is
 `/containers/<image>/latest`. `deploy_backend.yml` currently follows the app repo;
 reconcile the two deliberately when the pipeline is written.
 
+## 2026-07-21 update
+
+This gap became load-bearing again: PR #45 (D7 user-migration config) merged to
+`main` but **cannot reach dev-0** without a rebuild, so the user-migration deploy
+is blocked on it. The broader "how do we deliver code/config to dev-0 at all"
+question — with the manual-rebuild vs pipeline choice left **open** for Yuji/Dave
+— is now tracked in
+[dev-0-code-config-delivery-rebuild-or-pipeline.md](dev-0-code-config-delivery-rebuild-or-pipeline.md).
+Option 1 below (write the pipeline) is that note's Option B. No decision recorded.
+
 ## Cross-references
 
+- [dev-0-code-config-delivery-rebuild-or-pipeline.md](dev-0-code-config-delivery-rebuild-or-pipeline.md) — the open delivery-mechanism decision this blocks
 - `docs/planning/1b1-part4-d11-backend-deploy-scope.md` §1, §4
 - `pipeline/buildspec.yml`, `pipeline/deployspec.yml`
 - `terraform-infrastructure/aws_cicd/pipelines/drupal-dsf/` — the reference shape
