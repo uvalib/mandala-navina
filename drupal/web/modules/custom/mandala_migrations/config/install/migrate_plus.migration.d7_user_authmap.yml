@@ -30,16 +30,23 @@ source:
     provider: simplesamlphp_auth
 
 process:
-  # uid preserved by d7_users, so a straight lookup returns the same uid.
+  # uid preserved by d7_users, so the lookup returns the same uid. skip_on_empty
+  # (method: row) drops any authmap row whose user did not migrate, rather than
+  # writing an orphan link — the pattern externalauth's own d7_authmap template uses.
   uid:
-    plugin: migration_lookup
-    migration: d7_users
-    source: uid
+    - plugin: migration_lookup
+      migration: d7_users
+      source: uid
+    - plugin: skip_on_empty
+      method: row
   authname: authname
   provider: constants/provider
 
 destination:
-  plugin: 'entity:authmap'
+  # externalauth stores authmap through its AuthmapStorage service, NOT as a
+  # content entity — the destination plugin id is `authmap`, not `entity:authmap`.
+  # (Caught by the local synthetic smoke-test, 2026-07-21.)
+  plugin: authmap
 
 migration_dependencies:
   required:
