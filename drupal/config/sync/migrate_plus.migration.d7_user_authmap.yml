@@ -1,0 +1,31 @@
+uuid: 276ce149-a374-46e5-8e18-c4446f060a66
+langcode: en
+status: true
+dependencies: {  }
+id: d7_user_authmap
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Users'
+migration_group: mandala_users
+label: 'D7 SAML/Shibboleth authmap → D11 externalauth (NetBadge account linking)'
+source:
+  plugin: authmap
+  constants:
+    provider: simplesamlphp_auth
+process:
+  uid:
+    plugin: migration_lookup
+    migration: d7_users
+    source: uid
+  authname: authname
+  provider: constants/provider
+destination:
+  plugin: 'entity:authmap'
+idMap: {  }
+migration_dependencies:
+  required:
+    - d7_users
+include: null

@@ -1,0 +1,42 @@
+id: d7_user_role
+label: 'D7 shared roles → existing D11 roles (name remap, NOT permission migration)'
+migration_group: mandala_users
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Users'
+
+# We do NOT migrate D7 permissions. D11 roles and their permissions are defined
+# in committed config (user.role.*.yml). This migration exists only so that
+# `d7_users` can migration_lookup a D7 role → the matching D11 role id (the
+# array-friendly way to resolve a user's role set). The `id` process maps each
+# D7 role NAME to an ALREADY-EXISTING D11 role machine name, so the entity:user_role
+# save loads the existing role and leaves it fully intact (label AND permissions)
+# rather than creating a bare, permission-less role. We deliberately do NOT map a
+# `label` — supplying one would rename the shared D11 role to the D7 name, and with
+# several D7 roles collapsing onto one D11 role (below) the last one would win.
+source:
+  plugin: d7_user_role
+
+process:
+  id:
+    plugin: static_map
+    source: name
+    map:
+      'anonymous user': anonymous
+      'authenticated user': authenticated
+      administrator: administrator
+      # Custom D7 editor roles collapse onto D11 content_editor. Verified
+      # 2026-07-21 against mandala_d7_shared (SELECT rid, name FROM role → rids
+      # 4/5/6: editor, workflow editor, shanti editor). D11 ships a single
+      # editorial role, so per migrate-not-improve (ADR 008/010) the three-way
+      # distinction is intentionally flattened rather than reproduced. Revisit
+      # only if a downstream site actually needs the finer editorial grades.
+      editor: content_editor
+      'workflow editor': content_editor
+      'shanti editor': content_editor
+
+destination:
+  plugin: 'entity:user_role'
+
+migration_dependencies:
+  optional: []

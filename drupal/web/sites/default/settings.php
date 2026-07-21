@@ -981,6 +981,9 @@ if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev
     'driver'   => 'mysql',
     'prefix'   => '',
   ];
+  // NOTE: no DDEV `migrate_users` connection — the shared user DB is PII and
+  // is NOT replicated to laptops. The user migration runs on the dev server;
+  // its `migrate_users` connection is defined in the env-driven block above.
 }
 
 /**
