@@ -5,6 +5,16 @@
 **Jira:** (add when available)
 **Priority:** High — blocks PR #45 (`feat/user-migration`) from being safely un-drafted/merged as-is; doesn't block anything else today
 
+**Status: RESOLVED — 2026-07-21** (`feat/user-migration` commit `216579e`, PR #45).
+Rebased onto `main`, dropped the `migrate_shared` connection block from
+`settings.php`, and repointed `migrate_plus.migration_group.mandala_users.yml`'s
+`shared_configuration.source.key` at `migrate_users` per the recommendation
+below. Stale `mandala_shared_dev` references corrected to the real name,
+`mandala_d7_shared`. PR #45 itself is still draft — its remaining checklist
+items (role `static_map`, authmap format verification, config export,
+`collection_memberships` re-run) are unrelated to this duplication and need
+real data on dev-0; see the runbook posted as a PR #45 comment.
+
 ## Observation
 
 PR #45 (`feat/user-migration`, Than, draft) and PR #49 (`feat/env-driven-migrate-connection`,
