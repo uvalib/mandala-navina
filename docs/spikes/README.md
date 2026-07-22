@@ -8,7 +8,7 @@
 | [Spike 4](spike-04-ckeditor5-footnotes.md) | ~~CKEditor 5 footnotes + Tibetan Unicode~~ | Than | Individual | ◇ Split (2026-07-10) — see 4a/4b |
 | [Spike 4a](spike-04a-tibetan-unicode-roundtrip.md) | Tibetan Unicode round-trip (NFC/NFD fidelity, cross-cutting) | Than | Individual | ○ Pending |
 | [Spike 4b](spike-04b-ckeditor5-footnotes.md) | CKEditor 5 footnotes (Texts-specific) | Than | Individual | ○ Pending |
-| [Spike 5](spike-05-bibcite-sources.md) | bibcite for Sources site | Xiaoming | Individual | ○ Pending |
+| [Spike 5](spike-05-bibcite-sources.md) | bibcite for Sources site | Than | Individual | ○ Pending |
 | [Spike 6](spike-06-api-compatibility.md) | API compatibility for React application | Than | Team candidate | ○ Pending |
 | [Spike 7](spike-07-kaltura-av-integration.md) | Kaltura AV integration on Drupal 11 | — | Individual | ○ Pending |
 | [Spike 8](spike-08-reindeer-x-consolidation.md) | reindeer_x consolidation as managed sync subsystem | Yuji | Individual | ◐ Partial |
