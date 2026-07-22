@@ -67,6 +67,19 @@ rather than just failing a migration.
 fixed.** The other two user migrations are unaffected in isolation, but `d7_users`
 depends on `d7_user_role`, so the whole user migration is gated on this.
 
+## Update 2026-07-22 — this note's "leave committed permissions alone" fix is not sufficient on its own
+
+Follow-up investigation (live dev-0 query session, 2026-07-22) found that D11's
+committed `content_editor` permissions — the thing candidate fix 1 above would
+leave untouched — are **themselves wrong**: they cover `article`/`page`
+(Drupal's stock demo content types), not `shanti_image`/`subcollection`/
+`asset_link`/`collection` (Mandala's real content model). D7's actual editorial
+grant turned out to be Organic Groups' own group-scoped role system, not core
+`role_permission` at all. See
+[d7-editor-permissions-og-group-scoped-not-migrated.md](d7-editor-permissions-og-group-scoped-not-migrated.md)
+for the full data and what it means for the fix design — the destructive-wipe
+fix here is still correct and necessary, but no longer sufficient by itself.
+
 ## Cross-references
 
 - `drupal/web/modules/custom/mandala_migrations/config/install/migrate_plus.migration.d7_user_role.yml`
