@@ -1,6 +1,6 @@
 # Spike 5: bibcite for the Sources Site
 **Status:** Pending
-**Lead:** Xiaoming Wang
+**Lead:** Than Grove (reassigned from Xiaoming, 2026-07-22, by mutual agreement)
 **Mode:** Individual
 **Date:** —
 **Commit:** —
