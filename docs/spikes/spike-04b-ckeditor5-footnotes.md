@@ -1,9 +1,9 @@
 # Spike 4b: CKEditor 5 Footnotes
-**Status:** In progress — D7 side fully documented; D11 side confirms `footnotes` 4.x cannot bridge D7's citation/definition field split unaided (Fail Criteria scenario triggered). **2026-07-13: D7 already concatenates a whole book at render time, and a migration-time cross-node transform reproduces D7's citation-popup behavior without merging any node's storage — but the end-of-book Notes list needs a mitigation: the module's stock aggregation mechanism is empirically confirmed broken under Drupal's default entity render cache (near-certain in production, not a rare edge case).** Awaiting team sign-off: refined Option 1 (with a caching mitigation) vs. Option 2 (plain hyperlinks, no open risk).
+**Status:** In progress — D7 side fully documented; D11 side confirms `footnotes` 4.x cannot bridge D7's citation/definition field split unaided (Fail Criteria scenario triggered). **2026-07-13: D7 already concatenates a whole book at render time, and a migration-time cross-node transform reproduces D7's citation-popup behavior without merging any node's storage — but the end-of-book Notes list needs a mitigation: the module's stock aggregation mechanism is empirically confirmed broken under Drupal's default entity render cache (near-certain in production, not a rare edge case).** **2026-07-22: Option 3 (dedicated Notes-list aggregation, bypassing the stock accumulator) prototyped and confirmed working against the real bug precondition** — see `spike_footnotes_demo` module below. Awaiting team sign-off: refined Option 1 (now with a working Notes-list mitigation) vs. Option 2 (plain hyperlinks, no open risk).
 **Lead:** Than Grove (built D7 shanti_texts and footnotes)
 **Mode:** Individual
-**Date:** 2026-07-10 (D7/D11 findings); 2026-07-13 (book-display-model correction)
-**Branch/commit:** `spike/4b-ckeditor5-footnotes` (findings merged via PR #31); continued on `spike/4b-book-display-model`
+**Date:** 2026-07-10 (D7/D11 findings); 2026-07-13 (book-display-model correction); 2026-07-22 (Option 3 prototype)
+**Branch/commit:** `spike/4b-ckeditor5-footnotes` (findings merged via PR #31); continued on `spike/4b-book-display-model`; Option 3 prototype on `spike/4b-footnotes-notes-list-prototype`
 
 **Split from [Spike 4](spike-04-ckeditor5-footnotes.md) on 2026-07-10** — team-ratified.
 See that file for the original combined scope and why it was split.
@@ -501,7 +501,8 @@ Drupal's default caching.
    data directly (e.g., from the migration-time transform's own output, or
    a stored field), independent of whatever Drupal's entity cache is doing
    for the citation markup — more custom code, but sidesteps the caching
-   interaction altogether.
+   interaction altogether. **Prototyped and confirmed working, 2026-07-22
+   — see below.**
 4. Fall back to Option 2 (plain hyperlinks to a Notes section) if a robust
    fix for the aggregation proves too costly relative to its value.
 
@@ -509,6 +510,52 @@ This doesn't kill the refined Option 1 approach, but it does mean the
 end-of-book Notes list can no longer be treated as "solved by a config
 flag" — it needs one of the above, and that decision should happen before
 committing to Option 1 as final.
+
+### Option 3 prototyped and confirmed working (2026-07-22)
+
+Built a minimal reference module, `spike_footnotes_demo`
+(`drupal/web/modules/custom/spike_footnotes_demo/`, mirrors the
+`spike_solr_demo` pattern from Spike 2 — an isolated, non-production demo
+module, safe to leave in the repo as a reference implementation), to test
+Option 3 directly rather than just propose it.
+
+**What it does:**
+- A dedicated table, `spike_footnotes_resolved` (`bid`, `nid`, `page_weight`,
+  `number`, `text`), stands in for "the migration-time transform's own
+  output" — completely independent of Drupal's entity/field/render-cache
+  system.
+- A dedicated text format, `spike_footnotes_format`, enables
+  `filter_footnotes` with `footnotes_footer_disable: true` (defers the
+  stock per-field list so it never renders — citation links still work,
+  since the resolved text is baked into each citation's own tag regardless
+  of this setting).
+- A controller at `/spike/footnotes-book-demo/{bid}` renders each page
+  sharing a book id in sequence (natural entity view, citation links intact)
+  and then builds the Notes list **by querying `spike_footnotes_resolved`
+  directly** — never touching `FootnotesGroup` or the filter's static
+  accumulator.
+- `scripts/seed-demo.php` reproduces the CONFIRMED bug's exact precondition:
+  creates two citing pages sharing `bid=999`, renders the first one
+  **standalone** first (`renderInIsolation()`, seeding its entity render
+  cache — simulating a reader/crawler visiting it directly before it ever
+  appears in a book view), then populates the resolved-data table for both.
+
+**Result:** hitting `/spike/footnotes-book-demo/999` after seeding —
+both citation links render correctly (with working popover text), **and**
+the assembled Notes list correctly includes **both** footnotes
+(`[1]` from the cache-seeded page, `[2]` from the fresh page) — despite
+node 111350 being a genuine render-cache HIT at request time, exactly the
+condition that silently drops entries under the stock mechanism (per the
+CONFIRMED section above). This is the same failure precondition, with a
+different aggregation mechanism, and it does not fail.
+
+**What this establishes:** Option 3 is not just theoretically sound, it
+works as implemented against the actual `footnotes` 4.x module and Drupal's
+real entity render cache — not a paper design. **What this does NOT
+establish:** production-readiness (no book-outline-aware batch integration
+with the actual migration transform yet, no styling/theming, no automated
+test coverage) — this is a feasibility prototype, scoped exactly to what a
+spike needs to prove, not the production implementation.
 
 ### What this means for the Texts migration (leaning toward Option 1, pending team sign-off)
 
@@ -544,12 +591,14 @@ should factor into the team's choice between Option 1 and Option 2.
 
 ### Not yet done
 - Decide between the three options above (or another) — team input needed;
-  Option 1's core transform is de-risked, but the end-of-book Notes-list
-  mitigation (4 choices above) adds real cost that should weigh into the
-  decision against Option 2
-- **Choose and implement a Notes-list aggregation mitigation** if Option 1
-  is chosen (see the 4 options in the CONFIRMED caching section above) —
-  this is now confirmed-necessary work, not a "verify and maybe fix" item
+  Option 1's core transform is de-risked, and its Notes-list mitigation cost
+  is now a demonstrated-working prototype (Option 3) rather than an open
+  question, which should weigh into the decision against Option 2
+- **Integrate the Option 3 prototype with the real migration transform** —
+  the demo module proves the mechanism against hand-seeded data; it still
+  needs the actual `nb{N}`/`n{N}` resolution logic (below) to populate a
+  real version of the resolved-data table/field during migration, plus
+  styling/theming and test coverage
 - Transformation function (D7 pattern → chosen D11 approach) — must be
   **book-outline-aware** (operate across all pages sharing a `bid`, not
   per-node, to resolve `nb{N}`/`n{N}` anchor pairs) but writes back

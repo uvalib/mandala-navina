@@ -1,0 +1,70 @@
+<?php
+
+/**
+ * @file
+ * Install/schema for the Spike 4b footnotes Notes-list demo.
+ */
+
+/**
+ * Implements hook_uninstall().
+ *
+ * The demo text format (config/install/filter.format.spike_footnotes_format.yml)
+ * declares 'footnotes' as its owning module dependency, not this one, so
+ * Drupal's config system does not remove it automatically on uninstall —
+ * delete it explicitly so re-enabling this module is always a clean install.
+ */
+function spike_footnotes_demo_uninstall() {
+  \Drupal::configFactory()->getEditable('filter.format.spike_footnotes_format')->delete();
+}
+
+/**
+ * Implements hook_schema().
+ *
+ * One row per resolved footnote (number + text) per citing page, keyed by
+ * book id (`bid`, mirroring D7 core Book module's outline grouping). This
+ * table is what a real migration-time transform would populate — it stands
+ * in for "the migration-time transform's own output," Option 3's proposed
+ * data source, kept entirely independent of Drupal's entity/render cache.
+ */
+function spike_footnotes_demo_schema() {
+  $schema['spike_footnotes_resolved'] = [
+    'description' => 'Resolved footnote data per citing page, keyed by book id. Demo stand-in for migration-time transform output (Spike 4b Option 3).',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+      ],
+      'bid' => [
+        'description' => 'Book id grouping pages, analogous to D7 Book module bid.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'nid' => [
+        'description' => 'The citing page node id this footnote belongs to.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'page_weight' => [
+        'description' => 'Order of this page within the book, for Notes-list ordering.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'number' => [
+        'description' => 'Footnote citation number (matches the data-value on the citation tag).',
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'text' => [
+        'description' => 'Resolved footnote body text (matches data-text on the citation tag).',
+        'type' => 'text',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'bid_page_weight' => ['bid', 'page_weight'],
+    ],
+  ];
+  return $schema;
+}

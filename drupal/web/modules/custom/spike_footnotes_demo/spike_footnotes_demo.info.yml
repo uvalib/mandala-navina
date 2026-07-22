@@ -1,0 +1,9 @@
+name: 'Spike 4b: Footnotes Notes-List Demo'
+type: module
+description: 'Proof-of-concept for Spike 4b Option 3 — end-of-book footnote Notes-list built from a dedicated resolved-data table, independent of the footnotes module''s render-cache-bound accumulator. Not for production use.'
+core_version_requirement: ^10.2 || ^11
+package: Mandala Spikes
+dependencies:
+  - node:node
+  - filter:filter
+  - footnotes:footnotes

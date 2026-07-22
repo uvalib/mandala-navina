@@ -1,0 +1,8 @@
+spike_footnotes_demo.book_view:
+  path: '/spike/footnotes-book-demo/{bid}'
+  defaults:
+    _controller: '\Drupal\spike_footnotes_demo\Controller\BookNotesDemoController::view'
+    _title: 'Spike 4b: Footnotes Notes-list demo (Option 3)'
+  requirements:
+    _permission: 'access content'
+    bid: '\d+'

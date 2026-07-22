@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - footnotes
+name: 'Spike 4b: Footnotes demo format'
+format: spike_footnotes_format
+weight: 50
+filters:
+  filter_footnotes:
+    id: filter_footnotes
+    provider: footnotes
+    status: true
+    weight: 0
+    settings:
+      footnotes_collapse: false
+      footnotes_css: true
+      footnotes_dialog: true
+      footnotes_dialog_prevent_bubbling: false
+      footnotes_footer_disable: true
+      footnotes_preview_show_text: true
+      footnotes_preview_character: ''
