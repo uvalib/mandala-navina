@@ -4,7 +4,7 @@
 **Raised during:** Local synthetic user-migration smoke-test (2026-07-21, Xiaoming + Than)
 **Jira:** (add when available)
 **Priority:** **High — blocks the dev-0 user migration; running `d7_user_role` as-is strips editorial + authenticated-user access**
-**Status: RESOLVED 2026-07-24** (branch `fix/user-role-permission-wipe`) — candidate fix 1 implemented; see "Resolution" below.
+**Status: RESOLVED + VERIFIED end-to-end 2026-07-24** (branch `fix/user-role-permission-wipe`) — candidate fix 1 implemented and proven on the synthetic fixture; verification also caught a *second* bug in the fix (missing `handle_multiples`), now fixed on the same branch. See "Resolution" and "Verification handoff" below.
 
 ## What we found
 
@@ -111,6 +111,31 @@ entirely; role translation now happens in-process:
 receive the mapped role set. That is the end-to-end proof for the pairing session
 with Xiaoming's smoke-test harness (this DDEV has no shared-user D7 source loaded).
 
+### Follow-up 2026-07-24 (Xiaoming) — end-to-end proof done, and it caught a second bug
+
+The end-to-end `migrate:import d7_users` above was run against the rebuilt synthetic
+fixture (see "Verification handoff" below). It confirmed the wipe is gone — **but
+every migrated user came out with no editor/admin roles at all.** Root cause was a
+second, independent bug in the `mandala_role_map` plugin: it was missing
+**`handle_multiples = TRUE`** in its annotation.
+
+The source `roles` is a multi-value property (array of rids). migrate's pipeline
+prepends a `get` plugin for the `source: roles` line, and that `get` sets the
+pipeline's `$multiple` flag TRUE. With `handle_multiples` defaulting FALSE,
+`MigrateExecutable::processPipeline()` then applies the plugin **element-wise** —
+calling `transform()` once per rid — and nests the results, e.g.
+`[["administrator"],["content_editor"]]`. The `entity:user` destination cannot
+assign that shape, so users silently received no mapped roles (a *silent*
+correctness failure, not a loud one). The plugin's own unit test missed it because
+it calls `transform()` directly with the whole array, which bypasses the pipeline's
+per-element dispatch.
+
+Fix (commit `56331f1` on this branch): declare `handle_multiples = TRUE` on
+`mandala_role_map` so migrate passes the whole rid array to `transform()` in a
+single call — matching the plugin's array-aware design. Re-verified after the fix:
+all five fixture users received exactly the mapped roles (see the results table
+below).
+
 **Still open, tracked separately:** this fix stops the *destruction* of
 `content_editor`'s permissions but does not make that permission list *correct* —
 see [d7-editor-permissions-og-group-scoped-not-migrated.md](d7-editor-permissions-og-group-scoped-not-migrated.md)
@@ -119,14 +144,39 @@ D7's real grant was OG group-scoped). Authoring the correct sitewide `content_ed
 permissions (and deciding whether per-group Group-roles are in MVP scope) remains a
 separate task.
 
-## Verification handoff — run on Xiaoming's DDEV
+## Verification handoff — run on Xiaoming's DDEV — ✅ DONE 2026-07-24
 
-This is the end-to-end proof the author's DDEV could **not** do (no shared-user D7
-source loaded there). Xiaoming's DDEV has the **PR #66 synthetic (non-PII)
-shared-user fixture** reachable via the `migrate_users` connection — the same
-harness that originally reproduced the wipe (`content_editor` 23→0). Running the
-fix on it gives the symmetric proof: the wipe is gone **and** users get the right
-roles.
+**Result: PASS after fixing a second bug.** Regression proven (`content_editor`
+held at 23, no wipe) *and* role assignment proven, once the `handle_multiples`
+fix above was applied. Per-user results:
+
+| uid | D7 rids | D11 roles after import |
+|----|---------|------------------------|
+| 5  | 4 (editor)            | `content_editor` |
+| 8  | 5 (workflow editor)   | `content_editor` |
+| 12 | 3 + 4                 | `administrator`, `content_editor` |
+| 17 | 4 + 5 + 6             | `content_editor` (single — collapse+dedupe ✓) |
+| 20 | — (none)              | (plain) |
+
+`d7_users` 5/5 imported, `d7_user_authmap` 5/5 linked (`simplesamlphp_auth` →
+bare computing-id), 0 messages, `content_editor` still 23. Local env restored,
+fixture DB dropped (no PII persisted).
+
+**Fixture had to be rebuilt** — the 2026-07-21 fixture was ephemeral (isolated DB
+dropped, `migrate_users` connection only ever wired ad-hoc via env vars), so it
+was gone. Rebuilt from `~/Desktop/Mandala/mandala_shared.sql` using **schema-only**
+extraction (0 data rows) + synthetic uid-keyed rows. Two gotchas for anyone
+re-running: (1) beyond users/users_roles/role/role_permission/authmap, the d7_user
+source also needs a `system` table (its `checkRequirements()` probes `source_module
+= user`; without it the migration is silently filtered out of `migrate:status`) and
+empty `field_config` + `field_config_instance` tables (the source reads user
+fields). (2) A fresh checkout's *active* config is stale — run `drush cim` first so
+active config uses `mandala_role_map` and drops `d7_user_role` before importing.
+
+The original handoff intent (kept below for reference):
+This was the end-to-end proof the author's DDEV could **not** do (no shared-user D7
+source loaded there). Running the fix on the synthetic (non-PII) fixture gives the
+symmetric proof: the wipe is gone **and** users get the right roles.
 
 Prereqs: on branch `fix/user-role-permission-wipe`; the PR #66 fixture loaded and
 its users carry rids 3/4/5/6 so the whole map is exercised (add roles to fixture
