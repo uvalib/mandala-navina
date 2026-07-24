@@ -4,6 +4,7 @@
 **Raised during:** Local synthetic user-migration smoke-test (2026-07-21, Xiaoming + Than)
 **Jira:** (add when available)
 **Priority:** **High — blocks the dev-0 user migration; running `d7_user_role` as-is strips editorial + authenticated-user access**
+**Status: RESOLVED 2026-07-24** (branch `fix/user-role-permission-wipe`) — candidate fix 1 implemented; see "Resolution" below.
 
 ## What we found
 
@@ -79,6 +80,96 @@ grant turned out to be Organic Groups' own group-scoped role system, not core
 [d7-editor-permissions-og-group-scoped-not-migrated.md](d7-editor-permissions-og-group-scoped-not-migrated.md)
 for the full data and what it means for the fix design — the destructive-wipe
 fix here is still correct and necessary, but no longer sufficient by itself.
+
+## Resolution — 2026-07-24 (branch `fix/user-role-permission-wipe`)
+
+Implemented **candidate fix 1**. The `d7_user_role` lookup migration is deleted
+entirely; role translation now happens in-process:
+
+- New process plugin `mandala_role_map`
+  (`mandala_migrations/src/Plugin/migrate/process/RoleMap.php`) — "static_map but
+  array-aware." Holds the D7-rid → D11-role-machine-name dictionary in
+  configuration and maps each element itself. No `entity:user_role` save happens
+  anywhere, so committed role permissions can no longer be clobbered.
+- `d7_users.roles` now calls `mandala_role_map` directly with an inline
+  `map: {3: administrator, 4/5/6: content_editor}`; the `d7_user_role` entry was
+  dropped from `migration_dependencies`.
+- `migrate_plus.migration.d7_user_role.yml` deleted from both
+  `mandala_migrations/config/install/` and `drupal/config/sync/`.
+
+**Verified locally (DDEV, MySQL 8.4):**
+- Real plugin exercised via the process-plugin manager: `[2,4,6]→[content_editor]`
+  (rid 2 dropped, editor rids collapse+dedupe), `[3,4]→[administrator,content_editor]`,
+  `[2]→[]`, scalar `5→[content_editor]`, `[]→[]`.
+- `d7_users` partial-imported and instantiated cleanly: `roles` plugin =
+  `mandala_role_map`, migration_dependencies has no `d7_user_role`.
+- `content_editor` held at its committed **23 permissions** across cache rebuild,
+  plugin exercise, and the migration import — no wipe.
+
+**Not yet done here (deliberately, needs the D7 shared-user fixture):** a full
+`migrate:import d7_users` against real shared-user data to confirm actual accounts
+receive the mapped role set. That is the end-to-end proof for the pairing session
+with Xiaoming's smoke-test harness (this DDEV has no shared-user D7 source loaded).
+
+**Still open, tracked separately:** this fix stops the *destruction* of
+`content_editor`'s permissions but does not make that permission list *correct* —
+see [d7-editor-permissions-og-group-scoped-not-migrated.md](d7-editor-permissions-og-group-scoped-not-migrated.md)
+(committed `content_editor` covers stock article/page, not Mandala's content model;
+D7's real grant was OG group-scoped). Authoring the correct sitewide `content_editor`
+permissions (and deciding whether per-group Group-roles are in MVP scope) remains a
+separate task.
+
+## Verification handoff — run on Xiaoming's DDEV
+
+This is the end-to-end proof the author's DDEV could **not** do (no shared-user D7
+source loaded there). Xiaoming's DDEV has the **PR #66 synthetic (non-PII)
+shared-user fixture** reachable via the `migrate_users` connection — the same
+harness that originally reproduced the wipe (`content_editor` 23→0). Running the
+fix on it gives the symmetric proof: the wipe is gone **and** users get the right
+roles.
+
+Prereqs: on branch `fix/user-role-permission-wipe`; the PR #66 fixture loaded and
+its users carry rids 3/4/5/6 so the whole map is exercised (add roles to fixture
+users if it only had one).
+
+```bash
+# 1. Discover the new plugin.
+ddev drush cr
+
+# 2. Baseline BEFORE running — record permission counts.
+ddev drush php:eval 'foreach(["content_editor","authenticated","anonymous"] as $r){$o=\Drupal\user\Entity\Role::load($r);echo "$r: ".($o?count($o->getPermissions()):"MISSING")."\n";}'
+#    Expect content_editor = 23.
+
+# 3. Put the fixed migration into active config (partial import leaves unrelated
+#    local drift untouched).
+mkdir -p tmp_um && cp drupal/config/sync/migrate_plus.migration.d7_users.yml \
+  drupal/config/sync/migrate_plus.migration.d7_user_authmap.yml \
+  drupal/config/sync/migrate_plus.migration_group.mandala_users.yml tmp_um/ \
+  && ddev drush config:import --partial --source=/var/www/html/tmp_um -y && rm -rf tmp_um
+#    Confirm wiring: roles plugin = mandala_role_map, no d7_user_role dependency.
+ddev drush php:eval '$m=\Drupal::service("plugin.manager.migration")->createInstance("d7_users");$p=$m->getProcess();echo "roles plugin: ".$p["roles"][0]["plugin"]."\n";echo "deps: ".json_encode($m->getMigrationDependencies())."\n";'
+
+# 4. Run the user migration.
+ddev drush migrate:import d7_users
+
+# 5. THE REGRESSION CHECK — re-run step 2. content_editor must STILL be 23,
+#    authenticated/anonymous intact. (Before the fix this was 0.)
+
+# 6. Mapping worked on real rows — spot-check migrated users' roles.
+ddev drush php:eval 'foreach(\Drupal\user\Entity\User::loadMultiple() as $u){if(!$u->id())continue;echo $u->id()." ".$u->getAccountName().": ".implode(",",$u->getRoles())."\n";}'
+#    - user who had an editor rid (4/5/6) -> has content_editor
+#    - user with two/three editor rids   -> single content_editor (no duplicate)
+#    - user with rid 3                   -> administrator
+#    - plain user                        -> no editor role
+
+# 7. Close the rid loose end — list distinct rids in the fixture; confirm none
+#    outside {3,4,5,6} (unmapped rids are silently dropped by design).
+ddev drush php:eval '$db=\Drupal\Core\Database\Database::getConnection("default","migrate_users");foreach($db->query("SELECT DISTINCT rid FROM users_roles ORDER BY rid")->fetchCol() as $r){echo $r."\n";}'
+```
+
+**Pass = step 5 (wipe gone) AND step 6 (roles correctly assigned).** If step 7
+surfaces a rid outside {3,4,5,6}, decide whether it maps to a D11 role and add it
+to `map` in `d7_users.yml` (both `config/install` and `config/sync`).
 
 ## Cross-references
 

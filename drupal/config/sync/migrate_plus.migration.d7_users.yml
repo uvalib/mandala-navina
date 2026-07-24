@@ -35,13 +35,16 @@ process:
     plugin: default_value
     default_value: en
   roles:
-    plugin: migration_lookup
-    migration: d7_user_role
+    plugin: mandala_role_map
     source: roles
+    map:
+      3: administrator
+      4: content_editor
+      5: content_editor
+      6: content_editor
 destination:
   plugin: 'entity:user'
 idMap: {  }
 migration_dependencies:
-  required:
-    - d7_user_role
+  optional: {  }
 include: null
