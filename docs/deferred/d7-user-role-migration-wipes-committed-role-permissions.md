@@ -4,7 +4,7 @@
 **Raised during:** Local synthetic user-migration smoke-test (2026-07-21, Xiaoming + Than)
 **Jira:** (add when available)
 **Priority:** **High — blocks the dev-0 user migration; running `d7_user_role` as-is strips editorial + authenticated-user access**
-**Status: RESOLVED + VERIFIED end-to-end 2026-07-24** (branch `fix/user-role-permission-wipe`) — candidate fix 1 implemented and proven on the synthetic fixture; verification also caught a *second* bug in the fix (missing `handle_multiples`), now fixed on the same branch. See "Resolution" and "Verification handoff" below.
+**Status: RESOLVED + VERIFIED end-to-end 2026-07-24** (branch `fix/user-role-permission-wipe`) — candidate fix 1 implemented and proven twice: on Xiaoming's synthetic fixture (which caught a *second* bug, missing `handle_multiples`, now fixed on the same branch) and independently on the author's DDEV against the full 1,538-user scrubbed shared DB (0 failed, no wipe, roles correct). See "Resolution", "Verification handoff", and "Independent confirmation" below.
 
 ## What we found
 
@@ -220,6 +220,48 @@ ddev drush php:eval '$db=\Drupal\Core\Database\Database::getConnection("default"
 **Pass = step 5 (wipe gone) AND step 6 (roles correctly assigned).** If step 7
 surfaces a rid outside {3,4,5,6}, decide whether it maps to a D11 role and add it
 to `map` in `d7_users.yml` (both `config/install` and `config/sync`).
+
+## Independent confirmation 2026-07-24 (Than) — full scrubbed DB, second machine
+
+Re-ran the end-to-end on a *different* DDEV (author's, MySQL 8.4) against the
+**full scrubbed shared-user dump** (`Mandala/data/mandala_shared.sql`, 1,538
+real-shaped users) — not the synthetic fixture. Confirms the fix on real data and
+on a second machine.
+
+- Imported the dump into a **separate DDEV database** (`ddev import-db
+  --database=mandala_shared --file=…`) so it never touches the site DB; pointed the
+  `migrate_users` connection at it via the env-driven block in `settings.php`
+  (`MIGRATE_USERS_DATABASE=mandala_shared MIGRATE_SOURCE_HOST=db
+  MIGRATE_SOURCE_USER=db MIGRATE_SOURCE_PASSWORD=db drush migrate:import d7_users`).
+- Source role reality (matches the map exactly, no unmapped rids): rid 3
+  administrator ×23, rid 4 editor ×142, rid 5 workflow editor ×2, rid 6 shanti
+  editor ×0.
+
+Results — **1,538 imported, 0 failed:**
+
+| Check | Result |
+|---|---|
+| `content_editor` perms after import | **23** (baseline 23 — no wipe) |
+| `authenticated` / `anonymous` perms | 10 / 6 — intact |
+| D11 users with `content_editor` | **144** = distinct rid 4/5/6 users (142+2+0) |
+| D11 users with `administrator` | **23** = rid 3 users |
+| admin uid 1 | `[administrator]` |
+| plain uid 2 | `[]` |
+
+**Two operational gotchas for whoever runs this on dev-0** (neither is a fault in
+the fix; both cost time here):
+
+1. **`externalauth` must be enabled first.** migrate's discovery instantiates *all*
+   migrations, and the sibling `d7_user_authmap` migration's `authmap` source +
+   destination plugins come from `externalauth`. If it's off, discovery throws
+   *"The 'authmap' plugin does not exist"* and **aborts the entire `migrate:import`
+   run — even for `d7_users`, which doesn't depend on authmap.** dev-0 has the SAML
+   stack so this is moot there, but a bare DDEV needs `drush en externalauth`.
+2. **Stale active config silently drops `d7_users`.** If the `migrate_plus.migration.d7_users`
+   config entity isn't in *active* config (fresh checkout, or drift), migrate_tools
+   reports *"Migration d7_users does not exist"* — not a connection error. Run
+   `drush cim` (or partial-import the three `mandala_users` configs) and verify with
+   `\Drupal::config('migrate_plus.migration.d7_users')->get('id')` before importing.
 
 ## Cross-references
 
