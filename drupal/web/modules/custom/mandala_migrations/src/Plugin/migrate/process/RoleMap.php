@@ -43,8 +43,15 @@ use Drupal\migrate\Row;
  *     6: content_editor
  * @endcode
  *
+ * The source `roles` is a multi-value property (an array of rids), so this
+ * plugin MUST handle the whole array itself. Without handle_multiples = TRUE,
+ * migrate's pipeline applies the plugin element-wise (once per rid) and nests
+ * the results (e.g. [["administrator"],["content_editor"]]), which the
+ * entity:user destination cannot assign — users end up with no mapped roles.
+ *
  * @MigrateProcessPlugin(
- *   id = "mandala_role_map"
+ *   id = "mandala_role_map",
+ *   handle_multiples = TRUE
  * )
  */
 class RoleMap extends ProcessPluginBase {
