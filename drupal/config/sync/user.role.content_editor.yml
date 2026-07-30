@@ -14,14 +14,6 @@ id: content_editor
 label: 'Content editor'
 weight: 2
 is_admin: false
-# Global, non-administrative editorial role (ADR 015). Editorial reach into the
-# real Mandala content model (shanti_image, and every future site's content
-# types) is granted via synchronized Group roles — group.role.*-content_editor
-# — not via per-bundle core node permissions here. The stock article/page/tags
-# permissions this role shipped with were disconnected demo config and have been
-# removed. 'bypass mandala group access' lets this role view/edit content inside
-# PRIVATE collections (honored by mandala_group_inheritance's view hook); it does
-# NOT grant any site administration.
 permissions:
   - 'access administration pages'
   - 'access content overview'
