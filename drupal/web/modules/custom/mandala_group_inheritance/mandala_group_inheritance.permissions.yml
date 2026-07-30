@@ -1,0 +1,13 @@
+# Permissions provided by mandala_group_inheritance.
+#
+# 'bypass mandala group access' lets a global editorial role (content_editor,
+# per ADR 015) view and reach content inside PRIVATE collections/subcollections
+# (field_group_access = 1) without being a per-group member. It is honored by
+# mandala_group_inheritance_entity_access (the view-restriction hook). It grants
+# NO site administration and NO write capability on its own — write access to
+# group content still comes from the synchronized group.role.*-content_editor
+# roles. Marked restricted because it overrides per-group visibility.
+'bypass mandala group access':
+  title: 'Bypass Mandala private-group visibility'
+  description: 'View and reach content in private collections and subcollections without being a group member. Intended for the global content_editor role (ADR 015).'
+  restrict access: true

@@ -2,25 +2,26 @@ uuid: 151c08a5-6b74-4f33-b62e-541a8ec99927
 langcode: en
 status: true
 dependencies:
-  config:
-    - node.type.article
-    - node.type.page
-    - taxonomy.vocabulary.tags
   module:
-    - comment
     - contextual
     - file
+    - mandala_group_inheritance
     - node
     - path
     - system
-    - taxonomy
     - toolbar
-_core:
-  default_config_hash: e_wG1u7SrGaJbY2-Szgbgl-c8T3kdirU3uTNq2c_QJQ
 id: content_editor
 label: 'Content editor'
 weight: 2
 is_admin: false
+# Global, non-administrative editorial role (ADR 015). Editorial reach into the
+# real Mandala content model (shanti_image, and every future site's content
+# types) is granted via synchronized Group roles — group.role.*-content_editor
+# — not via per-bundle core node permissions here. The stock article/page/tags
+# permissions this role shipped with were disconnected demo config and have been
+# removed. 'bypass mandala group access' lets this role view/edit content inside
+# PRIVATE collections (honored by mandala_group_inheritance's view hook); it does
+# NOT grant any site administration.
 permissions:
   - 'access administration pages'
   - 'access content overview'
@@ -28,19 +29,9 @@ permissions:
   - 'access files overview'
   - 'access toolbar'
   - 'administer url aliases'
-  - 'create article content'
-  - 'create page content'
-  - 'create terms in tags'
+  - 'bypass mandala group access'
   - 'create url aliases'
-  - 'delete article revisions'
-  - 'delete own article content'
   - 'delete own files'
-  - 'delete own page content'
-  - 'delete page revisions'
-  - 'edit own article content'
-  - 'edit own comments'
-  - 'edit own page content'
-  - 'edit terms in tags'
   - 'revert all revisions'
   - 'view all revisions'
   - 'view own unpublished content'

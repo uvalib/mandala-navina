@@ -86,8 +86,10 @@ function _mandala_group_inheritance_group_access(GroupInterface $group, AccountI
     return AccessResult::neutral()->addCacheableDependency($group);
   }
 
-  // Let superadmins and accounts with bypass group access through.
-  if ($account->hasPermission('bypass group access')) {
+  // Let superadmins and accounts with a bypass permission through. The global
+  // content_editor role (ADR 015) holds 'bypass mandala group access' so it can
+  // reach content in private collections without per-group membership.
+  if ($account->hasPermission('bypass group access') || $account->hasPermission('bypass mandala group access')) {
     return AccessResult::neutral()->cachePerPermissions();
   }
 
@@ -106,8 +108,9 @@ function _mandala_group_inheritance_group_access(GroupInterface $group, AccountI
  * Returns forbidden() for nodes in private groups when user is not a member.
  */
 function _mandala_group_inheritance_node_access(EntityInterface $node, AccountInterface $account) {
-  // Let superadmins and bypass-capable accounts through immediately.
-  if ($account->hasPermission('bypass group access') || $account->hasPermission('bypass node access')) {
+  // Let superadmins and bypass-capable accounts through immediately. The global
+  // content_editor role (ADR 015) holds 'bypass mandala group access'.
+  if ($account->hasPermission('bypass group access') || $account->hasPermission('bypass node access') || $account->hasPermission('bypass mandala group access')) {
     return AccessResult::neutral()->cachePerPermissions();
   }
 
