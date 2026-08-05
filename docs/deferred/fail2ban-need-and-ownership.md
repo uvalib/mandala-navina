@@ -3,7 +3,9 @@
 **Area:** infrastructure / security / scraper mitigation
 **Raised during:** Session 2026-07-14 (1b.1 part 4 — dev-0 drift capture)
 **Jira:** (add when available)
-**Priority:** Low **while the load problem is quiet** — explicitly not a D11 blocker. **Would become urgent immediately if scraper load returns**; this note is the prior art for that day.
+**Priority:** Low — explicitly not a D11 blocker. **Updated 2026-08-05:** load did return
+(2026-08-04 outage) — but in a shape this measure doesn't address; see the update below
+before assuming "load returned" means "revive fail2ban."
 
 ## What this actually was (Yuji, 2026-07-14) — read this first
 
@@ -92,9 +94,67 @@ one. It is:
    `configure_backend.yml` and close out the `fail2ban-rework` branch — so the next
    person does not mistake an abandoned emergency for an unfinished design.
 
+## Update (2026-08-05) — the load problem returned; here's what actually happened
+
+**Answers the three open questions above with a real incident instead of hypotheticals.**
+
+1. **Is the load problem still there?** Yes — a ~14.7h worker-pool-exhaustion outage on
+   2026-08-04→05 (17:15 EDT→08:07 EDT), the second of its kind after 2026-08-02→03. But
+   it wasn't the *same* load problem this note was written for.
+
+2. **Did fail2ban (even finished) work? Would it have?** No — checked directly against
+   the actual traffic, not assumed. The Aug 4 outage was a large, genuinely distributed
+   multi-bot crawl: 2,129 requests to KMaps explorer pages, 86% to distinct paths, 89%
+   from distinct source IPs (top single IP: 5 hits across the *whole day*), spanning
+   named crawlers (Amazonbot, Applebot, Bytespider, Baiduspider) plus a UA-rotating
+   scraper. The existing `sources-scraper-ratelimit` jail's mechanism — `maxretry=30` in
+   a 300s window from one IP, banned by `/24` — fundamentally cannot catch this shape:
+   there's no per-IP or per-subnet concentration to detect. (It also doesn't cover these
+   routes at all — its filter is hard-anchored to `sources-search`/`biblio` only.) This
+   is a genuinely *different* traffic shape than the 2026-07 biblio/sources-search
+   scraper (`84.75.150.0/24`, `82.38.180.0/24` — a small number of proxy-reseller blocks
+   doing high per-IP volume) fail2ban *was* built for. So: fail2ban wasn't tested and
+   found wanting here — it was never applicable to this attack surface to begin with.
+
+3. **If load returns, is fail2ban still the fastest bulwark to hand?** Not for *this*
+   traffic shape. What actually fixed the Aug 4 outage, on the legacy D7 side:
+   - `robots.txt` `Disallow` on the expensive KMaps "explorer" secondary tabs
+     (audio-video-node, sources-node, etc. — ~79% of the crawl's server-time), `Allow`
+     kept on the overview tab for discoverability. Fits self-identifying, largely
+     policy-compliant crawlers (Amazonbot/Applebot/Baidu) — a lever fail2ban has no
+     equivalent for.
+   - Extended the KMaps explorer cache TTL 1h → 12h (the corpus is genuinely low-churn
+     reference data — most recent edit across all 473K entities was 19 days old at
+     check time), since a short TTL was defeating caching entirely against a wide,
+     sparse, mostly-non-repeating crawl (86% of hit paths were one-time-only).
+   - Also hardened several previously un-timed/under-timed upstream HTTP calls in
+     `kmaps_explorer` (bounds worst-case cost per request), and added a scoped per-ID
+     cache-clear (admin form field + drush command + admin-only link on the overview
+     tab) so editors don't have to nuke the whole KMaps cache to propagate one edit.
+
+   None of this is fail2ban, and none of it needed the half-built `fail2ban-rework`
+   branch. **Concrete evidence for question 3:** for a distributed, self-identifying
+   crawl against a large, low-churn, cacheable corpus, `robots.txt` + cache-TTL tuning
+   is the faster and more correctly-targeted bulwark — not IP rate-limiting. fail2ban
+   (or `global/waf-v2/`) would likely still be the right tool for a *concentrated*-IP
+   repeat of the 2026-07 biblio-scraper pattern specifically — today's finding doesn't
+   settle that case, only this one.
+
+**Full technical detail:** `mandala-legacy` repo, memory record
+`mandala-outage-2026-08-04-recurrence.md` (CloudWatch Insights evidence trail — exact
+request counts/durations, per-tab cost breakdown, Solr corpus-size and edit-recency
+checks) and `shanti-uva/mandala-drupal` commits/tags `7.x-1.43.5` through `7.x-1.43.8`.
+
+**Question 4 (delete the dead host-side banlist machinery / close `fail2ban-rework`) is
+still open** — the case for keeping fail2ban alive for the *2026-07 biblio-scraper*
+pattern specifically (concentrated `/24`s, not this crawl) is unaffected by today's
+finding, so this isn't a settled "no" yet. What's settled: "load returned" does not by
+itself mean "revive fail2ban" — check the traffic shape first.
+
 ## Cross-references
 
 - [dev-0-drift-capture.md](../planning/dev-0-drift-capture.md) — where this was found; fail2ban is explicitly out of scope there
 - `terraform-infrastructure/mandala/drupal/staging/ansible/configure_backend.yml` — the host half
 - `shanti-uva/mandala_drupal_docker` branch `fail2ban-rework` — the container half
 - `terraform-infrastructure/global/waf-v2/` — a possible alternative layer
+- `mandala-legacy` memory record `mandala-outage-2026-08-04-recurrence.md` — full 2026-08-04/05 incident detail (2026-08-05 update)
