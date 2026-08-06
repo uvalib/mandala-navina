@@ -1,5 +1,5 @@
 # Spike 4b: CKEditor 5 Footnotes
-**Status:** In progress — D7 side fully documented; D11 side confirms `footnotes` 4.x cannot bridge D7's citation/definition field split unaided (Fail Criteria scenario triggered). **2026-07-13: D7 already concatenates a whole book at render time, and a migration-time cross-node transform reproduces D7's citation-popup behavior without merging any node's storage — but the end-of-book Notes list needs a mitigation: the module's stock aggregation mechanism is empirically confirmed broken under Drupal's default entity render cache (near-certain in production, not a rare edge case).** **2026-07-22: Option 3 (dedicated Notes-list aggregation, bypassing the stock accumulator) prototyped and confirmed working against the real bug precondition** — see `spike_footnotes_demo` module below. Awaiting team sign-off: refined Option 1 (now with a working Notes-list mitigation) vs. Option 2 (plain hyperlinks, no open risk).
+**Status:** **Direction chosen 2026-07-30 → Option 1 + Option 3** (see Decision section below); feasibility proven, no open technical blockers, production transform is downstream implementation work. — D7 side fully documented; D11 side confirms `footnotes` 4.x cannot bridge D7's citation/definition field split unaided (Fail Criteria scenario triggered). **2026-07-13: D7 already concatenates a whole book at render time, and a migration-time cross-node transform reproduces D7's citation-popup behavior without merging any node's storage — but the end-of-book Notes list needs a mitigation: the module's stock aggregation mechanism is empirically confirmed broken under Drupal's default entity render cache (near-certain in production, not a rare edge case).** **2026-07-22: Option 3 (dedicated Notes-list aggregation, bypassing the stock accumulator) prototyped and confirmed working against the real bug precondition** — see `spike_footnotes_demo` module below. Awaiting team sign-off: refined Option 1 (now with a working Notes-list mitigation) vs. Option 2 (plain hyperlinks, no open risk).
 **Lead:** Than Grove (built D7 shanti_texts and footnotes)
 **Mode:** Individual
 **Date:** 2026-07-10 (D7/D11 findings); 2026-07-13 (book-display-model correction); 2026-07-22 (Option 3 prototype)
@@ -7,6 +7,54 @@
 
 **Split from [Spike 4](spike-04-ckeditor5-footnotes.md) on 2026-07-10** — team-ratified.
 See that file for the original combined scope and why it was split.
+
+## Decision (2026-07-30): Option 1 + Option 3 (Than)
+
+**Chosen approach: Option 1 (migration-time cross-node transform, per-page
+storage) using Option 3 (dedicated Notes-list aggregation) as its end-of-book
+Notes-list mechanism.** Option 2 (plain hyperlinks) is rejected.
+
+**What this commits to:**
+- A **book-outline-aware migration transform**: for each citing page, resolve
+  its `nb{N}` citations to their `n{N}` definitions anywhere in the same book
+  (via `bid`) and rewrite *that page's own field* to inline the resolved text
+  into a self-contained `<footnotes data-value data-text>` tag. D11 keeps one
+  node per page — D7's exact granularity, no node-merge, no editing-UX risk.
+  Per-citation popovers then work unconditionally (text is baked into each
+  citation's tag, independent of render caching).
+- The **end-of-book Notes list via Option 3's dedicated aggregation**, reading
+  the transform's own resolved-footnote output directly (a stored field/table),
+  **not** the stock `footnotes_footer_disable` + `FootnotesGroupBlock`
+  accumulator — which is empirically confirmed to silently drop footnotes from
+  any page ever rendered standalone, under Drupal's default entity render cache
+  (see the CONFIRMED section). The `spike_footnotes_demo` prototype proves this
+  aggregation produces a correct, complete Notes list against that exact
+  cache-HIT precondition.
+
+**Rationale:** most faithful to the D7 reading experience (footnote popover +
+aggregated Notes list, which is what readers have today), and it carries **no
+remaining open technical blocker** — the per-citation transform is de-risked,
+and Option 3 converts Option 1's only real risk (the broken stock aggregation)
+into a demonstrated-working mechanism. Option 2 would be a permanent UX
+downgrade with no offsetting risk reduction now that the caching problem is
+solved. This decouples the approach from the unresolved AV-transcript question.
+
+**Status of this decision:** Than's call (original D7 `shanti_texts`/footnotes
+developer). Individual-mode spike, but the option choice was flagged for team
+sign-off — this record + the accompanying docs PR are the sign-off vehicle; no
+open technical blockers remain to raise.
+
+**Downstream implementation (production work, not spike scope):**
+- Build the book-outline-aware transform (resolve `nb{N}`/`n{N}` pairs across a
+  `bid`, write back per-page) — must match **both** D7 footnote-div markup
+  variants, including the `xmlns:i18n` namespaced form (~3.3% of rows).
+- Integrate the Option 3 prototype with the real transform: populate the
+  resolved-footnote field/table during migration instead of hand-seeded data;
+  add book-outline-aware batch integration, styling/theming, and test coverage.
+- CKEditor 5 render verification of the transformed markup.
+- Spot-check the benign "orphan footnote 1" editorial convention (1–2 of 11
+  books); decide handling for the 2 content-quality outliers (`bid=15582`,
+  `bid=15988`).
 
 ## Recap for the team (updated 2026-07-13)
 

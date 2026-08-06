@@ -7,7 +7,7 @@
 | [Spike 3](spike-03-group-collections.md) | Group module collections architecture | Than | Team candidate | ● Proven |
 | [Spike 4](spike-04-ckeditor5-footnotes.md) | ~~CKEditor 5 footnotes + Tibetan Unicode~~ | Than | Individual | ◇ Split (2026-07-10) — see 4a/4b |
 | [Spike 4a](spike-04a-tibetan-unicode-roundtrip.md) | Tibetan Unicode round-trip (NFC/NFD fidelity, cross-cutting) | Than | Individual | ● Proven (2026-07-22) |
-| [Spike 4b](spike-04b-ckeditor5-footnotes.md) | CKEditor 5 footnotes (Texts-specific) | Than | Individual | ○ Pending |
+| [Spike 4b](spike-04b-ckeditor5-footnotes.md) | CKEditor 5 footnotes (Texts-specific) | Than | Individual | ◐ Direction chosen (2026-07-30): Option 1+3 — feasibility proven, transform impl downstream |
 | [Spike 5](spike-05-bibcite-sources.md) | bibcite for Sources site | Than | Individual | ○ Pending |
 | [Spike 6](spike-06-api-compatibility.md) | API compatibility for React application | Than | Team candidate | ○ Pending |
 | [Spike 7](spike-07-kaltura-av-integration.md) | Kaltura AV integration on Drupal 11 | — | Individual | ○ Pending |
