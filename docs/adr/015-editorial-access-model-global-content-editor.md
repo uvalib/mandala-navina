@@ -1,8 +1,8 @@
 # ADR 015: D11 editorial access model — global non-admin `content_editor` (shanti_editor equivalent); per-group editors deferred to Group roles
 
-**Status:** Proposed
-**Date:** 2026-07-30
-**Deciders:** *(to ratify — Than Grove authoring; sign-off requested from Yuji Shinozaki, Xiaoming Wang)*
+**Status:** Accepted
+**Date:** 2026-07-30 (proposed); 2026-08-06 (accepted)
+**Deciders:** Than Grove (authoring); Yuji Shinozaki, Xiaoming Wang (sign-off 2026-08-06)
 **Relates to:** [ADR 008](008-mvp-migrate-not-improve.md) (MVP is migrate, not improve), [ADR 010](010-adr-008-scope-clarification.md) (scope clarification), [ADR 011](011-group-collections-inheritance.md) (Group collections inheritance)
 **Resolves:** deferred note [`d7-editor-permissions-og-group-scoped-not-migrated.md`](../deferred/d7-editor-permissions-og-group-scoped-not-migrated.md)
 

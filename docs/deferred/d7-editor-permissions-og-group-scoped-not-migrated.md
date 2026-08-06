@@ -4,7 +4,7 @@
 **Raised during:** Live dev-0 investigation following the `d7_user_role` permission-wipe bug (2026-07-22, Than)
 **Jira:** (add when available)
 **Priority:** **High — reframes the user-migration permission question; affects real editorial access on day one post-migration; connects to open tasks 1b.3/1b.4**
-**Status (2026-07-30):** Being resolved by [ADR 015](../adr/015-editorial-access-model-global-content-editor.md) (Proposed). ADR 015 **narrows** this note's "make `content_editor` global" direction: `content_editor` becomes global + non-admin but is assigned **only to former `shanti editor`s** (rid 6), which — per project history — was itself a global override role. The group-scoped `editor` (rid 4) is **not** promoted to global; its per-group editing is deferred to a later Group-role migration (Phase B). Open question (c) below (design group-role now vs. sitewide fix first) is answered: sitewide `content_editor` now for shanti_editors, per-group roles in Phase B.
+**Status (2026-08-06):** Resolved in principle by [ADR 015](../adr/015-editorial-access-model-global-content-editor.md) (Accepted 2026-08-06); implementation tracked in PR #75. ADR 015 **narrows** this note's "make `content_editor` global" direction: `content_editor` becomes global + non-admin but is assigned **only to former `shanti editor`s** (rid 6), which — per project history — was itself a global override role. The group-scoped `editor` (rid 4) is **not** promoted to global; its per-group editing is deferred to a later Group-role migration (Phase B). Open question (c) below (design group-role now vs. sitewide fix first) is answered: sitewide `content_editor` now for shanti_editors, per-group roles in Phase B.
 
 ## Context
 
