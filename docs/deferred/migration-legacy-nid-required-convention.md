@@ -92,3 +92,10 @@ development going forward, not just migrations.
       in the same commit — verify with `drush config:status` before and after
 - [ ] Post-import verification: row count + 0 mismatches against
       `migrate_map_*`
+- [ ] `content_editor` granted full create/edit/delete on the site's new
+      content types, on the same footing Images has for `shanti_image` — per
+      [ADR 015](../adr/015-editorial-access-model-global-content-editor.md).
+      For Group content types this is a synchronized `group.role.*-content_editor`
+      config (`global_role: content_editor`) granting `create` / `update any` /
+      `delete any group_node:<type> entity`. Omitting it leaves editors unable
+      to manage that site's content.
