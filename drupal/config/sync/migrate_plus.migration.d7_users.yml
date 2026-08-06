@@ -39,8 +39,6 @@ process:
     source: roles
     map:
       3: administrator
-      4: content_editor
-      5: content_editor
       6: content_editor
 destination:
   plugin: 'entity:user'

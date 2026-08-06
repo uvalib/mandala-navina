@@ -49,19 +49,24 @@ process:
   # Array of D7 rids → D11 role machine names, mapped element-wise WITHOUT ever
   # saving a role config entity. Replaces the old migration_lookup→d7_user_role
   # indirection, whose entity:user_role destination wiped committed role
-  # permissions on save. rids 4/5/6 (editor / workflow editor / shanti editor)
-  # were verified against mandala_d7_shared (2026-07-21); they collapse onto the
-  # single D11 content_editor role per migrate-not-improve (ADR 008/010). rids
-  # 1/2 (anonymous/authenticated) are implicit in D7 / locked in D11, so they are
-  # deliberately absent. See docs/deferred/
-  # d7-user-role-migration-wipes-committed-role-permissions.md.
+  # permissions on save.
+  #
+  # Per ADR 015 (editorial access model), only D7 rid 6 (shanti editor) → D11
+  # content_editor. shanti editor was a GLOBAL editorial role that overrode
+  # per-group permissions — content_editor is its D11 realization. rid 4 (editor)
+  # was GROUP-SCOPED (real grant lived in Organic Groups per-collection); it is
+  # deliberately NOT promoted to the global content_editor role — its per-group
+  # editing is restored later, in the group user-membership/role migration
+  # (Phase B), as a per-group Group role. rid 5 (workflow editor) was AV-only and
+  # vestigial. rids 4/5 therefore migrate as plain authenticated users here.
+  # rids 1/2 (anonymous/authenticated) are implicit in D7 / locked in D11 and are
+  # deliberately absent. See docs/adr/015-editorial-access-model-global-content-editor.md
+  # and docs/deferred/d7-editor-permissions-og-group-scoped-not-migrated.md.
   roles:
     plugin: mandala_role_map
     source: roles
     map:
       3: administrator
-      4: content_editor
-      5: content_editor
       6: content_editor
 
   # NOTE: user_picture intentionally omitted — no d7_file/user-picture migration
