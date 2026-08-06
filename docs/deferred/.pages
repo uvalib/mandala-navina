@@ -52,3 +52,4 @@ nav:
   - "d7_user_role wipes committed role permissions": d7-user-role-migration-wipes-committed-role-permissions.md
   - "D7 editor permissions are OG group-scoped, not migrated": d7-editor-permissions-og-group-scoped-not-migrated.md
   - "SimpleSAMLphp never configured in DDEV": simplesamlphp-never-configured-in-ddev.md
+  - "ADR 015 merged with three questions unanswered": adr-015-unanswered-questions-at-merge.md
