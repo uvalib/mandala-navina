@@ -8,7 +8,7 @@ nav:
   - "○ Spike 4a: Tibetan Unicode round-trip": spike-04a-tibetan-unicode-roundtrip.md
   - "● Spike 4b: CKEditor 5 footnotes": spike-04b-ckeditor5-footnotes.md
   - "○ Spike 5: bibcite Sources": spike-05-bibcite-sources.md
-  - "○ Spike 6: API compatibility": spike-06-api-compatibility.md
+  - "◐ Spike 6: API compatibility": spike-06-api-compatibility.md
   - "○ Spike 7: Kaltura AV integration": spike-07-kaltura-av-integration.md
   - "◐ Spike 8: reindeer_x consolidation": spike-08-reindeer-x-consolidation.md
   - "○ Spike 9: Docs hosting & Confluence": spike-09-docs-hosting-confluence.md
