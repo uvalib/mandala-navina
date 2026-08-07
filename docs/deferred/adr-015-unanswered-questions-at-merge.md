@@ -3,7 +3,7 @@
 **Area:** access / users / migration / ADR 015
 **Raised during:** PR #75 merge, 2026-08-06 (verification by Than 2026-07-30 and Xiaoming 2026-08-06)
 **Jira:** (add when available)
-**Priority:** **High for question 1** (the role may currently grant editorial access to zero users, and ADR 015's own guardrail is unmet) · Medium for questions 2 and 3
+**Priority:** Question 1 **RESOLVED** (1(a) data 2026-08-06, 1(b) policy 2026-08-07); its High-priority follow-through moved to the prerequisite [`authenticated-contributor-crud-not-wired-in-d11.md`](authenticated-contributor-crud-not-wired-in-d11.md). Questions 2 and 3 still open (Medium)
 
 ## Context
 
@@ -64,9 +64,9 @@ ADR 015's own Consequences section already names this as a guardrail:
 
 **That guardrail's data half is now met** (see (a) below — confirmed via the same live dump
 loaded on `rds-mysql8-staging` that dev-0's own migration source uses); its policy half, (b),
-is still open.
+is **now decided** (2026-08-07, Than — see (b)).
 
-**To resolve — both parts are open:**
+**Both parts are now settled — Question 1 is resolved:**
 
 - **(a)** ✅ **Answered 2026-08-06.** Confirmed the rid-6 count against dev-0's live
   `mandala_d7_shared` (loaded on `rds-mysql8-staging`, 1,543 users — not the 1,538-user
@@ -83,13 +83,30 @@ is still open.
   `field_permissions` module, a single workflow-state field, not general node edit rights.
   Doesn't change this question's answer, since it's still only 2 users, but may be relevant
   context whenever AV's migration hits ADR 015's per-site `content_editor` CRUD checklist item.)
-- **(b)** Still fully open — a policy call, not a data question. Given (a) is now settled with
-  two independent confirmations (scrubbed + live dump, plus the codebase grep), the team can
-  decide this without further data collection: does the team still want `content_editor`
-  reserved for `shanti editor` — accepting that Phase A delivers editorial access to zero
-  migrated users until Phase B — or does that change the Phase A/Phase B split? A new ADR
-  superseding 015 would be the vehicle if the answer changes the model; ADRs are immutable once
-  accepted.
+- **(b)** ✅ **Decided 2026-08-07 (Than).** `content_editor` stays reserved for the
+  `shanti editor` equivalent and **migrates empty** — since rid 6 = 0 users, no one is
+  auto-assigned it. It is granted **by hand**, per person, going forward. The **142 rid-4
+  `editor` users migrate as plain authenticated users**; their per-collection editing returns
+  with the Phase B Group-role migration, not before.
+
+  This **confirms ADR 015's model rather than changing it**, so it needs **no superseding ADR
+  and no code change** — the merged implementation (PR #75) already produces exactly this
+  outcome (rid 6 → `content_editor`, rid 4 → authenticated). This note simply records that the
+  team examined the "Phase A grants editorial access to zero users" consequence with the data
+  in hand and accepted it deliberately.
+
+  **Consequence — why "142 → authenticated" is non-destructive, and its one prerequisite.**
+  Migrating the 142 editors as authenticated is *not* a loss of authoring, **provided the
+  authenticated contributor tier is wired**. In D7, authenticated users hold core, site-wide
+  `create` / `edit own` / `delete own` on every asset **and** collection content type (verified
+  against the Images per-site dump), so as authenticated they keep full CRUD on **their own**
+  content and lose only the ability to edit **others'** content until Phase B — a small blast
+  radius. **But D11's committed `authenticated` role grants none of this** (it is view-only
+  today). So this decision is only safe once that tier is implemented; against D11 as-is, "142
+  → authenticated" means those users — and every other authenticated user — can author
+  **nothing**. Wiring the contributor tier is therefore a **prerequisite gate** for the next
+  real user-migration cutover, tracked in
+  [`authenticated-contributor-crud-not-wired-in-d11.md`](authenticated-contributor-crud-not-wired-in-d11.md).
 
 ---
 
@@ -153,8 +170,10 @@ privilege leak** — but behavior and the checklist's wording disagree.
 
 ## Suggested sequencing
 
-Question 1(b) should be settled before the next real migration run against dev-0, since it
-determines whether Phase A delivers any editorial access at all — 1(a)'s data question is now
-closed (2026-08-06), so this is purely a team policy call, not blocked on further investigation.
-Questions 2 and 3 are not urgent but should be decided before the next per-site migration
-(Texts/Sources/AV) inherits question 2's precedent unexamined.
+Question 1 is now fully resolved — 1(a) (data) closed 2026-08-06, 1(b) (policy) decided
+2026-08-07. What now gates the next real migration run against dev-0 is **not** this question
+but its prerequisite: wiring the authenticated contributor tier
+([`authenticated-contributor-crud-not-wired-in-d11.md`](authenticated-contributor-crud-not-wired-in-d11.md)),
+without which the accepted "142 editors → authenticated" outcome leaves the whole user base
+unable to author anything. Questions 2 and 3 are not urgent but should be decided before the
+next per-site migration (Texts/Sources/AV) inherits question 2's precedent unexamined.
