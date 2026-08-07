@@ -99,18 +99,52 @@ found **no controller serving `/api/json/__NID__`** (or any node-JSON path). So 
 publish a `url_json` into Solr that resolves to nothing. Building that D11 endpoint (to return
 the response shapes documented in the audit above) is core Spike-6 implementation work.
 
+### What the current React client actually consumes — scoping the real D11 API surface (2026-08-07)
+
+Audited `mandala-om` (`release/v1.1.0-rc`) for which endpoints/fields it truly uses, to size
+the D11 work against reality rather than the full historical endpoint matrix. **The
+Pass-Criteria "8 endpoint" table is both too big and too small:** the browse-by-KMap Drupal
+endpoints appear unused, while a current-user endpoint the matrix omits *is* used.
+
+**In scope — the client consumes these (must exist in D11):**
+
+| Solr field / endpoint | How the client uses it | D11 status |
+|---|---|---|
+| **`url_json`** | Core node-detail fetch (`useMandala.js`, JSONP `callback`; `assetapi.js` uses `json_wrf`). | Written by `mandala_kmassets_sync`; **serving endpoint missing** (above) |
+| **`url_html`** | Full-page links (`FeatureCard`, `TextsViewer`, `SourcesViewer`, legacy `searchui`) **and a reverse Solr lookup** — `MandalaMarkup.js` queries `q: url_html:"…"` to find an asset by its page URL. | D11 writes it (`__BASE_URL__/image/__NID__`); pages must resolve **and** match the value the client searches on |
+| **`url_thumb`** | Image thumbnails + client-side size derivation (`searchapi.js`, legacy image/collection views). | Handled — `mandala_kmassets_sync` `ImageFieldContributor` builds IIIF thumb URLs |
+| **`url_ajax` → embed** | **Texts only** (`legacy/texts.js`): rewrites `node_ajax`→`node_embed`, `?callback=pfunc`, to pull an embeddable HTML fragment. | D11 has no embed endpoint; Texts-phase work |
+| **`/general/api/user/current`** | `LoginLink.js` — current-user / auth status. **Not in the endpoint matrix.** | Not yet in D11; ties to SAML/OAuth (Spike 10) |
+
+**Out of scope — appears NOT consumed by the React client:**
+
+- The **browse-by-KMap Drupal endpoints** (`/services/subject/{id}`, `/general/api/*images/{id}`,
+  etc. from the Spike 2 pre-findings) — no client references found. Consistent with Spike 2's
+  finding that browse/search is done **directly against Solr**, not via Drupal endpoints. So
+  these likely **do not need reproducing in D11** for the React app (confirm before deleting the
+  requirement — other consumers, e.g. the WordPress plugin, are unaudited).
+- The generic **AJAX endpoints** for non-Texts sites (`/api/ajax`, `/services/node/ajax`) — only
+  the Texts embed path showed up in the client.
+
+**Net:** the D11 API surface the React client actually needs is **`url_json` (all sites) +
+`url_html` page resolution + `url_thumb` (done) + a Texts embed endpoint + `/…/user/current`** —
+materially smaller and differently-shaped than the historical 8-endpoint matrix. This should
+refocus the remaining spike work and the D11 implementation estimate.
+
 ### Client-side architecture + live WAF incident (2026-07-30)
 See the **Pre-spike findings (2026-07-30)** section below — how `mandala-om` fetches
 (Solr record → `url_json` → node JSON, all JSONP across 6 subdomains), and the confirmed
 Sources WAF-503 incident + its same-origin `/proxy/json` mitigation.
 
 ## What this does NOT establish
-- **The browse-by-KMap endpoints** (`/services/subject/{kmap_id}`, `/general/api/*images/{kmap_id}`,
-  etc. — see the Spike 2 pre-findings below) are **not yet audited** to the same depth as
-  the node-JSON endpoints; their exact D7 response shapes still need documenting.
-- **The AJAX endpoints** (the second column of the Pass-Criteria table:
-  `/services/node/ajax/{nid}`, `/api/ajax/{nid}`, etc.) are not yet audited — unknown
-  whether the React client still uses them or they are legacy.
+- **Whether the browse-by-KMap and generic AJAX endpoints have any remaining consumer.** The
+  React client does **not** use them (scoping audit above), but the **WordPress `wp-kmaps`
+  plugin and any server-side consumers are unaudited** — confirm before dropping them from the
+  D11 requirement. Their exact D7 response shapes were not documented (deprioritized as likely
+  out of scope for the React app).
+- **The Texts embed endpoint** (`node_embed`, reached via `url_ajax`) and the
+  **`/general/api/user/current`** endpoint are identified as in-scope but **not yet audited**
+  for response shape / D11 approach.
 - **No URL strategy is decided yet** (Option A/B/C, or generalize `/proxy/json`, or native
   CORS) — the pre-findings frame the choice; this spike still owes the recommendation.
 - **No D11 endpoint prototype exists yet** — and a route check confirms D11 currently serves
