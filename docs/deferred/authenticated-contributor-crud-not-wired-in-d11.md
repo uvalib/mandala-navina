@@ -5,6 +5,9 @@
 **Jira:** (add when available)
 **Priority:** **High** — this is the baseline authoring capability for **all ~1,538 migrated users**, D11 grants none of it, and it is what makes the ADR 015 Q1(b) decision (142 rid-4 editors → plain authenticated) non-destructive rather than a total loss of authoring on cutover day.
 
+> **Update 2026-08-07 (ADR 015 Q2 decided):** the contributor tier's **`create` is group-scoped, not core site-wide.** D11 forbids creating asset content outside a group **for every role** (authenticated, `content_editor`, admin) — see
+> [`adr-015-unanswered-questions-at-merge.md`](adr-015-unanswered-questions-at-merge.md) Q2. So the "wire core `create X content`" guidance in the body below is **superseded**: create/edit-own/delete-own are realized through **Group member-role permissions** (the D11 analogue of D7's OG `member` role), granted within groups, not as core node permissions on the site-wide `authenticated` role. The site-wide floor stays view-only; authoring capability comes with group membership. The 36 orphan `shanti_image`s are anomalies (mistakes or pre-collection legacy), not evidence for collection-less content — they migrate to a temporary review group ([`orphaned-content-temp-group-on-migration.md`](orphaned-content-temp-group-on-migration.md)).
+
 ## Context
 
 ADR 015 settled the *editor* tiers of Mandala's access model (global `content_editor`
@@ -89,9 +92,11 @@ which is almost certainly not intended.
 
 ## To resolve (open)
 
-- Wire the contributor tier into D11's `authenticated` role: node
-  `create/edit own/delete own` for the real D11 asset node types, **plus** the
-  Group-permission equivalents for collection/subcollection creation.
+- Wire the contributor tier as **Group member-role permissions** (per the Q2
+  update above): `create` / `edit own` / `delete own` for the real D11 asset
+  types, granted **within groups** to the group membership role — *not* as core
+  node permissions on the site-wide `authenticated` role. No role gets core
+  `create X content`; the site-wide `authenticated` floor stays view-only.
 - Decide per-site (Images first) exactly which D11 content entities the grant
   covers, given the node→paragraph and node→Group remodeling.
 - Because ADR 015 makes "grant the editorial floor" a required checklist item for

@@ -125,17 +125,43 @@ Verified route access for a `content_editor` with no group membership:
 So **no core permission needs adding** for the in-group path to work. But a `content_editor`
 **cannot create an image outside a collection context**.
 
-That may well be correct and desirable for Mandala, where every image belongs to a collection,
-and it is the tighter default. But ADR 015's wording ("may create / edit / delete any content
-item of any content type in any collection or subcollection") does not settle whether
-collection-less creation should be possible.
+**✅ Decided 2026-08-07 (Than, team present — Yuji & Xiaoming).** Creation stays **group-scoped
+only** — the current behavior (group create form ALLOWED, bare `/node/add` DENIED) is **correct
+as-is**, and **no** core `create X content` is granted to any role. This is now a **universal
+D11 rule:**
 
-**To resolve (open):** leave `create` group-scoped only, or additionally grant core
-`create shanti_image content` so `/node/add` works? Whichever way it lands, it should be
-written down — ADR 015 makes granting `content_editor` full CRUD a **required checklist item
-for every subsequent per-site migration** (Texts, Sources, AV, Mandala Home), so this choice
-becomes a precedent each of those inherits. Leaving it undocumented guarantees it gets
-re-litigated per site.
+> **No content may be created outside a group — not authenticated users, not `content_editor`,
+> not administrators.** All asset content must be created within a collection/subcollection
+> group, through the group create path.
+
+This is **faithful to D7's design intent, not a deviation** (so it is *not* an ADR 008/010
+"improvement" that needs justifying). D7's permission config technically granted site-wide core
+`create` to *authenticated*, but Mandala's intended model was always collection-based: content
+lives in a collection. The **36 orphan `shanti_image`s** found with no collection at all
+(verified in the Images prod dump — see
+[`authenticated-contributor-crud-not-wired-in-d11.md`](authenticated-contributor-crud-not-wired-in-d11.md))
+are **anomalies — data-entry mistakes or nodes created before collections existed — not a
+supported feature.** D11 enforces the invariant D7 intended but never technically constrained.
+
+**Consequences / follow-through:**
+
+- The [contributor tier](authenticated-contributor-crud-not-wired-in-d11.md) create is likewise
+  group-scoped, **not** core site-wide — that note is revised accordingly.
+- **Admin enforcement caveat:** administrators normally hold core `bypass node access`, which
+  would let them create via `/node/add` regardless of Group scoping. Truly enforcing "not even
+  admins" requires either **withholding `bypass node access`** or ensuring **no collection-less
+  create route is exposed**. Flagged for the wiring — do not assume the blanket rule holds for
+  admins for free.
+- **Migration:** pre-existing orphan content (the 36 Images `shanti_image`s + any orphans of
+  other asset types, **per site**) migrates into a **temporary review group**, not dropped and
+  not force-fit — see [`orphaned-content-temp-group-on-migration.md`](orphaned-content-temp-group-on-migration.md).
+- **Open follow-up (bootstrap / container):** a top-level collection is itself a *group*, not
+  group-content, so it is not "inside a group." Some path to create the first collection must
+  therefore remain, or no one can bootstrap any content. Whether **group/collection creation**
+  is open to all authenticated users or restricted is **not settled by this decision** and needs
+  its own call.
+- **Precedent for every per-site migration checklist** (Texts, Sources, AV, Mandala Home): asset
+  content is group-content-only; grant no core create; sweep orphans into the review group.
 
 ---
 
