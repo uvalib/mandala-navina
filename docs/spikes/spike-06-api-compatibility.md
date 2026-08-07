@@ -136,6 +136,44 @@ See the **Pre-spike findings (2026-07-30)** section below — how `mandala-om` f
 (Solr record → `url_json` → node JSON, all JSONP across 6 subdomains), and the confirmed
 Sources WAF-503 incident + its same-origin `/proxy/json` mitigation.
 
+## URL-strategy analysis + recommendation (decision pending — needs Dave / WAF+ALB)
+
+This is the spike's headline deliverable. The findings above reframe the original Option A/B/C
+into a sharper question. Two facts drive it:
+
+- **`url_json` is a lever D11 already controls** — `mandala_kmassets_sync` writes the client's
+  fetch URL per bundle (`__BASE_URL__/api/json/__NID__` today, a *placeholder* by the config's
+  own admission). Changing the scheme + re-indexing changes what the client hits **without a
+  client redeploy**.
+- **The real obstacle is not CORS, it's the WAF** — the Sources incident was a browser
+  cross-origin block (503 on JSONP), not a plain CORS-header problem. Any option that keeps a
+  **browser cross-origin call** is exposed to the same D11 AWS WAF rule; options that make the
+  call **same-origin** or **server-to-server** sidestep it.
+
+| Option | Cross-origin call from browser? | Client change | WAF exposure | Notes |
+|---|---|---|---|---|
+| **A. Generalize `/proxy/json`** (same-origin WP proxy → D11 server-side) | **No** (same-origin to WP; proxy fetches server-side) | Small — extend the proven Sources pattern to all apps | **Avoided** | Already working for Sources; adds a proxy hop + couples to WordPress; owner/host TBD |
+| **B. Native CORS on D11** + client JSONP→`fetch` | **Yes** | Larger — touches aging client (React 16) | **Exposed** — WAF must allow-list the browser cross-origin call (the exact thing that broke Sources) | Cleanest standards-wise; risk concentrated in WAF policy + client rewrite |
+| **C. Same-origin serving** (React app served from the D11 origin / ALB path) | **No** (no cross-origin at all) | Large — changes the WordPress-embed model | **Avoided** | Architecturally cleanest end state; biggest structural change; may not fit `wp-kmaps` embedding |
+| **D. ALB-aliased subdomains** (keep per-app hosts → single D11) | **Yes** (still cross-origin from the WP-embed origin) | None (if kmassets writes subdomain URLs) | **Exposed** — does not by itself defeat a browser-targeted WAF rule | Preserves D7 shape / zero client change, but doesn't solve the actual blocker |
+
+**Recommendation (for team confirmation, not a solo call — WAF/ALB is Dave's domain):**
+
+- **Short term / cutover-safe: Option A** — generalize the same-origin `/proxy/json` proxy to
+  all apps. It is the only option already proven in production, requires no D11 CORS/WAF
+  allow-listing, and needs only a small, well-understood client change. Lowest cutover risk.
+- **Long-term target: Option C** (or B if C doesn't fit the embed model) — eliminate the proxy
+  hop once the hosting/embedding model for the React app on AWS is settled. Track as a follow-up,
+  not a cutover blocker.
+- **Reject D** as a *primary* strategy — it preserves the D7 shape but leaves the WAF blocker
+  unsolved; only viable if paired with A/B/C.
+
+**Why this can't be finalized here:** the choice hinges on (1) the D11 AWS **WAF policy** (does
+it allow browser cross-origin, or must we stay same-origin?) and (2) whether/where the React app
+will be **served on AWS** — both owned by Dave Goldstein / infra. This spike's job is to make the
+decision *ready*; the decision itself belongs in a team session. Recorded here so it is made on
+this evidence, not re-derived.
+
 ## What this does NOT establish
 - **Whether the browse-by-KMap and generic AJAX endpoints have any remaining consumer.** The
   React client does **not** use them (scoping audit above), but the **WordPress `wp-kmaps`
