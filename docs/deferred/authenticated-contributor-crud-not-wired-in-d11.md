@@ -6,7 +6,7 @@
 **Priority:** **High** — this is the baseline authoring capability for **all ~1,538 migrated users**, D11 grants none of it, and it is what makes the ADR 015 Q1(b) decision (142 rid-4 editors → plain authenticated) non-destructive rather than a total loss of authoring on cutover day.
 
 > **Update 2026-08-07 (ADR 015 Q2 decided):** the contributor tier's **`create` is group-scoped, not core site-wide.** D11 forbids creating asset content outside a group **for every role** (authenticated, `content_editor`, admin) — see
-> [`adr-015-unanswered-questions-at-merge.md`](adr-015-unanswered-questions-at-merge.md) Q2. So the "wire core `create X content`" guidance in the body below is **superseded**: create/edit-own/delete-own are realized through **Group member-role permissions** (the D11 analogue of D7's OG `member` role), granted within groups, not as core node permissions on the site-wide `authenticated` role. The site-wide floor stays view-only; authoring capability comes with group membership. The 36 orphan `shanti_image`s are anomalies (mistakes or pre-collection legacy), not evidence for collection-less content — they migrate to a temporary review group ([`orphaned-content-temp-group-on-migration.md`](orphaned-content-temp-group-on-migration.md)).
+> [`adr-015-unanswered-questions-at-merge.md`](adr-015-unanswered-questions-at-merge.md) Q2. So the "wire core `create X content`" guidance in the body below is **superseded**: create/edit-own/delete-own are realized through **Group member-role permissions** (the D11 analogue of D7's OG `member` role), granted within groups, not as core node permissions on the site-wide `authenticated` role. The site-wide floor is view-only **plus one exception — `create <group_type> group`**, since groups are the only content type creatable without a containing group; all other authoring comes with group membership. The 36 orphan `shanti_image`s are anomalies (mistakes or pre-collection legacy), not evidence for collection-less content — they migrate to a temporary review group ([`orphaned-content-temp-group-on-migration.md`](orphaned-content-temp-group-on-migration.md)).
 
 ## Context
 
@@ -96,7 +96,12 @@ which is almost certainly not intended.
   update above): `create` / `edit own` / `delete own` for the real D11 asset
   types, granted **within groups** to the group membership role — *not* as core
   node permissions on the site-wide `authenticated` role. No role gets core
-  `create X content`; the site-wide `authenticated` floor stays view-only.
+  `create X content` for asset types.
+- **One site-wide grant on `authenticated`:** `create <group_type> group`
+  (collections/subcollections) — groups are the sole content type creatable
+  without a containing group, so any authenticated user can start a collection
+  and then author assets inside it. Everything else stays group-scoped; the
+  site-wide floor is otherwise view-only.
 - Decide per-site (Images first) exactly which D11 content entities the grant
   covers, given the node→paragraph and node→Group remodeling.
 - Because ADR 015 makes "grant the editorial floor" a required checklist item for

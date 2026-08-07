@@ -155,11 +155,14 @@ supported feature.** D11 enforces the invariant D7 intended but never technicall
 - **Migration:** pre-existing orphan content (the 36 Images `shanti_image`s + any orphans of
   other asset types, **per site**) migrates into a **temporary review group**, not dropped and
   not force-fit — see [`orphaned-content-temp-group-on-migration.md`](orphaned-content-temp-group-on-migration.md).
-- **Open follow-up (bootstrap / container):** a top-level collection is itself a *group*, not
-  group-content, so it is not "inside a group." Some path to create the first collection must
-  therefore remain, or no one can bootstrap any content. Whether **group/collection creation**
-  is open to all authenticated users or restricted is **not settled by this decision** and needs
-  its own call.
+- **Bootstrap / container — RESOLVED 2026-08-07 (same session):** **groups are the sole content
+  type exempt** from the in-a-group rule. **Any authenticated user can create a group**
+  (collections/subcollections) — and since `content_editor`s and admins are also authenticated,
+  the capability is universal. So the create permission `create <group_type> group` is granted
+  on the **`authenticated` role** (site-wide, no containing group required); every other content
+  type is group-content-only. This bootstraps the model: create a collection, then create assets
+  inside it. Also D7-faithful — rid 2 held core `create collection content` /
+  `create subcollection content` site-wide.
 - **Precedent for every per-site migration checklist** (Texts, Sources, AV, Mandala Home): asset
   content is group-content-only; grant no core create; sweep orphans into the review group.
 
