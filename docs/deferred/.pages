@@ -55,3 +55,4 @@ nav:
   - "ADR 015 merged with three questions unanswered": adr-015-unanswered-questions-at-merge.md
   - "Authenticated contributor CRUD not wired in D11": authenticated-contributor-crud-not-wired-in-d11.md
   - "Orphaned content → temp review group on migration": orphaned-content-temp-group-on-migration.md
+  - "Texts footnotes production transform (Spike 4b downstream)": texts-footnotes-production-transform.md
