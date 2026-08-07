@@ -3,7 +3,7 @@
 **Area:** access / users / migration / ADR 015
 **Raised during:** PR #75 merge, 2026-08-06 (verification by Than 2026-07-30 and Xiaoming 2026-08-06)
 **Jira:** (add when available)
-**Priority:** Question 1 **RESOLVED** (1(a) data 2026-08-06, 1(b) policy 2026-08-07); its High-priority follow-through moved to the prerequisite [`authenticated-contributor-crud-not-wired-in-d11.md`](authenticated-contributor-crud-not-wired-in-d11.md). Questions 2 and 3 still open (Medium)
+**Priority:** **All three questions RESOLVED** — Q1 (1(a) data 2026-08-06, 1(b) policy 2026-08-07), Q2 (2026-08-07, all asset content group-scoped), Q3 (2026-08-07, keep admin pages + narrow URL-alias perm). The remaining High-priority follow-through is downstream implementation, not open questions: the contributor-tier wiring ([`authenticated-contributor-crud-not-wired-in-d11.md`](authenticated-contributor-crud-not-wired-in-d11.md), gates the next migration cutover) and the orphan review-group sweep ([`orphaned-content-temp-group-on-migration.md`](orphaned-content-temp-group-on-migration.md))
 
 ## Context
 
@@ -181,28 +181,52 @@ admin)"*. Strictly, `/admin/config` is **not** locked out:
 Both derive from `access administration pages`, which `content_editor` **already held before
 PR #75** — the PR retained it rather than introducing it.
 
-Everything beneath is denied, which is what actually matters. Verified denied: site
-information, performance, cron, people, users admin, permissions, modules list, node types,
-views UI, group admin, and the URL-alias overview. `is_admin` is `false` and the role holds no
-`administer *` permissions. So the landing page renders as an empty shell and there is **no
-privilege leak** — but behavior and the checklist's wording disagree.
+Most of what's beneath is denied: site information, performance, cron, people, users admin,
+permissions, modules list, node types, views UI, group admin. `is_admin` is `false`, so those
+landing pages render as empty shells with **no privilege leak**.
 
-**To resolve (open):** two directions, both with a real cost —
+**Correction to PR #75's verification.** That verification also claimed the role holds *"no
+`administer *` permissions"* and that the **URL-alias overview was denied**. Both were wrong:
+the committed role held **`administer url aliases`** — the exact permission that **grants**
+`/admin/config/search/path` (site-wide alias management: edit/delete *anyone's* aliases). So
+there *was* one piece of real, reachable admin functionality, contradicting the "empty shell"
+framing.
 
-- **Drop `access administration pages`** — cleanest match to "no admin surface", but it also
-  removes the toolbar admin menu, which editors may rely on to reach `/admin/content`. That is
-  a UX change to editors' navigation that ADR 015 did not ask for.
-- **Keep it and reword the item** to "no admin *functionality* reachable" — accepts a reachable
-  but empty page.
+**✅ Decided 2026-08-07 (Than, team present).** Two parts:
+
+1. **Keep `access administration pages` (Option B)** and reword the checklist item from
+   "admin-surface lockout" to **"no admin *functionality* reachable."** Dropping the permission
+   would kill the admin toolbar's Manage menu — the editors' route to `/admin/content` and
+   `/admin/content/files` — for zero security gain (those pages are empty shells). `/admin` +
+   `/admin/config` stay reachable but harmless.
+2. **Narrow URL-alias access to match intent.** Editors *should* manage aliases — they are
+   content metadata — but that intent is served by **`create url aliases`** (set/update the alias
+   on the content you're editing), **not** by **`administer url aliases`** (the site-wide alias
+   admin over everyone's aliases). So `administer url aliases` is **dropped** from `content_editor`
+   (config change in this branch, `user.role.content_editor.yml`); `create url aliases` is kept.
+   This removes the one real admin page that was reachable, making the reworded checklist
+   ("no admin functionality reachable") **literally true**, not aspirational.
+
+**Verification.** The load-bearing claim is **confirmed at the framework level** (2026-08-07,
+non-destructive `drush eval`): the route `entity.path_alias.collection` (`/admin/config/search/path`)
+requires exactly `_permission: administer url aliases`. So dropping that permission from
+`content_editor` **denies the route by definition** — no test user or config import needed to
+establish it. **Still owed** (on a DDEV synced to Mandala's real config — the local instance was
+drifted from `config/sync` at the time): a user-level `cim` + confirmation that an editor can
+still set/update the alias on **their own content** via the node form (core shows the path field
+for `create url aliases` *or* `administer url aliases`, so `create url aliases` alone should cover
+it — worth confirming live).
 
 ---
 
 ## Suggested sequencing
 
-Question 1 is now fully resolved — 1(a) (data) closed 2026-08-06, 1(b) (policy) decided
-2026-08-07. What now gates the next real migration run against dev-0 is **not** this question
-but its prerequisite: wiring the authenticated contributor tier
-([`authenticated-contributor-crud-not-wired-in-d11.md`](authenticated-contributor-crud-not-wired-in-d11.md)),
-without which the accepted "142 editors → authenticated" outcome leaves the whole user base
-unable to author anything. Questions 2 and 3 are not urgent but should be decided before the
-next per-site migration (Texts/Sources/AV) inherits question 2's precedent unexamined.
+All three questions are now resolved (Q1 2026-08-06/07, Q2 & Q3 2026-08-07). What remains is
+**downstream implementation, not open decisions**, and it gates the next real migration run
+against dev-0:
+
+1. **Wire the authenticated contributor tier** ([`authenticated-contributor-crud-not-wired-in-d11.md`](authenticated-contributor-crud-not-wired-in-d11.md)) — as Group member-role perms (Q2), without which "142 editors → authenticated" leaves the whole user base unable to author.
+2. **Sweep orphans into a review group** ([`orphaned-content-temp-group-on-migration.md`](orphaned-content-temp-group-on-migration.md)) — per site, per asset type.
+3. **Verify Q3's role change** in DDEV (`cim` + route re-check) before relying on the "no admin functionality reachable" wording.
+
+The per-site checklist (Texts/Sources/AV/Mandala Home) inherits all three decisions.

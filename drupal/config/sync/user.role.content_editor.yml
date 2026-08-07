@@ -20,7 +20,6 @@ permissions:
   - 'access contextual links'
   - 'access files overview'
   - 'access toolbar'
-  - 'administer url aliases'
   - 'bypass mandala group access'
   - 'create url aliases'
   - 'delete own files'
