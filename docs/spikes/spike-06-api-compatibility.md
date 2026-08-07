@@ -58,6 +58,47 @@ them; each needs its own response shaping.
    Group access model) in whatever replaces these endpoints, or private assets leak via
    the API.
 
+### How the endpoint URL is configured & discovered — `url_json` is per-content-type config, not a hardcoded route (2026-08-07)
+
+This closes the loop on the pre-finding that *"the node-JSON URL is data carried in the Solr
+`url_json` field, not hardcoded in the client."* **Where that data comes from, in D7:**
+
+- The **`shanti_kmaps_fields`** module adds, to **each content type's** edit form (e.g.
+  `…/admin/structure/types/manage/shanti_image`), a block of asset settings:
+  **`asset_type`, HTML Path, AJAX Path, JSON Path, Thumbnail Path** — each a **URL template
+  with a `__NID__` placeholder** (e.g. JSON Path = `api/json/__NID__`; HTML Path defaults to
+  `node/__NID__`). Stored as D7 vars `shanti_kmaps_fields_url_json__{type}` etc.
+  (`shanti_kmaps_fields.module:867–895`).
+- When the module builds a node's Solr doc, it substitutes `__NID__`→nid, wraps in an absolute
+  `url()`, and writes `url_html` / `url_ajax` / `url_json` / `url_thumb` into the kmassets
+  record (`…module:1192–1196`). The React client then reads `url_json` off the Solr record and
+  fetches it. **So the discoverable API path is per-content-type configuration**, decoupled by
+  design from the endpoint that serves it — the settings form itself notes the paths *"may not
+  exist, so they may need to be created … by Services, Views, or a module"* (which is why the
+  endpoint implementations audited above live in separate modules per site).
+- **AV is the exception**: it uses `mb_solr` (not `shanti_kmaps_fields`) to build its doc, so
+  its `url_json` (`/api/v1/media/node/__NID__.json`) is set there, not via content-type config.
+
+**D11 state — the mechanism was relocated & redesigned, NOT dropped** (verified across all D11
+custom modules; it is **not** in the pared-down D11 `shanti_kmaps_fields`, which is field-type
+only):
+
+- It now lives in **`mandala_kmassets_sync`** (the 1a.8 kmassets write path). Per-**bundle** CMI
+  config (`mandala_kmassets_sync.settings.yml`) keyed by node bundle instead of per-install D7
+  vars (single-site, ADR 005), tokens `__BASE_URL__` + `__NID__`, built by `KmassetDocBuilder`.
+- The `shanti_image` bundle default is already `url_json: '__BASE_URL__/api/json/__NID__'` — but
+  the config's own comments flag that the **D11 single-site path scheme is a *deferred
+  decision*** and these templates merely *"preserve the D7 path shape"* as placeholders. **That
+  deferred decision is precisely the URL strategy this spike owes.**
+- Only `shanti_image` is configured so far (images is the only migrated site) — AV/Texts/Sources
+  bundles are not yet defined.
+
+**⚠️ Concrete gap this surfaces:** the **producer** side exists (D11 writes a `url_json` into
+kmassets), but the **server** side does **not** — a route check across all D11 custom modules
+found **no controller serving `/api/json/__NID__`** (or any node-JSON path). So today D11 would
+publish a `url_json` into Solr that resolves to nothing. Building that D11 endpoint (to return
+the response shapes documented in the audit above) is core Spike-6 implementation work.
+
 ### Client-side architecture + live WAF incident (2026-07-30)
 See the **Pre-spike findings (2026-07-30)** section below — how `mandala-om` fetches
 (Solr record → `url_json` → node JSON, all JSONP across 6 subdomains), and the confirmed
@@ -72,9 +113,15 @@ Sources WAF-503 incident + its same-origin `/proxy/json` mitigation.
   whether the React client still uses them or they are legacy.
 - **No URL strategy is decided yet** (Option A/B/C, or generalize `/proxy/json`, or native
   CORS) — the pre-findings frame the choice; this spike still owes the recommendation.
-- **No D11 endpoint prototype exists yet** — feasibility of reproducing each response shape
-  in D11 (esp. AV's Solr-derived `doc` and Texts' embedded Views HTML) is argued from
-  source-reading, not yet demonstrated with running code.
+- **No D11 endpoint prototype exists yet** — and a route check confirms D11 currently serves
+  **no** `/api/json/__NID__` (or equivalent) node-JSON endpoint at all, even though
+  `mandala_kmassets_sync` already publishes that URL into `url_json`. Building it (to return
+  the audited response shapes, esp. AV's Solr-derived `doc` and Texts' embedded Views HTML) is
+  the central open implementation task; feasibility is argued from source, not yet run.
+- **The D11 single-site URL path scheme is still formally deferred** — `mandala_kmassets_sync`'s
+  `url_json` template is a D7-shape placeholder by its own admission. Choosing the real scheme
+  (and reconciling it with the client's JSONP/CORS/WAF needs from the pre-findings) is this
+  spike's headline deliverable, still open.
 - Whether node IDs are preserved across migration (a Fail-Criteria risk) — assumed via
   `field_legacy_nid`, not yet confirmed against the client's `url_json` values end-to-end.
 
