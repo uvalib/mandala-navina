@@ -131,17 +131,52 @@ content they manage is a regression, not a neutral internal choice.
 
 ## Open questions
 
-- What did `workflow editor` and `shanti editor` actually do in D7? No
-  evidence of any grant has turned up yet (core `role_permission`: empty; OG:
-  no matching role name). Possibilities: genuinely vestigial/no-op roles;
-  capability implemented in custom module code (`hook_node_access` or similar,
-  keyed on rid) rather than any permission table; or a mechanism not yet
-  checked (Panels/Page Manager per-role rules, a custom access module).
-  Needs a legacy-codebase grep (`mandala-drupal` repo) for hardcoded rid
-  checks before concluding they were no-ops.
-- Does `og_users_roles` show these OG roles actually in active use (how many
-  users hold `editor` on how many groups), or were they rarely/never
-  assigned? Affects how urgent the gap is in practice.
+- ~~What did `workflow editor` and `shanti editor` actually do in D7?~~
+  **Partially answered 2026-08-06** — queried `users_roles` in
+  `mandala_d7_shared` (staging RDS copy of the dump, per
+  [d7-shared-user-database.md](d7-shared-user-database.md)) for the sitewide
+  role assignment counts:
+
+  | rid | name | user_count |
+  |---|---|---|
+  | 4 | editor | 142 |
+  | 5 | workflow editor | 2 |
+  | 6 | shanti editor | **0** |
+
+  **`shanti editor` was never assigned to a single user** — confirmed
+  vestigial, not merely undocumented. `workflow editor` has only 2 users,
+  worth identifying but low urgency. `editor` (142 users) is the real,
+  actively-used role, and it's the one with a matching OG `editor` grant
+  already found in `mandala_d7_images` (see above). This substantially
+  de-risks the migration-permission question: the two roles with no known
+  capability are also the two nobody (or almost nobody) holds.
+
+  **Legacy-codebase grep, 2026-08-06** (`mandala-legacy/mandala-drupal/docroot`,
+  all custom modules + Features exports, all 5 sites) closes this out:
+  - `shanti editor` — **zero hits anywhere in the codebase.** No Features
+    export, no hardcoded `rid` check, nothing. Fully vestigial on every site,
+    not just Images.
+  - `workflow editor` — **has one real, narrow grant, but only on the AV
+    site**: `sites/all/modules/custom/mediabase/features/audio_video` (a
+    Features module) exports it with `edit field_workflow` / `view
+    field_workflow` (via the `field_permissions` module) — control over a
+    single workflow-state field, not general node edit rights. This is why
+    it didn't show up empty in the Images-site `role_permission` check for
+    the wrong reason — it's AV-specific, not a no-op everywhere. Confirms
+    the doc's earlier caveat that "the editor grant found here may not
+    generalize across all five sites," in the opposite direction: an
+    *empty* role can still be real elsewhere.
+  - `hook_node_access()` in `shanti_images`, `shivanode`, `shanti_texts`,
+    `sources_misc` (the four implementations in custom modules) — none
+    contain `rid`-keyed logic for these three roles. Access flows through
+    node ownership and OG group grants, not role checks.
+  - No further legacy-code work needed on this question.
+- ~~Does `og_users_roles` show these OG roles actually in active use~~ — the
+  sitewide `users_roles` counts above answer the practical urgency question
+  (shanti editor: none; workflow editor: negligible). A follow-up
+  `og_users_roles` count (how many *group memberships* hold OG `editor`,
+  in `mandala_d7_images`) would still be useful to size the group-scoped-role
+  design work in the "Why it matters" section, but is no longer blocking.
 - Should the fix be: (a) design a Group-module group-role equivalent to OG's
   `editor` role now, as part of closing this gap, or (b) land a *sitewide*
   `content_editor` fix first (correct the permission list to at least cover
@@ -159,3 +194,4 @@ content they manage is a regression, not a neutral internal choice.
 - [ADR 011](../adr/011-group-collections-inheritance.md) — Group collections inheritance; the group-scoped role question belongs in this architecture.
 - 1b.3 (Solr-proxy visibility coherence) / 1b.4 (paragraph access inheritance) — open Sprint 1 tasks, likely the same underlying access-model gap.
 - [ADR 015](../adr/015-editorial-access-model-global-content-editor.md) — the editorial access model this note is resolved by; global non-admin `content_editor` for former shanti_editors, per-group editors deferred to Phase B Group roles.
+- [adr-015-unanswered-questions-at-merge.md](adr-015-unanswered-questions-at-merge.md) — **live tracking doc for the population question above.** Than independently found the same 142/2/0 split on 2026-07-30 (scrubbed dump) and flagged it on PR #75 as Question 1; this note's population data (from the live dev-0-loaded dump) closed out 1(a) (scrubbed data is representative). 1(b) — whether the team still wants `content_editor` reserved for a role with 0 real holders — is still an open policy call there, not here.

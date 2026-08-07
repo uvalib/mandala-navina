@@ -62,20 +62,34 @@ ADR 015's own Consequences section already names this as a guardrail:
 > *"the former-`shanti_editor` population must be confirmed on dev-0 before running, so the
 > global grant lands only where intended."*
 
-**That guardrail is currently unmet on merged code.**
+**That guardrail's data half is now met** (see (a) below — confirmed via the same live dump
+loaded on `rds-mysql8-staging` that dev-0's own migration source uses); its policy half, (b),
+is still open.
 
 **To resolve — both parts are open:**
 
-- **(a)** Is the scrubbed dump representative? Confirm the rid-6 count against dev-0's live
-  `mandala_d7_shared` (`SELECT rid, COUNT(*) FROM users_roles GROUP BY rid`). The scrubbed
-  extract may simply not carry these assignments.
-- **(b)** If `shanti editor` really was near-unused in production, does the team still want
-  `content_editor` reserved for it — accepting that no one holds editorial access until Phase
-  B — or does that change the Phase A/Phase B split? A new ADR superseding 015 would be the
-  vehicle if the answer changes the model; ADRs are immutable once accepted.
-
-Note that a synthetic-fixture run **cannot** answer this: fabricating a rid-6 user proves the
-mechanism works, not that anyone holds the role. This needs real data.
+- **(a)** ✅ **Answered 2026-08-06.** Confirmed the rid-6 count against dev-0's live
+  `mandala_d7_shared` (loaded on `rds-mysql8-staging`, 1,543 users — not the 1,538-user
+  scrubbed dump Than checked) via `SELECT r.rid, r.name, COUNT(ur.uid) FROM role r LEFT JOIN
+  users_roles ur ON ur.rid = r.rid WHERE r.rid IN (4,5,6) GROUP BY r.rid, r.name`. **Identical
+  distribution: rid 4 (editor) = 142, rid 5 (workflow editor) = 2, rid 6 (shanti editor) = 0.**
+  The scrubbed dump was representative — this is not a scrubbing artifact. A legacy-codebase
+  grep (`mandala-legacy/mandala-drupal/docroot`, all custom modules + Features exports, all 5
+  sites) additionally found **zero references to `shanti editor` anywhere in the D7 codebase**
+  — no Features export, no hardcoded `rid` check. It wasn't just unassigned; nothing in the
+  code ever granted it anything, on any site. (As a side finding, `workflow editor` — rid 5 —
+  turned out to have one real, narrow grant, but only on the **AV site**:
+  `mediabase/features/audio_video` exports `edit`/`view field_workflow` via the
+  `field_permissions` module, a single workflow-state field, not general node edit rights.
+  Doesn't change this question's answer, since it's still only 2 users, but may be relevant
+  context whenever AV's migration hits ADR 015's per-site `content_editor` CRUD checklist item.)
+- **(b)** Still fully open — a policy call, not a data question. Given (a) is now settled with
+  two independent confirmations (scrubbed + live dump, plus the codebase grep), the team can
+  decide this without further data collection: does the team still want `content_editor`
+  reserved for `shanti editor` — accepting that Phase A delivers editorial access to zero
+  migrated users until Phase B — or does that change the Phase A/Phase B split? A new ADR
+  superseding 015 would be the vehicle if the answer changes the model; ADRs are immutable once
+  accepted.
 
 ---
 
@@ -139,7 +153,8 @@ privilege leak** — but behavior and the checklist's wording disagree.
 
 ## Suggested sequencing
 
-Question 1 should be settled before the next real migration run against dev-0, since it
-determines whether Phase A delivers any editorial access at all. Questions 2 and 3 are not
-urgent but should be decided before the next per-site migration (Texts/Sources/AV) inherits
-question 2's precedent unexamined.
+Question 1(b) should be settled before the next real migration run against dev-0, since it
+determines whether Phase A delivers any editorial access at all — 1(a)'s data question is now
+closed (2026-08-06), so this is purely a team policy call, not blocked on further investigation.
+Questions 2 and 3 are not urgent but should be decided before the next per-site migration
+(Texts/Sources/AV) inherits question 2's precedent unexamined.
