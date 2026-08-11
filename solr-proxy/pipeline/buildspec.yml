@@ -36,6 +36,66 @@ phases:
       # earns a warning. If build-tag traceability in the image is wanted later,
       # add `ARG BUILD_TAG` + a LABEL to the Dockerfile first, then pass it here.
       - docker build -f solr-proxy/Dockerfile -t $CONTAINER_IMAGE:latest solr-proxy/
+
+      # ---- SMOKE TESTS ----------------------------------------------------
+      # Run BEFORE any tag or push. Publishing `latest` and the SSM tag param is
+      # what makes an image deployable, so a broken image must never get that far.
+      #
+      # Each check below corresponds to a real defect that has actually shipped
+      # in this codebase or its sibling — these are regression guards, not
+      # ceremony:
+      #   1. Apache config       — the D11 app's first pipeline run died on a
+      #                            missing PHP extension; here the equivalent trap
+      #                            is SOLR_BASEURL, which kmterms-proxy.conf
+      #                            interpolates into a ProxyPass directive. Unset
+      #                            or malformed and the container exits at start.
+      #   2. PHP extensions      — ext-redis comes from a `pecl install` that is
+      #                            recompiled on every build (CodeBuild has no
+      #                            layer cache), so it can regress silently.
+      #   3. Composer autoload   — catches a lock/vendor mismatch reaching runtime.
+      #   4. paths.php renders   — the config file read $_ENV, which is ALWAYS
+      #                            empty under this image's variables_order=GPCS.
+      #                            Every Solr URL silently became host-relative,
+      #                            so searches AND the ALB health-check path
+      #                            failed, while Redis fell back to 127.0.0.1 and
+      #                            quietly downgraded every logged-in user to the
+      #                            anonymous filter. Nothing about the image
+      #                            looked wrong. This check fails on that exact
+      #                            shape.
+      - echo Running smoke tests before tagging...
+      - |
+        docker run --rm \
+          -e SOLR_BASEURL=http://smoke.invalid:8080 \
+          -e DEFAULT_RETURL=https://smoke.invalid/home \
+          $CONTAINER_IMAGE:latest apache2ctl configtest
+      - |
+        docker run --rm $CONTAINER_IMAGE:latest php -r '
+          foreach (["redis","json","mbstring"] as $e) {
+            if (!extension_loaded($e)) { fwrite(STDERR, "SMOKE FAIL: PHP extension $e not loaded\n"); exit(1); }
+          }
+          echo "smoke: php extensions ok\n";'
+      - |
+        docker run --rm $CONTAINER_IMAGE:latest php -r '
+          require "/var/www/html/vendor/autoload.php";
+          if (!class_exists("League\\OAuth2\\Client\\Provider\\GenericProvider")) {
+            fwrite(STDERR, "SMOKE FAIL: OAuth2 GenericProvider did not autoload\n"); exit(1);
+          }
+          printf("smoke: oauth2-client %s ok\n", \Composer\InstalledVersions::getPrettyVersion("league/oauth2-client"));'
+      - |
+        docker run --rm -v $CODEBUILD_SRC_DIR/solr-proxy/settings:/tmpl:ro \
+          -e SOLR_BASEURL=http://smoke.invalid:8080 \
+          -e DEFAULT_RETURL=https://smoke.invalid/home \
+          $CONTAINER_IMAGE:latest php -r '
+          copy("/tmpl/paths.php.template", "/tmp/p.php");
+          require "/tmp/p.php";
+          $u = $SOLR_URLS["/solr/kmassets"];
+          if (strpos($u, "http://smoke.invalid:8080/") !== 0) {
+            fwrite(STDERR, "SMOKE FAIL: paths.php produced \"$u\" — the container environment is not being read\n"); exit(1);
+          }
+          echo "smoke: paths.php resolves absolute URLs ok\n";'
+      - echo All smoke tests passed.
+      # ---- end smoke tests ------------------------------------------------
+
       # NB: the "build-" prefix is load-bearing — it must match the value written
       # to /containers/$CONTAINER_IMAGE/latest below, because that parameter is
       # what the deploy playbook resolves the image tag from.
@@ -45,6 +105,20 @@ phases:
 
   post_build:
     commands:
+      # CodeBuild runs post_build EVEN WHEN THE BUILD PHASE FAILED. Without this
+      # guard the smoke tests above would be decorative: a failed build would
+      # still push `latest` and overwrite the SSM tag parameter, and the next
+      # deploy would pull the broken image. $CODEBUILD_BUILD_SUCCEEDING is 1 only
+      # if every prior phase succeeded.
+      #
+      # NB the D11 app's buildspec has the same shape without this guard; that is
+      # latent there because it has no smoke tests to bypass, but it is worth
+      # fixing there too.
+      - |
+        if [ "$CODEBUILD_BUILD_SUCCEEDING" != "1" ]; then
+          echo "Build phase failed — refusing to push or update the SSM tag parameter."
+          exit 1
+        fi
       - echo Pushing image to ECR...
       - docker push $CONTAINER_REGISTRY/$CONTAINER_IMAGE:build-$BUILD_VERSION
       - docker push $CONTAINER_REGISTRY/$CONTAINER_IMAGE:$COMMIT_TAG
