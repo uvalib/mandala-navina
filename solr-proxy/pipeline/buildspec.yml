@@ -82,17 +82,40 @@ phases:
           }
           printf("smoke: oauth2-client %s ok\n", \Composer\InstalledVersions::getPrettyVersion("league/oauth2-client"));'
       - |
-        docker run --rm -v $CODEBUILD_SRC_DIR/solr-proxy/settings:/tmpl:ro \
+        docker run --rm \
           -e SOLR_BASEURL=http://smoke.invalid:8080 \
           -e DEFAULT_RETURL=https://smoke.invalid/home \
           $CONTAINER_IMAGE:latest php -r '
-          copy("/tmpl/paths.php.template", "/tmp/p.php");
-          require "/tmp/p.php";
+          require "/usr/local/etc/settings/paths.php";
           $u = $SOLR_URLS["/solr/kmassets"];
           if (strpos($u, "http://smoke.invalid:8080/") !== 0) {
             fwrite(STDERR, "SMOKE FAIL: paths.php produced \"$u\" — the container environment is not being read\n"); exit(1);
           }
           echo "smoke: paths.php resolves absolute URLs ok\n";'
+      # 5. creds.php reads the OAuth config from the environment too, and refuses
+      #    to load without a client secret. A proxy that starts without one
+      #    completes no OAuth exchange, so every user stays anonymous and it
+      #    serves public-only results while still returning 200s — invisible from
+      #    outside. Both halves are checked: that it resolves when configured, and
+      #    that it actually throws when the secret is absent.
+      - |
+        docker run --rm \
+          -e SOLRPROXY_OAUTH_ROOT=https://smoke.invalid/oauth \
+          -e SOLRPROXY_CLIENT_SECRET=smoke-secret \
+          -e SOLRPROXY_REDIRECT_URI=https://smoke.invalid/auth \
+          $CONTAINER_IMAGE:latest php -r '
+          require "/usr/local/etc/settings/creds.php";
+          if ($CREDS["clientSecret"] !== "smoke-secret" || $CREDS["urlAccessToken"] !== "https://smoke.invalid/oauth/token") {
+            fwrite(STDERR, "SMOKE FAIL: creds.php did not read the environment\n"); exit(1);
+          }
+          echo "smoke: creds.php resolves from env ok\n";'
+      - |
+        if docker run --rm -e SOLRPROXY_OAUTH_ROOT=https://smoke.invalid/oauth \
+             $CONTAINER_IMAGE:latest php -r 'require "/usr/local/etc/settings/creds.php";' 2>/dev/null; then
+          echo "SMOKE FAIL: creds.php loaded without SOLRPROXY_CLIENT_SECRET — it must refuse" >&2
+          exit 1
+        fi
+      - echo "smoke: creds.php correctly refuses to load without a client secret"
       - echo All smoke tests passed.
       # ---- end smoke tests ------------------------------------------------
 

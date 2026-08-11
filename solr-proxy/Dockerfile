@@ -24,6 +24,23 @@ RUN cd /var/www/html && composer install --no-dev --no-interaction --prefer-dist
 COPY ./proxy/ /var/www/html/
 COPY settings/php.ini /usr/local/etc/php/php.ini
 
+# Bake the settings files into the image. They read every value from the container
+# environment (getenv()) and therefore contain NO secrets and NOTHING
+# environment-specific — which is what makes this image deployment-agnostic, the
+# same shape drupal-netbadge uses: one image, configured per environment from the
+# container_0.env.{generated,managed,secret} layering.
+#
+# This replaces the deploy-time bind mount of settings/. proxy/*.php require these
+# two paths unconditionally, so without them baked in the container fatals on the
+# first request — the mount was previously the only thing supplying them.
+#
+# Local development still overrides these by mounting ./settings over the
+# directory (see docker-compose.yml); .dockerignore keeps a developer's real
+# settings/creds.php and settings/paths.php out of the build context so only the
+# templates are ever baked.
+COPY settings/paths.php.template /usr/local/etc/settings/paths.php
+COPY settings/creds.php.template /usr/local/etc/settings/creds.php
+
 # Install required Apache modules
 RUN a2enmod rewrite proxy proxy_http proxy_balancer proxy_connect remoteip
 

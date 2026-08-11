@@ -58,10 +58,40 @@ hardcoded `clientSecret` placeholder. Now:
   baked into the image rather than mounted, fully realising the deployment-agnostic
   shape. Not done yet; it is the natural follow-on.
 
-**Still to rework against this pattern:** the merged `deployspec.yml` (its
-`PROXY_CREDS` decrypt block is now wrong), the drafted `deploy_solrproxy.yml` (drop
-the settings mount and the creds-file guard; load the layered env files instead), and
-the pipeline entry (build-only, so items 3–4 below shrink).
+### Rework DONE (2026-08-11)
+
+- **`Dockerfile` bakes `settings/{paths,creds}.php`** from the templates. Now
+  mandatory, not cosmetic: `proxy/*.php` require those two paths unconditionally, and
+  the deploy-time bind mount was the only thing supplying them. They contain no
+  secrets and nothing environment-specific, so baking them is what makes the image
+  deployment-agnostic. Local dev still overrides by mounting `./settings`.
+- **`deployspec.yml`** — the `solrproxy_creds.php.cpt` decrypt is gone, replaced by
+  the **existing shared** `container_0.env.secret` decrypt (the same file
+  mandala-drupal's deployspec already decrypts). No solrproxy-specific `.cpt`.
+- **`deploy_solrproxy.yml`** — rewritten on `deploy_netbadge.yml`: loads the three
+  layered env files, `combine()`s them, asserts `required_env_vars`, and passes the
+  result as the container's `env:`. **No volumes.** The settings-mount and
+  creds-file-guard tasks are gone.
+- **Smoke tests extended** to check the *baked* `paths.php`, that `creds.php`
+  resolves from the environment, and that it **refuses to load without a client
+  secret** (both halves — resolves when configured, throws when not).
+
+Verified end to end by running it: image builds; settings baked with no placeholder
+secret; and with **no mount and env-only configuration** the proxy serves anonymous
+search with the correct `fq`, injects a real Redis visibility token for a logged-in
+uid, and fails closed to the anonymous filter when Redis is stopped.
+`ansible-playbook --syntax-check` passes.
+
+**Still to do:** add the `SOLRPROXY_*` keys to `container_0.env.managed` /
+`container_0.env.secret` (the playbook asserts them and will fail until they exist),
+and create the pipeline entry — **build-only**, per netbadge, so items 3–4 below
+shrink accordingly.
+
+⚠ **One consequence to be aware of:** `Searcher.php` requires `creds.php`, which now
+throws without `SOLRPROXY_CLIENT_SECRET`. So a proxy deployed without that secret
+serves **nothing at all**, rather than degrading to public-only results. That is the
+deliberate choice — a silent downgrade to public-only is indistinguishable from
+working — but it does mean the secret is required even for anonymous search.
 
 ## What we found
 
