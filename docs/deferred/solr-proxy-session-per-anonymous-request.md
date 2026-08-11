@@ -3,8 +3,7 @@
 **Area:** solr-proxy / performance / availability
 **Raised during:** Session 2026-08-11 (checking the proxy against the "public access is the 90% case" principle)
 **Jira:** (add when available)
-**Priority:** Medium — no correctness or access-control impact, but it puts avoidable
-per-request disk I/O and unbounded file growth directly in the hot public path
+**Priority:** ~~Medium~~ — **RESOLVED 2026-08-11** (called out as a major anti-pattern; fixed same session)
 
 ## Measured, not inferred
 
@@ -51,7 +50,30 @@ requests, and:
 - Container-local `/tmp` also means sessions do not survive a redeploy, so nothing
   is gained by writing them for anonymous callers.
 
-## Fix direction
+## ✅ FIXED 2026-08-11
+
+`Searcher::setSession()` now starts a session only when the caller supplies a `sid`
+parameter or already holds a session cookie. Anonymous callers get
+`sessionStarted = false`, `isLoggedIn = false` and no session at all —
+`setVisibility()` reaches the anonymous filter from `isLoggedIn === false` without
+needing any session state.
+
+Two call sites needed guarding, which is why this was filed rather than done blind:
+`endSession()` (returns early — `session_unset()`/`session_destroy()` warn with no
+active session) and `getReturnUrl()` (falls back to `?returl=`, then the session,
+then `$DEFAULT_RETURL`, instead of reading an undefined index).
+
+**Measured after the fix: 50 anonymous requests → 0 session files** (was 1 per
+request). Verified unbroken: anonymous search returns the correct filter; the `sid`
+and session-cookie paths both still resume and inject the Redis visibility token;
+`ping` returns `{"loggedIn":false}`; `logout` with neither session nor `returl`
+redirects to `$DEFAULT_RETURL` instead of fataling. No PHP warnings in the logs.
+
+A smoke test in `solr-proxy/pipeline/buildspec.yml` now guards it, and was confirmed
+to **fail against the pre-fix `Searcher.php`** — a guard never seen failing is not
+known to be a guard.
+
+## Original fix direction (kept for context)
 
 Start the session only when one is actually implicated:
 

@@ -22,8 +22,10 @@ Consequences that are already load-bearing in this code — do not "tidy" them a
   to be obvious in `docker logs`/syslog — while costing the hot path as little as
   possible (hence a single consolidated log line, not one per missing variable).
 
-Known deviation: the proxy currently starts a PHP session on **every** request,
-including anonymous ones, writing a session file per request. See
+Applied consequence: `Searcher::setSession()` starts a PHP session **only** when the
+caller supplies a `sid` parameter or already holds a session cookie. It previously
+called `session_start()` unconditionally, writing a session file on every anonymous
+request that nothing ever read. A smoke test guards this — see
 [`docs/deferred/solr-proxy-session-per-anonymous-request.md`](../docs/deferred/solr-proxy-session-per-anonymous-request.md).
 
 Solr authentication proxy for the D11 platform. Forked from
@@ -72,14 +74,25 @@ land.
 ## Local setup
 
 ```
-cp settings/creds.php.template settings/creds.php   # fill in real client secret + redirect URI
-cp settings/paths.php.template settings/paths.php   # fill in Redis host if not localhost
-cp example.env .env                                  # SOLR_BASEURL / DEFAULT_RETURL / REDIS_HOST / REDIS_PORT
+cp example.env .env    # SOLR_BASEURL / DEFAULT_RETURL / REDIS_HOST / REDIS_PORT
+                       # plus SOLRPROXY_OAUTH_ROOT / _CLIENT_SECRET / _REDIRECT_URI
 docker compose up --build
 ```
 
-`settings/creds.php` and `settings/paths.php` are gitignored (generated from
-the `.template` files) since they carry environment-specific secrets/hosts.
+**No settings files to copy or fill in.** `settings/{paths,creds}.php.template` read
+every value from the container environment via `getenv()`, contain no secrets, and
+are baked into the image (see `Dockerfile`) — that is what makes the image
+deployment-agnostic, the same shape `drupal-netbadge` uses. Configuration comes from
+the environment in every context: `.env` locally, and the layered
+`container_0.env.{generated,managed,secret}` files when deployed.
+
+`settings/creds.php` and `settings/paths.php` (no `.template`) remain gitignored and
+are still honoured if present, because `docker-compose.yml` mounts `./settings` over
+the baked directory — useful for poking at local overrides, but not required.
+
+If `SOLRPROXY_CLIENT_SECRET` is unset the proxy starts anyway in **public-only**
+mode: anonymous search works, login is disabled, and the reason is logged on every
+request. See the design principle at the top.
 
 **Note (Spike 10):** D11's `simple_oauth` paths are `/oauth/*`, not the D7
 proxy's `/oauth2/*` — `$OAUTH_ROOT` in `creds.php.template` reflects this.
@@ -90,5 +103,13 @@ proxy's `/oauth2/*` — `$OAUTH_ROOT` in `creds.php.template` reflects this.
 |---|---|---|---|
 | `mandala_solr_fq:{uid}` | Drupal (login / Group membership change / logout) | this proxy | Full Solr `fq` string, TTL 1h, re-written on access change |
 
-`uid=1` (Drupal admin) has no token written — the proxy applies no
-visibility filter for uid 1, matching prior D7 proxy behaviour.
+`uid=1` (Drupal admin) has no token written.
+
+⚠ **This next part was long documented incorrectly, here and in three other
+places.** It said the proxy "applies no visibility filter for uid 1". It does not:
+`Searcher::setVisibility()` skips the *token lookup* for uid 1 and then falls
+through to the **anonymous** filter, so admin sees public content only. D7 behaves
+identically, so this is not a D11 regression — but `VisibilityTokenBuilder`
+deliberately writes no token for uid 1 *on the strength of the false claim*. Which
+way to reconcile it is an open decision:
+[`docs/deferred/solr-proxy-uid1-admin-gets-anonymous-filter.md`](../docs/deferred/solr-proxy-uid1-admin-gets-anonymous-filter.md).

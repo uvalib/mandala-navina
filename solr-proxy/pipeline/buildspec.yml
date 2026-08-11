@@ -121,6 +121,29 @@ phases:
           echo "SMOKE FAIL: creds.php degraded SILENTLY — the public-only warning must be logged" >&2
           echo "$out" >&2; exit 1; }
       - echo "smoke: creds.php degrades to public-only and logs it"
+      # 7. An anonymous request must not spawn a PHP session. Unauthenticated
+      #    public search is the 90% case (see solr-proxy/README.md); this used to
+      #    call session_start() unconditionally, writing one session file per
+      #    request that nothing ever read — measured at 20 files for 20 requests —
+      #    and scaling with bot traffic, which send no cookies. Verified to FAIL
+      #    against the pre-fix Searcher.php, so it is a real guard.
+      - |
+        docker run --rm \
+          -e SOLR_BASEURL=http://smoke.invalid:8080 \
+          -e DEFAULT_RETURL=https://smoke.invalid/home \
+          -e SOLRPROXY_OAUTH_ROOT=https://smoke.invalid/oauth \
+          -e SOLRPROXY_CLIENT_SECRET=smoke-secret \
+          -e SOLRPROXY_REDIRECT_URI=https://smoke.invalid/auth \
+          $CONTAINER_IMAGE:latest php -r '
+          chdir("/var/www/html"); require "Searcher.php";
+          $s = new Searcher();
+          if (session_status() === PHP_SESSION_ACTIVE) {
+            fwrite(STDERR, "SMOKE FAIL: a session was started for an anonymous request\n"); exit(1);
+          }
+          if ($s->isLoggedIn !== false || $s->sessionStarted !== false) {
+            fwrite(STDERR, "SMOKE FAIL: unexpected anonymous session state\n"); exit(1);
+          }
+          echo "smoke: no session spawned for an anonymous request\n";'
       - echo All smoke tests passed.
       # ---- end smoke tests ------------------------------------------------
 
