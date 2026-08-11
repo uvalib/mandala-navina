@@ -131,6 +131,47 @@ present at container start; a missing value is a crash-loop, not a degraded serv
   scope for this fix; worth its own decision before the proxy carries production
   traffic on D11.
 
+## Playbook draft — 2026-08-11, UNCOMMITTED in terraform-infrastructure
+
+`deploy_solrproxy.yml` has been drafted but **deliberately not committed**, pending
+review in a later session. It is untracked in the terraform-infrastructure working
+copy — note that repo takes commits straight to `master` with no PR mechanism, so
+committing it *is* publishing it, which is why it is being held:
+
+```
+terraform-infrastructure/mandala/drupal/staging/ansible/deploy_solrproxy.yml
+terraform-infrastructure/mandala/drupal/staging/ansible/files/var/solr-proxy/paths.php
+```
+
+⚠ **This is per-machine state on the current driver's laptop.** Another driver
+picking this up will not see it. Either commit it or re-draft from this note.
+
+Validated as far as is possible without running it: `ansible-playbook --syntax-check`
+passes (exit 0, matching `deploy_backend.yml`), 19 tasks parse, and the deployed
+`paths.php` passes `php -l` inside the built image.
+
+Modelled on `deploy_backend.yml`. Deliberate differences, all load-bearing:
+
+- **No SimpleSAMLphp anything** — the proxy is an OAuth2 client, not a SAML SP.
+- **No drush** — plain PHP/Apache, not Drupal.
+- **Container named `mandala-solr-proxy-0`, not `mandala-solr-proxy`** — the
+  unsuffixed name is the *legacy D7 proxy*, a different codebase. Reusing it would
+  make the playbook silently replace a live service.
+- **Missing credentials are a hard failure, not a warning.** `deploy_backend.yml`
+  only warns on a missing SAML key (the trap its own deployspec calls out). Here a
+  missing `creds.php` would let the proxy come up and serve *only public results to
+  logged-in users* — invisible from outside — so the playbook refuses to deploy.
+- **Does not stop the legacy container** even though both bind 8765. It is stopped
+  on dev-0 today so there is no conflict; in production it is live. Which proxy
+  owns the port is a decision, not something a playbook should force.
+- Ends by probing the exact ALB health-check path (`/solr/kmassets/status`) from
+  inside the container, warning rather than failing — Solr being briefly
+  unreachable shouldn't fail a deploy; the ALB is the authority on target health.
+
+**Still to be created before it can run:** `solrproxy_creds.php.cpt` (the encrypted
+OAuth2 client secret) in the same ansible directory, plus items 2–3 above (ECR repo,
+pipeline entry).
+
 ## Cross-references
 
 - [ADR 014](../adr/014-hybrid-solr-proxy-design.md) — the hybrid proxy design this deploys
