@@ -1,14 +1,62 @@
 <?php
 
+// Read configuration with getenv(), NOT $_ENV — see the long explanation in
+// paths.php.template. Short version: this image ships php.ini-production, whose
+// variables_order = "GPCS" has no "E", so $_ENV is always empty.
+//
+// Nothing in this file is a secret any more. Every value comes from the container
+// environment, which is how the deployment-agnostic image pattern works here (the
+// same shape drupal-netbadge uses): one image, configured per environment from the
+// layered container_0.env.{generated,managed,secret} files, rather than a
+// hand-edited settings file baked or mounted per host.
+//
+// Variables are SOLRPROXY_-prefixed because container_0.env.secret is SHARED with
+// the other containers on the host — the same reason netbadge's config is all
+// SIMPLESAML_-prefixed. The pre-existing unprefixed vars this proxy already uses
+// (SOLR_BASEURL, DEFAULT_RETURL, REDIS_HOST, REDIS_PORT) are left alone; renaming
+// them is a separate decision.
+//
+// Where each value belongs:
+//   SOLRPROXY_CLIENT_SECRET -> container_0.env.secret   (ccrypt-encrypted .cpt)
+//   SOLRPROXY_ADMIN_PW      -> container_0.env.secret   (ccrypt-encrypted .cpt)
+//   everything else         -> container_0.env.managed  (committed, non-secret)
+//
+// NB: `?:` not `??` throughout — getenv() returns FALSE, not NULL, for an unset
+// variable, so `??` would assign FALSE instead of the intended default.
+
 // D11 simple_oauth server. NOTE (Spike 10): D11 uses /oauth/* paths, not the
 // D7 proxy's /oauth2/* -- simple_oauth does not use the "2" segment.
-$OAUTH_ROOT = "https://mandala-dev.internal.lib.virginia.edu/oauth";
+$OAUTH_ROOT = getenv("SOLRPROXY_OAUTH_ROOT") ?: "";
+
+// The OAuth2 client secret for the `solrproxy` simple_oauth consumer registered in
+// D11. Fail loudly rather than deploying without it: with no secret the
+// authorization-code exchange cannot complete, so EVERY user stays anonymous and
+// the proxy quietly serves public-only results — a failure that is invisible from
+// the outside (it still returns 200s with plausible data). Same reasoning as
+// paths.php throwing on a missing SOLR_BASEURL.
+$SOLRPROXY_CLIENT_SECRET = getenv("SOLRPROXY_CLIENT_SECRET");
+if ($SOLRPROXY_CLIENT_SECRET === false || $SOLRPROXY_CLIENT_SECRET === "") {
+    throw new Exception("Environment variable SOLRPROXY_CLIENT_SECRET must be set!");
+}
+if ($OAUTH_ROOT === "") {
+    throw new Exception("Environment variable SOLRPROXY_OAUTH_ROOT must be set!");
+}
+
 $CREDS = array(
-             'clientId'                => 'solrproxy',      // OAuth2 client registered in D11 (simple_oauth consumer)
-             'clientSecret'            => 'SECRET_SUPER_SECRET_SECRET', // The client password assigned to you by the provider
-             'redirectUri'             => 'https://mandala-index-dev.internal.lib.virginia.edu/auth',  // This is the url for the /proxy/auth.php script in this repo
+             'clientId'                => getenv("SOLRPROXY_CLIENT_ID") ?: 'solrproxy',  // OAuth2 client registered in D11 (simple_oauth consumer)
+             'clientSecret'            => $SOLRPROXY_CLIENT_SECRET,
+             'redirectUri'             => getenv("SOLRPROXY_REDIRECT_URI") ?: '',        // the /auth endpoint of THIS proxy, per environment
              'urlAuthorize'            => $OAUTH_ROOT.'/authorize',
              'urlAccessToken'          => $OAUTH_ROOT.'/token',
              'urlResourceOwnerDetails' => $OAUTH_ROOT.'/UserInfo',
+             // Not configurable: Spike 10 established that `openid` is the only
+             // scope that works here, and that client_credentials must NOT carry it
+             // (see docs/deferred/oauth-openid-scope-client-credentials-crash.md).
              'scopes'                  => 'openid',
 );
+
+// Password gating proxysess.php's admin actions (list/delete/destroyall).
+// Previously referenced there but defined NOWHERE, so those actions were
+// unusable — they failed closed, which is why it was never noticed. Optional:
+// leave unset to keep them disabled; set it to enable them.
+$ADMIN_PW = getenv("SOLRPROXY_ADMIN_PW") ?: '';

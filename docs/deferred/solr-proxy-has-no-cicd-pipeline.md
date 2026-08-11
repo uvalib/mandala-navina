@@ -8,6 +8,61 @@ ADR 014's hybrid design end-to-end
 **Status:** **DECIDED (2026-08-11, Yuji) — solr-proxy needs a full CI/CD pipeline.**
 Production explicitly out of scope for now.
 
+## ⚠ DESIGN CORRECTION (2026-08-11, Yuji) — follow `drupal-netbadge`
+
+> *"The shape should follow the way the drupal-netbadge project is configured. The
+> image is deployment-agnostic and gets its configuration from the environment."*
+
+**This supersedes parts of the deployspec merged in PR #92 and of the drafted
+Ansible playbook.** Read it before building on either.
+
+The pattern, as verified in `terraform-infrastructure`:
+
+- **`aws_cicd/pipelines/drupal-netbadge` is BUILD-ONLY** — `build_phase = true`,
+  `deploy_phase` deliberately commented out. It builds the image, pushes it to ECR
+  and writes the SSM tag. It deploys nothing.
+- **Each consuming environment deploys that image from its own Ansible.** Mandala
+  already does exactly this in `mandala/drupal/<env>/ansible/deploy_netbadge.yml`.
+- **All configuration is environment variables**, layered from
+  `container_0.env.generated` (terraform) + `container_0.env.managed` (committed,
+  non-secret) + `container_0.env.secret` (ccrypt `.cpt`), `combine()`d into the
+  container's `env:`, with a `required_env_vars` assertion. **No mounted config
+  files.** Precedent already present: `SIMPLESAML_REDIS_HOST: "redis"` /
+  `SIMPLESAML_REDIS_PORT: "6379"` in mandala's `container_0.env.managed`.
+
+| Superseded (built earlier 2026-08-11) | Correct, per netbadge |
+|---|---|
+| separate `solrproxy_creds.php.cpt` | OAuth secret as `SOLRPROXY_CLIENT_SECRET` in the **existing** `container_0.env.secret` |
+| playbook bind-mounts `settings/` | no mounts — config via env vars |
+| deployspec decrypts a creds file | reuse the `container_0.env.secret` decrypt that already exists |
+| build **+ deploy** pipeline | **build-only**; deploy from mandala's own Ansible |
+| `creds.php` hardcodes the secret | ✅ **fixed** — reads `getenv()` (see below) |
+
+**`creds.php` converted to `getenv()`.** It had the same `$_ENV`-class problem as
+`paths.php` (config baked into a file rather than read from the environment) plus a
+hardcoded `clientSecret` placeholder. Now:
+
+- `SOLRPROXY_OAUTH_ROOT`, `SOLRPROXY_CLIENT_ID`, `SOLRPROXY_REDIRECT_URI` →
+  `container_0.env.managed`; `SOLRPROXY_CLIENT_SECRET`, `SOLRPROXY_ADMIN_PW` →
+  `container_0.env.secret`. `SOLRPROXY_`-prefixed because that env file is **shared
+  with the other containers on the host** — the same reason netbadge namespaces
+  everything `SIMPLESAML_`.
+- **A missing or empty `SOLRPROXY_CLIENT_SECRET` now throws.** Without it the
+  authorization-code exchange cannot complete, so every user stays anonymous and the
+  proxy quietly serves public-only results while still returning 200s — invisible
+  from outside. Same reasoning as `paths.php` throwing on a missing `SOLR_BASEURL`.
+- **`$ADMIN_PW` is now actually defined.** It was referenced by `proxysess.php` but
+  declared nowhere, so those admin actions were dead (failing closed, which is why
+  nobody noticed). Optional — unset leaves them disabled.
+- **Consequence: `settings/*.php` now contain no secrets at all**, so they could be
+  baked into the image rather than mounted, fully realising the deployment-agnostic
+  shape. Not done yet; it is the natural follow-on.
+
+**Still to rework against this pattern:** the merged `deployspec.yml` (its
+`PROXY_CREDS` decrypt block is now wrong), the drafted `deploy_solrproxy.yml` (drop
+the settings mount and the creds-file guard; load the layered env files instead), and
+the pipeline entry (build-only, so items 3–4 below shrink).
+
 ## What we found
 
 Auditing all D11-related CI/CD live in the staging AWS account (2026-08-11) found
