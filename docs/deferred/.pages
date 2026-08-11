@@ -38,8 +38,8 @@ nav:
   - "Plan production D7→D11 migration (future)": production-migration-planning.md
   - "SAML SP cert expired — renew + re-register": saml-sp-cert-expired-renewal.md
   - "Redis: two stores required; enterprise location deferred": redis-enterprise-store-location.md
-  - "D11 app has no CI/CD pipeline": d11-app-has-no-cicd-pipeline.md
-  - "reindeer_x has no ECR repo or pipeline": reindeer-x-has-no-ecr-repo-or-pipeline.md
+  - "D11 app has no CI/CD pipeline (RESOLVED 2026-08-11)": d11-app-has-no-cicd-pipeline.md
+  - "reindeer_x has no ECR repo or pipeline (under review)": reindeer-x-has-no-ecr-repo-or-pipeline.md
   - "rdx ALB target unhealthy in production": rdx-alb-target-unhealthy-in-production.md
   - "fail2ban: emergency measure, still needed? (decoupled from D11)": fail2ban-need-and-ownership.md
   - "Pipeline triggers on every monorepo commit (no trigger_paths)": pipeline-triggers-on-every-monorepo-commit.md
@@ -48,7 +48,7 @@ nav:
   - "migrate_shared vs migrate_users connection duplication (PR #45)": migrate-shared-vs-migrate-users-connection-duplication.md
   - "Large migration OOM + resume behavior": migrate-large-migration-oom-and-resume-behavior.md
   - "Dev migration slower than DDEV (cross-AZ latency)": dev-migration-slower-than-ddev-cross-az-latency.md
-  - "Deliver code/config to dev-0: rebuild vs pipeline (open)": dev-0-code-config-delivery-rebuild-or-pipeline.md
+  - "Deliver code/config to dev-0: rebuild vs pipeline (RESOLVED 2026-08-11)": dev-0-code-config-delivery-rebuild-or-pipeline.md
   - "d7_user_role wipes committed role permissions": d7-user-role-migration-wipes-committed-role-permissions.md
   - "D7 editor permissions are OG group-scoped, not migrated": d7-editor-permissions-og-group-scoped-not-migrated.md
   - "SimpleSAMLphp never configured in DDEV": simplesamlphp-never-configured-in-ddev.md
@@ -56,3 +56,5 @@ nav:
   - "Authenticated contributor CRUD not wired in D11": authenticated-contributor-crud-not-wired-in-d11.md
   - "Orphaned content → temp review group on migration": orphaned-content-temp-group-on-migration.md
   - "Texts footnotes production transform (Spike 4b downstream)": texts-footnotes-production-transform.md
+  - "solr-proxy has no CI/CD pipeline (DECIDED: build it)": solr-proxy-has-no-cicd-pipeline.md
+  - "s3-sync pipeline deferred (pending reindeer_x consolidation)": s3-sync-pipeline-deferred-pending-reindeer-x-consolidation.md

@@ -69,3 +69,12 @@ so whichever way this goes, consider solving both consistently.
 - [reindeer-x-has-no-ecr-repo-or-pipeline.md](reindeer-x-has-no-ecr-repo-or-pipeline.md) — same gap for reindeer_x
 - [d11-dev-database-bootstrap-and-migration-source.md](d11-dev-database-bootstrap-and-migration-source.md) — how dev-0 was stood up
 - `package/Dockerfile`, `pipeline/buildspec.yml`, `pipeline/deployspec.yml`
+
+## RESOLVED — 2026-08-11
+
+**Option B was chosen and built** — see the matching update in
+[d11-app-has-no-cicd-pipeline.md](d11-app-has-no-cicd-pipeline.md). Verified live
+2026-08-11: the pipeline exists, auto-deploys on every relevant `main` merge, and
+has been doing so since 2026-07-15. This note's "no repeatable way to deliver code"
+premise no longer holds for the Drupal app. Left as-is otherwise for history —
+Option A (manual runbook) was never needed.

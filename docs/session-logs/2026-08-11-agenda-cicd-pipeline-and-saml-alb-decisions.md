@@ -55,3 +55,39 @@ This doc is pushed as-is (agenda only, no decisions recorded yet) so Yuji/Xiaomi
 two items queued up with full context. Whoever drives should fill in the actual decisions
 made under each item above (or add a follow-up dated section) and update the two deferred
 notes' status once resolved, per the usual session-end ritual.
+
+### Item 1 update (2026-08-11, Yuji) — the framing was stale; pipeline already exists
+
+Before deciding "write the real pipeline vs. bootstrap by hand," verified live against
+the staging AWS account: **the pipeline was already built and working.**
+`terraform-infrastructure/aws_cicd/pipelines/mandala-drupal/` was added 2026-07-14
+(`e7bf08615`) and went GREEN 2026-07-15 — nearly a month before this agenda was drafted.
+ECR repo, CodePipeline, webhook trigger on `main` all confirmed live; 10 most recent
+executions checked, mostly Succeeded, most recently 2026-08-07. Both
+[d11-app-has-no-cicd-pipeline.md](../deferred/d11-app-has-no-cicd-pipeline.md) and
+[dev-0-code-config-delivery-rebuild-or-pipeline.md](../deferred/dev-0-code-config-delivery-rebuild-or-pipeline.md)
+were marked resolved — they'd just never been updated after the pipeline shipped.
+
+**What's real: the pipeline only covers `drupal/`, staging/dev only.** Auditing all
+D11-related CI/CD in the account turned up the other two monorepo components with no
+pipeline at all — `solr-proxy/` and `s3-sync/` — plus `reindeer_x` (separate repo,
+ADR 007), which turned out to not be running anywhere (stopped ~4 weeks, since
+2026-07-15, deliberately — not a crash — and never restarted).
+
+**Decided (2026-08-11, Yuji), production explicitly out of scope for all of this:**
+- **solr-proxy** — needs a full CI/CD pipeline. Scoped in
+  [solr-proxy-has-no-cicd-pipeline.md](../deferred/solr-proxy-has-no-cicd-pipeline.md).
+  Its runtime dependencies (OAuth2 client, Redis visibility writer) are already merged,
+  so this is unblocked.
+- **s3-sync** — deferred. The directory is empty in the monorepo; its legacy content
+  (`mandala_s3_synch`) is architecturally already slated for absorption into reindeer_x
+  (Spike 8 Part A, proven on a spike branch). Scoping its own pipeline now risks
+  building something that gets retired. See
+  [s3-sync-pipeline-deferred-pending-reindeer-x-consolidation.md](../deferred/s3-sync-pipeline-deferred-pending-reindeer-x-consolidation.md).
+- **reindeer_x** — under review, to be discussed later. This revives the "do we even
+  need an always-on rdx service" question opened 2026-07-14 and never closed (see
+  [reindeer-x-has-no-ecr-repo-or-pipeline.md](../deferred/reindeer-x-has-no-ecr-repo-or-pipeline.md)),
+  now with 4 more weeks of it running fine while stopped as evidence for the "nobody
+  would notice" hypothesis.
+
+Item 2 (SAML/ALB routing) not yet discussed this session.

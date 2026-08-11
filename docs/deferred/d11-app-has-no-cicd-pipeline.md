@@ -75,3 +75,30 @@ Option 1 below (write the pipeline) is that note's Option B. No decision recorde
 - `docs/planning/1b1-part4-d11-backend-deploy-scope.md` §1, §4
 - `pipeline/buildspec.yml`, `pipeline/deployspec.yml`
 - `terraform-infrastructure/aws_cicd/pipelines/drupal-dsf/` — the reference shape
+
+## RESOLVED — 2026-08-11
+
+**This gap was already closed the day after it was filed and this note was never
+updated.** `terraform-infrastructure/aws_cicd/pipelines/mandala-drupal/` was added
+2026-07-14 (`e7bf08615`), fixed up through 2026-07-16, and the full cycle went GREEN
+2026-07-15 (see `docs/session-logs/2026-07-15-sprint-01-1b1-part4-first-green-pipeline.md`
+and the project-mandala-state memory's "pipeline is GREEN" block). This note and
+today's 2026-08-11 session-log agenda both still cited it as open — verified live
+today and it is not:
+
+- ECR repo `uvalib/mandala-drupal` — exists, created 2026-07-15
+- CodePipeline `uva-mandala-drupal-codepipeline` — exists, Source→Build→Deploy,
+  webhook-triggered on `drupal/**`/`package/**`/`pipeline/**` pushes to `main`
+- 10 most recent executions checked, mostly Succeeded, most recently 2026-08-07
+  (matches `main`'s HEAD at the time)
+- SSM `/containers/uvalib/mandala-drupal/latest` — live, `build-20260807170435`
+
+So the "write it properly vs. bootstrap by hand" choice this note posed is moot —
+Option 1 was already done. **What's real and still open:** the pipeline only
+deploys to staging/dev (`ENVIRONMENT: staging` hardcoded in `deployspec.yml`); there
+is no production pipeline app and `terraform-infrastructure/mandala/drupal/production/ansible/`
+still only has the pre-D11 Aegir-era playbooks, not `deploy_backend.yml`/etc. That's
+explicitly **out of scope for now** (2026-08-11, Yuji) — not tracked as a gap here.
+
+Also resolves [dev-0-code-config-delivery-rebuild-or-pipeline.md](dev-0-code-config-delivery-rebuild-or-pipeline.md)
+the same way — Option B there is this same pipeline, already built and running.
