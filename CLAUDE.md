@@ -8,11 +8,14 @@ Monorepo for the Mandala Digital Library platform at the University of Virginia 
 
 ## Session startup
 
-At the start of every session, read these files to orient yourself before doing any work:
+At the start of every session, before doing any work:
 
-1. `docs/adr/README.md` — index of all architectural decisions; read any ADR that seems relevant to the task
-2. `docs/spikes/README.md` — spike status; read the doc for any spike being continued or referenced
-3. `docs/deferred/README.md` — known gaps and deferred work
+1. Run `git status` then `git pull --ff-only` (in this repo directory) to make sure local is current — since sessions are driven by different team members on different machines, a stale local copy is a recurring source of working from outdated context. If the pull isn't a fast-forward, stop and surface it rather than resolving it silently.
+2. Read these files to orient yourself:
+   1. `docs/adr/README.md` — index of all architectural decisions; read any ADR that seems relevant to the task
+   2. `docs/spikes/README.md` — spike status; read the doc for any spike being continued or referenced
+   3. `docs/deferred/README.md` — known gaps and deferred work
+   4. `docs/session-logs/` — scan for the most recent log in particular; it may be an agenda or handoff (e.g. drafted by one driver for another to pick up) with open decisions or context not yet reflected elsewhere
 
 This ensures all team members' Claude instances start from the same shared context regardless of who drove the previous session.
 

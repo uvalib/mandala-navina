@@ -131,5 +131,27 @@ ADR 007 stands: this is reindeer_x's **own** pipeline, not a stage in
 - [ADR 006](../adr/006-kmterms-in-kmassets-shadow-pattern.md) — the shadow pattern
 - [ADR 007](../adr/007-reindeer-x-independent-service.md) — independent deployable
 - [ADR 013](../adr/013-drupal-source-of-truth-solr-client-compatibility.md) — the kmterms carve-out
-- [d11-app-has-no-cicd-pipeline.md](d11-app-has-no-cicd-pipeline.md) — the same gap for the D11 app
+- [d11-app-has-no-cicd-pipeline.md](d11-app-has-no-cicd-pipeline.md) — the same gap for the D11 app (RESOLVED 2026-08-11 — see that note; reindeer_x's own gap below is NOT resolved the same way)
 - `docs/planning/1b1-part4-d11-backend-deploy-scope.md` §5.1 (replace in place), §6 (component audit)
+
+## Status check — 2026-08-11
+
+The "review the need for rdx in general" gate above was never recorded as closed —
+**still open, still gating this note.** Verified live today, both facts unchanged
+since 2026-07-14:
+
+- **reindeer_x is not running anywhere.** SSH to dev-0: the container last exited
+  2026-07-15T20:05:51Z (`SIGTERM`, `RestartPolicy: no`) — the same session that
+  deliberately quiesced the legacy Aegir-adjacent containers for the volume-snapshot
+  work, not a crash (job queue was healthy right up to the stop: 72,978 succeeded,
+  0 failed). It has not been restarted since — about 4 weeks with no kmterms→kmassets
+  sync running anywhere, dev or otherwise.
+- **The rdx ALB target is still unhealthy**, dev and production both — same
+  9000-vs-9001 port mismatch as 2026-07-14, unchanged.
+
+Triaged 2026-08-11 (Yuji): status is **under review, to be discussed later** —
+explicitly not resolving the push-vs-pull question today. This note and
+[rdx-alb-target-unhealthy-in-production.md](rdx-alb-target-unhealthy-in-production.md)
+both stand as-is until that discussion happens. Also decided the same session:
+[s3-sync-pipeline-deferred-pending-reindeer-x-consolidation.md](s3-sync-pipeline-deferred-pending-reindeer-x-consolidation.md) —
+s3-sync's fate is tied to reindeer_x's, so it's deferred alongside this.
