@@ -1,0 +1,28 @@
+# Build context hygiene for solr-proxy.
+#
+# The critical entry is proxy/vendor/. The Dockerfile installs dependencies from
+# composer.lock and only THEN does `COPY ./proxy/ /var/www/html/`, so a developer
+# who has run `composer install` locally would otherwise have their host-resolved
+# vendor/ copied over the image's lock-installed one — silently defeating the
+# pinning, and potentially shipping packages resolved against a local PHP 8.x
+# rather than the image's 7.4. CodeBuild clones fresh so it never hits this;
+# local builds would.
+proxy/vendor/
+
+# Environment-specific settings are bind-mounted at /usr/local/etc/settings at
+# runtime, never baked in. The Dockerfile only COPYs settings/php.ini by name, so
+# these are already excluded in practice — listed explicitly so that stays true
+# if that COPY is ever widened to the whole directory.
+settings/creds.php
+settings/paths.php
+.env
+
+# Local-development and repo files with no place in the image.
+docker-compose.yml
+example.env
+README.md
+files/apache2/proxy-conf/README.md
+.git
+.gitignore
+.idea
+.DS_Store
