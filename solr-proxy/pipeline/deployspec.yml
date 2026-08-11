@@ -5,11 +5,16 @@ version: 0.2
 # Modelled on the D11 app's pipeline/deployspec.yml (the proven live reference).
 #
 # ⚠ THIS SPEC IS NOT RUNNABLE YET. It invokes `deploy_solrproxy.yml`, which does
-# not exist — it must be written in terraform-infrastructure under
-# mandala/drupal/<env>/ansible/, along with the encrypted creds file referenced
-# below. See docs/deferred/solr-proxy-has-no-cicd-pipeline.md. Do not wire this
-# into a pipeline before those land, or the deploy phase will fail at the
-# playbook invocation.
+# not exist in terraform-infrastructure yet (it is drafted but uncommitted), and
+# the SOLRPROXY_* keys it needs are not yet in container_0.env.{managed,secret}.
+# See docs/deferred/solr-proxy-has-no-cicd-pipeline.md. Do not wire this into a
+# pipeline before those land, or the deploy phase will fail at the playbook
+# invocation.
+#
+# Follows the drupal-netbadge pattern: the image is deployment-agnostic and takes
+# all of its configuration from the container environment, so there is no
+# solrproxy-specific secrets file to decrypt and no settings directory to install
+# — only the shared container_0.env.secret below.
 #
 # No parameter-store block on purpose. TF_VAR_access_key / TF_VAR_secret_key /
 # TF_VAR_region are already injected by the codepipeline module (the two keys
@@ -65,17 +70,17 @@ phases:
       - ${TF_INFRA}/scripts/decrypt-key.ksh ${TF_INFRA}/${PRIVATE_KEY_NAME}.cpt ${PRIVATE_KEY_NAME}
       - chmod 600 ${TF_INFRA}/${PRIVATE_KEY_NAME}
 
-      # solr-proxy settings/creds.php — carries the OAuth2 client secret for the
-      # `solrproxy` simple_oauth consumer registered in D11 (ADR 014 / 1b.1
-      # part 2). MUST NOT be committed in plaintext.
+      # Shared container secrets. The proxy takes ALL of its configuration from the
+      # environment (drupal-netbadge pattern), so its OAuth2 client secret lives in
+      # this existing file as SOLRPROXY_CLIENT_SECRET rather than in a settings file
+      # of its own — there is no solrproxy-specific .cpt.
       #
-      # ⚠ TO BE CREATED: this .cpt does not exist yet in terraform-infrastructure.
-      # settings/paths.php deliberately does NOT get this treatment — it holds no
-      # secrets, deriving everything from SOLR_BASEURL / REDIS_HOST / REDIS_PORT
-      # at runtime, so the playbook should render it from the committed template.
-      - PROXY_CREDS=${TF_INFRA}/mandala/drupal/${ENVIRONMENT}/ansible/solrproxy_creds.php
-      - ${TF_INFRA}/scripts/decrypt-key.ksh ${PROXY_CREDS}.cpt ${PRIVATE_KEY_NAME}
-      - chmod 600 ${PROXY_CREDS}
+      # This is the same file mandala-drupal's deployspec decrypts, for the same
+      # reason: deploy_solrproxy.yml `include_vars` the PLAINTEXT copy, which is
+      # gitignored, so a fresh clone has nothing to read without this step.
+      - CONTAINER_SECRET=${TF_INFRA}/mandala/drupal/${ENVIRONMENT}/ansible/container_0.env.secret
+      - ${TF_INFRA}/scripts/decrypt-key.ksh ${CONTAINER_SECRET}.cpt ${PRIVATE_KEY_NAME}
+      - chmod 600 ${CONTAINER_SECRET}
 
   build:
     commands:

@@ -1,14 +1,78 @@
 <?php
 
+// Read configuration with getenv(), NOT $_ENV — see the long explanation in
+// paths.php.template. Short version: this image ships php.ini-production, whose
+// variables_order = "GPCS" has no "E", so $_ENV is always empty.
+//
+// Nothing in this file is a secret any more. Every value comes from the container
+// environment, which is how the deployment-agnostic image pattern works here (the
+// same shape drupal-netbadge uses): one image, configured per environment from the
+// layered container_0.env.{generated,managed,secret} files, rather than a
+// hand-edited settings file baked or mounted per host.
+//
+// Variables are SOLRPROXY_-prefixed because container_0.env.secret is SHARED with
+// the other containers on the host — the same reason netbadge's config is all
+// SIMPLESAML_-prefixed. The pre-existing unprefixed vars this proxy already uses
+// (SOLR_BASEURL, DEFAULT_RETURL, REDIS_HOST, REDIS_PORT) are left alone; renaming
+// them is a separate decision.
+//
+// Where each value belongs:
+//   SOLRPROXY_CLIENT_SECRET -> container_0.env.secret   (ccrypt-encrypted .cpt)
+//   SOLRPROXY_ADMIN_PW      -> container_0.env.secret   (ccrypt-encrypted .cpt)
+//   everything else         -> container_0.env.managed  (committed, non-secret)
+//
+// NB: `?:` not `??` throughout — getenv() returns FALSE, not NULL, for an unset
+// variable, so `??` would assign FALSE instead of the intended default.
+
 // D11 simple_oauth server. NOTE (Spike 10): D11 uses /oauth/* paths, not the
 // D7 proxy's /oauth2/* -- simple_oauth does not use the "2" segment.
-$OAUTH_ROOT = "https://mandala-dev.internal.lib.virginia.edu/oauth";
+$OAUTH_ROOT = getenv("SOLRPROXY_OAUTH_ROOT") ?: "";
+$SOLRPROXY_CLIENT_SECRET = getenv("SOLRPROXY_CLIENT_SECRET") ?: "";
+
+// DEGRADE, don't die. If the OAuth2 client is not fully configured the proxy
+// still serves anonymous (public-only) search — it does NOT 500 — matching how it
+// already behaves when Redis is unreachable (Searcher::getVisibilityToken() falls
+// back to the anonymous filter rather than failing the request).
+//
+// The risk this trades against is that a public-only proxy looks identical to a
+// working one from the outside, so the misconfiguration MUST be loud in the logs.
+// Every request logs, deliberately: this is a misconfiguration that should be
+// impossible to miss in `docker logs` / syslog, not a once-at-startup whisper.
+// $OAUTH_CONFIGURED lets auth.php refuse the login flow with a clear message
+// instead of failing deep inside the OAuth2 library.
+//
+// Only auth.php consumes $CREDS; search/status/ping merely require this file, so
+// they are unaffected either way.
+// ONE log line, not one per missing variable. This file is required on every
+// request including the anonymous search path, which is the hot path -- see the
+// "public access is the 90% case" principle in solr-proxy/README.md. mod_php
+// gives each request a fresh PHP context, so there is no cheap way to memoise
+// this across requests; the lever available is keeping it to a single write.
+$OAUTH_CONFIGURED = TRUE;
+$missing_oauth_vars = array();
+if ($SOLRPROXY_CLIENT_SECRET === "") { $missing_oauth_vars[] = "SOLRPROXY_CLIENT_SECRET"; }
+if ($OAUTH_ROOT === "")              { $missing_oauth_vars[] = "SOLRPROXY_OAUTH_ROOT"; }
+if (!empty($missing_oauth_vars)) {
+    $OAUTH_CONFIGURED = FALSE;
+    error_log("solr-proxy: PUBLIC-ONLY mode — " . implode(", ", $missing_oauth_vars)
+        . " not set. OAuth2 login is DISABLED and no private collection content is reachable through this proxy. Anonymous search is unaffected.");
+}
+
 $CREDS = array(
-             'clientId'                => 'solrproxy',      // OAuth2 client registered in D11 (simple_oauth consumer)
-             'clientSecret'            => 'SECRET_SUPER_SECRET_SECRET', // The client password assigned to you by the provider
-             'redirectUri'             => 'https://mandala-index-dev.internal.lib.virginia.edu/auth',  // This is the url for the /proxy/auth.php script in this repo
+             'clientId'                => getenv("SOLRPROXY_CLIENT_ID") ?: 'solrproxy',  // OAuth2 client registered in D11 (simple_oauth consumer)
+             'clientSecret'            => $SOLRPROXY_CLIENT_SECRET,
+             'redirectUri'             => getenv("SOLRPROXY_REDIRECT_URI") ?: '',        // the /auth endpoint of THIS proxy, per environment
              'urlAuthorize'            => $OAUTH_ROOT.'/authorize',
              'urlAccessToken'          => $OAUTH_ROOT.'/token',
              'urlResourceOwnerDetails' => $OAUTH_ROOT.'/UserInfo',
+             // Not configurable: Spike 10 established that `openid` is the only
+             // scope that works here, and that client_credentials must NOT carry it
+             // (see docs/deferred/oauth-openid-scope-client-credentials-crash.md).
              'scopes'                  => 'openid',
 );
+
+// Password gating proxysess.php's admin actions (list/delete/destroyall).
+// Previously referenced there but defined NOWHERE, so those actions were
+// unusable — they failed closed, which is why it was never noticed. Optional:
+// leave unset to keep them disabled; set it to enable them.
+$ADMIN_PW = getenv("SOLRPROXY_ADMIN_PW") ?: '';
