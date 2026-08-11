@@ -94,6 +94,23 @@ succeeds against the PHP 7.4 platform, and all five `league/oauth2-client` metho
 `auth.php` calls (`getAuthorizationUrl`, `getState`, `getAccessToken`,
 `getResourceOwner`, `getDefaultScopes`) are public on `GenericProvider` at 2.9.0.
 
+**Image build verified 2026-08-11** — `docker build --platform linux/amd64` (matching
+CodeBuild's architecture, not the arm64 laptop) succeeds end to end. `composer install`
+reports *"Installing dependencies from lock file"* — the lock is honoured, not
+re-resolved. Runtime checks on the built image: `redis`/`json`/`mbstring` all loaded,
+`GenericProvider` + `AccessToken` resolve through the locked autoloader at 2.9.0, and
+all six Apache modules the vhost needs (`rewrite`, `proxy`, `proxy_http`,
+`proxy_balancer`, `proxy_connect`, `remoteip`) are present.
+
+**Deploy-relevant finding from that verification: `SOLR_BASEURL` is a hard
+container-start requirement, not merely app config.** `files/apache2/proxy-conf/kmterms-proxy.conf`
+interpolates it into a `ProxyPass` directive, so with the variable unset Apache fails
+config parse (`AH00526 ... ProxyPass URL must be absolute!`) and **the container exits
+immediately** — before any PHP runs, so `check.php`'s own env validation never fires.
+With `SOLR_BASEURL` + `DEFAULT_RETURL` set, `apache2ctl configtest` returns `Syntax OK`
+and the container stays up. The Ansible playbook must therefore guarantee both are
+present at container start; a missing value is a crash-loop, not a degraded service.
+
 **Two follow-ups deliberately not taken:**
 - **A stale-lock guard is still missing.** `composer install` only *warns* when the
   lock does not match `composer.json`; `composer validate --strict` catches it
