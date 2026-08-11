@@ -1,0 +1,53 @@
+version: 0.2
+
+# Builds the solr-proxy Docker image and pushes it to ECR.
+#
+# Modelled on the D11 app's pipeline/buildspec.yml, which is the proven live
+# reference in this repo (green since 2026-07-15). Kept deliberately close to it
+# so the two are diffable; the differences are called out inline.
+#
+# No env block on purpose: CONTAINER_IMAGE and CONTAINER_REGISTRY are injected by
+# the codepipeline module (aws_cicd/pipelines/<this pipeline>), as are
+# GITHUB_*/GITLAB_*. AWS_REGION is a CodeBuild built-in. Do not add a
+# parameter-store block for values that do not exist — CodeBuild refuses to start
+# a build when a parameter-store variable cannot be resolved, which is how the
+# D11 app's first buildspec could never have run.
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $CONTAINER_REGISTRY
+      # Plain `date`, matching the D11 app. NOT dsf's CODEBUILD_START_TIME form —
+      # that convention was deliberately settled during the app's pipeline work.
+      - BUILD_VERSION=$(date +%Y%m%d%H%M%S)
+      - COMMIT_TAG=gitcommit-$CODEBUILD_RESOLVED_SOURCE_VERSION
+
+  build:
+    commands:
+      - echo Building Docker image...
+      # DIFFERS from the D11 app: the build context is solr-proxy/, not the repo
+      # root. The Dockerfile's COPY paths (./proxy/, settings/php.ini,
+      # files/apache2) are all relative to that directory, so the context cannot
+      # be `.` here.
+      #
+      # No --build-arg BUILD_TAG: unlike package/Dockerfile, solr-proxy's
+      # Dockerfile declares no such ARG, and passing an undeclared build-arg only
+      # earns a warning. If build-tag traceability in the image is wanted later,
+      # add `ARG BUILD_TAG` + a LABEL to the Dockerfile first, then pass it here.
+      - docker build -f solr-proxy/Dockerfile -t $CONTAINER_IMAGE:latest solr-proxy/
+      # NB: the "build-" prefix is load-bearing — it must match the value written
+      # to /containers/$CONTAINER_IMAGE/latest below, because that parameter is
+      # what the deploy playbook resolves the image tag from.
+      - docker tag $CONTAINER_IMAGE:latest $CONTAINER_REGISTRY/$CONTAINER_IMAGE:build-$BUILD_VERSION
+      - docker tag $CONTAINER_IMAGE:latest $CONTAINER_REGISTRY/$CONTAINER_IMAGE:$COMMIT_TAG
+      - docker tag $CONTAINER_IMAGE:latest $CONTAINER_REGISTRY/$CONTAINER_IMAGE:latest
+
+  post_build:
+    commands:
+      - echo Pushing image to ECR...
+      - docker push $CONTAINER_REGISTRY/$CONTAINER_IMAGE:build-$BUILD_VERSION
+      - docker push $CONTAINER_REGISTRY/$CONTAINER_IMAGE:$COMMIT_TAG
+      - docker push $CONTAINER_REGISTRY/$CONTAINER_IMAGE:latest
+      - aws --region=$AWS_REGION ssm put-parameter --name /containers/$CONTAINER_IMAGE/latest --value build-$BUILD_VERSION --type String --overwrite
+      - echo Build complete. Tag build-$BUILD_VERSION

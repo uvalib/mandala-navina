@@ -50,9 +50,13 @@ Modelled on `aws_cicd/pipelines/mandala-drupal/` — now the proven, live in-rep
 reference (closer and more current than `drupal-dsf`, which mandala-drupal itself
 was originally modelled on):
 
-1. `solr-proxy/pipeline/buildspec.yml` / `deployspec.yml` (or a `solr-proxy/`-scoped
-   equivalent — decide whether it lives alongside `drupal/pipeline/` or gets its
-   own top-level `pipeline/` the way `drupal/` does)
+1. ✅ **DRAFTED 2026-08-11** — `solr-proxy/pipeline/buildspec.yml` +
+   `deployspec.yml`. Location resolved: the codepipeline module's
+   `build_buildspec` / `deploy_buildspec` are configurable variables (defaulting
+   to `pipeline/buildspec.yml`), so a second pipeline in this monorepo points at
+   `solr-proxy/pipeline/…` without colliding with the D11 app's root `pipeline/`.
+   **The deployspec is not runnable until items 3–4 below exist** — it is marked
+   as such in its own header
 2. ECR repository for the proxy image
 3. `aws_cicd/pipelines/mandala-solr-proxy/` (or similar — name it so it won't
    collide with a future production pipeline, per the `var.application`-only
@@ -60,7 +64,13 @@ was originally modelled on):
 4. Ansible deploy playbook + terraform wiring — decide how/where the proxy runs
    relative to the Drupal container (co-located on the same instance vs. its own
    service) and how it fits the existing `index` (8765) ALB target pattern seen
-   for the D7 proxy
+   for the D7 proxy. **The drafted deployspec assumes `deploy_solrproxy.yml` at
+   `mandala/drupal/<env>/ansible/`** and deliberately does NOT re-run
+   `deploy_redis.yml` (that belongs to the app's pipeline; the proxy only *reads*
+   the ADR 014 tokens Drupal writes). It also expects an encrypted
+   `solrproxy_creds.php.cpt` there for the OAuth2 client secret — `paths.php`
+   needs no encryption, holding no secrets, so the playbook should render it from
+   the committed template
 5. Trigger-path filtering (`trigger_paths`) scoped to `solr-proxy/**` only, same
    pattern as `mandala-drupal`'s filter on `drupal/**`/`package/**`/`pipeline/**`,
    so unrelated monorepo commits don't fire it

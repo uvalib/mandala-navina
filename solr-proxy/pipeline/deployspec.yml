@@ -1,0 +1,107 @@
+version: 0.2
+
+# Deploys the solr-proxy container via Terraform + Ansible.
+#
+# Modelled on the D11 app's pipeline/deployspec.yml (the proven live reference).
+#
+# ⚠ THIS SPEC IS NOT RUNNABLE YET. It invokes `deploy_solrproxy.yml`, which does
+# not exist — it must be written in terraform-infrastructure under
+# mandala/drupal/<env>/ansible/, along with the encrypted creds file referenced
+# below. See docs/deferred/solr-proxy-has-no-cicd-pipeline.md. Do not wire this
+# into a pipeline before those land, or the deploy phase will fail at the
+# playbook invocation.
+#
+# No parameter-store block on purpose. TF_VAR_access_key / TF_VAR_secret_key /
+# TF_VAR_region are already injected by the codepipeline module (the two keys
+# from Secrets Manager, the region as plaintext). Referencing /terraform/aws/*
+# parameters that do not exist prevents CodeBuild from starting the build at all.
+#
+# ENVIRONMENT is set here and only here. A buildspec `variables` entry overrides
+# a project-level environment variable, so injecting it from terraform as well
+# would be dead code. It is always "staging": production is explicitly out of
+# scope (2026-08-11), and a production pipeline would have to be a separate
+# application anyway, since the codepipeline module derives every resource name
+# from var.application alone.
+env:
+  variables:
+    terraform_version: 1.15.8
+    #ansible_debug: -vvvv
+    ENVIRONMENT: staging
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.x
+      golang: 1.x
+    commands:
+      # ccrypt, needed to decrypt the committed *.cpt keys and secrets
+      - dnf install -y http://ccrypt.sourceforge.net/download/1.11/ccrypt-1.11-1.x86_64.rpm
+      - pip3 install ansible
+      - wget https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_amd64.zip
+      - unzip terraform_${terraform_version}_linux_amd64.zip
+      - mv terraform /usr/local/bin
+
+  pre_build:
+    commands:
+      - git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/uvalib/terraform-infrastructure.git
+      - TF_INFRA=${CODEBUILD_SRC_DIR}/terraform-infrastructure
+
+      # Everything below is committed to git only in ccrypt-encrypted .cpt form;
+      # the decryption passphrase for each is itself an AWS Secrets Manager entry,
+      # named by the second argument to decrypt-key.ksh. Nothing here is a
+      # plaintext secret in the repo.
+
+      # bastion private key (its own secret name)
+      - BASTION_KEY_NAME=${ENVIRONMENT}/bastion/keys/bastion_${ENVIRONMENT}.pem
+      - ${TF_INFRA}/scripts/decrypt-key.ksh ${TF_INFRA}/${BASTION_KEY_NAME}.cpt ${BASTION_KEY_NAME}
+      - chmod 600 ${TF_INFRA}/${BASTION_KEY_NAME}
+
+      # instance private key. Its secret name is ALSO the passphrase for the
+      # proxy creds below — the fleet convention is one passphrase per
+      # environment, reused across that environment's encrypted assets. The proxy
+      # deploys onto the same instance as the D11 app, so this is the same key
+      # that app's deployspec decrypts.
+      - PRIVATE_KEY_NAME=mandala/drupal/${ENVIRONMENT}/keys/mandala-drupal-${ENVIRONMENT}.pem
+      - ${TF_INFRA}/scripts/decrypt-key.ksh ${TF_INFRA}/${PRIVATE_KEY_NAME}.cpt ${PRIVATE_KEY_NAME}
+      - chmod 600 ${TF_INFRA}/${PRIVATE_KEY_NAME}
+
+      # solr-proxy settings/creds.php — carries the OAuth2 client secret for the
+      # `solrproxy` simple_oauth consumer registered in D11 (ADR 014 / 1b.1
+      # part 2). MUST NOT be committed in plaintext.
+      #
+      # ⚠ TO BE CREATED: this .cpt does not exist yet in terraform-infrastructure.
+      # settings/paths.php deliberately does NOT get this treatment — it holds no
+      # secrets, deriving everything from SOLR_BASEURL / REDIS_HOST / REDIS_PORT
+      # at runtime, so the playbook should render it from the committed template.
+      - PROXY_CREDS=${TF_INFRA}/mandala/drupal/${ENVIRONMENT}/ansible/solrproxy_creds.php
+      - ${TF_INFRA}/scripts/decrypt-key.ksh ${PROXY_CREDS}.cpt ${PRIVATE_KEY_NAME}
+      - chmod 600 ${PROXY_CREDS}
+
+  build:
+    commands:
+      - cd ${CODEBUILD_SRC_DIR}/terraform-infrastructure/mandala/drupal/${ENVIRONMENT}
+      - terraform init -no-color
+      # TARGETED deliberately, exactly as the D11 app's deployspec does. An
+      # untargeted `apply -auto-approve` here would try to converge the whole
+      # legacy Aegir stack unattended — including EC2 instances and ALB rules
+      # whose prior state no longer decodes against current provider schemas.
+      # The pipeline only needs terraform to render the ansible input files.
+      - terraform apply -auto-approve -no-color --target=local_file.inventory --target=local_file.tfvars --target=local_file.environment
+      - cd ansible
+      # Only the proxy is deployed here. Redis is NOT redeployed: deploy_redis.yml
+      # belongs to the D11 app's pipeline, and the proxy is a *reader* of the
+      # ADR 014 visibility tokens Drupal writes there. Re-running it from this
+      # pipeline would restart a container the app depends on, for no benefit.
+      #
+      # ⚠ deploy_solrproxy.yml DOES NOT EXIST YET — see the header note.
+      # No -e deploy_tag: the module injects no DEPLOY_TAG, so passing it would
+      # resolve to an empty string and build an image tag of
+      # "uvalib/mandala-solr-proxy:" — which fails. Omitting it lets the playbook
+      # use its own default of "latest" and resolve the real tag from
+      # /containers/uvalib/mandala-solr-proxy/latest, which the Build phase has
+      # just written. Pass `-e deploy_tag=<tag>` by hand to pin a version.
+      - ansible-playbook ${ansible_debug} deploy_solrproxy.yml
+
+  post_build:
+    commands:
+      - echo Deploy complete.
