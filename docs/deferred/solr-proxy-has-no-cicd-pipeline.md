@@ -68,6 +68,42 @@ was originally modelled on):
 **Scope note (2026-08-11, Yuji): production is explicitly out of scope for now.**
 Staging/dev only, same as the existing `mandala-drupal` pipeline.
 
+## Prerequisite DONE — reproducible builds (2026-08-11)
+
+Fixed before writing the pipeline, because an auto-deploying pipeline on top of a
+non-reproducible build is worse than no pipeline: a green build today and a broken
+one tomorrow would have byte-identical source.
+
+`solr-proxy/proxy/composer.json` required `league/oauth2-client: "dev-master"` under
+`minimum-stability: dev`, and the fork had **dropped the D7 repo's `composer.lock`** —
+so `composer install` silently degraded to a fresh resolve on every build. The
+Dockerfile's `composer.lock*` glob made the lock optional, which is how its absence
+went unnoticed.
+
+Measured, not assumed: resolving the old `composer.json` against PHP 7.4 today
+produced **Guzzle 8.2.x-dev**, while the D7 lock (still on the box, still what
+production runs) pins the **Guzzle 7** line. Unpinned builds were drifting across a
+major version.
+
+Fix: pinned `league/oauth2-client: ^2.8`, dropped `minimum-stability: dev`, added
+`config.platform.php = 7.4.33` so the lock resolves for the runtime regardless of the
+developer's local PHP, and **committed `composer.lock`** (10 packages, all stable —
+`league/oauth2-client` 2.9.0, Guzzle 7.15.3; no security advisories). Dockerfile now
+requires the lock rather than globbing it. Verified: lock-driven `composer install`
+succeeds against the PHP 7.4 platform, and all five `league/oauth2-client` methods
+`auth.php` calls (`getAuthorizationUrl`, `getState`, `getAccessToken`,
+`getResourceOwner`, `getDefaultScopes`) are public on `GenericProvider` at 2.9.0.
+
+**Two follow-ups deliberately not taken:**
+- **A stale-lock guard is still missing.** `composer install` only *warns* when the
+  lock does not match `composer.json`; `composer validate --strict` catches it
+  (exit 2) but also fails on the missing `license` field. Declaring a license for
+  this code is a project decision, not a build-fix — decide the license, then add
+  `validate --strict` to the pipeline.
+- **PHP 7.4 is EOL** (Nov 2022) and constrains every dependency pin here. Out of
+  scope for this fix; worth its own decision before the proxy carries production
+  traffic on D11.
+
 ## Cross-references
 
 - [ADR 014](../adr/014-hybrid-solr-proxy-design.md) — the hybrid proxy design this deploys

@@ -12,11 +12,15 @@
             "email": "than@virginia.edu"
         }
     ],
-    "minimum-stability": "dev",
     "require": {
-        "league/oauth2-client": "dev-master",
+        "league/oauth2-client": "^2.8",
         "ext-json": "*",
         "ext-mbstring": "*",
         "ext-redis": "*"
+    },
+    "config": {
+        "platform": {
+            "php": "7.4.33"
+        }
     }
 }
