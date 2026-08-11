@@ -27,19 +27,35 @@
 // D11 simple_oauth server. NOTE (Spike 10): D11 uses /oauth/* paths, not the
 // D7 proxy's /oauth2/* -- simple_oauth does not use the "2" segment.
 $OAUTH_ROOT = getenv("SOLRPROXY_OAUTH_ROOT") ?: "";
+$SOLRPROXY_CLIENT_SECRET = getenv("SOLRPROXY_CLIENT_SECRET") ?: "";
 
-// The OAuth2 client secret for the `solrproxy` simple_oauth consumer registered in
-// D11. Fail loudly rather than deploying without it: with no secret the
-// authorization-code exchange cannot complete, so EVERY user stays anonymous and
-// the proxy quietly serves public-only results — a failure that is invisible from
-// the outside (it still returns 200s with plausible data). Same reasoning as
-// paths.php throwing on a missing SOLR_BASEURL.
-$SOLRPROXY_CLIENT_SECRET = getenv("SOLRPROXY_CLIENT_SECRET");
-if ($SOLRPROXY_CLIENT_SECRET === false || $SOLRPROXY_CLIENT_SECRET === "") {
-    throw new Exception("Environment variable SOLRPROXY_CLIENT_SECRET must be set!");
-}
-if ($OAUTH_ROOT === "") {
-    throw new Exception("Environment variable SOLRPROXY_OAUTH_ROOT must be set!");
+// DEGRADE, don't die. If the OAuth2 client is not fully configured the proxy
+// still serves anonymous (public-only) search — it does NOT 500 — matching how it
+// already behaves when Redis is unreachable (Searcher::getVisibilityToken() falls
+// back to the anonymous filter rather than failing the request).
+//
+// The risk this trades against is that a public-only proxy looks identical to a
+// working one from the outside, so the misconfiguration MUST be loud in the logs.
+// Every request logs, deliberately: this is a misconfiguration that should be
+// impossible to miss in `docker logs` / syslog, not a once-at-startup whisper.
+// $OAUTH_CONFIGURED lets auth.php refuse the login flow with a clear message
+// instead of failing deep inside the OAuth2 library.
+//
+// Only auth.php consumes $CREDS; search/status/ping merely require this file, so
+// they are unaffected either way.
+// ONE log line, not one per missing variable. This file is required on every
+// request including the anonymous search path, which is the hot path -- see the
+// "public access is the 90% case" principle in solr-proxy/README.md. mod_php
+// gives each request a fresh PHP context, so there is no cheap way to memoise
+// this across requests; the lever available is keeping it to a single write.
+$OAUTH_CONFIGURED = TRUE;
+$missing_oauth_vars = array();
+if ($SOLRPROXY_CLIENT_SECRET === "") { $missing_oauth_vars[] = "SOLRPROXY_CLIENT_SECRET"; }
+if ($OAUTH_ROOT === "")              { $missing_oauth_vars[] = "SOLRPROXY_OAUTH_ROOT"; }
+if (!empty($missing_oauth_vars)) {
+    $OAUTH_CONFIGURED = FALSE;
+    error_log("solr-proxy: PUBLIC-ONLY mode — " . implode(", ", $missing_oauth_vars)
+        . " not set. OAuth2 login is DISABLED and no private collection content is reachable through this proxy. Anonymous search is unaffected.");
 }
 
 $CREDS = array(

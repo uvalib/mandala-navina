@@ -60,3 +60,4 @@ nav:
   - "s3-sync pipeline deferred (pending reindeer_x consolidation)": s3-sync-pipeline-deferred-pending-reindeer-x-consolidation.md
   - "solr-proxy: uid=1 gets the anonymous filter (docs say otherwise)": solr-proxy-uid1-admin-gets-anonymous-filter.md
   - "solr-proxy forwards the session id to Solr": solr-proxy-session-id-forwarded-to-solr.md
+  - "solr-proxy starts a session on every anonymous request": solr-proxy-session-per-anonymous-request.md

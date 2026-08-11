@@ -34,6 +34,22 @@ function safeSession() {
 
 $myget = filter_input_array(INPUT_GET, FILTER_SANITIZE_STRING);
 
+// If the OAuth2 client is not configured, refuse the login flow here with a clear
+// message rather than letting it fail deep inside the OAuth2 library against an
+// empty clientSecret / a bare "/authorize" URL. creds.php has already logged the
+// specific missing variable(s); the proxy continues to serve anonymous
+// (public-only) search regardless -- see the PUBLIC-ONLY note in creds.php.
+if (empty($OAUTH_CONFIGURED)) {
+    error_log('solr-proxy: /auth requested but OAuth2 is not configured — refusing the login flow (proxy is in public-only mode).');
+    http_response_code(503);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(array(
+        'status'  => 'error',
+        'message' => 'Login is unavailable: this Solr proxy is running in public-only mode because its OAuth2 client is not configured. Public content is still searchable.',
+    ));
+    exit;
+}
+
 // Set up session
 safeSession();
 

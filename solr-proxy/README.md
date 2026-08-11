@@ -1,5 +1,31 @@
 # solr-proxy (D11)
 
+## Design principle: public access is the 90% case
+
+**Unauthenticated public access is the overwhelming majority of traffic and must be
+highly available and performant at all times.** Authenticated access to private
+collections is the minority case, and no failure in the authenticated path may be
+allowed to take the public path down with it.
+
+Consequences that are already load-bearing in this code — do not "tidy" them away:
+
+- **Every dependency of the authenticated path degrades rather than fails.**
+  Redis unreachable, no visibility token, OAuth2 client unconfigured: each falls
+  back to the anonymous (public-only) filter and keeps serving. None of them
+  returns a 5xx to a public reader.
+- **The public path does no work it does not need.** Anonymous requests make no
+  Redis connection at all (`Searcher::getVisibilityToken()` returns early when not
+  logged in) and no membership lookup of any kind — that was the whole point of
+  ADR 014 moving the decision to Drupal.
+- **Degradation must be loud in the logs but cheap.** A public-only proxy is
+  externally indistinguishable from a fully working one, so a misconfiguration has
+  to be obvious in `docker logs`/syslog — while costing the hot path as little as
+  possible (hence a single consolidated log line, not one per missing variable).
+
+Known deviation: the proxy currently starts a PHP session on **every** request,
+including anonymous ones, writing a session file per request. See
+[`docs/deferred/solr-proxy-session-per-anonymous-request.md`](../docs/deferred/solr-proxy-session-per-anonymous-request.md).
+
 Solr authentication proxy for the D11 platform. Forked from
 [`shanti-uva/mandala-solr-proxy`](https://github.com/shanti-uva/mandala-solr-proxy)
 (vendored at `../` history via the D7 monorepo migration) per

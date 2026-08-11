@@ -92,12 +92,11 @@ phases:
             fwrite(STDERR, "SMOKE FAIL: paths.php produced \"$u\" — the container environment is not being read\n"); exit(1);
           }
           echo "smoke: paths.php resolves absolute URLs ok\n";'
-      # 5. creds.php reads the OAuth config from the environment too, and refuses
-      #    to load without a client secret. A proxy that starts without one
-      #    completes no OAuth exchange, so every user stays anonymous and it
-      #    serves public-only results while still returning 200s — invisible from
-      #    outside. Both halves are checked: that it resolves when configured, and
-      #    that it actually throws when the secret is absent.
+      # 5. creds.php reads the OAuth config from the environment too. Both halves
+      #    are checked: that it resolves when configured, and that when the secret
+      #    is ABSENT it degrades to public-only WITHOUT dying — while logging the
+      #    misconfiguration loudly. A public-only proxy is indistinguishable from a
+      #    working one externally, so the log line is the only signal; guard it.
       - |
         docker run --rm \
           -e SOLRPROXY_OAUTH_ROOT=https://smoke.invalid/oauth \
@@ -110,12 +109,18 @@ phases:
           }
           echo "smoke: creds.php resolves from env ok\n";'
       - |
-        if docker run --rm -e SOLRPROXY_OAUTH_ROOT=https://smoke.invalid/oauth \
-             $CONTAINER_IMAGE:latest php -r 'require "/usr/local/etc/settings/creds.php";' 2>/dev/null; then
-          echo "SMOKE FAIL: creds.php loaded without SOLRPROXY_CLIENT_SECRET — it must refuse" >&2
-          exit 1
-        fi
-      - echo "smoke: creds.php correctly refuses to load without a client secret"
+        out=$(docker run --rm -e SOLRPROXY_OAUTH_ROOT=https://smoke.invalid/oauth \
+                $CONTAINER_IMAGE:latest php -r '
+                require "/usr/local/etc/settings/creds.php";
+                if (!empty($OAUTH_CONFIGURED)) { fwrite(STDERR, "SMOKE FAIL: OAUTH_CONFIGURED should be false\n"); exit(1); }
+                echo "loaded-degraded\n";' 2>&1) || {
+          echo "SMOKE FAIL: creds.php died without a client secret — it must degrade to public-only, not fail" >&2
+          echo "$out" >&2; exit 1; }
+        echo "$out" | grep -q "loaded-degraded" || { echo "SMOKE FAIL: creds.php did not load" >&2; exit 1; }
+        echo "$out" | grep -q "PUBLIC-ONLY" || {
+          echo "SMOKE FAIL: creds.php degraded SILENTLY — the public-only warning must be logged" >&2
+          echo "$out" >&2; exit 1; }
+      - echo "smoke: creds.php degrades to public-only and logs it"
       - echo All smoke tests passed.
       # ---- end smoke tests ------------------------------------------------
 
