@@ -1,10 +1,35 @@
 <?php
 
+// Read configuration with getenv(), NOT $_ENV.
+//
+// The image ships php.ini-production, which sets variables_order = "GPCS" — no
+// "E" — so $_ENV is never populated: it is empty (count 0) even when the
+// variables are present in the container environment. getenv() reads the real
+// environment and is unaffected.
+//
+// This was not theoretical. Every value below silently became empty:
+//   * $SOLR_BASE collapsed to "/solr", making every Solr URL host-relative, so
+//     file_get_contents() tried the local filesystem. All searches failed AND
+//     /solr/kmassets/status returned HTTP 400 — the exact path the ALB
+//     health-checks, so the target would never have come up healthy.
+//   * $REDIS_HOST fell back to 127.0.0.1 (nothing listens there inside the
+//     container), so the ADR 014 token read always failed and every logged-in
+//     user was silently downgraded to the anonymous filter — serving only
+//     public results, with no error anywhere.
+//
+// It went unnoticed because the D7 deployment never used this file as written:
+// the copy on the box hardcodes literal values and comments the env check out.
+// check.php uses getenv() correctly, which made startup validation pass and
+// masked the problem.
+//
+// NB: `?:` below, not `??`. getenv() returns FALSE (not NULL) for an unset
+// variable, so `??` would assign FALSE rather than the intended default.
+
 if ( getenv("SOLR_BASEURL") === false ) {
     throw new Exception("Environment variable SOLR_BASEURL must be set!");
 }
-$DEFAULT_RETURL = $_ENV["DEFAULT_RETURL"]; // "https://standalone.kmaps.virginia.edu/home";
-$SOLR_BASE = $_ENV["SOLR_BASEURL"]."/solr";
+$DEFAULT_RETURL = getenv("DEFAULT_RETURL"); // "https://standalone.kmaps.virginia.edu/home";
+$SOLR_BASE = getenv("SOLR_BASEURL")."/solr";
 
 $SOLR_URLS = array(
              "/solr/kmassets" => "$SOLR_BASE/kmassets",
@@ -19,5 +44,5 @@ $STATUS_URLS = array(
 // Shared Redis instance (ADR 014): Drupal writes `mandala_solr_fq:{uid}`
 // visibility tokens here; the proxy only ever reads them. Same instance
 // Drupal's settings.php points at for this environment.
-$REDIS_HOST = $_ENV["REDIS_HOST"] ?? "127.0.0.1";
-$REDIS_PORT = $_ENV["REDIS_PORT"] ?? "6379";
+$REDIS_HOST = getenv("REDIS_HOST") ?: "127.0.0.1";
+$REDIS_PORT = getenv("REDIS_PORT") ?: "6379";
