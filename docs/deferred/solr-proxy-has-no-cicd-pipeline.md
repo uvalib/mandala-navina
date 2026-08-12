@@ -82,13 +82,54 @@ search with the correct `fq`, injects a real Redis visibility token for a logged
 uid, and fails closed to the anonymous filter when Redis is stopped.
 `ansible-playbook --syntax-check` passes.
 
-**Still to do:** add the `SOLRPROXY_*` keys to `container_0.env.managed` /
-`container_0.env.secret` (the playbook asserts them and will fail until they exist),
-and create the pipeline entry — **build-only**, per netbadge, so items 3–4 below
-shrink accordingly.
+### Pipeline DONE (2026-08-12)
 
-⚠ **One consequence to be aware of:** `Searcher.php` requires `creds.php`, which now
-throws without `SOLRPROXY_CLIENT_SECRET`. So a proxy deployed without that secret
+- **ECR repo** `uvalib/mandala-solr-proxy` — terraform-infrastructure `8e9216b93`,
+  appended at the END of the count-indexed `repo_names` (plan confirmed
+  3 add / 0 change / 0 destroy).
+- **Pipeline** `uva-mandala-solr-proxy-codepipeline` — `d3eb4a76d`. **BUILD-ONLY**,
+  per drupal-netbadge: Source + Build, no Deploy. `trigger_paths` = `solr-proxy/**`
+  alone; `build_buildspec` overridden to `solr-proxy/pipeline/buildspec.yml`.
+- **`deploy_solrproxy.yml`** committed — `edb80d9d0`.
+- **`solr-proxy/pipeline/deployspec.yml` DELETED** — dead under a build-only
+  pipeline. Deployment happens from mandala's own deployspec, which invokes
+  `deploy_solrproxy.yml` alongside `deploy_redis` / `deploy_netbadge` /
+  `deploy_backend`, exactly as it already deploys the netbadge image.
+
+**Why build-only** (decided 2026-08-12): the `.generated` Ansible inputs are
+untracked and rendered by `terraform apply --target=local_file.*` at deploy time, so
+a deploy phase here would apply the *same* `mandala/drupal/<env>` state that
+mandala-drupal's deploy phase applies. A commit touching both `drupal/**` and
+`solr-proxy/**` would race — S3 locking means no corruption, but the loser fails and
+looks like real breakage. Accepted consequence: a solr-proxy-only change builds an
+image that does not reach the box until mandala's pipeline next deploys.
+
+⚠ **Local applies in `aws_cicd/pipelines/` fail partway.** The `staging` aws-vault
+profile is the plain `ys2n` IAM user, lacking **both** `iam:GetRolePolicy` (already
+known) and `iam:DeleteRolePolicy` (new). The first apply created 21 of 22 resources
+then 403'd on read-back, leaving both inline policies tainted; the retry could not
+replace them. Recovery: confirm via `aws iam list-role-policies` that the policies
+really exist, `terraform untaint` both, then `plan -refresh=false`. Worth raising
+with Dave.
+
+**Config keys: DONE** — terraform-infrastructure `1c6e491c7`. The `solrproxy`
+consumer is registered on dev-0 (id 2) with `SOLRPROXY_CLIENT_SECRET` in
+`container_0.env.secret` and the non-secret `SOLRPROXY_*` / `SOLR_BASEURL` /
+`DEFAULT_RETURL` / `REDIS_HOST` / `REDIS_PORT` in `container_0.env.managed`.
+
+**Remaining:** wire `ansible-playbook deploy_solrproxy.yml` into the app's
+`pipeline/deployspec.yml`. ⚠ Sequencing: that must not land before the first
+solr-proxy image exists, because the playbook resolves its tag from
+`/containers/uvalib/mandala-solr-proxy/latest` under
+`failed_when: latest_tag.stderr != ""` — wiring it in while ECR is empty would fail
+the *Drupal* deploy.
+
+~~⚠ One consequence to be aware of: `Searcher.php` requires `creds.php`, which now
+throws without `SOLRPROXY_CLIENT_SECRET`.~~ **SUPERSEDED** — `creds.php` now degrades
+to public-only rather than throwing (Yuji: unauthenticated public access is the 90%
+case and must stay available). Retained below for the reasoning, which still explains
+why the misconfiguration is logged on every request. Historical text: a proxy deployed
+without that secret
 serves **nothing at all**, rather than degrading to public-only results. That is the
 deliberate choice — a silent downgrade to public-only is indistinguishable from
 working — but it does mean the secret is required even for anonymous search.
