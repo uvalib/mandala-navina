@@ -117,12 +117,26 @@ consumer is registered on dev-0 (id 2) with `SOLRPROXY_CLIENT_SECRET` in
 `container_0.env.secret` and the non-secret `SOLRPROXY_*` / `SOLR_BASEURL` /
 `DEFAULT_RETURL` / `REDIS_HOST` / `REDIS_PORT` in `container_0.env.managed`.
 
-**Remaining:** wire `ansible-playbook deploy_solrproxy.yml` into the app's
-`pipeline/deployspec.yml`. ⚠ Sequencing: that must not land before the first
-solr-proxy image exists, because the playbook resolves its tag from
+**Deploy wiring: DONE.** `ansible-playbook deploy_solrproxy.yml` runs from the app's
+`pipeline/deployspec.yml`, after `deploy_netbadge.yml` and **before**
+`deploy_backend.yml` — that one runs `drush updb` + a full `cim`, so anything that can
+fail cheaply fails first and leaves Drupal untouched.
+
+Sequenced deliberately: the playbook resolves its tag from
 `/containers/uvalib/mandala-solr-proxy/latest` under
-`failed_when: latest_tag.stderr != ""` — wiring it in while ECR is empty would fail
-the *Drupal* deploy.
+`failed_when: latest_tag.stderr != ""`, so wiring it in while ECR was empty would have
+failed the *Drupal* deploy. The parameter was seeded by the pipeline's first green
+build, `build-20260812132552` (2026-08-12), whose seven smoke tests all passed in
+CodeBuild — the first time they ran anywhere but a laptop.
+
+**First-build note:** that pipeline shows two earlier failures, both understood and
+fixed. `CreatePipeline` failed with `Project cannot be found` — it auto-ran during the
+window when the partial terraform apply had created the pipeline but not yet the
+CodeBuild project. The next failed at `DOWNLOAD_SOURCE` with `YAML_FILE_ERROR:
+Expected Commands[9] to be of string type` — a plain YAML scalar containing `": "`
+parses as a mapping, and the inner double quotes do not protect it (PR #97). **Local
+validation had only checked that the file parsed and counted commands, never that each
+command was a string** — parsing and being correct are different properties.
 
 ~~⚠ One consequence to be aware of: `Searcher.php` requires `creds.php`, which now
 throws without `SOLRPROXY_CLIENT_SECRET`.~~ **SUPERSEDED** — `creds.php` now degrades
