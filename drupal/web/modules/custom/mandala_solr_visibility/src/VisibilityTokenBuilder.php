@@ -42,6 +42,32 @@ class VisibilityTokenBuilder {
   protected const FQ_ALL = '(*:*)';
 
   /**
+   * Permissions that mean "can reach private-collection content".
+   *
+   * MUST stay identical to the predicate in
+   * _mandala_group_inheritance_node_access() — that hook decides what a user can
+   * see in Drupal, and this class decides what they can see in search. If the two
+   * lists drift, Drupal and Solr disagree about the same user, which is exactly
+   * the class of inconsistency ADR 013/014 exists to prevent.
+   *
+   *   'bypass group access'          - Group module's own bypass
+   *   'bypass node access'           - Drupal core; also implied for uid 1 via
+   *                                    SuperUserAccessPolicy and for is_admin roles
+   *   'bypass mandala group access'  - Mandala's own (mandala_group_inheritance),
+   *                                    held by the global content_editor per ADR 015
+   *
+   * The third one is the reason this is a list rather than a single check: ADR
+   * 015's content_editor holds ONLY that permission, so keying on core's
+   * `bypass node access` alone would let an editor open private content in Drupal
+   * while search silently hid it.
+   */
+  protected const BYPASS_PERMISSIONS = [
+    'bypass group access',
+    'bypass node access',
+    'bypass mandala group access',
+  ];
+
+  /**
    * Builds the fq string for a user, or NULL if no token should be written.
    *
    * Anonymous gets NULL -- anonymous users are never written a token (see the
@@ -53,10 +79,12 @@ class VisibilityTokenBuilder {
    * everything" is expressed here, as a permissive token, rather than as a
    * special case inside the proxy.
    *
-   * Keyed on the `bypass node access` permission rather than on uid 1, so it
-   * follows Drupal's own answer: uid 1 gets it via SuperUserAccessPolicy, the
-   * `administrator` role via `is_admin: true`, and any role explicitly granted
-   * it. Content editors and plain authenticated users do not.
+   * Keyed on permissions rather than on uid 1, so it follows Drupal's own answer.
+   * The list (self::BYPASS_PERMISSIONS) mirrors
+   * _mandala_group_inheritance_node_access() exactly, so search and Drupal agree:
+   * uid 1 qualifies via SuperUserAccessPolicy, the `administrator` role via
+   * `is_admin: true`, and the global `content_editor` via ADR 015's
+   * `bypass mandala group access`. Plain authenticated users do not.
    *
    * NB this corrects a long-standing inversion. uid 1 previously returned NULL
    * here and was ALSO short-circuited in the proxy, so the admin fell through to
@@ -68,8 +96,10 @@ class VisibilityTokenBuilder {
       return NULL;
     }
 
-    if ($account->hasPermission('bypass node access')) {
-      return self::FQ_ALL;
+    foreach (self::BYPASS_PERMISSIONS as $permission) {
+      if ($account->hasPermission($permission)) {
+        return self::FQ_ALL;
+      }
     }
 
     $uid = (int) $account->id();

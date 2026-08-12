@@ -110,9 +110,17 @@ Previously uid 1 was special-cased in two places at once: the builder wrote no t
 *and* the proxy skipped the lookup, so the admin fell through to the anonymous filter
 and saw **less** than a normal user, while four comments claimed uid 1 "views
 everything". Both special cases are gone. `VisibilityTokenBuilder` now writes a
-permissive `(*:*)` token for any account with `bypass node access` — uid 1 via
-Drupal's `SuperUserAccessPolicy`, the `administrator` role via `is_admin: true` — and
-the proxy simply applies whatever it finds. That keeps every access decision in
+permissive `(*:*)` token for any account holding one of the three bypass permissions
+that `mandala_group_inheritance` itself honours — `bypass group access`,
+`bypass node access`, `bypass mandala group access` — and the proxy simply applies
+whatever it finds. That resolves to uid 1 (via `SuperUserAccessPolicy`), the
+`administrator` role (via `is_admin: true`), and the global `content_editor` (via
+ADR 015's `bypass mandala group access`).
+
+The list must stay identical to `_mandala_group_inheritance_node_access()`. If it
+drifts, Drupal and search disagree about the same user — which is precisely what
+happened first time round: keying on core's `bypass node access` alone let a
+`content_editor` open private content in Drupal while search silently hid it. That keeps every access decision in
 Drupal, per ADR 013/014.
 
 Fail-closed is unchanged: an account with **no** token still gets the public filter,

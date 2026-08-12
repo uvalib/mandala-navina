@@ -67,10 +67,16 @@ applied consistently.
   `uid !== 1` short-circuits are gone. Every logged-in user is treated identically:
   read the token, apply it; no token means fail closed to the public filter.
 - `VisibilityTokenBuilder::build()` — no longer returns NULL for uid 1. It returns a
-  permissive `(*:*)` token for any account with **`bypass node access`**, keyed on the
-  permission rather than a magic uid, so it follows Drupal's own answer: uid 1 via
-  `SuperUserAccessPolicy`, the `administrator` role via `is_admin: true`, and any role
-  explicitly granted it. `content_editor` and plain `authenticated` do not qualify.
+  permissive `(*:*)` token for any account holding one of the **three** bypass
+  permissions that `_mandala_group_inheritance_node_access()` honours:
+  `bypass group access`, `bypass node access`, `bypass mandala group access`.
+
+  **Corrected same day.** The first version checked only core's `bypass node access`.
+  That was wrong for ADR 015's `content_editor`, which holds *only*
+  `bypass mandala group access` — so an editor could open private content in Drupal
+  while search silently hid it. Surfaced when the ADR 015 config was finally imported
+  to dev-0. Verified against the real roles there: `content_editor` and
+  `administrator` see all; `authenticated` and `anonymous` do not.
 
 **Why a permissive token rather than "no token":** the proxy treats a missing token as
 fail-closed. Overloading absence to mean "unrestricted" would make the privileged and
