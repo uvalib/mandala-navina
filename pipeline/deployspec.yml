@@ -84,13 +84,29 @@ phases:
       # The pipeline only needs terraform to render the ansible input files.
       - terraform apply -auto-approve -no-color --target=local_file.inventory --target=local_file.tfvars --target=local_file.environment
       - cd ansible
-      # Order matters. Redis first: both netbadge-0 and the Drupal container use it —
-      # netbadge/SimpleSAMLphp for the session store (db 4) and Drupal for the ADR 014
-      # visibility tokens (db 0). Then netbadge-0 (alias "sp"), which serves
-      # /simplesaml/* for the Drupal container's ProxyPass — required in every
-      # environment, not just dev. Then the app.
+      # Order matters. Redis first: netbadge-0, solr-proxy-0 and the Drupal container
+      # all use it — netbadge/SimpleSAMLphp for the session store (db 4), and Drupal
+      # (writer) plus solr-proxy (reader) for the ADR 014 visibility tokens (db 0).
+      # Then netbadge-0 (alias "sp"), which serves /simplesaml/* for the Drupal
+      # container's ProxyPass — required in every environment, not just dev. Then
+      # solr-proxy. Then the app.
       - ansible-playbook ${ansible_debug} deploy_redis.yml
       - ansible-playbook ${ansible_debug} deploy_netbadge.yml
+      # solr-proxy is deployed from HERE, not from its own pipeline: that pipeline is
+      # build-only (the drupal-netbadge shape), because the .generated Ansible inputs
+      # are rendered by the `terraform apply --target=local_file.*` above and two
+      # pipelines applying the same state would race on the S3 lock. So this deploy
+      # owns every container on the box, and a solr-proxy image only reaches the
+      # instance when this pipeline runs.
+      #
+      # Placed BEFORE deploy_backend.yml deliberately: that playbook runs drush updb
+      # and a full cim, so anything that can fail cheaply should fail first.
+      # solr-proxy failing here leaves Drupal untouched.
+      #
+      # Requires /containers/uvalib/mandala-solr-proxy/latest to exist — the playbook
+      # resolves its tag from it under `failed_when: latest_tag.stderr != ""`. Seeded
+      # by the solr-proxy pipeline's first green build (build-20260812132552).
+      - ansible-playbook ${ansible_debug} deploy_solrproxy.yml
       # No -e deploy_tag: the module injects no DEPLOY_TAG, so passing it resolved to
       # an empty string — which is not "latest", so the playbook would build an image
       # tag of "uvalib/mandala-drupal:" and fail. Omitting it lets deploy_backend.yml

@@ -1,5 +1,5 @@
 # Spike 6: API Compatibility for React Application
-**Status:** ◐ In progress — pre-spike findings 2026-07-30 (client architecture + live WAF/proxy incident); **D7 node-JSON endpoint audit 2026-08-07** (all four per-site detail endpoints located + response shapes documented against live D7 source); **URL strategy DECIDED 2026-08-12** — Option A (generalize the same-origin proxy). Open: D11 node-JSON endpoint implementation, client-side generalization to all sites, and the proxy's SSRF hardening.
+**Status:** ◐ In progress — pre-spike findings 2026-07-30 (client architecture + live WAF/proxy incident); **D7 node-JSON endpoint audit 2026-08-07** (all four per-site detail endpoints located + response shapes documented against live D7 source); **URL strategy DECIDED 2026-08-12** — Option A (generalize the same-origin proxy); **D11 node-JSON endpoint for Images LIVE 2026-08-12** (`mandala_node_api` module, verified against real migrated data in DDEV). Open: client-side generalization to all sites, the proxy's SSRF hardening (drafted, pending push), and node-JSON controllers for Sources/Texts/AV once each site migrates.
 **Lead:** Than Grove (owns React app and D7 API contracts)
 **Mode:** Team spike (candidate)
 **Date:** —
@@ -11,10 +11,14 @@ multi-site D7 API endpoints and the consolidated D11 single-instance, without
 breaking the React application that consumes them.
 
 ## Demo
-*Full end-to-end demo (D11 endpoint prototype) to be completed. So far the spike has
-produced two audits against real source: the client-side fetch architecture (pre-spike
-findings, 2026-07-30, against `mandala-om`) and the D7 server-side node-JSON endpoints
-(2026-08-07, against `Site/mandala-drupal`), documented below.*
+**Live (2026-08-12):** the D11 `/api/json/{nid}` endpoint for `shanti_image` (Images), verified
+against real migrated data in DDEV — see "D11 node-JSON endpoint for Images" below. Sources/
+Texts/AV still need their own controllers when each site migrates (each has a materially
+different response shape per the D7 audit below), and the client itself hasn't yet been
+generalized to call this endpoint through the decided proxy path (currently Sources-only). The
+spike also produced two audits against real source that informed this build: the client-side
+fetch architecture (pre-spike findings, 2026-07-30, against `mandala-om`) and the D7 server-side
+node-JSON endpoints (2026-08-07, against `Site/mandala-drupal`), documented below.
 
 ## Findings
 
@@ -217,6 +221,45 @@ Instead: declare the dependency explicitly via a WordPress `Requires Plugins` he
 fixes the actual problem (undiscoverable dependency) without the coupling cost of a merge.
 Tracked: [wp-kmaps-mandala-proxy-dependency.md](../deferred/wp-kmaps-mandala-proxy-dependency.md).
 
+### D11 node-JSON endpoint for Images (2026-08-12) — closes the "concrete gap" above
+
+New module `mandala_node_api` (`drupal/web/modules/custom/mandala_node_api/`) serves
+`GET /api/json/{node}` — the exact path `mandala_kmassets_sync.settings.yml` already declares
+for `shanti_image`'s `url_json`, which until now resolved to nothing (see the "concrete gap"
+finding above). Only `shanti_image` is handled (404 for any other bundle) since Images is the
+only migrated site; Sources/Texts/AV each need their own controller when they migrate, per the
+D7 audit's finding that the four sites' response shapes aren't uniform.
+
+**Design choices:**
+- **Access is not reimplemented** — the route declares `_entity_access: 'node.view'`, so
+  `mandala_group_inheritance_entity_access()`'s existing private-collection gating (ADR 011)
+  applies automatically. No bespoke `shanti_general_api_check()`-equivalent was written.
+- **No JSONP, no CORS headers.** Both existed in D7 solely to support direct browser
+  cross-origin fetches. Under the decided Option A architecture, the client always fetches
+  through `mandala-wp-proxy`'s same-origin `/proxy/json`, which does a server-to-server fetch —
+  CORS doesn't apply to server-to-server HTTP, and the client parses the response as plain JSON
+  (`axios.get`), never as executed script. Implementing either would be dead code for a
+  requirement Option A specifically eliminated.
+- **Response shape is curated, not a raw-node-dump port of D7's `shanti_images_node_json()`.**
+  D7 returned the *entire* raw node object, including internal fields (`field_admin_notes`,
+  `field_private_note`). This deliberately excludes those and instead returns a shaped object
+  (image/IIIF geometry, descriptions, agents, owning collection, KMaps term references,
+  technical/rights field groups) built by reusing the same field-extraction logic as
+  `ImageFieldContributor`/`CollectionFieldContributor` (the kmassets Solr-doc builder) so the
+  detail JSON and the Solr-indexed thumb URL stay consistent. **This shape has not been
+  validated against the live React client's actual rendering code** — Spike 6's client audit
+  confirmed *that* `url_json` gets fetched, not which fields the detail view reads out of it.
+  Treat it as a reasonable first cut, not a finished contract, before the same pattern is reused
+  for Sources/Texts/AV.
+
+**Verified live in DDEV against real migrated data** (111,343 `shanti_image` nodes), not just
+`php -l`: a public node returns 200 with the expected shaped JSON (descriptions, agents,
+collection, KMaps terms with domain/id/header/path, technical/rights fields all populated
+correctly); a node in a private collection correctly returns 403 (`node->access()` denied it via
+the real group-membership check, not a stub); a nonexistent nid and a non-numeric nid both
+return 404; response headers show `Cache-Control: private, must-revalidate, no-cache` (the
+per-user cache context is real, not just declared) and `X-Content-Type-Options: nosniff`.
+
 ## What this does NOT establish
 - **Whether the browse-by-KMap and generic AJAX endpoints have any remaining consumer.** The
   React client does **not** use them (scoping audit above), but the **WordPress `wp-kmaps`
@@ -230,17 +273,20 @@ Tracked: [wp-kmaps-mandala-proxy-dependency.md](../deferred/wp-kmaps-mandala-pro
   implementation: generalize the client's Sources-only proxy gate to all sites, harden
   `mandala-wp-proxy`'s open `json_proxy` route with a host allowlist, and wire the
   `wp-kmaps`↔`mandala-wp-proxy` dependency declaration.
-- **No D11 endpoint prototype exists yet** — and a route check confirms D11 currently serves
-  **no** `/api/json/__NID__` (or equivalent) node-JSON endpoint at all, even though
-  `mandala_kmassets_sync` already publishes that URL into `url_json`. Building it (to return
-  the audited response shapes, esp. AV's Solr-derived `doc` and Texts' embedded Views HTML) is
-  the central open implementation task; feasibility is argued from source, not yet run.
-- **The D11 single-site URL path scheme is still formally deferred** — `mandala_kmassets_sync`'s
-  `url_json` template is a D7-shape placeholder by its own admission. Choosing the real scheme
-  (and reconciling it with the client's JSONP/CORS/WAF needs from the pre-findings) is this
-  spike's headline deliverable, still open.
+- **D11 endpoint exists and is verified for Images only** (`mandala_node_api`, see above).
+  Sources' bespoke-flat-doc shape, AV's Solr-derived `doc` shape, and Texts' embedded-Views-HTML
+  shape each still need their own controller when that site migrates — none of that work has
+  started, and this endpoint's shape is not yet confirmed against the live React client's actual
+  field usage (see the caveat above).
+- **The D11 single-site URL path scheme is still formally deferred for the *unmigrated* sites**
+  — Sources/Texts/AV bundles have no `mandala_kmassets_sync.settings.yml` entry yet at all
+  (`shanti_image` is the only bundle configured). Images' scheme (`/api/json/{nid}`) is now real
+  and live, not just a placeholder, but the other three sites' path scheme is still an open
+  choice for whenever they migrate.
 - Whether node IDs are preserved across migration (a Fail-Criteria risk) — assumed via
-  `field_legacy_nid`, not yet confirmed against the client's `url_json` values end-to-end.
+  `field_legacy_nid`, not yet confirmed against the client's `url_json` values end-to-end. The
+  new endpoint does surface `legacy_nid` in its response, which makes that end-to-end check
+  possible now but it hasn't been run.
 
 ## Deferred notes
 - [mandala-wp-proxy-json-proxy-open-ssrf.md](../deferred/mandala-wp-proxy-json-proxy-open-ssrf.md) —

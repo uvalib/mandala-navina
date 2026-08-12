@@ -3,10 +3,85 @@
 **Area:** deployment / CI-CD / ECR / solr-proxy / ADR 014
 **Raised during:** Session 2026-08-11 (CI/CD pipeline inventory)
 **Jira:** (add when available)
-**Priority:** High — 1b.1 part 4 needs the proxy actually running to validate
-ADR 014's hybrid design end-to-end
-**Status:** **DECIDED (2026-08-11, Yuji) — solr-proxy needs a full CI/CD pipeline.**
-Production explicitly out of scope for now.
+**Priority:** ~~High~~ — **RESOLVED 2026-08-12**
+**Status:** ✅ **COMPLETE for the public/anonymous path, which is the 90% case.**
+⚠ The **authenticated** path is NOT working end to end — not because of anything
+here, but because the kmassets index carries no D11-format uids. See
+[kmassets-index-has-no-d11-uids.md](kmassets-index-has-no-d11-uids.md). Production
+remains explicitly out of scope; everything below is dev/staging.
+
+## ✅ RESOLVED — 2026-08-12
+
+The whole chain is built and verified working. ADR 014's hybrid design is now
+running outside DDEV for the first time.
+
+| Step | Evidence |
+|---|---|
+| ECR repository | `uvalib/mandala-solr-proxy` — tf-infra `8e9216b93` |
+| Pipeline (build-only) | `uva-mandala-solr-proxy-codepipeline` — tf-infra `d3eb4a76d` |
+| Ansible playbook | `deploy_solrproxy.yml` — tf-infra `edb80d9d0` |
+| Dead deployspec removed | PR #96 |
+| Buildspec YAML fix | PR #97 |
+| Deploy wired into the app pipeline | PR #99 |
+| First green build | `build-20260812132552`, **all 7 smoke tests passed in CodeBuild** |
+| Deployed | `mandala-solr-proxy-0` up on 8765; legacy `mandala-solr-proxy` untouched |
+| **ALB `idx` target** | **healthy** — first time since 2026-07-15 |
+
+**Proof on dev-0**, not inference: anonymous search through the proxy against the real
+index returned **562,952 docs** with
+`fq=(visibility_i:1 OR asset_type:(places subjects terms))` injected; the health path
+returns HTTP 200 with real `kmassets` core status; Redis `PING: 1` via the `drupalnet`
+alias; all 7 env vars correct and `SOLRPROXY_CLIENT_SECRET` present (64 chars).
+
+### ⚠ Scope of that proof — the authenticated path is NOT covered
+
+An earlier revision of this note claimed "proven end to end". That was an
+overstatement and is corrected here. What the above establishes is the **anonymous**
+path only.
+
+**Proven** (2026-08-12, by injecting a synthetic token and measuring): the proxy reads
+`mandala_solr_fq:{uid}` from Redis, injects it verbatim, and Solr honours it — a
+session granted one private collection saw **3,112 documents that return 0 anonymously**
+(total 562,952 → 566,516). So ADR 014's *enforcement* mechanism genuinely works.
+
+**Not proven, and blocked:**
+
+| Gap | State |
+|---|---|
+| Drupal *writing* a token on login | Never observed here — Redis db 0 was empty (`DBSIZE 0`) before the synthetic key |
+| OAuth2 flow with the real `solrproxy` consumer | Never exercised; needs a browser + NetBadge |
+| **D11-format uids in the kmassets index** | **Zero** — blocks the whole authenticated path, see the note below |
+
+That test only worked because the token was deliberately written in **D7** uid format.
+A real D11 token would have matched nothing. Also note dev-0 currently has **2 users**
+(anonymous + admin) and 22 private groups, so there is nobody who could be a member of
+one — the user migration has not been run there.
+
+**The idx target took ~6 minutes to flip after deploy — that is arithmetic, not a
+fault.** `interval=120` × `healthy_threshold=3`. Do not go hunting when it reads
+unhealthy immediately after a deploy. Note also that ALB health checks are
+deliberately absent from the access log (`SetEnvIf User-Agent "^ELB-HealthChecker"
+skiplog=1` in the vhost), so "no health checks in the log" is expected, not evidence
+of a network problem.
+
+### Three pipeline failures, all understood — the diagnostic path is reusable
+
+1. **`CreatePipeline` → `Project cannot be found`.** The pipeline auto-ran during the
+   window when a partial terraform apply had created it but not the CodeBuild project.
+   Historical artifact of #2 below.
+2. **Partial apply, from an IAM gap.** The `staging` aws-vault profile is the plain
+   `ys2n` IAM user, lacking **both** `iam:GetRolePolicy` (known since 2026-07-16) and
+   `iam:DeleteRolePolicy` (new). The apply created 21 of 22 resources then 403'd on
+   read-back, leaving both inline policies **tainted**; the retry then could not
+   replace them. Recovery: confirm with `aws iam list-role-policies` that the policies
+   genuinely exist, `terraform untaint` both, then `plan -refresh=false`. **Worth
+   raising with Dave** — it makes routine local applies here fail partway.
+3. **`DOWNLOAD_SOURCE` → `YAML_FILE_ERROR: Expected Commands[9] to be of string
+   type`.** A plain YAML scalar containing `": "` parses as a *mapping*; the inner
+   double quotes do not protect it. Fixed in PR #97 by quoting the whole scalar.
+   **The local check had only verified the file parsed and counted commands — never
+   that each command was a string.** Parsing and being correct are different
+   properties; assert the type.
 
 ## ⚠ DESIGN CORRECTION (2026-08-11, Yuji) — follow `drupal-netbadge`
 
@@ -82,13 +157,68 @@ search with the correct `fq`, injects a real Redis visibility token for a logged
 uid, and fails closed to the anonymous filter when Redis is stopped.
 `ansible-playbook --syntax-check` passes.
 
-**Still to do:** add the `SOLRPROXY_*` keys to `container_0.env.managed` /
-`container_0.env.secret` (the playbook asserts them and will fail until they exist),
-and create the pipeline entry — **build-only**, per netbadge, so items 3–4 below
-shrink accordingly.
+### Pipeline DONE (2026-08-12)
 
-⚠ **One consequence to be aware of:** `Searcher.php` requires `creds.php`, which now
-throws without `SOLRPROXY_CLIENT_SECRET`. So a proxy deployed without that secret
+- **ECR repo** `uvalib/mandala-solr-proxy` — terraform-infrastructure `8e9216b93`,
+  appended at the END of the count-indexed `repo_names` (plan confirmed
+  3 add / 0 change / 0 destroy).
+- **Pipeline** `uva-mandala-solr-proxy-codepipeline` — `d3eb4a76d`. **BUILD-ONLY**,
+  per drupal-netbadge: Source + Build, no Deploy. `trigger_paths` = `solr-proxy/**`
+  alone; `build_buildspec` overridden to `solr-proxy/pipeline/buildspec.yml`.
+- **`deploy_solrproxy.yml`** committed — `edb80d9d0`.
+- **`solr-proxy/pipeline/deployspec.yml` DELETED** — dead under a build-only
+  pipeline. Deployment happens from mandala's own deployspec, which invokes
+  `deploy_solrproxy.yml` alongside `deploy_redis` / `deploy_netbadge` /
+  `deploy_backend`, exactly as it already deploys the netbadge image.
+
+**Why build-only** (decided 2026-08-12): the `.generated` Ansible inputs are
+untracked and rendered by `terraform apply --target=local_file.*` at deploy time, so
+a deploy phase here would apply the *same* `mandala/drupal/<env>` state that
+mandala-drupal's deploy phase applies. A commit touching both `drupal/**` and
+`solr-proxy/**` would race — S3 locking means no corruption, but the loser fails and
+looks like real breakage. Accepted consequence: a solr-proxy-only change builds an
+image that does not reach the box until mandala's pipeline next deploys.
+
+⚠ **Local applies in `aws_cicd/pipelines/` fail partway.** The `staging` aws-vault
+profile is the plain `ys2n` IAM user, lacking **both** `iam:GetRolePolicy` (already
+known) and `iam:DeleteRolePolicy` (new). The first apply created 21 of 22 resources
+then 403'd on read-back, leaving both inline policies tainted; the retry could not
+replace them. Recovery: confirm via `aws iam list-role-policies` that the policies
+really exist, `terraform untaint` both, then `plan -refresh=false`. Worth raising
+with Dave.
+
+**Config keys: DONE** — terraform-infrastructure `1c6e491c7`. The `solrproxy`
+consumer is registered on dev-0 (id 2) with `SOLRPROXY_CLIENT_SECRET` in
+`container_0.env.secret` and the non-secret `SOLRPROXY_*` / `SOLR_BASEURL` /
+`DEFAULT_RETURL` / `REDIS_HOST` / `REDIS_PORT` in `container_0.env.managed`.
+
+**Deploy wiring: DONE.** `ansible-playbook deploy_solrproxy.yml` runs from the app's
+`pipeline/deployspec.yml`, after `deploy_netbadge.yml` and **before**
+`deploy_backend.yml` — that one runs `drush updb` + a full `cim`, so anything that can
+fail cheaply fails first and leaves Drupal untouched.
+
+Sequenced deliberately: the playbook resolves its tag from
+`/containers/uvalib/mandala-solr-proxy/latest` under
+`failed_when: latest_tag.stderr != ""`, so wiring it in while ECR was empty would have
+failed the *Drupal* deploy. The parameter was seeded by the pipeline's first green
+build, `build-20260812132552` (2026-08-12), whose seven smoke tests all passed in
+CodeBuild — the first time they ran anywhere but a laptop.
+
+**First-build note:** that pipeline shows two earlier failures, both understood and
+fixed. `CreatePipeline` failed with `Project cannot be found` — it auto-ran during the
+window when the partial terraform apply had created the pipeline but not yet the
+CodeBuild project. The next failed at `DOWNLOAD_SOURCE` with `YAML_FILE_ERROR:
+Expected Commands[9] to be of string type` — a plain YAML scalar containing `": "`
+parses as a mapping, and the inner double quotes do not protect it (PR #97). **Local
+validation had only checked that the file parsed and counted commands, never that each
+command was a string** — parsing and being correct are different properties.
+
+~~⚠ One consequence to be aware of: `Searcher.php` requires `creds.php`, which now
+throws without `SOLRPROXY_CLIENT_SECRET`.~~ **SUPERSEDED** — `creds.php` now degrades
+to public-only rather than throwing (Yuji: unauthenticated public access is the 90%
+case and must stay available). Retained below for the reasoning, which still explains
+why the misconfiguration is logged on every request. Historical text: a proxy deployed
+without that secret
 serves **nothing at all**, rather than degrading to public-only results. That is the
 deliberate choice — a silent downgrade to public-only is indistinguishable from
 working — but it does mean the secret is required even for anonymous search.
