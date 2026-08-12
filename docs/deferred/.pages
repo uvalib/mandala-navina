@@ -62,3 +62,6 @@ nav:
   - "solr-proxy: uid=1 gets the anonymous filter (docs say otherwise)": solr-proxy-uid1-admin-gets-anonymous-filter.md
   - "solr-proxy forwards the session id to Solr": solr-proxy-session-id-forwarded-to-solr.md
   - "solr-proxy starts a session on every anonymous request": solr-proxy-session-per-anonymous-request.md
+  - "mandala-wp-proxy json_proxy is an open proxy (SSRF)": mandala-wp-proxy-json-proxy-open-ssrf.md
+  - "wp-kmaps needs a declared dependency on mandala-wp-proxy": wp-kmaps-mandala-proxy-dependency.md
+  - "mandala_node_api sees every request as anonymous (no identity via JSON proxy)": mandala-node-api-no-identity-forwarded-through-json-proxy.md
