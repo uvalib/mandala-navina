@@ -3,10 +3,85 @@
 **Area:** deployment / CI-CD / ECR / solr-proxy / ADR 014
 **Raised during:** Session 2026-08-11 (CI/CD pipeline inventory)
 **Jira:** (add when available)
-**Priority:** High — 1b.1 part 4 needs the proxy actually running to validate
-ADR 014's hybrid design end-to-end
-**Status:** **DECIDED (2026-08-11, Yuji) — solr-proxy needs a full CI/CD pipeline.**
-Production explicitly out of scope for now.
+**Priority:** ~~High~~ — **RESOLVED 2026-08-12**
+**Status:** ✅ **COMPLETE for the public/anonymous path, which is the 90% case.**
+⚠ The **authenticated** path is NOT working end to end — not because of anything
+here, but because the kmassets index carries no D11-format uids. See
+[kmassets-index-has-no-d11-uids.md](kmassets-index-has-no-d11-uids.md). Production
+remains explicitly out of scope; everything below is dev/staging.
+
+## ✅ RESOLVED — 2026-08-12
+
+The whole chain is built and verified working. ADR 014's hybrid design is now
+running outside DDEV for the first time.
+
+| Step | Evidence |
+|---|---|
+| ECR repository | `uvalib/mandala-solr-proxy` — tf-infra `8e9216b93` |
+| Pipeline (build-only) | `uva-mandala-solr-proxy-codepipeline` — tf-infra `d3eb4a76d` |
+| Ansible playbook | `deploy_solrproxy.yml` — tf-infra `edb80d9d0` |
+| Dead deployspec removed | PR #96 |
+| Buildspec YAML fix | PR #97 |
+| Deploy wired into the app pipeline | PR #99 |
+| First green build | `build-20260812132552`, **all 7 smoke tests passed in CodeBuild** |
+| Deployed | `mandala-solr-proxy-0` up on 8765; legacy `mandala-solr-proxy` untouched |
+| **ALB `idx` target** | **healthy** — first time since 2026-07-15 |
+
+**Proof on dev-0**, not inference: anonymous search through the proxy against the real
+index returned **562,952 docs** with
+`fq=(visibility_i:1 OR asset_type:(places subjects terms))` injected; the health path
+returns HTTP 200 with real `kmassets` core status; Redis `PING: 1` via the `drupalnet`
+alias; all 7 env vars correct and `SOLRPROXY_CLIENT_SECRET` present (64 chars).
+
+### ⚠ Scope of that proof — the authenticated path is NOT covered
+
+An earlier revision of this note claimed "proven end to end". That was an
+overstatement and is corrected here. What the above establishes is the **anonymous**
+path only.
+
+**Proven** (2026-08-12, by injecting a synthetic token and measuring): the proxy reads
+`mandala_solr_fq:{uid}` from Redis, injects it verbatim, and Solr honours it — a
+session granted one private collection saw **3,112 documents that return 0 anonymously**
+(total 562,952 → 566,516). So ADR 014's *enforcement* mechanism genuinely works.
+
+**Not proven, and blocked:**
+
+| Gap | State |
+|---|---|
+| Drupal *writing* a token on login | Never observed here — Redis db 0 was empty (`DBSIZE 0`) before the synthetic key |
+| OAuth2 flow with the real `solrproxy` consumer | Never exercised; needs a browser + NetBadge |
+| **D11-format uids in the kmassets index** | **Zero** — blocks the whole authenticated path, see the note below |
+
+That test only worked because the token was deliberately written in **D7** uid format.
+A real D11 token would have matched nothing. Also note dev-0 currently has **2 users**
+(anonymous + admin) and 22 private groups, so there is nobody who could be a member of
+one — the user migration has not been run there.
+
+**The idx target took ~6 minutes to flip after deploy — that is arithmetic, not a
+fault.** `interval=120` × `healthy_threshold=3`. Do not go hunting when it reads
+unhealthy immediately after a deploy. Note also that ALB health checks are
+deliberately absent from the access log (`SetEnvIf User-Agent "^ELB-HealthChecker"
+skiplog=1` in the vhost), so "no health checks in the log" is expected, not evidence
+of a network problem.
+
+### Three pipeline failures, all understood — the diagnostic path is reusable
+
+1. **`CreatePipeline` → `Project cannot be found`.** The pipeline auto-ran during the
+   window when a partial terraform apply had created it but not the CodeBuild project.
+   Historical artifact of #2 below.
+2. **Partial apply, from an IAM gap.** The `staging` aws-vault profile is the plain
+   `ys2n` IAM user, lacking **both** `iam:GetRolePolicy` (known since 2026-07-16) and
+   `iam:DeleteRolePolicy` (new). The apply created 21 of 22 resources then 403'd on
+   read-back, leaving both inline policies **tainted**; the retry then could not
+   replace them. Recovery: confirm with `aws iam list-role-policies` that the policies
+   genuinely exist, `terraform untaint` both, then `plan -refresh=false`. **Worth
+   raising with Dave** — it makes routine local applies here fail partway.
+3. **`DOWNLOAD_SOURCE` → `YAML_FILE_ERROR: Expected Commands[9] to be of string
+   type`.** A plain YAML scalar containing `": "` parses as a *mapping*; the inner
+   double quotes do not protect it. Fixed in PR #97 by quoting the whole scalar.
+   **The local check had only verified the file parsed and counted commands — never
+   that each command was a string.** Parsing and being correct are different
+   properties; assert the type.
 
 ## ⚠ DESIGN CORRECTION (2026-08-11, Yuji) — follow `drupal-netbadge`
 
