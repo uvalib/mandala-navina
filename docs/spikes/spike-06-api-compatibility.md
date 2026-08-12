@@ -1,5 +1,5 @@
 # Spike 6: API Compatibility for React Application
-**Status:** ◐ In progress — pre-spike findings 2026-07-30 (client architecture + live WAF/proxy incident); **D7 node-JSON endpoint audit 2026-08-07** (all four per-site detail endpoints located + response shapes documented against live D7 source). Open: URL-strategy decision + D11 implementation approach.
+**Status:** ◐ In progress — pre-spike findings 2026-07-30 (client architecture + live WAF/proxy incident); **D7 node-JSON endpoint audit 2026-08-07** (all four per-site detail endpoints located + response shapes documented against live D7 source); **URL strategy DECIDED 2026-08-12** — Option A (generalize the same-origin proxy). Open: D11 node-JSON endpoint implementation, client-side generalization to all sites, and the proxy's SSRF hardening.
 **Lead:** Than Grove (owns React app and D7 API contracts)
 **Mode:** Team spike (candidate)
 **Date:** —
@@ -136,10 +136,19 @@ See the **Pre-spike findings (2026-07-30)** section below — how `mandala-om` f
 (Solr record → `url_json` → node JSON, all JSONP across 6 subdomains), and the confirmed
 Sources WAF-503 incident + its same-origin `/proxy/json` mitigation.
 
-## URL-strategy analysis + recommendation (decision pending — needs Dave / WAF+ALB)
+## URL-strategy DECISION (2026-08-12, Than): Option A — generalize the same-origin proxy
 
-This is the spike's headline deliverable. The findings above reframe the original Option A/B/C
-into a sharper question. Two facts drive it:
+**Decided.** The React app is embedded via WordPress on third-party hosting (`thlib.org` on
+hosting.com today, potentially other WordPress sites in the future) that Mandala/D11 does not
+control and never will. That rules out **Option C (same-origin serving)** outright, not just
+deprioritizes it — there is no single origin to serve the app *and* the API from, because the
+set of embedding sites isn't fixed or Mandala-owned. It also weakens **Option D** (ALB-aliased
+subdomains) for the same reason the doc already flagged: it doesn't defeat a browser-targeted
+WAF rule. That leaves **Option A, generalized to every app**, as the strategy — not a cutover
+stopgap with a later migration to C.
+
+This is the spike's headline deliverable. The findings below reframe the original Option A/B/C
+into a sharper question. Two facts drove it:
 
 - **`url_json` is a lever D11 already controls** — `mandala_kmassets_sync` writes the client's
   fetch URL per bundle (`__BASE_URL__/api/json/__NID__` today, a *placeholder* by the config's
@@ -157,22 +166,56 @@ into a sharper question. Two facts drive it:
 | **C. Same-origin serving** (React app served from the D11 origin / ALB path) | **No** (no cross-origin at all) | Large — changes the WordPress-embed model | **Avoided** | Architecturally cleanest end state; biggest structural change; may not fit `wp-kmaps` embedding |
 | **D. ALB-aliased subdomains** (keep per-app hosts → single D11) | **Yes** (still cross-origin from the WP-embed origin) | None (if kmassets writes subdomain URLs) | **Exposed** — does not by itself defeat a browser-targeted WAF rule | Preserves D7 shape / zero client change, but doesn't solve the actual blocker |
 
-**Recommendation (for team confirmation, not a solo call — WAF/ALB is Dave's domain):**
+**Decision: Option A, generalized to all apps, no Option C migration planned.**
 
-- **Short term / cutover-safe: Option A** — generalize the same-origin `/proxy/json` proxy to
-  all apps. It is the only option already proven in production, requires no D11 CORS/WAF
-  allow-listing, and needs only a small, well-understood client change. Lowest cutover risk.
-- **Long-term target: Option C** (or B if C doesn't fit the embed model) — eliminate the proxy
-  hop once the hosting/embedding model for the React app on AWS is settled. Track as a follow-up,
-  not a cutover blocker.
-- **Reject D** as a *primary* strategy — it preserves the D7 shape but leaves the WAF blocker
-  unsolved; only viable if paired with A/B/C.
+- Generalize the same-origin `/proxy/json` proxy to Images/AV/Texts/Visuals (today it's
+  Sources-only in the client). Already proven in production for Sources, needs no D11 CORS/WAF
+  allow-listing, and the server side is already generic (see Implementation reality below) — the
+  remaining work is client-side.
+- **Option C is off the table, not deferred.** It required the React app and the D11 API to
+  share an origin. The app is embedded on arbitrary third-party WordPress installs Mandala
+  doesn't control — there is no single origin to converge on. This also means there's no
+  "eliminate the proxy hop later" follow-up: the proxy *is* the permanent architecture.
+- **Option D rejected** — preserves the D7 URL shape but doesn't defeat a browser-targeted WAF
+  rule, and is now moot since A is already proven and generalizing it is strictly less work.
+- Option B (native CORS) is superseded by A for the same reason C is off the table: CORS only
+  helps if the WAF allows the browser-side cross-origin call, and A already sidesteps needing
+  that permission at all.
 
-**Why this can't be finalized here:** the choice hinges on (1) the D11 AWS **WAF policy** (does
-it allow browser cross-origin, or must we stay same-origin?) and (2) whether/where the React app
-will be **served on AWS** — both owned by Dave Goldstein / infra. This spike's job is to make the
-decision *ready*; the decision itself belongs in a team session. Recorded here so it is made on
-this evidence, not re-derived.
+## Implementation reality (2026-08-12): the proxy is a separate plugin, and it's currently an open proxy
+
+Locating the actual `/proxy/json` implementation behind the proven Sources fix took three
+lookups — it is **not** in `wp-kmaps` (the app-embedding plugin) and **not** in `mandala-kadence`
+(the display theme). It lives in its own repo: **[`shanti-uva/mandala-wp-proxy`](https://github.com/shanti-uva/mandala-wp-proxy)**,
+a small standalone WordPress plugin (`mandala-proxy.php`, one file) that predates this spike.
+It registers four proxy routes via `add_rewrite_rule`: `/proxy/wfs` (Geoserver), `/proxy/ttt`,
+`/proxy/solr` (hardcoded to `texts.thdl.org`), and the general-purpose `/proxy/json` used by the
+Sources fix.
+
+**Good news for generalizing Option A:** the `json_proxy` handler is already fully generic —
+`$base_url = $params['url']; wp_remote_get($base_url);` — it isn't hardcoded to Sources or any
+single host. What's hardcoded today is only the **client** (`useMandala.js` in `mandala-om`
+gates the proxy path on `query.includes('sources.mandala.library.virginia.edu')`). Generalizing
+to all four remaining sites is a client-side change, not a server-side one.
+
+**⚠️ Blocking security finding: `json_proxy` is currently an open proxy (SSRF risk).** It takes
+any `url` param, fetches it server-side with **no host allowlist**, and serves the response with
+`Access-Control-Allow-Origin: *`. That's a narrow, low-traffic stopgap today; making it the
+sanctioned, generalized architecture for every embedding site and every app raises its exposure
+significantly. **Must add a host allowlist (restrict `url` to `*.mandala.library.virginia.edu`)
+before generalizing client usage.** Tracked as a deferred item — see
+[mandala-wp-proxy-json-proxy-open-ssrf.md](../deferred/mandala-wp-proxy-json-proxy-open-ssrf.md).
+
+**Merge-vs-separate decision (2026-08-12, Than): keep `mandala-wp-proxy` as its own plugin.**
+Considered folding it into `wp-kmaps` for discoverability (three lookups to find it is itself a
+signal), but rejected: (1) it isn't Mandala-specific — it already proxies Geoserver/WFS and a
+THDL Solr endpoint unrelated to KMaps, so merging would misscope a general-purpose CORS proxy
+into an app-embedding plugin; (2) once hardened with an allowlist it's a security-sensitive
+component that benefits from its own release/review cycle, independent of `wp-kmaps`'s UI churn.
+Instead: declare the dependency explicitly via a WordPress `Requires Plugins` header on
+`wp-kmaps` (so sites can't activate it without the proxy present) plus README documentation —
+fixes the actual problem (undiscoverable dependency) without the coupling cost of a merge.
+Tracked: [wp-kmaps-mandala-proxy-dependency.md](../deferred/wp-kmaps-mandala-proxy-dependency.md).
 
 ## What this does NOT establish
 - **Whether the browse-by-KMap and generic AJAX endpoints have any remaining consumer.** The
@@ -183,8 +226,10 @@ this evidence, not re-derived.
 - **The Texts embed endpoint** (`node_embed`, reached via `url_ajax`) and the
   **`/general/api/user/current`** endpoint are identified as in-scope but **not yet audited**
   for response shape / D11 approach.
-- **No URL strategy is decided yet** (Option A/B/C, or generalize `/proxy/json`, or native
-  CORS) — the pre-findings frame the choice; this spike still owes the recommendation.
+- **URL strategy is decided (2026-08-12): Option A, generalized.** What remains is
+  implementation: generalize the client's Sources-only proxy gate to all sites, harden
+  `mandala-wp-proxy`'s open `json_proxy` route with a host allowlist, and wire the
+  `wp-kmaps`↔`mandala-wp-proxy` dependency declaration.
 - **No D11 endpoint prototype exists yet** — and a route check confirms D11 currently serves
   **no** `/api/json/__NID__` (or equivalent) node-JSON endpoint at all, even though
   `mandala_kmassets_sync` already publishes that URL into `url_json`. Building it (to return
@@ -198,9 +243,12 @@ this evidence, not re-derived.
   `field_legacy_nid`, not yet confirmed against the client's `url_json` values end-to-end.
 
 ## Deferred notes
-*To be completed when the spike concludes — likely a note on the AV `/api/v1/media/node`
-server-rewrite requirement for the D11 Terraform/ALB config, and one on standardizing the
-JSONP/CORS story across endpoints.*
+- [mandala-wp-proxy-json-proxy-open-ssrf.md](../deferred/mandala-wp-proxy-json-proxy-open-ssrf.md) —
+  the open-proxy/SSRF finding in `json_proxy`, blocking generalized rollout
+- [wp-kmaps-mandala-proxy-dependency.md](../deferred/wp-kmaps-mandala-proxy-dependency.md) —
+  the plugin-dependency declaration needed since the two plugins stay separate repos
+- Still to file: a note on the AV `/api/v1/media/node` server-rewrite requirement for the D11
+  Terraform/ALB config, and the client-side change to generalize the proxy gate beyond Sources
 
 ---
 
