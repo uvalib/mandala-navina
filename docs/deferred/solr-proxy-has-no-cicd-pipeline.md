@@ -4,8 +4,11 @@
 **Raised during:** Session 2026-08-11 (CI/CD pipeline inventory)
 **Jira:** (add when available)
 **Priority:** ~~High~~ — **RESOLVED 2026-08-12**
-**Status:** ✅ **COMPLETE AND PROVEN END TO END.** Production remains explicitly out
-of scope; everything below is dev/staging.
+**Status:** ✅ **COMPLETE for the public/anonymous path, which is the 90% case.**
+⚠ The **authenticated** path is NOT working end to end — not because of anything
+here, but because the kmassets index carries no D11-format uids. See
+[kmassets-index-has-no-d11-uids.md](kmassets-index-has-no-d11-uids.md). Production
+remains explicitly out of scope; everything below is dev/staging.
 
 ## ✅ RESOLVED — 2026-08-12
 
@@ -24,11 +27,35 @@ running outside DDEV for the first time.
 | Deployed | `mandala-solr-proxy-0` up on 8765; legacy `mandala-solr-proxy` untouched |
 | **ALB `idx` target** | **healthy** — first time since 2026-07-15 |
 
-**End-to-end proof on dev-0**, not inference: anonymous search through the proxy
-against the real index returned **562,952 docs** with
+**Proof on dev-0**, not inference: anonymous search through the proxy against the real
+index returned **562,952 docs** with
 `fq=(visibility_i:1 OR asset_type:(places subjects terms))` injected; the health path
 returns HTTP 200 with real `kmassets` core status; Redis `PING: 1` via the `drupalnet`
 alias; all 7 env vars correct and `SOLRPROXY_CLIENT_SECRET` present (64 chars).
+
+### ⚠ Scope of that proof — the authenticated path is NOT covered
+
+An earlier revision of this note claimed "proven end to end". That was an
+overstatement and is corrected here. What the above establishes is the **anonymous**
+path only.
+
+**Proven** (2026-08-12, by injecting a synthetic token and measuring): the proxy reads
+`mandala_solr_fq:{uid}` from Redis, injects it verbatim, and Solr honours it — a
+session granted one private collection saw **3,112 documents that return 0 anonymously**
+(total 562,952 → 566,516). So ADR 014's *enforcement* mechanism genuinely works.
+
+**Not proven, and blocked:**
+
+| Gap | State |
+|---|---|
+| Drupal *writing* a token on login | Never observed here — Redis db 0 was empty (`DBSIZE 0`) before the synthetic key |
+| OAuth2 flow with the real `solrproxy` consumer | Never exercised; needs a browser + NetBadge |
+| **D11-format uids in the kmassets index** | **Zero** — blocks the whole authenticated path, see the note below |
+
+That test only worked because the token was deliberately written in **D7** uid format.
+A real D11 token would have matched nothing. Also note dev-0 currently has **2 users**
+(anonymous + admin) and 22 private groups, so there is nobody who could be a member of
+one — the user migration has not been run there.
 
 **The idx target took ~6 minutes to flip after deploy — that is arithmetic, not a
 fault.** `interval=120` × `healthy_threshold=3`. Do not go hunting when it reads
