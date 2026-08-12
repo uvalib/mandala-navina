@@ -120,7 +120,13 @@ phases:
         echo "$out" | grep -q "PUBLIC-ONLY" || {
           echo "SMOKE FAIL: creds.php degraded SILENTLY — the public-only warning must be logged" >&2
           echo "$out" >&2; exit 1; }
-      - echo "smoke: creds.php degrades to public-only and logs it"
+      # NB the surrounding single quotes are load-bearing. A plain YAML scalar
+      # containing ": " parses as a MAPPING, not a string — the inner double
+      # quotes do not protect it — and CodeBuild then rejects the whole file with
+      # "Expected Commands[N] to be of string type: found subkeys instead". This
+      # exact line failed the first real build. Any command with a colon-space
+      # needs quoting like this, or to live inside a `- |` block.
+      - 'echo "smoke: creds.php degrades to public-only and logs it"'
       # 7. An anonymous request must not spawn a PHP session. Unauthenticated
       #    public search is the 90% case (see solr-proxy/README.md); this used to
       #    call session_start() unconditionally, writing one session file per
