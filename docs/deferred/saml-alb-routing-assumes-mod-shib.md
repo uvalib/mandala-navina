@@ -4,9 +4,18 @@
 **Raised during:** Session 2026-07-13 (1b.1 part 4 — scoping NetBadge/SAML outside DDEV)
 **Jira:** (add when available)
 **Priority:** High — part of 1b.1 part 4
-**Status (2026-07-14):** ALB-rule deletion **POSTPONED** — Yuji to forward the
-request to Dave Goldstein (needs `terraform plan` / AWS access). This does **not**
-hold up the rest of part 4: the deletion is hygiene, not a prerequisite. The 5
+**Status (2026-08-12): RESOLVED as an FYI to Dave, not a deletion request.**
+The `authproxy` + `mod_shib` mapping is **standard infrastructure Dave provides for
+installations that use mod_shib**. Mandala uses SimpleSAMLphp and is not one of them,
+so **we never needed this mapping** — it is not abandoned config we left behind.
+Action: tell Dave we don't need it; whether to remove it is his call, on his schedule.
+Nothing in the D11 rebuild depends on it either way.
+
+⚠ **An earlier revision of this note framed it as "the team switched SP technology and
+never went back to update terraform."** That was wrong and is corrected below — it
+implied Mandala once ran mod_shib and abandoned the config. It never did.
+
+This does **not** hold up the rest of part 4: it is hygiene, not a prerequisite. The 5
 rules exist only in the `production` terraform env (part 4's target is the dev
 env configured within the *staging* configs), they match `/user/netbadge` +
 `/Shibboleth.sso/*` — paths the SimpleSAMLphp SP does not use (it serves
@@ -31,8 +40,24 @@ Provider.
 
 But the actual implementation — on the live production site **and** the D7 legacy —
 uses **SimpleSAMLphp** (`drupal/simplesamlphp_auth`), whose endpoints live under
-`/simplesaml/*` with the Drupal login trigger at `/saml_login`. The team switched
-SP technology and never went back to update terraform.
+`/simplesaml/*` with the Drupal login trigger at `/saml_login`.
+
+**Why the mod_shib mapping exists at all (clarified by Yuji, 2026-08-12).** It is part
+of the standard `authproxy` offering Dave maintains for installations that *do* use
+mod_shib — not something Mandala requested or ever used. The two are alternative SP
+technologies:
+
+| | mod_shib via authproxy | SimpleSAMLphp (what Mandala uses) |
+|---|---|---|
+| Where the SP runs | shared `authproxy` host, outside the app | **inside** the Drupal container |
+| Login entry point | `/user/netbadge` | `/saml_login` |
+| Protocol endpoints | `/Shibboleth.sso/*`, handled by the proxy | `/simplesaml/*`, served by the app |
+| How Drupal learns who you are | injected request headers (`REMOTE_USER`, `cn`, `mail`, …) consumed by a header-auth module | `simplesamlphp_auth` handles the assertion directly |
+| ALB routing needed | yes — those two paths must reach the proxy | **none** — everything hits the normal app target |
+
+That last row is the whole point: SimpleSAMLphp needs **no** SAML-specific ALB rules,
+which is why `dsf.library.virginia.edu` (the fleet's SimpleSAMLphp reference) has zero
+of them.
 
 ## Evidence (probed live 2026-07-13)
 
