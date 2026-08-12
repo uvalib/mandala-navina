@@ -51,9 +51,31 @@ plus whatever D11 serves them from post-consolidation). Reject/ignore requests f
 rather than silently proxying them. Consider also scoping `Access-Control-Allow-Origin` rather
 than leaving it wildcard, though that's secondary to the host allowlist.
 
+**Done (2026-08-12):** host allowlist added (`av`/`images`/`sources`/`texts`/`visuals`
+`.mandala.library.virginia.edu` + bare `mandala.library.virginia.edu`, matched via
+`parse_url($base_url, PHP_URL_HOST)`, exact string match — not a suffix match, so
+`mandala.library.virginia.edu.evil.com`-style spoofing is rejected). Verified `php -l` clean and
+unit-tested the allowlist logic standalone against 8 cases (legit hosts, spoofed subdomain
+suffix, cloud-metadata SSRF target `169.254.169.254`, `file://`, empty/malformed input) — all
+correct. Also added `X-Content-Type-Options: nosniff` to the response (the endpoint is not
+exploitable via XSS today — `Content-Type` is hardcoded to `application/json` regardless of
+upstream response, and the current client consumes it via `axios.get` + JSON-parse, never as
+executed script — but `nosniff` closes the legacy MIME-sniffing gap for non-compliant browsers).
+Not yet committed/pushed — sitting as a diff in a scratch clone pending final review.
+
+**⚠️ Landmine noticed while fixing this, not yet acted on:** `$wf = $params['wf'] ?? false;` is
+parsed from the query string but **never used** anywhere in the handler — dead code, zero live
+risk today. But it strongly resembles a half-built JSONP-callback parameter (the client elsewhere
+uses `?json_wrf=` for Texts). If anyone later "completes" it the conventional way —
+`echo $wf . '(' . $body . ')';` with `Content-Type: application/javascript` — that's a textbook
+reflected-XSS-via-callback-name vulnerability: an attacker-controlled `$wf` becomes raw executed
+JavaScript on the page. Left as-is (not removed) since it may be intentionally reserved, but flag
+this note for whoever touches JSONP support in this file next — validate `$wf` as a safe JS
+identifier (e.g. `preg_match('/^[A-Za-z_$][A-Za-z0-9_$]*$/', $wf)`) before ever echoing it back.
+
 This is a fix in the external `shanti-uva/mandala-wp-proxy` repo, not in this monorepo — it has
 no PR mechanism established (single `main` branch, direct commits per the repo's history), so
-apply and verify carefully before pushing.
+apply and verify carefully before pushing. `v1.0.0` tags the pre-fix state.
 
 ## Cross-references
 
