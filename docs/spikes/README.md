@@ -9,7 +9,7 @@
 | [Spike 4a](spike-04a-tibetan-unicode-roundtrip.md) | Tibetan Unicode round-trip (NFC/NFD fidelity, cross-cutting) | Than | Individual | ● Proven (2026-07-22) |
 | [Spike 4b](spike-04b-ckeditor5-footnotes.md) | CKEditor 5 footnotes (Texts-specific) | Than | Individual | ● Complete (2026-08-07) — Option 1+3, feasibility proven + prototype; production transform tracked for the Texts migration ([deferred note](../deferred/texts-footnotes-production-transform.md)) |
 | [Spike 5](spike-05-bibcite-sources.md) | bibcite for Sources site | Than | Individual | ○ Pending |
-| [Spike 6](spike-06-api-compatibility.md) | API compatibility for React application | Than | Team candidate | ◐ In progress — client architecture + WAF incident (2026-07-30); D7 node-JSON endpoint audit (2026-08-07). Open: URL strategy + D11 prototype |
+| [Spike 6](spike-06-api-compatibility.md) | API compatibility for React application | Than | Team candidate | ◐ In progress — **URL strategy DECIDED** (Option A, generalized proxy, 2026-08-12); D11 endpoint proven live for Images. Open: Sources/Texts/AV controllers, client-side generalization, AJAX endpoints |
 | [Spike 7](spike-07-kaltura-av-integration.md) | Kaltura AV integration on Drupal 11 | — | Individual | ○ Pending |
 | [Spike 8](spike-08-reindeer-x-consolidation.md) | reindeer_x consolidation as managed sync subsystem | Yuji | Individual | ◐ Partial |
 | [Spike 9](spike-09-docs-hosting-confluence.md) | Documentation hosting & access control (mkdocs → public + Confluence) | Yuji | Individual | ○ Pending (low priority) |

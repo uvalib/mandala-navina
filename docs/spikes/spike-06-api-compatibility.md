@@ -1,5 +1,23 @@
 # Spike 6: API Compatibility for React Application
-**Status:** ◐ In progress — pre-spike findings 2026-07-30 (client architecture + live WAF/proxy incident); **D7 node-JSON endpoint audit 2026-08-07** (all four per-site detail endpoints located + response shapes documented against live D7 source); **URL strategy DECIDED 2026-08-12** — Option A (generalize the same-origin proxy); **D11 node-JSON endpoint for Images LIVE 2026-08-12** (`mandala_node_api` module, verified against real migrated data in DDEV). Open: client-side generalization to all sites, the proxy's SSRF hardening (drafted, pending push), and node-JSON controllers for Sources/Texts/AV once each site migrates.
+**Status:** ◐ In progress — **headline architecture question is decided and proven**, but the
+spike is not complete. **URL strategy DECIDED 2026-08-12: Option A**, the same-origin proxy,
+generalized to every site (superseding the original Option A/B/C framing — see "URL-strategy
+DECISION" below). Proven end-to-end for one real site: `mandala_node_api`'s
+`GET /api/json/{nid}` for Images is **live and verified against real migrated data in DDEV**
+(public node → 200 with shaped JSON; private-collection node → real 403 via group membership,
+not a stub). `mandala-wp-proxy`'s SSRF gap is fixed and pushed; the `wp-kmaps` dependency is
+declared. **Pass-criteria scorecard:** URL strategy agreed ✅; feasible in D11 ✅ (and Option A's
+whole point is that no ALB/WAF change is needed at all); D11 implementation approach clear —
+◐ Images only, Sources/Texts/AV still need their own controllers (confirmed different shapes,
+none built); all 8 D7 response formats documented — ◐ JSON done for all 4 sites, AJAX endpoints
+(Texts' `node_embed`, `/user/current`) still unaudited. **Remaining work:** generalize the React
+client past its current Sources-only proxy gate, build Sources/Texts/AV controllers when each
+site migrates, audit + build the AJAX endpoints, and validate the Images response shape against
+what the live client actually reads (built from the D7 audit + kmassets logic, not yet checked
+against client rendering code). A known, deferred gap: private-collection assets can't be
+fetched through the JSON-proxy path today because no caller identity reaches
+`mandala_node_api` — see
+[mandala-node-api-no-identity-forwarded-through-json-proxy.md](../deferred/mandala-node-api-no-identity-forwarded-through-json-proxy.md).
 **Lead:** Than Grove (owns React app and D7 API contracts)
 **Mode:** Team spike (candidate)
 **Date:** —
@@ -202,12 +220,12 @@ single host. What's hardcoded today is only the **client** (`useMandala.js` in `
 gates the proxy path on `query.includes('sources.mandala.library.virginia.edu')`). Generalizing
 to all four remaining sites is a client-side change, not a server-side one.
 
-**⚠️ Blocking security finding: `json_proxy` is currently an open proxy (SSRF risk).** It takes
-any `url` param, fetches it server-side with **no host allowlist**, and serves the response with
-`Access-Control-Allow-Origin: *`. That's a narrow, low-traffic stopgap today; making it the
-sanctioned, generalized architecture for every embedding site and every app raises its exposure
-significantly. **Must add a host allowlist (restrict `url` to `*.mandala.library.virginia.edu`)
-before generalizing client usage.** Tracked as a deferred item — see
+**✅ FIXED (2026-08-12).** `json_proxy` was an open proxy (SSRF risk) — any `url` param, fetched
+server-side with no host restriction. **Host allowlist + `X-Content-Type-Options: nosniff` added
+and pushed to `shanti-uva/mandala-wp-proxy`'s `main`** (tagged `v1.0.0` pre-fix for rollback).
+Verified `php -l` clean and unit-tested the allowlist against 8 cases (legit hosts, spoofed
+subdomain suffix, the `169.254.169.254` cloud-metadata SSRF target, `file://`, malformed input).
+Full detail — see
 [mandala-wp-proxy-json-proxy-open-ssrf.md](../deferred/mandala-wp-proxy-json-proxy-open-ssrf.md).
 
 **Merge-vs-separate decision (2026-08-12, Than): keep `mandala-wp-proxy` as its own plugin.**
