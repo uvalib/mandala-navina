@@ -103,13 +103,20 @@ proxy's `/oauth2/*` — `$OAUTH_ROOT` in `creds.php.template` reflects this.
 |---|---|---|---|
 | `mandala_solr_fq:{uid}` | Drupal (login / Group membership change / logout) | this proxy | Full Solr `fq` string, TTL 1h, re-written on access change |
 
-`uid=1` (Drupal admin) has no token written.
+`uid=1` and any other administrator **do** get a token written, like every other
+logged-in user — Drupal decides what it contains.
 
-⚠ **This next part was long documented incorrectly, here and in three other
-places.** It said the proxy "applies no visibility filter for uid 1". It does not:
-`Searcher::setVisibility()` skips the *token lookup* for uid 1 and then falls
-through to the **anonymous** filter, so admin sees public content only. D7 behaves
-identically, so this is not a D11 regression — but `VisibilityTokenBuilder`
-deliberately writes no token for uid 1 *on the strength of the false claim*. Which
-way to reconcile it is an open decision:
-[`docs/deferred/solr-proxy-uid1-admin-gets-anonymous-filter.md`](../docs/deferred/solr-proxy-uid1-admin-gets-anonymous-filter.md).
+Previously uid 1 was special-cased in two places at once: the builder wrote no token
+*and* the proxy skipped the lookup, so the admin fell through to the anonymous filter
+and saw **less** than a normal user, while four comments claimed uid 1 "views
+everything". Both special cases are gone. `VisibilityTokenBuilder` now writes a
+permissive `(*:*)` token for any account with `bypass node access` — uid 1 via
+Drupal's `SuperUserAccessPolicy`, the `administrator` role via `is_admin: true` — and
+the proxy simply applies whatever it finds. That keeps every access decision in
+Drupal, per ADR 013/014.
+
+Fail-closed is unchanged: an account with **no** token still gets the public filter,
+so removing the special case did not create a fail-open path.
+
+⚠ Operational note: the token is written on login (and on Group membership change), so
+an administrator with a pre-existing session must log in again to receive one.
