@@ -101,11 +101,17 @@ class Searcher {
      * writes it on login / Group membership change / logout (ADR 014). The
      * proxy makes no Solr call and no membership decision of its own.
      *
-     * uid=1 (Drupal admin) intentionally has no token written -> null fq,
-     * meaning no visibility filter is applied, matching prior behaviour.
+     * NOTE: there is deliberately NO special case for uid 1 here. Deciding that
+     * an administrator sees everything is an access decision, and ADR 013/014
+     * put every access decision in Drupal — so Drupal writes a permissive token
+     * for accounts it considers privileged, and this method just reads it like
+     * any other. An earlier version short-circuited uid 1 to null here, which
+     * (because null falls through to the anonymous filter below) actually gave
+     * admin LESS access than a normal user, while four comments claimed the
+     * opposite.
      */
     private function getVisibilityToken(): ?string {
-        if (!$this->isLoggedIn || $this->uid === 1) {
+        if (!$this->isLoggedIn) {
             return null;
         }
         $redis = $this->getRedis();
@@ -165,8 +171,11 @@ class Searcher {
                 unset($this->params['fq'][$fqn]);
             }
         }
-        if ($this->isLoggedIn && !empty($this->uid) && $this->uid !== 1) {
-            // if uid = 1, view everything (no filter) -- matches prior behaviour
+        // No uid is special here. Every logged-in user's access is whatever
+        // Drupal wrote to Redis for them -- including administrators, for whom
+        // Drupal writes a permissive token (see VisibilityTokenBuilder). That is
+        // ADR 014's premise: Drupal is the sole authority, the proxy only applies.
+        if ($this->isLoggedIn && !empty($this->uid)) {
             $fq = $this->getVisibilityToken();
             if ($fq !== null) {
                 $this->visibilityFq = $fq;

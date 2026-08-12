@@ -3,9 +3,7 @@
 **Area:** solr-proxy / ADR 014 / visibility / documentation-vs-behaviour
 **Raised during:** Session 2026-08-11 (running the proxy locally to validate the pipeline specs)
 **Jira:** (add when available)
-**Priority:** Medium — not a regression and not a data-exposure bug, but a **trap for
-the upcoming 1b.1 part 4 validation**, which is exactly when someone will log in as
-admin and misread the result
+**Priority:** ~~Medium~~ — **RESOLVED 2026-08-12**
 
 ## What we found
 
@@ -59,7 +57,42 @@ for private-collection content, sees nothing, and concludes the ADR 014 visibili
 path is broken — when it is working correctly for every other user. That is an
 expensive false negative to chase.
 
-## Options (decide, don't drift)
+## ✅ RESOLVED 2026-08-12 — Option B, generalised: Drupal decides
+
+Decision (Yuji): **defer to Drupal to determine uid 1's access.** Both special cases
+are removed, so the proxy makes no access decision at all — ADR 013/014's premise
+applied consistently.
+
+- `Searcher::getVisibilityToken()` / `setVisibility()` — the `uid === 1` /
+  `uid !== 1` short-circuits are gone. Every logged-in user is treated identically:
+  read the token, apply it; no token means fail closed to the public filter.
+- `VisibilityTokenBuilder::build()` — no longer returns NULL for uid 1. It returns a
+  permissive `(*:*)` token for any account with **`bypass node access`**, keyed on the
+  permission rather than a magic uid, so it follows Drupal's own answer: uid 1 via
+  `SuperUserAccessPolicy`, the `administrator` role via `is_admin: true`, and any role
+  explicitly granted it. `content_editor` and plain `authenticated` do not qualify.
+
+**Why a permissive token rather than "no token":** the proxy treats a missing token as
+fail-closed. Overloading absence to mean "unrestricted" would make the privileged and
+the broken cases indistinguishable — precisely the bug being fixed.
+
+**Verified by running it** (proxy + Redis + stub Solr), all four cases:
+
+| Case | fq applied |
+|---|---|
+| uid 1, permissive token | `(*:*)` |
+| uid 1, **no** token | public filter — **fails closed** |
+| ordinary user, membership token | unchanged |
+| anonymous | unchanged |
+
+**Consequences worth knowing:**
+- This grants full search visibility to the `administrator` role too, not just uid 1 —
+  intended, and the point of keying on the permission.
+- It is a behaviour change vs. D7, where admin saw public content only.
+- Tokens are written on login, so an administrator with a pre-existing session must log
+  in again to get one. Until then they fail closed to public — safe, not broken.
+
+## Original options (kept for the record)
 
 - **A — Fix the code to match the docs.** Add an explicit `return` for uid=1 so no
   `fq` is applied. Genuinely changes behaviour: admin would start seeing private

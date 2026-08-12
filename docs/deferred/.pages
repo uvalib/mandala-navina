@@ -59,7 +59,7 @@ nav:
   - "solr-proxy CI/CD pipeline (COMPLETE 2026-08-12)": solr-proxy-has-no-cicd-pipeline.md
   - "s3-sync pipeline deferred (pending reindeer_x consolidation)": s3-sync-pipeline-deferred-pending-reindeer-x-consolidation.md
   - "kmassets index has no D11 uids (blocks authenticated access)": kmassets-index-has-no-d11-uids.md
-  - "solr-proxy: uid=1 gets the anonymous filter (docs say otherwise)": solr-proxy-uid1-admin-gets-anonymous-filter.md
+  - "solr-proxy: uid=1 access now decided by Drupal (resolved)": solr-proxy-uid1-admin-gets-anonymous-filter.md
   - "solr-proxy forwards the session id to Solr": solr-proxy-session-id-forwarded-to-solr.md
   - "solr-proxy starts a session on every anonymous request": solr-proxy-session-per-anonymous-request.md
   - "mandala-wp-proxy json_proxy is an open proxy (SSRF)": mandala-wp-proxy-json-proxy-open-ssrf.md

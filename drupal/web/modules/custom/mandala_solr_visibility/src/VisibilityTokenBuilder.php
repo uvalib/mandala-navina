@@ -17,6 +17,11 @@ use Drupal\group\GroupMembershipLoader;
  * decisions (ADR 013). The %20/OR encoding matches Searcher::getQueryStr(),
  * which concatenates fq values into the query string with no further
  * encoding.
+ *
+ * One deliberate divergence from D7: privileged accounts. D7 special-cased
+ * uid 1 inside the proxy; this class decides it instead, so that EVERY access
+ * decision lives in Drupal and the proxy only ever applies what it is given.
+ * See build().
  */
 class VisibilityTokenBuilder {
 
@@ -27,18 +32,47 @@ class VisibilityTokenBuilder {
   }
 
   /**
-   * Builds the fq string for a user, or NULL if no filter should apply.
+   * The fq granting access to everything.
    *
-   * uid=1 (Drupal admin) and anonymous both get NULL -- for uid=1 this
-   * matches the D7 proxy's "view everything" behaviour (Searcher.php
-   * explicitly special-cases uid 1); anonymous users are never written a
-   * token in the first place (see hook implementations).
+   * Written for accounts Drupal considers privileged (see build()). It must be
+   * an explicit token rather than "no token": the proxy treats a missing token
+   * as fail-closed and applies the anonymous filter, so absence cannot mean
+   * "unrestricted" without making those two cases indistinguishable.
+   */
+  protected const FQ_ALL = '(*:*)';
+
+  /**
+   * Builds the fq string for a user, or NULL if no token should be written.
+   *
+   * Anonymous gets NULL -- anonymous users are never written a token (see the
+   * hook implementations), and the proxy applies the public filter to anyone
+   * without one.
+   *
+   * Everyone else, INCLUDING administrators, gets a real token. Drupal is the
+   * sole authority on access (ADR 013/014), so "an administrator sees
+   * everything" is expressed here, as a permissive token, rather than as a
+   * special case inside the proxy.
+   *
+   * Keyed on the `bypass node access` permission rather than on uid 1, so it
+   * follows Drupal's own answer: uid 1 gets it via SuperUserAccessPolicy, the
+   * `administrator` role via `is_admin: true`, and any role explicitly granted
+   * it. Content editors and plain authenticated users do not.
+   *
+   * NB this corrects a long-standing inversion. uid 1 previously returned NULL
+   * here and was ALSO short-circuited in the proxy, so the admin fell through to
+   * the anonymous filter and saw LESS than a normal user — while the code and
+   * docs in four places claimed uid 1 "views everything".
    */
   public function build(AccountInterface $account): ?string {
-    $uid = (int) $account->id();
-    if ($uid === 1 || $account->isAnonymous()) {
+    if ($account->isAnonymous()) {
       return NULL;
     }
+
+    if ($account->hasPermission('bypass node access')) {
+      return self::FQ_ALL;
+    }
+
+    $uid = (int) $account->id();
 
     $conditions = [
       '(visibility_i:(1%203))',
