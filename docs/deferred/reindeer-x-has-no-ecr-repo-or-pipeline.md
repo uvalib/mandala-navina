@@ -114,6 +114,15 @@ Mirroring what was just done for the D11 app (commit `f7ec9604d`):
    the list**. `registry.tf` uses `count = length(var.repo_names)` with
    `element(var.repo_names, count.index)`, so repositories are keyed by list position;
    inserting mid-list renumbers every later repo and destroys/recreates them.
+> **Pattern now proven (2026-08-12).** If this work is ever picked up, model it on
+> what solr-proxy just did rather than on `drupal-dsf`: a **build-only** pipeline
+> (`drupal-netbadge` shape) producing a deployment-agnostic image configured
+> entirely from the container environment, deployed by an Ansible playbook run
+> from the consuming environment's own deployspec. See
+> [solr-proxy-has-no-cicd-pipeline.md](solr-proxy-has-no-cicd-pipeline.md), which
+> also records the IAM gap that makes local applies in `aws_cicd/pipelines/` fail
+> partway and how to recover from it.
+
 3. **Create `aws_cicd/pipelines/mandala-reindeer_x/`** from the `drupal-dsf` shape —
    five files, only `application` / `container_image` / `source_repo` and the backend
    state key differ. NB the module derives every name from `var.application` alone, so
