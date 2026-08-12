@@ -1,0 +1,15 @@
+# Path is not a free choice: it must match mandala_kmassets_sync.settings.yml's
+# bundles.shanti_image.url_json template ('__BASE_URL__/api/json/__NID__'),
+# which is already live in the kmassets Solr index. See
+# docs/spikes/spike-06-api-compatibility.md.
+mandala_node_api.node_json:
+  path: '/api/json/{node}'
+  defaults:
+    _controller: '\Drupal\mandala_node_api\Controller\NodeJsonController::view'
+  requirements:
+    _entity_access: 'node.view'
+    node: \d+
+  options:
+    parameters:
+      node:
+        type: entity:node

@@ -1,0 +1,8 @@
+name: 'Mandala Node API'
+type: module
+description: 'Serves the node-detail JSON endpoints the React app fetches per each Solr record''s url_json field (Spike 6). Fulfils the contract mandala_kmassets_sync already publishes into Solr; access is delegated to core node access, so mandala_group_inheritance''s private-collection gating applies for free.'
+package: Mandala
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - shanti_iiif:shanti_iiif
