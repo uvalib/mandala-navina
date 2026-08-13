@@ -13,3 +13,4 @@ nav:
   - "dev-0 Drift Capture (before D11 replaces it)": dev-0-drift-capture.md
   - "Readiness: dev-0 Database + User Migration": dev-0-database-and-user-migration-readiness.md
   - "Collections: Inheritance Decision Brief (RESOLVED → ADR 011)": collections-inheritance-decision-brief.md
+  - "Solr Index Inventory (dev/staging/production)": solr-index-inventory.md
