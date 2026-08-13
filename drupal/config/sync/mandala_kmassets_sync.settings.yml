@@ -1,5 +1,7 @@
 _core:
   default_config_hash: 3u5QDIgRr0LBVapJGjrd50LgFV8EDk4lQh9vxvursqs
+solr_master_url: 'http://mandala-solr-master-staging-private.internal.lib.virginia.edu:8080/solr/kmassets'
+base_url: 'https://mandala.library.virginia.edu'
 bundles:
   shanti_image:
     service: images
