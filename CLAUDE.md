@@ -31,6 +31,14 @@ Development is driven collaboratively — team members take turns leading sessio
   4. Refresh your local Claude memory so the next session doesn't start stale: update `project-mandala-state` (sprint/spike/ADR status, dates) and add or revise topic memories for anything decided this session, marking superseded framings as superseded. Note: memory is **per-machine and per-driver** — each lead refreshes their own; the committed `docs/` tree remains the team source of truth, and memory only mirrors it.
 - **ADRs are immutable.** Once accepted, don't edit an ADR — write a new one that supersedes it.
 - **Spikes over engineering.** Prove unknowns with the lightest possible demo before building production code.
+- **This repo is public.** Almost everything belongs here anyway — ADRs, spikes, deferred
+  notes and session logs are public by design, and over-classifying hides work from the
+  team. But material that would hand a stranger a working recipe against a live, unfixed
+  system goes in one of two private docs repos instead (`uvalib/mandala-legacy-docs`,
+  `uvalib/mandala-navina-docs`; each carries an identical `CONVENTION.md`). See
+  [docs/non-public-documentation.md](docs/non-public-documentation.md). When writing here
+  about something tracked privately: **say that a problem exists and who to ask, never
+  what it is** — and check anything that *references* it, not just the note itself.
 
 ## Team
 

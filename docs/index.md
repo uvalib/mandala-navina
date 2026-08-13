@@ -14,3 +14,4 @@ for the active rebuild. For the codebase, see the
 - [Architecture Decision Records](adr/README.md) — foundational decisions for the rebuild
 - [Spikes](spikes/README.md) — proof-of-concept work proving key unknowns
 - [Deferred Work](deferred/README.md) — known gaps deferred for later spikes or production work
+- [Non-public Documentation](non-public-documentation.md) — the small amount of material that cannot live in this public repo, and where it does live

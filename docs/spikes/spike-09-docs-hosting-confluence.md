@@ -1,5 +1,5 @@
 # Spike 9: Documentation Hosting & Access Control (mkdocs → public site + Confluence)
-**Status:** Pending
+**Status:** Pending — **partially superseded 2026-08-13** (see the amendment at the end)
 **Date:** (not yet scheduled)
 **Branch/commit:** —
 **Priority:** Low — long-run / precedent-setting. Not on the implementation critical path.
@@ -54,12 +54,16 @@ separately and is the more urgent track; see
 1. **Public repo (`uvalib/mandala-navina`)** — keeps code + a handful of
    hand-written, outward-facing pages served by GitHub Pages. This becomes the
    "public-facing project information" site; the internal corpus leaves it.
-2. **Private docs repo (`uvalib/mandala-navina-docs`, private)** — the git-native
-   authoring home for ADRs/spikes/deferred/session-logs/planning. The session +
-   markdown + mkdocs workflow is preserved exactly; only repo *visibility*
-   changes. Mounted into the code repo as a **git submodule** (e.g.
-   `internal-docs/`) so "one repo, one session" ergonomics survive — collaborators
-   clone `--recurse-submodules`; others simply don't get the submodule.
+2. **Private docs repo(s)** — the git-native authoring home. The session + markdown +
+   mkdocs workflow is preserved exactly; only repo *visibility* changes. Mounted into the
+   code repo as a **git submodule** (e.g. `internal-docs/`) so "one repo, one session"
+   ergonomics survive — collaborators clone `--recurse-submodules`; others simply don't
+   get the submodule.
+   **⚠ Amended 2026-08-13:** this was written as a single `uvalib/mandala-navina-docs`
+   holding the whole internal corpus. **Two private repos now exist**
+   (`uvalib/mandala-legacy-docs`, `uvalib/mandala-navina-docs`) scoped to genuinely
+   sensitive material only — not the corpus, and with no submodule. See the amendment at
+   the end before designing against this item.
 3. **Confluence (restricted space)** — CI in the private docs repo renders
    markdown → Confluence on merge. This is the access-controlled *reading*
    surface, and crucially reaches people who are not GitHub collaborators
@@ -116,3 +120,65 @@ mostly that:
 ## Deferred notes
 
 - [docs/deferred/jira-issue-tracking-integration.md](../deferred/jira-issue-tracking-integration.md)
+
+---
+
+## Amendment — 2026-08-13
+
+Part of this spike was overtaken by events. A live case (a high-severity access-control
+finding that could not go in a public repo) arrived while the spike was still unscheduled,
+and there was nowhere to put it — so the decision was taken early and minimally.
+
+### What now exists
+
+Two **private** repos, both in `uvalib`, each carrying an **identical `CONVENTION.md`**:
+
+| Repo | Holds |
+|---|---|
+| `uvalib/mandala-legacy-docs` | material whose fix serves the **legacy D7 stack** |
+| `uvalib/mandala-navina-docs` | material whose fix serves the **D11 rebuild** |
+
+The public-facing summary is [docs/non-public-documentation.md](../non-public-documentation.md).
+
+### How this differs from what the spike proposed
+
+| Spike 9 as written | What was built |
+|---|---|
+| **One** repo, `mandala-navina-docs` | **Two**, mirroring the legacy/rebuild split |
+| Holds the whole internal corpus (ADRs, spikes, deferred, session logs, planning) | Holds **only** material whose *source* must not be public. The corpus stays public by design |
+| Mounted as a git submodule | **No submodule.** Plain repos, cloned separately |
+| Paired with Confluence sync | **No sync.** Not built |
+
+The scope change is the substantive one. Spike 9 framed the private repo as *"the internal
+corpus moves out of the public repo"*. In practice the corpus is better off public —
+over-classifying hides work from the team and from collaborators who are not GitHub org
+members — and only a narrow class of content genuinely cannot be published. The two repos
+are scoped to that narrow class.
+
+The two-repo shape came from a boundary the single-repo design did not account for:
+**sensitivity cuts across the legacy/rebuild split.** A finding can be *about* the legacy
+stack, *found during* rebuild work, and *affect* both. The tie-breaker is **file by where
+the fix lands, not where the problem was found**.
+
+Both repos are in `uvalib` although the legacy D7 **code** remains in `shanti-uva`.
+Documentation ownership follows the Library, not the code's current host. The code stays
+put because **legacy is still in production** and moving it would churn live
+infrastructure; it migrates to `uvalib` **after cutover**. Docs could move immediately
+because they have no such coupling.
+
+### What is still open — this spike remains Pending
+
+Everything else, unchanged:
+
+- **Submodule ergonomics** — untested; the two repos are cloned separately today.
+- **Confluence sync fidelity** — the original core question. Untouched. Still the way to
+  reach PM, directors, and external partners who are not GitHub collaborators; two private
+  GitHub repos do not reach them.
+- **Public-vs-internal split for the existing corpus** — now leaning strongly toward
+  "the corpus stays public", which narrows this considerably but does not close it.
+- **The public site itself** — a curated GitHub Pages front page is still unbuilt.
+- **Git history** — unchanged and still public; the note above still applies.
+
+Nothing in this amendment resolves the Confluence half. It only records that the
+*access-controlled storage* question was answered early, under pressure, in a smaller
+shape than proposed.

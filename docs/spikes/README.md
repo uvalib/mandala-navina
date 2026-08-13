@@ -12,7 +12,7 @@
 | [Spike 6](spike-06-api-compatibility.md) | API compatibility for React application | Than | Team candidate | ◐ In progress — **URL strategy DECIDED** (Option A, generalized proxy, 2026-08-12); D11 endpoint proven live for Images. Open: Sources/Texts/AV controllers, client-side generalization, AJAX endpoints |
 | [Spike 7](spike-07-kaltura-av-integration.md) | Kaltura AV integration on Drupal 11 | — | Individual | ○ Pending |
 | [Spike 8](spike-08-reindeer-x-consolidation.md) | reindeer_x consolidation as managed sync subsystem | Yuji | Individual | ◐ Partial |
-| [Spike 9](spike-09-docs-hosting-confluence.md) | Documentation hosting & access control (mkdocs → public + Confluence) | Yuji | Individual | ○ Pending (low priority) |
+| [Spike 9](spike-09-docs-hosting-confluence.md) | Documentation hosting & access control (mkdocs → public + Confluence) | Yuji | Individual | ○ Pending (low priority) — **partially superseded 2026-08-13**: two private docs repos now exist (`uvalib/mandala-legacy-docs`, `uvalib/mandala-navina-docs`), scoped to sensitive material only; submodule + Confluence sync still open |
 | [Spike 10](spike-10-saml-oauth2-coexistence.md) | SAML + OAuth2 coexistence on D11 (`simplesamlphp_auth` + `simple_oauth`) | Yuji | Individual | ● Proven — **1b.1 unblocked** (2026-07-09) |
 | [Spike 11](spike-11-av-transcript-replication.md) | AV time-synced transcript replication on D11 (data model + sync + search + migration) | Than | Individual | ○ Pending — backlog (AV / Phase 4); relates to Spikes 7, 4a, 6 |
 
