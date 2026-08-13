@@ -136,6 +136,38 @@ no backup. It is now in the private legacy repo.
   document each found a real defect — both in the parts telling someone what to *do*, not
   in the analysis. Instructions drift when the plan changes underneath them.
 
+## Addendum — written after the log was first merged
+
+Two further pieces landed after this log was written, both continuations of the same work.
+
+**[The Solr inventory as a reference document](../planning/solr-index-inventory.md)**
+([#111](https://github.com/uvalib/mandala-navina/pull/111)). The inventory had produced three
+deferred notes and this log, but **no single document that was the inventory** — topology,
+cores, counts, freshness, read and write paths, the D7 backend patchwork. That document now
+exists in `docs/planning/`, alongside the KMasset doc contract: that one is the document
+*format*, this one is the deployed *reality*. It cross-references the deferred notes rather
+than duplicating them, and it ships the re-measurement commands, since every figure was
+measured rather than read from configuration — and one core is about to change when the D11
+writer runs.
+
+Its §7 states plainly that one aspect of the legacy D7 Solr routing is omitted and who to
+ask. That split is drawn on **inference, not just content**: the public document has to say
+which endpoint is the filtered proxy in order to describe the read path at all, so
+publishing the per-site endpoint mapping beside it would give the withheld finding away to
+anyone reading both. The mapping is therefore withheld whole rather than partially.
+
+**A backup of the `mandala-legacy/` umbrella-directory files.** The read-first banners added
+to that directory's `CLAUDE.md` and `AGENTS.md` were tracked by *nothing* — the umbrella
+root is a folder of clones, not a repository — so they existed on one laptop only. That is
+the same failure mode as the orphaned postmortem rehomed earlier the same day, recreated
+while fixing the original. They are now mirrored into the private legacy repo, with restore
+commands and an explicit warning that the mirror is manual.
+
+**A fourth lesson, from that:** *"is it closed out?" deserves the same scepticism as "is it
+ready?"* Asking it twice found stale close-out artifacts both times — a merged session log
+that under-reported, and a memory snapshot naming a superseded commit. Work done after a
+close-out does not announce itself.
+
 ## Next
 
 Unchanged and still the next action: set `mandala_kmassets_sync.settings.solr_master_url`
