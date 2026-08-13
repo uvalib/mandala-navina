@@ -19,7 +19,8 @@ Query: "Buddhism" (D7-equivalent raw query) → subjects-2610, subjects-1205, su
 Direct Solr (*:*) → 147,778 documents via proxy (anonymous), 557,483 total
 ```
 
-A working comparison page at `/spike/solr-comparison` has two sections:
+A working comparison page at `/spike/solr-comparison` has two sections. **The `spike_solr_demo` module is disabled as of 2026-08-13** (see the correction note at the end); the code is retained — re-enable with `drush en spike_solr_demo` to view the page.
+
 
 **Section 1 — Result order:** Corrected D11 (D7-equivalent raw Solarium query, green
 header) on the left vs naive D11 (search_api standard stack) on the right. Row color:
@@ -36,7 +37,8 @@ approach has perfect field fidelity with no transformation layer.
 `search_api_solr` connects cleanly to the proxy. The correct Solarium endpoint
 configuration is:
 - `scheme: https`
-- `host: mandala-solr-proxy.internal.lib.virginia.edu`
+- `host: mandala-index-dev.internal.lib.virginia.edu`  ← **corrected 2026-08-13**; see
+  the correction note at the end
 - `port: 443`
 - `path: /`  ← critical: NOT `/solr/`
 - `core: kmassets`
@@ -58,16 +60,28 @@ prefixed naming (`ss_`, `its_`, `tm_`). With the `solr_document` datasource,
 `search_api_solr` queries fields by their exact names as configured in the index
 `field_settings`. No mapping layer is required.
 
-### 4. The proxy is a visibility filter — KEY FINDING
-`mandala-solr-proxy` is not a simple pass-through. It intercepts every query and
+### 4. The proxy is a visibility filter — KEY FINDING (hostname corrected 2026-08-13)
+The Mandala Solr proxy is not a simple pass-through. It intercepts every query and
 injects a visibility filter:
 
 **Anonymous:** `fq=(visibility_i:1 OR asset_type:(places subjects terms))`
 **Authenticated:** adds user's private collections to the filter
 
-This explains the document count difference:
-- Direct Solr: 557,483 total documents
-- Via proxy (anonymous): 147,778 documents (public assets only)
+This filter is real and was re-verified on 2026-08-13: against production kmassets,
+`visibility_i:1 OR asset_type:(places subjects terms)` returns **549,312** documents,
+which is exactly what the filtered proxy endpoint (`mandala-index`) returns to an
+anonymous caller. The semantics recorded by this spike are correct.
+
+**The endpoint attribution was not.** The hostname originally recorded here — and used in
+the server connector — is not the filtered proxy. The connector has been repointed
+(see the correction note at the end). The routing detail behind that is tracked outside
+this repo; **ask Yuji before changing any production Solr endpoint.**
+
+The original figure above ("via proxy (anonymous): 147,778") matches neither endpoint
+today and is closest to `visibility_i:1` alone (150,013) less the demo's
+`-asset_type:(picture document video)` exclusion — i.e. it appears to have measured a
+query rather than the proxy's anonymous behaviour. Left unexplained rather than
+retro-fitted.
 
 The proxy authenticates users via Mandala Drupal OAuth2 (`sid` session cookie).
 D11 will need to pass authenticated sessions to the proxy to serve private records
@@ -276,3 +290,47 @@ approach is already implemented in the spike comparison page as a reference.
    that endpoint and times out on every query.
 
 *Full spike definition: [docs/planning/spikes-plan.md](../planning/spikes-plan.md#spike-2)*
+
+---
+
+## Correction note — 2026-08-13
+
+Found while auditing which Solr indexes are actually in use across dev / staging /
+production, and then asking what consumes this spike's `search_api` index.
+
+**1. The connector was pointed at the wrong endpoint.** Finding 4 above attributed the
+visibility filter to a hostname that does not serve it. The connector has been repointed
+to `mandala-index-dev.internal.lib.virginia.edu` — the dev proxy, which reads the staging
+replica and applies the documented filter — in `config/sync`, in this module's
+`config/optional/`, and directly on dev-0. The reason the previous endpoint was wrong is
+tracked outside this repo; ask Yuji.
+
+**2. This spike's demo module was the D11 kmassets index's only consumer**, and its
+route (`_permission: 'access content'`) was reachable anonymously. `spike_solr_demo` is
+now disabled. The `search_api.server.kmassets` / `search_api.index.kmassets` config
+survives the uninstall — neither depends on this module — and remains as the D11 read
+connection to kmassets.
+
+**2b. Expected side-effect: Drupal will report the server as "unavailable".** The
+proxy blocks `/admin/system` (404) while permitting `/admin/ping` and `/select` (both
+200). `search_api_solr`'s `isAvailable()` reaches for core info and therefore fails, so
+`/admin/config/search/search-api` shows the server as unavailable. **Queries work
+regardless** — verified through the full D11 stack on dev-0:
+
+```
+$server->getBackend()->getSolrConnector()->execute(*:*)  →  numFound = 562,952
+```
+
+which matches `mandala-index-dev` anonymously (562,952), i.e. the filtered staging count.
+This was masked before the repoint because the old endpoint permitted `/admin/*`. Do not
+"fix" it by repointing back.
+
+**3. What this does not change.** Findings 2, 3, 5–9 stand as written; they concern the
+index schema, field naming, Solr version handling, flat-document structure, field
+fidelity and the `string`-vs-`text` query issue, none of which depend on which endpoint
+served the query. **Spike 2 remains Proven.**
+
+**4. One consequence worth carrying forward.** The connector host is environment-specific
+configuration living in a shared `config/sync`. Correct for dev, wrong for anywhere else.
+Tracked in
+[`spike-solr-demo-enabled-with-anonymous-route.md`](../deferred/spike-solr-demo-enabled-with-anonymous-route.md).

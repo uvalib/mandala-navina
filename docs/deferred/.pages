@@ -67,3 +67,7 @@ nav:
   - "mandala-wp-proxy json_proxy open proxy / SSRF (FIXED 2026-08-12)": mandala-wp-proxy-json-proxy-open-ssrf.md
   - "wp-kmaps declared dependency on mandala-wp-proxy (MERGED 2026-08-12)": wp-kmaps-mandala-proxy-dependency.md
   - "mandala_node_api sees every request as anonymous (no identity via JSON proxy)": mandala-node-api-no-identity-forwarded-through-json-proxy.md
+  - "Production kmassets frozen (~12 months of no writes)": kmassets-production-index-frozen.md
+  - "Cross-environment Solr write targets (staging→prod, prod→staging)": solr-cross-environment-write-targets.md
+  - "SearchStax external Solr config is defunct": searchstax-defunct-external-solr-config.md
+  - "Spike 2 demo module enabled with an anonymous route": spike-solr-demo-enabled-with-anonymous-route.md
