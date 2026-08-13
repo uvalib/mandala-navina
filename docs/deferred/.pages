@@ -70,3 +70,4 @@ nav:
   - "Production kmassets frozen (~12 months of no writes)": kmassets-production-index-frozen.md
   - "Cross-environment Solr write targets (staging→prod, prod→staging)": solr-cross-environment-write-targets.md
   - "SearchStax external Solr config is defunct": searchstax-defunct-external-solr-config.md
+  - "Spike 2 demo module enabled with an anonymous route": spike-solr-demo-enabled-with-anonymous-route.md

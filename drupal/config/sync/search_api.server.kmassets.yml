@@ -17,7 +17,7 @@ backend_config:
   connector: standard
   connector_config:
     scheme: https
-    host: mandala-solr-proxy.internal.lib.virginia.edu
+    host: mandala-index-dev.internal.lib.virginia.edu
     port: 443
     path: /
     core: kmassets
