@@ -57,8 +57,13 @@ Then the ordinary prerequisites:
 - [ ] D7 Images dump obtained out-of-band and loaded into the staging migrate source
       (analogue of `scripts/load-d7-source.sh`; the dump is gitignored ~70MB).
 - [ ] `base_url` set to the staging site URL (per-env `$config[...]['base_url']`).
-- [ ] `solr_master_url` confirmed → staging kmassets master (this is already the config
-      default) and reachable from the staging container.
+- [x] `solr_master_url` confirmed → staging kmassets master and reachable from the
+      container. **Correction (2026-08-13):** this was NOT already the config default on
+      dev-0/staging — the committed `config/sync` export predated the key and only carried
+      `bundles:`, so it stayed unset until PR #113 added it and it was applied via a
+      targeted `cim`/`cset` (deploy still doesn't run a full `cim`). See
+      [d11-dev-database-bootstrap-and-migration-source.md](../deferred/d11-dev-database-bootstrap-and-migration-source.md)
+      item 1.
 
 ---
 

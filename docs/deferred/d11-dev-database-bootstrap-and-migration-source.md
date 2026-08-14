@@ -42,10 +42,15 @@ issue from either.
 
 **Next steps (in order):**
 
-1. `drush kmassets:index-all` + `drush kmassets:audit` — currently a **no-op**,
-   confirmed `solr_master_url` is still unset on dev-0 (nothing to index
-   against yet). Skip until Solr is actually wired up; not a blocker for
-   anything below.
+1. ✅ **DONE 2026-08-13.** `drush kmassets:index-all` + `drush kmassets:audit` —
+   no longer a no-op. `solr_master_url`/`base_url` were added to committed
+   `config/sync` (PR #113) and applied on dev-0; the full `shanti_image` bulk
+   index ran clean (111,340 indexed, 0 skipped, 0 errors — hit the same 128MB
+   CLI `memory_limit` landmine as the migration below, same fix:
+   `php -d memory_limit=1024M vendor/bin/drush.php`), and
+   `kmassets:audit --check-stale` reports 0 missing/stale/orphaned. See
+   [kmassets-index-has-no-d11-uids.md](kmassets-index-has-no-d11-uids.md) for
+   what this unblocked.
 2. Merge PR #45 only after Than has rebased it per the review comment on that
    PR (still open/draft as of 2026-07-19) — see
    `migrate-shared-vs-migrate-users-connection-duplication.md` — it currently

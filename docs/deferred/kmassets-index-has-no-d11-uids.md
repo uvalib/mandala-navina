@@ -3,8 +3,37 @@
 **Area:** solr / kmassets / ADR 014 / migration / identity
 **Raised during:** Session 2026-08-12 (testing the authenticated case after the solr-proxy pipeline went live)
 **Jira:** (add when available)
-**Priority:** **High — blocks the entire authenticated half of ADR 014.** The public
-path is unaffected and works today.
+**Priority:** **RESOLVED 2026-08-13.** Was High — blocked the entire authenticated half of
+ADR 014. The public path was unaffected throughout.
+
+## ✅ Resolution (2026-08-13)
+
+Option 1 below was executed: the D11 kmassets write path ran against the staging index.
+`solr_master_url`/`base_url` were added to committed `config/sync` (PR #113) and applied
+on dev-0; `kmassets:index-all shanti_image` indexed all 111,340 published nodes clean (0
+skipped, 0 errors — hit and fixed the same 128MB CLI `memory_limit` landmine documented in
+[migrate-large-migration-oom-and-resume-behavior.md](migrate-large-migration-oom-and-resume-behavior.md));
+`kmassets:audit --check-stale` reports 0 missing/stale/orphaned.
+
+**Proven end-to-end with a real user, not a hand-rolled query.** Built the actual visibility
+token via `\Drupal::service('mandala_solr_visibility.token_builder')->build($user)` for a
+real migrated member (uid 600) of a real private D11 collection (`images-11-111`, one of
+four the user belongs to). Result: 25 docs exist across those 4 collections; the anonymous
+filter matches **0** of them (fails closed, correct); the real token matches **all 25**.
+This is exactly the case that returned 0 everywhere before today.
+
+Also confirmed additive-only as designed: overall kmassets core went from 572,150 to
+683,490 — exactly +111,340, so no D7-era doc was touched. 111,303 of the 111,340 new docs
+carry a `collection_uid_s` (the 37 without one match the known orphaned-content pattern,
+see [orphaned-content-temp-group-on-migration.md](orphaned-content-temp-group-on-migration.md)).
+
+What this does NOT yet cover: only `shanti_image`/Images is indexed (the only bundle
+`mandala_kmassets_sync` has configured, per Sprint 1 scope) — AV/Sources/Texts still have
+no D11-format docs once those migrations land. The uid-legacy shim and full-cutover reindex
+(see [kmassets-uid-identity-across-migration.md](kmassets-uid-identity-across-migration.md))
+remain future work, unrelated to this fix.
+
+## Original finding (2026-08-12), retained for the record
 
 ## Measured, not inferred
 
