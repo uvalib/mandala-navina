@@ -56,23 +56,6 @@ See `/docs/` for architecture and planning documentation.
 
 - [`uvalib/mandala-reindeer_x`](https://github.com/uvalib/mandala-reindeer_x) — kmterms→kmassets sync service (Node.js, `reindeer_x` container); formerly `shanti-uva/kmaps-solr-sync`. Maintains the 1:1 shadow kmasset entries for `subjects`, `places`, and `terms` asset types so that KMaps taxonomy terms are discoverable as first-class assets in a single Solr index. See [ADR 006](docs/adr/006-kmterms-in-kmassets-shadow-pattern.md) and [ADR 007](docs/adr/007-reindeer-x-independent-service.md).
 
-## Repository Structure
-
-```
-mandala/
-├── drupal/           # Drupal 11 application
-│   ├── web/          # Drupal webroot (Composer-managed)
-│   │   ├── modules/custom/   # Custom modules (committed here)
-│   │   └── themes/custom/    # Custom themes
-│   ├── config/sync/  # Drupal CMI config exports — committed to git
-│   └── composer.json
-├── solr-proxy/       # Solr authentication proxy service
-├── s3-sync/          # S3 file sync utilities
-├── package/          # Production Dockerfile
-├── pipeline/         # AWS CodeBuild specs (buildspec.yml, deployspec.yml)
-└── scripts/          # Local dev helper scripts
-```
-
 ## Local Development
 
 Uses DDEV. From the repo root:
@@ -86,17 +69,6 @@ ddev drush cache:rebuild      # Clear caches
 ```
 
 Site URL: https://mandala.ddev.site
-
-## Common Drush Commands
-
-```bash
-ddev drush cr                 # Cache rebuild
-ddev drush cim                # Config import
-ddev drush cex                # Config export
-ddev drush updb               # Run DB updates
-ddev drush en <module>        # Enable module
-ddev drush pmu <module>       # Uninstall module
-```
 
 ## Custom Modules
 
