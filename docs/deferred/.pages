@@ -59,6 +59,7 @@ nav:
   - "solr-proxy CI/CD pipeline (COMPLETE 2026-08-12)": solr-proxy-has-no-cicd-pipeline.md
   - "s3-sync pipeline deferred (pending reindeer_x consolidation)": s3-sync-pipeline-deferred-pending-reindeer-x-consolidation.md
   - "Deploy never imports config/sync (merging to main changes nothing)": deploy-never-imports-config-sync.md
+  - "Pre-deploy RDS snapshot gate (needed before production rollout)": pre-deploy-rds-snapshot-gate.md
   - "User migration run on dev-0 (1,543 users)": user-migration-run-on-dev0.md
   - "kmassets index has no D11 uids (blocks authenticated access)": kmassets-index-has-no-d11-uids.md
   - "solr-proxy: uid=1 access now decided by Drupal (resolved)": solr-proxy-uid1-admin-gets-anonymous-filter.md
