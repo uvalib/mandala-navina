@@ -1,5 +1,8 @@
 # Spike 8: reindeer_x Consolidation as Managed Sync Subsystem
-**Status:** Partial — Part A (file watcher) proven; Parts B (SQS) and C (SNS) deferred
+**Status:** Partial — Part A (file watcher) proven; Parts B (SQS) and C (SNS) deferred —
+**2026-08-17: recommend not building these at all** — see the addendum below, which
+argues the trigger should be pull/scheduled rather than push, making the SQS race-fix
+(Part B) and its SNS reporting (Part C) unnecessary rather than merely undone.
 **Date:** 2026-06
 **Branch/commit:** `uvalib/mandala-reindeer_x` branch [`spike/08-reindeer-x-consolidation`](https://github.com/uvalib/mandala-reindeer_x/tree/spike/08-reindeer-x-consolidation)
 
@@ -181,10 +184,86 @@ the chain finds differs. Full design and infra hand-off in
   Node.js consolidation, not the full ECS integration)
 - Cost impact of SQS polling vs. current UDP model
 
+## Addendum (2026-08-17): the open question is the trigger, not the transform
+
+Following the drift measurement in
+[kmassets-production-index-frozen.md](../deferred/kmassets-production-index-frozen.md)
+(53% of `kmterms` `terms` records touched since the kmassets shadow froze, in bursty
+bulk-shaped activity, not a steady trickle), the natural next question was whether
+`reindeer_x` — as currently built — is actually the right way to close that gap, or
+whether the project should step back before investing further in it. Read the live
+`main` branch of `uvalib/mandala-reindeer_x` (`server/index.js`,
+`queue/jobCreationQueue.js`, `queue/queueConfigs.js`) to check, rather than assuming
+from the spike write-up above.
+
+**Finding: the sync/transform logic already fits a scheduled-delta model — it doesn't
+need to be built, it's already the default behavior.**
+
+```js
+// server/index.js
+const DEFAULT_QUERY = process.env.DEFAULT_QUERY || "_timestamp_:[NOW-1WEEK TO NOW]";
+```
+
+`generateJobspecs` (`queue/jobCreationQueue.js`) takes that query, chunks the matching
+`kmterms` result set into paginated jobs, and dispatches them through a Redis-backed
+Bee-Queue (`jobCreationQueue` → `indexerQueue`) to transform and write each chunk to
+`kmassets`. This is already a time-windowed incremental sync, not a full reindex —
+exactly the shape a scheduled delta job against `updated_at`/`_timestamp_` would need.
+
+**Finding: the racy UDP trigger is not load-bearing — a plain HTTP alternative already
+exists and calls the identical code path:**
+
+```js
+app.post('/post', (req, res) => {
+  ...
+  processRequest(order)  // same function the UDP handler calls
+  ...
+});
+```
+
+Both the UDP datagram handler and `POST /post` funnel into the same `processRequest()`.
+So Spike 8 Part B (SQS subscription) exists to fix a timing race that is only a
+problem *because* the trigger is a fire-and-forget UDP ping racing against an ECS
+Solr commit. Nothing about the actual sync logic requires that trigger mechanism —
+anything capable of an HTTP POST or a direct `processRequest()` call (a cron job, an
+ECS Scheduled Task, a GitHub Action, a person) can drive a correct, non-racy sync run
+today, through code that already exists.
+
+**Conclusion: keep the transform/sync implementation as-is. The thing that's actually
+oversized for the job is the *deployment shape* wrapped around it** — an Express
+server binding an ALB-exposed port 24/7, a UDP socket listening for a trigger that
+(per the frozen-index finding) nothing has reliably sent in over a year, a
+`setInterval` health-check loop running forever, and an Arena dashboard. That shape
+is *why* the remaining spike scope (Parts B/C) and the open deferred notes — no ECR
+repo or pipeline, the 9000/9001 ALB port mismatch — exist: they are problems that only
+arise because reindeer_x is modeled as a standing, push-triggered service. Given the
+bursty, infrequent, previously-unnoticed-for-15-months usage pattern the drift
+measurement established, that model doesn't match the job.
+
+**Recommendation:** don't build Parts B/C, and don't build the always-on
+pipeline/ALB work in
+[reindeer-x-has-no-ecr-repo-or-pipeline.md](../deferred/reindeer-x-has-no-ecr-repo-or-pipeline.md)
+as currently scoped. Decide the trigger cadence instead (scheduled pull vs. on-demand
+manual — the actual push-vs-pull question, still Than/Andres's call) and let that
+decision determine deployment shape. A scheduled/on-demand task needs no ALB target,
+no UDP listener, and no fix for the port-mismatch defect — it only needs to run to
+completion when invoked, which is a smaller build than what's currently scoped.
+
+**What this does NOT establish:**
+- Whether anyone actually needs near-real-time propagation (edits visible in Mandala
+  search within minutes). Nothing found argues for it — 15 months of staleness went
+  unnoticed — but this is a fact question for Andres/Than, not something the code can
+  answer.
+- Which specific scheduling mechanism (ECS Scheduled Task, cron, GitHub Action) —
+  not decided, and lower-stakes than the pull-vs-push decision itself.
+- Whether the Bee-Queue consumer (`jobCreationQueue.process(8, processor)`) can
+  cleanly drain and exit for a one-shot invocation, or needs modification to do so —
+  not verified against a real run, just read from the source.
+
 ## Deferred notes
 
 - [docs/deferred/solr-sync-architecture-d11.md](../deferred/solr-sync-architecture-d11.md)
 - [docs/deferred/solr-pipeline-cost-discussion.md](../deferred/solr-pipeline-cost-discussion.md)
-- [docs/deferred/reindeer-x-has-no-ecr-repo-or-pipeline.md](../deferred/reindeer-x-has-no-ecr-repo-or-pipeline.md) — gates all pipeline/ECR work on the "do we need an always-on rdx" review
-- [docs/deferred/rdx-alb-target-unhealthy-in-production.md](../deferred/rdx-alb-target-unhealthy-in-production.md) — live production defect, independent of this spike
+- [docs/deferred/reindeer-x-has-no-ecr-repo-or-pipeline.md](../deferred/reindeer-x-has-no-ecr-repo-or-pipeline.md) — gates all pipeline/ECR work on the "do we need an always-on rdx" review; the 2026-08-17 addendum above argues that work is oversized for the job regardless of that review's outcome
+- [docs/deferred/rdx-alb-target-unhealthy-in-production.md](../deferred/rdx-alb-target-unhealthy-in-production.md) — live production defect, independent of this spike; moot if the trigger moves off an always-on ALB-fronted service
 - [docs/deferred/kmassets-production-index-frozen.md](../deferred/kmassets-production-index-frozen.md) — the push-vs-pull evidence: `kmterms` `terms` records are 53% touched since the shadow froze (bursty, likely bulk import), `subjects`/`places` are <6% (steady low-volume, looks like normal curation)
