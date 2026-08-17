@@ -6,6 +6,17 @@
 **Priority:** **High — every `config/sync` change merged to `main` since this deploy
 path was built has silently failed to reach dev-0.**
 
+**Status: PARTIALLY RESOLVED 2026-08-17** — `deploy_backend.yml` now runs a full
+`drush updb` + `drush cim` on every deploy (not just the partial SimpleSAMLphp
+import), and a post-cim `drush config:status --format=json` check fails the build
+if any drift remains (`terraform-infrastructure` commit `5904a3684`). This closes
+items 1 and 4 of "What needs to happen" below. **Still open:** item 2 (RDS
+snapshot gating before the full `cim`/`updb` runs — Decision B's other half,
+never built) and item 3 (this was checked live 2026-08-17 and found already
+clean — `drush config:status` on dev-0 reports no drift, so the ADR 015 items
+must have been hand-applied at some point after 2026-08-12; not investigated
+further since it's now moot given the build-failing check above).
+
 ## What we found
 
 `terraform-infrastructure/mandala/drupal/staging/ansible/deploy_backend.yml` runs
