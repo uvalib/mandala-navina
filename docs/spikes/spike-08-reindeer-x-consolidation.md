@@ -185,3 +185,6 @@ the chain finds differs. Full design and infra hand-off in
 
 - [docs/deferred/solr-sync-architecture-d11.md](../deferred/solr-sync-architecture-d11.md)
 - [docs/deferred/solr-pipeline-cost-discussion.md](../deferred/solr-pipeline-cost-discussion.md)
+- [docs/deferred/reindeer-x-has-no-ecr-repo-or-pipeline.md](../deferred/reindeer-x-has-no-ecr-repo-or-pipeline.md) — gates all pipeline/ECR work on the "do we need an always-on rdx" review
+- [docs/deferred/rdx-alb-target-unhealthy-in-production.md](../deferred/rdx-alb-target-unhealthy-in-production.md) — live production defect, independent of this spike
+- [docs/deferred/kmassets-production-index-frozen.md](../deferred/kmassets-production-index-frozen.md) — the push-vs-pull evidence: `kmterms` `terms` records are 53% touched since the shadow froze (bursty, likely bulk import), `subjects`/`places` are <6% (steady low-volume, looks like normal curation)
