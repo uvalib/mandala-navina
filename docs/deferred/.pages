@@ -72,3 +72,5 @@ nav:
   - "Cross-environment Solr write targets (staging→prod, prod→staging)": solr-cross-environment-write-targets.md
   - "SearchStax external Solr config is defunct": searchstax-defunct-external-solr-config.md
   - "Spike 2 demo module enabled with an anonymous route": spike-solr-demo-enabled-with-anonymous-route.md
+  - "SimpleSAMLphp Redis store missing predis/predis (RESOLVED 2026-08-18)": simplesamlphp-redis-store-missing-predis.md
+  - "dev-0 needs a test IdP for SAML login testing": dev-0-needs-test-idp-for-saml-login-testing.md
