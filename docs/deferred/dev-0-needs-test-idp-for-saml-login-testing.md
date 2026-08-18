@@ -3,8 +3,51 @@
 **Area:** infrastructure / SAML / SimpleSAMLphp / dev environment / 1b.3
 **Raised during:** Session 2026-08-18 (predis/predis fix + first live NetBadge attempt)
 **Jira:** (add when available)
-**Priority:** High — blocks the live end-to-end proof for
+**Priority:** **RESOLVED 2026-08-18** (same day, a second session). Was High — blocked
+the live end-to-end proof for
 [Sprint 1 task 1b.3](../sprints/sprint-01-images-implementation.md).
+
+## ✅ Resolution (2026-08-18, later the same day)
+
+Both open gaps below were closed. Full writeup:
+[session log](../session-logs/2026-08-18-dev-test-idp-and-oauth2-userinfo-bug.md).
+
+- **Attribute mismatch — fixed with a general mapping, not per-identity hardcoding.**
+  Rather than editing each canned identity's static attribute array to carry a specific
+  `unique_id` OID value (this note's first "option to weigh"), the hosted IdP config
+  (`metadata/saml20-idp-hosted.php`, new) applies SimpleSAMLphp's standard
+  `core:AttributeMap`/`name2oid` authproc filter, which translates *all* friendly
+  attribute names (`uid`, `mail`, `eduPersonAffiliation`, ...) to their OID equivalents
+  uniformly. Any of the three canned identities now resolves correctly, not just one
+  hand-edited for the purpose.
+- **`default-sp`'s `idp` now actually points at the test IdP** when
+  `SIMPLESAML_ENABLE_EXAMPLE_AUTH=true` — this note correctly identified that
+  `simplesamlphp_auth.settings.yml`'s `auth_source: default-sp` was the missing wire,
+  but the fix lives one level down: `authsources.php`'s `default-sp` entry itself now
+  switches its `idp` target on the same flag, rather than changing which Drupal auth
+  source is active.
+- **Authmap row added.** The `staff` identity is now linked
+  (`ExternalAuth::linkExistingAccount`) to a real migrated non-admin user with genuine
+  private-collection membership — full identity intentionally kept out of this public
+  repo, see `mandala-navina-docs` (private).
+- **Two more real bugs surfaced and fixed getting this far** (both found by actually
+  running the deploy, not by static check): a bogus `MYSQL_*` requirement in
+  `deploy_netbadge.yml` copy-pasted from the dsf reference playbook, and a missing
+  `enable.saml20-idp` config key with no default in SimpleSAMLphp core.
+- **The cookie-domain question above was not resolved, just not hit.** Tonight's full
+  walkthrough used `https://mandala-dev.internal.lib.virginia.edu` throughout — the
+  same hostname the SP's `SIMPLESAML_SP_ENTITY_ID`/`BASE_URL`/`COOKIE_DOMAIN` are pinned
+  to — and completed the full round trip (SAML login → Drupal session → OAuth2
+  authorize/token exchange) successfully. Whether `mandala-images-dev` would still fail
+  on a cookie-domain mismatch remains untested; use `mandala-dev` for SAML testing until
+  someone checks.
+- **Proven live, with a real non-admin user, not assumed:** SAML login → real Drupal
+  session (verified via the `sessions` table) → full OAuth2 authorization-code exchange
+  against the real `solrproxy` consumer, including `state` CSRF round-trip and
+  `automatic_authorization`. That surfaced **two further, independent** OAuth2 defects
+  (signing keys not persisted across deploy; the proxy's OAuth2 client never sends a
+  Bearer token to `/oauth/userinfo`) — both written up as their own deferred notes,
+  neither fixed tonight.
 
 ## Where this sits
 
