@@ -73,4 +73,6 @@ nav:
   - "SearchStax external Solr config is defunct": searchstax-defunct-external-solr-config.md
   - "Spike 2 demo module enabled with an anonymous route": spike-solr-demo-enabled-with-anonymous-route.md
   - "SimpleSAMLphp Redis store missing predis/predis (RESOLVED 2026-08-18)": simplesamlphp-redis-store-missing-predis.md
-  - "dev-0 needs a test IdP for SAML login testing": dev-0-needs-test-idp-for-saml-login-testing.md
+  - "dev-0 needs a test IdP for SAML login testing (RESOLVED 2026-08-18)": dev-0-needs-test-idp-for-saml-login-testing.md
+  - "OAuth2 signing keys not persisted across deploy": oauth2-signing-keys-not-persisted-across-deploy.md
+  - "solr-proxy GenericProvider sends no Bearer header to /oauth/userinfo": solr-proxy-genericprovider-no-bearer-header-on-userinfo.md

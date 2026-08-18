@@ -5,6 +5,15 @@
 **Jira:** (add when available)
 **Priority:** Medium (works today), High before a production cutover
 
+## ▶ Next action (added 2026-08-18)
+
+**Contact Bob to update the real IdP-side configuration for `mandala-dev` and
+`mandala-staging`.** Noted verbatim from Yuji at the end of tonight's session — not yet
+scoped beyond that; likely overlaps with (or is in addition to) the cert-renewal /
+re-registration work below, which so far has been tracked as going "via Dave Goldstein."
+Confirm with Yuji what specifically needs updating and how it relates to the plan
+already here before acting.
+
 ## What we found
 
 The live mandala SimpleSAMLphp SP keypair (recovered from `dev-0` at
