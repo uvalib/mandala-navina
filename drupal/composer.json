@@ -27,7 +27,8 @@
         "drupal/search_api_solr": "^4.3",
         "drupal/simple_oauth": "^6.1",
         "drupal/simplesamlphp_auth": "^4.1",
-        "drush/drush": "^13"
+        "drush/drush": "^13",
+        "predis/predis": "^3.3"
     },
     "require-dev": {
         "drupal/core-dev": "^11",
