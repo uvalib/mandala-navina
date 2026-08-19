@@ -4,6 +4,7 @@
 **Raised during:** Session 2026-08-19 (re-verifying the two 2026-08-18 OAuth2 defects after fixing both)
 **Jira:** (add when available)
 **Priority:** High — blocks the entire OAuth2-authenticated path (proxy UserInfo call, and by extension anything else that authenticates via a `simple_oauth` Bearer token) regardless of the two defects fixed this session
+**Status:** 🟡 Fix decided and applied in config (2026-08-19); verified in DDEV only — not yet redeployed/re-verified live against dev-0
 
 ## Issue
 
@@ -98,22 +99,30 @@ Neither is wired up on any scope in this environment.
   `openid`; it was simply never exercised against a route with a real permission
   requirement until this session's live UserInfo call.
 
-## Fix options (not yet decided)
+## Fix — DECIDED and applied 2026-08-19 (Yuji)
 
-1. **Add a `Permission` granularity to the `openid` scope itself**, granting `access
-   content` (the specific permission the `/oauth/userinfo` route requires). Simplest,
-   but muddies an identity-only scope with an authorization grant.
-2. **Add a new, separate scope** (e.g. `solrproxy_access` or similar) configured with
-   `Permission` granularity for `access content`, and have `solr-proxy`'s `auth.php`
-   request it alongside `openid` (`'scope' => 'openid solrproxy_access'` in the
-   `getAccessToken()`/authorization URL calls). Cleaner separation of identity vs.
-   authorization scopes, but touches both the Drupal scope config and the proxy's
-   requested-scope list.
-3. Consider `Role` granularity instead of `Permission` if more than just `access
-   content` ends up needed once the Redis visibility-token read (the next unproven
-   link) is exercised for real.
+**Reuse the `openid` scope** — the pattern already used elsewhere in this project,
+rather than introducing a second scope. `simple_oauth.oauth2_scope.openid.yml` now
+carries:
 
-Decision needs a human call on scope design before implementing — not purely a bug fix.
+```yaml
+granularity_id: permission
+granularity_configuration:
+  permission: 'access content'
+```
+
+Verified locally in DDEV: `config:import` applies cleanly, `config:status` shows no
+drift afterward, and `Oauth2Scope::getPermissions()` for `openid` now correctly
+returns `["access content"]`. Not yet re-verified live against dev-0 — that's the
+next-session (or later-this-session) step: redeploy, then redo the full SAML → OAuth2 →
+UserInfo live walkthrough to confirm `/oauth/userinfo` actually returns JSON, and that
+the proxy's own Redis visibility-token read (the one remaining unproven 1b.3 link)
+works for a real authenticated session.
+
+If a permission beyond `access content` turns out to be needed once the Redis
+visibility-token path is exercised, extend the same `granularity_configuration`
+(`Permission` grants exactly one permission per config — for more than one, switch to
+`Role` granularity instead, or reconsider a second scope at that point).
 
 ## Related
 
