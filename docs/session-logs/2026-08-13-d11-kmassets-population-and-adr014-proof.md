@@ -843,7 +843,7 @@ Group 3 has zero content docs — a real membership, but the collection itself i
 | Same query, anonymous filter | **0** visible | |
 | Same query, real token from `VisibilityTokenBuilder::build($user)` | | **25** visible |
 
-This used the actual Drupal service (not a hand-rolled guess) against a real migrated user (uid 600, "Nicholas Osborne") with real group memberships — exactly the scenario `kmassets-index-has-no-d11-uids.md` said was impossible before today (0 D11-format docs existed at all). It's now closed end-to-end: anonymous fails closed, the real member sees exactly their content.
+This used the actual Drupal service (not a hand-rolled guess) against a real migrated user (uid 600) with real group memberships — exactly the scenario `kmassets-index-has-no-d11-uids.md` said was impossible before today (0 D11-format docs existed at all). It's now closed end-to-end: anonymous fails closed, the real member sees exactly their content.
 
 ---
 

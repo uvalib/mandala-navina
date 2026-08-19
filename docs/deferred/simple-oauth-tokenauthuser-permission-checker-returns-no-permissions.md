@@ -138,7 +138,7 @@ Drupal access-control layer, not assumed.
 **But the live end-to-end `/oauth/userinfo` HTTP request still doesn't return JSON —
 a fourth, distinct issue.** With this fix live, the failure mode changed: watchdog no
 longer logs an `access denied` entry (consistent with access now correctly being
-allowed) — instead it logs repeated `Session closed for Nicholas Osborne` /
+allowed) — instead it logs repeated `Session closed for [uid 600]` /
 `session_destroy(): Trying to destroy uninitialized session` pairs, and the HTTP
 response is still a redirect loop bouncing between `/oauth/userinfo` and `/`
 (`GuzzleHttp\Exception\TooManyRedirectsException` after 5 hops on the proxy side).
