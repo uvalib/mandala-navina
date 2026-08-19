@@ -76,3 +76,4 @@ nav:
   - "dev-0 needs a test IdP for SAML login testing (RESOLVED 2026-08-18)": dev-0-needs-test-idp-for-saml-login-testing.md
   - "OAuth2 signing keys not persisted across deploy": oauth2-signing-keys-not-persisted-across-deploy.md
   - "solr-proxy GenericProvider sends no Bearer header to /oauth/userinfo": solr-proxy-genericprovider-no-bearer-header-on-userinfo.md
+  - "Images missing interactive viewing surfaces (viewer, carousel, gallery)": images-missing-interactive-viewing-surfaces.md
