@@ -153,7 +153,7 @@ matching config change and merged.
 
 With the scope fix live, `/oauth/userinfo` still doesn't return JSON, but the failure
 mode changed: watchdog no longer logs `access denied` — instead repeated `Session
-closed for Nicholas Osborne` / `session_destroy(): Trying to destroy uninitialized
+closed for [uid 600]` / `session_destroy(): Trying to destroy uninitialized
 session` pairs, and the HTTP response is a redirect loop between `/oauth/userinfo` and
 `/` (the proxy's Guzzle client hits `GuzzleHttp\Exception\TooManyRedirectsException`
 after 5 hops). Looks like Drupal's session-handling layer reacting badly to a
