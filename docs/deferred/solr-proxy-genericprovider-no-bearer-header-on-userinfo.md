@@ -86,8 +86,25 @@ immediately.
 2. Or bypass `getResourceOwner()` entirely and issue the `/oauth/userinfo` GET manually
    with an explicit `Authorization: Bearer` header in `auth.php`.
 
-Either is a small, contained change in `auth.php`/wherever the provider is instantiated —
-this is the `uvalib/mandala-solr-proxy` repo, not this monorepo.
+Either is a small, contained change in `solr-proxy/proxy/auth.php` (provider instantiated
+at line 59, `getResourceOwner()` called at line 107) — **in this monorepo**, not a
+separate repo. ADR 014 forked the D11 proxy into `solr-proxy/` (commit `1b8e682`); the
+`uvalib/mandala-solr-proxy` name in the original version of this note was a mistake —
+that repo doesn't exist. Don't confuse this with `shanti-uva/mandala-solr-proxy`, the
+unrelated D7 proxy ADR 014 explicitly leaves untouched.
+
+**This is not a D11-introduced regression.** `shanti-uva/mandala-solr-proxy`'s own
+`auth.php` has the identical code — vanilla `GenericProvider`, no
+`getAuthorizationHeaders()` override, same call shape to D7's `$OAUTH_ROOT/UserInfo` —
+confirmed by reading the legacy repo directly (`mandala-legacy/mandala-solr-proxy`,
+`league/oauth2-client: dev-master` in its `composer.json`, same empty base-class method
+in its own vendored copy). The bug was inherited from D7, not introduced during the
+fork, and was presumably just as latent there — never exercised end-to-end with a real
+browser either. **Fixed 2026-08-19:** `solr-proxy/proxy/src/BearerGenericProvider.php`
+(new file, autoloads via the existing PSR-4 `mandala\oauth\` → `src/` mapping already in
+`composer.json`) subclasses `GenericProvider` with the header override; `auth.php` now
+instantiates that instead of the base class. Verified with a standalone script
+confirming `getAuthenticatedRequest()` now carries `Authorization: Bearer <token>`.
 
 ## What's already proven and doesn't need re-testing
 
