@@ -4,7 +4,7 @@ status: true
 dependencies: {  }
 id: openid
 name: openid
-description: 'OpenID Connect: identifies the authenticated Drupal user (sub = uid). User-context flows only (Spike 10: must not be requested on client_credentials).'
+description: 'OpenID Connect: identifies the authenticated Drupal user (sub = uid). User-context flows only (Spike 10: must not be requested on client_credentials). Granted "access content" via Permission granularity (2026-08-19) so tokens with this scope can reach permission-gated routes like /oauth/userinfo -- see SA-CONTRIB-2025-114 and docs/deferred/simple-oauth-tokenauthuser-permission-checker-returns-no-permissions.md.'
 grant_types:
   authorization_code:
     status: true
@@ -14,5 +14,6 @@ grant_types:
     description: 'OpenID Connect on token refresh.'
 umbrella: true
 parent: null
-granularity_id: null
-granularity_configuration: null
+granularity_id: permission
+granularity_configuration:
+  permission: 'access content'
