@@ -4,7 +4,7 @@
 **Raised during:** Session 2026-08-19 (re-verifying the two 2026-08-18 OAuth2 defects after fixing both)
 **Jira:** (add when available)
 **Priority:** High — blocks the entire OAuth2-authenticated path (proxy UserInfo call, and by extension anything else that authenticates via a `simple_oauth` Bearer token) regardless of the two defects fixed this session
-**Status:** 🟡 Fix decided and applied in config (2026-08-19); verified in DDEV only — not yet redeployed/re-verified live against dev-0
+**Status:** 🟡 The scope-permission fix itself is CONFIRMED CORRECT live on dev-0 (2026-08-19) — `TokenAuthUser->hasPermission('access content')` now YES, route access ALLOWED, both verified directly, not assumed. But the live end-to-end call still fails, for a **fourth**, distinct, not-yet-root-caused reason (a session-handling redirect loop) — see the bottom of the Fix section
 
 ## Issue
 
@@ -106,18 +106,47 @@ rather than introducing a second scope. `simple_oauth.oauth2_scope.openid.yml` n
 carries:
 
 ```yaml
+umbrella: false
 granularity_id: permission
 granularity_configuration:
   permission: 'access content'
 ```
 
-Verified locally in DDEV: `config:import` applies cleanly, `config:status` shows no
-drift afterward, and `Oauth2Scope::getPermissions()` for `openid` now correctly
-returns `["access content"]`. Not yet re-verified live against dev-0 — that's the
-next-session (or later-this-session) step: redeploy, then redo the full SAML → OAuth2 →
-UserInfo live walkthrough to confirm `/oauth/userinfo` actually returns JSON, and that
-the proxy's own Redis visibility-token read (the one remaining unproven 1b.3 link)
-works for a real authenticated session.
+**The `umbrella: false` line matters and was not part of the first attempt.**
+`Oauth2ScopeProvider::getPermissions($scope)` — the method `Oauth2AccessPolicy`
+actually calls, not `Oauth2Scope::getPermissions()` — checks `isUmbrella()` first: if
+true, it ignores the scope's own granularity entirely and instead unions permissions
+from *child* scopes (of which `openid` has none), silently making any granularity
+config on an umbrella scope dead code on this path. The module's own admin form
+enforces this by force-nulling `granularity_id`/`granularity_configuration` whenever
+`umbrella` is checked — hand-editing the YAML bypassed that UI constraint but not the
+functional one. First attempt (granularity only, `umbrella` left `true`) tested as
+correct in DDEV via `Oauth2Scope::getPermissions()` — the wrong method to test against —
+and failed identically live. Retested using `Oauth2ScopeProvider::getPermissions()`
+(the real call path) after adding `umbrella: false`; both entity and provider methods
+now agree, returning `["access content"]`.
+
+**Tested directly on dev-0 first, via `drush config:set --input-format=yaml` (not a
+full pipeline redeploy)** — per Yuji's request, to iterate faster than a ~6-8 minute
+pipeline cycle per attempt. Confirmed with hard evidence against the real token from a
+live SAML→OAuth2 walkthrough (not a synthetic token): `TokenAuthUser->hasPermission('access
+content')` → **YES** (was NO before the `umbrella: false` fix), and
+`\Drupal::service('access_manager')->checkNamedRoute('simple_oauth.userinfo', ..., $account)`
+→ **isAllowed: YES**. This fix is genuinely correct and necessary — confirmed at the
+Drupal access-control layer, not assumed.
+
+**But the live end-to-end `/oauth/userinfo` HTTP request still doesn't return JSON —
+a fourth, distinct issue.** With this fix live, the failure mode changed: watchdog no
+longer logs an `access denied` entry (consistent with access now correctly being
+allowed) — instead it logs repeated `Session closed for Nicholas Osborne` /
+`session_destroy(): Trying to destroy uninitialized session` pairs, and the HTTP
+response is still a redirect loop bouncing between `/oauth/userinfo` and `/`
+(`GuzzleHttp\Exception\TooManyRedirectsException` after 5 hops on the proxy side).
+This looks like something in Drupal's session-handling layer reacting badly to a
+*stateless* Bearer-authenticated request that resolves to a real user identity with no
+matching session cookie — repeatedly treating it as a logout event. Not yet
+root-caused; a genuinely new problem layered under this one, only reachable now that
+this scope-permission fix works. **Next-session starting point.**
 
 If a permission beyond `access content` turns out to be needed once the Redis
 visibility-token path is exercised, extend the same `granularity_configuration`
