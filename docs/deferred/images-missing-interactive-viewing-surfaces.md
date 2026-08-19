@@ -1,0 +1,113 @@
+# D11 Images has no interactive viewing surfaces — no deep-zoom viewer, no collection carousel, no mosaic/gallery view
+
+**Area:** Images / UI-UX / shanti_iiif / views
+**Raised during:** Session 2026-08-19 — reviewing the live D7 site
+(`images.mandala.library.virginia.edu`) against the Sprint 1 acceptance criterion "Images
+render through the existing IIIF server with `i3fid` linkage intact"
+**Jira:** (add when available)
+**Priority:** **To be discussed by the team as the next item after Sprint 1 closes.** Not
+a Sprint 1 blocker — Sprint 1's AC as written is satisfied by 1a.5's URL-contract proof
+(see below); this note captures a materially bigger scope the AC didn't actually cover.
+
+## What we found
+
+Live D7 (`images.mandala.library.virginia.edu`) has three interactive viewing surfaces
+built directly into Drupal — not just backend IIIF URL correctness, and not something the
+React client (`mandala-om`) supplies. None of the three exist in D11 yet.
+
+### 1. OpenSeadragon deep-zoom viewer on the image detail page
+
+`sarvaka_images` theme + `shanti_images` module wire a real deep-zoom viewer into the node
+page itself:
+
+- `shanti-main-images.js` (`Drupal.behaviors.shantiImagesIIIF`) lazy-loads
+  `openseadragon.min.js` and shows a full-screen overlay (`#sddiv`/`.sdwrapper`/`#iiiftools`
+  — rotation control, navigator, close button, Escape-to-close) triggered by clicking the
+  "View in IIIF Viewer" icon on the node page.
+- Tile sources come from `Drupal.settings.shanti_images.infourls`, set server-side in
+  `shanti_images.module` (~line 838) — real IIIF `info.json` URLs, not the flat derivative
+  URLs `shanti_iiif`'s `IiifUrlBuilder` builds.
+- A second, related mechanism (`sdviewer.php` + `shanti_images_sdinit.js`, `data-iiifurls`
+  with `|$|`-delimited multi-image sequences) supports viewing an ordered *series* of
+  images — used for sorting/classifying workflows, not just single-image viewing.
+
+**D11's `shanti_iiif` module (built in 1a.5) only ported `IiifUrlBuilder` +
+`IiifImageFormatter`** — a flat `<img>` derivative matching D7's non-interactive fallback
+rendering. The interactive viewer itself was never carried forward.
+
+### 2. AJAX sibling carousel on the image detail page
+
+Below the main image, D7 shows a carousel of other images in the same collection,
+windowed around the current image:
+
+- `shanti_images_get_node_carousel($nid)` (module) finds the node's collection
+  (`shanti_collections_get_collection`), gets the collection's full ordered nid list
+  (`_shanti_images_get_coll_node_ids`, cached), and windows ±15 around the current node (30
+  total).
+- Loaded via AJAX after page load — the node template only ships a placeholder
+  (`<div id="fscarousel-placeholder">`), replaced client-side
+  (`shanti-main-images.js`) once the carousel markup arrives.
+- Falls back to a hidden/no-data state if the image has no collection.
+
+**Nothing in D11 does this today.**
+
+### 3. Mosaic/gallery grid view (e.g. the images.mandala.library.virginia.edu homepage)
+
+A general-purpose custom Views style plugin, not IIIF-specific:
+
+- `shanti_grid_view` (submodule of `shanti_general`,
+  `docroot/sites/all/modules/custom/shanti_general/modules/shanti_grid_view` in the D7
+  repo) — a Google-Photos-style masonry grid (PIG library) usable on *any* View. Can source
+  images from IIIF, plain Drupal files, node images, or an arbitrary data source
+  (auto-detected from the view's fields, per the module's own README).
+- Click a tile → AJAX "popdown" panel (`shanti/grid/info/{type}/{eid}` or
+  `shanti/grid/dinfo/...` for data-source views) showing a larger image + metadata, plus a
+  "Details" link through to the full node page. Uses PhotoSwipe for the lightbox.
+- Has its own admin settings page and an image-size cache table
+  (`shanti_grid_image_sizes`).
+- The module's README cites both an IIIF example (`all_image_gallery` — the live homepage
+  gallery) and a non-IIIF example (`related_images`), implying it's used in more than one
+  place across the site(s) — not audited yet which views actually use it.
+
+**Nothing in D11 does this today** — confirmed no trace in `drupal/web/modules/custom`,
+`docs/sprints/`, or `docs/deferred/` prior to this note.
+
+## Why this wasn't caught by the existing acceptance criterion
+
+Sprint 1's AC (`docs/sprints/sprint-01-images-implementation.md` line 124) reads: *"Images
+render through the existing IIIF server with `i3fid` linkage intact."* 1a.5 satisfied this
+narrowly and correctly — byte-identical derivative URLs to D7, live reachability against
+the real Cantaloupe server, `i3fid` preserved end-to-end through the 1a.7 migration. The
+criterion is about backend identifier/URL-contract fidelity, and says nothing about
+interactive viewing, carousels, or gallery views. As written, it's already satisfiable
+without any of the above — this note exists because the *user-facing experience* implied
+by "renders through the IIIF server" turned out to be much bigger than the criterion
+captured.
+
+## Scope note: other asset types
+
+Images is the only site actually migrated so far (ADR 009 — Phase 2 for
+Texts/Sources/AV/Home hasn't been forked off yet). D7's AV site almost certainly has an
+equivalent interactive surface (Kaltura player, not IIIF — `sarvaka_mediabase` theme,
+`KalturaClient` library referenced in the D7 repo) and Sources/Texts likely have their own
+patterns; **none of that has been traced yet** and is explicitly out of scope for this
+note. **Visuals is explicitly excluded from this concern per team direction (not a site
+D11 needs to carry forward).** When Phase 2 scoping starts, each site's equivalent
+viewing/sorting/classifying surface needs the same kind of audit this note gives Images.
+
+## Decision
+
+**2026-08-19 (Than, team pending): defer.** Not a Sprint 1 blocker — Sprint 1 is otherwise
+functionally complete, gated only on the two open OAuth2 defects (signing keys not
+persisted across deploy; solr-proxy's missing Bearer header on UserInfo). Flagged here as
+**the next item for the team to discuss and scope once Sprint 1 closes** — likely a
+sizeable follow-on task (or several), not a quick fix: rebuilding an OpenSeadragon
+integration, an AJAX collection-scoped carousel, and a general-purpose masonry/gallery
+Views plugin, each from scratch against D11's stack.
+
+## Cross-references
+
+- [`docs/sprints/sprint-01-images-implementation.md`](../sprints/sprint-01-images-implementation.md)
+  — 1a.5 (IIIF wiring, URL-contract-only) and the acceptance criteria section
+- `drupal/web/modules/custom/shanti_iiif/` — the D11 module that ported the URL builder
+  only, not the interactive viewer
