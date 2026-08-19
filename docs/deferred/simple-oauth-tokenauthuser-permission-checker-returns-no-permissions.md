@@ -1,6 +1,6 @@
-# `TokenAuthUser` gets zero effective permissions from `permission_checker`, even with correct roles
+# OAuth2 tokens get zero effective permissions — the `openid` scope has no permission grant configured
 
-**Area:** simple_oauth / Drupal core Access Policy API / OAuth2 authenticated path
+**Area:** simple_oauth / OAuth2 scope configuration / ADR 014 authenticated path
 **Raised during:** Session 2026-08-19 (re-verifying the two 2026-08-18 OAuth2 defects after fixing both)
 **Jira:** (add when available)
 **Priority:** High — blocks the entire OAuth2-authenticated path (proxy UserInfo call, and by extension anything else that authenticates via a `simple_oauth` Bearer token) regardless of the two defects fixed this session
@@ -23,45 +23,68 @@ meta-refresh body ("Redirecting to /"). Drupal's watchdog logs an `access denied
 **path `/`** (not `/oauth/userinfo`) with the message *"The 'access content' permission is
 required."*
 
-## Root cause, confirmed via direct testing (not assumption)
+## Root cause, confirmed by reading the actual mechanism (not assumption)
 
-`simple_oauth`'s `UserInfo` controller
-(`web/modules/contrib/simple_oauth/src/Controller/UserInfo.php`) requires
-`$this->user instanceof TokenAuthUser`, and — more importantly — anything downstream that
-checks the resulting account's permissions goes through
-`Drupal\simple_oauth\Authentication\TokenAuthUser`, a **decorator** implementing
-`AccountInterface` but wrapping a real `User` entity rather than being one.
-
-Isolated the exact failure point via `drush php:eval` against the real token entity
-(id 16, `auth_user_id=600`, the one issued during this exact test run):
+Isolated step by step via `drush php:eval` against the real token entity involved
+(id 16, `auth_user_id=600`):
 
 ```
-token roles: []                                    <- Oauth2Token::getRoles() is empty (expected: "openid" scope is `umbrella: true` with no granularity/role-granting config, per Spike 10's design)
-user roles: ["authenticated"]                       <- the real Drupal user's own roles, correct
-user status (active): 1
-TokenAuthUser roles: ["authenticated"]               <- TokenAuthUser::getRoles() correctly intersects token+user roles, resolves to the expected role
-TokenAuthUser hasPermission("access content"): NO    <- but permission_checker denies it anyway
+Oauth2Token::getRoles():                              []              <- expected, see below
+TokenAuthUser::getRoles():                             ["authenticated"]  <- correct
+TokenAuthUser->hasPermission("access content"):        NO
+permission_checker->hasPermission(..., $realUserEntity): YES  <- same permission, same role, real User entity instead of the decorator
 ```
 
-Then isolated further, comparing the **same permission_checker service** against a real
-`User` entity with the identical role:
+So role resolution is correct, but the *permission* computed for the exact same
+effective role differs depending on whether the account is a real `User` entity or
+`simple_oauth`'s `TokenAuthUser` decorator. Reading `simple_oauth` 6.1.1's source
+explains why — this is a **deliberate security fix**, not a bug:
 
-```
-real user hasPermission("access content") via $user->hasPermission(): YES
-permission_checker->hasPermission("access content", $realUser):        YES
-permission_checker->hasPermission("access content", $tokenAuthUser):    NO   <- same permission, same effective role, different account object
+`Drupal\simple_oauth\Access\Oauth2AccessPolicy::alterPermissions()` (registered as a
+Drupal core `AccessPolicy` plugin) runs for every `TokenAuthUser` request and does this:
+
+```php
+$oauth2_scopes = $token->get('scopes')->getScopes();
+$allowed_permissions = [];
+foreach ($oauth2_scopes as $oauth2_scope) {
+    $allowed_permissions = array_merge($allowed_permissions, $this->scopeProvider->getPermissions($oauth2_scope));
+}
+foreach ($calculated_permissions->getItems() as $item) {
+    $permissions = $token->get('auth_user_id')->isEmpty()
+        ? $allowed_permissions
+        : array_intersect($item->getPermissions(), $allowed_permissions);   // <-- here
+    ...
+}
 ```
 
-**`TokenAuthUser::getRoles()` is correct.** The defect is in
-`Drupal\Core\Session\PermissionChecker::hasPermission()` →
-`AccessPolicyProcessorInterface::processAccessPolicies($account)`, Drupal core's
-Access Policy API (D10.2+) — it computes an empty/negative permission set for a
-`TokenAuthUser` decorator despite `getRoles()` returning `["authenticated"]`, identical to
-what a real `User` entity with the same role correctly resolves permissions from.
+The user's real role permissions (correctly computed by a companion policy,
+`DecoratedUserRolesAccessPolicy`, added specifically to fix
+**SA-CONTRIB-2025-114**) get **intersected with `$allowed_permissions`** — the union of
+whatever each of the token's granted OAuth2 *scopes* explicitly confers via a
+`ScopeGranularity` plugin. Our token's only scope is `openid`, whose config
+(`simple_oauth.oauth2_scope.openid.yml`) is:
+
+```yaml
+umbrella: true
+granularity_id: null
+granularity_configuration: null
+```
+
+No granularity plugin configured → `$allowed_permissions` for that scope is `[]` →
+the intersection with the user's real permissions is **always empty**, for any user,
+regardless of their actual roles. This is exactly right per OIDC semantics — `openid`
+is an *identity* scope (`description: "OpenID Connect: identifies the authenticated
+Drupal user (sub = uid)"`, Spike 10's original design), not an *authorization* scope —
+but nothing was ever configured to additionally grant the permissions that
+`/oauth/userinfo`'s route (or anything downstream of it) actually requires.
+
+Two granularity plugins exist and are usable today: `Permission`
+(`web/modules/contrib/simple_oauth/src/Plugin/ScopeGranularity/Permission.php` —
+grants exactly one named permission) and `Role` (grants a whole role's permissions).
+Neither is wired up on any scope in this environment.
 
 **Versions:** `drupal/core` 11.3.11, `drupal/simple_oauth` 6.1.1, `drupal/consumers`
-1.24.0. Not yet checked against simple_oauth's issue queue for a known
-incompatibility with core's Access Policy API — worth checking before attempting a fix.
+1.24.0.
 
 ## What this does NOT affect
 
@@ -69,24 +92,33 @@ incompatibility with core's Access Policy API — worth checking before attempti
   **third**, independent blocker found only because those two are now fixed and the chain
   runs far enough to reach it.
 - The OAuth2 authorization-code exchange (`/oauth/authorize` → `/oauth/token`) is
-  unaffected — that path doesn't go through `TokenAuthUser`'s permission checking.
-- No mandala custom code is involved — no custom `AccessPolicy` plugin exists in this
-  codebase (checked). This is `simple_oauth`/Drupal core interaction, not a mandala bug.
+  unaffected — that path doesn't go through scope-permission intersection.
+- Not a mandala or Drupal-core bug, and not something introduced by either of today's
+  two fixes — this scope-configuration gap has existed since Spike 10 first wired up
+  `openid`; it was simply never exercised against a route with a real permission
+  requirement until this session's live UserInfo call.
 
-## Fix options (not yet investigated)
+## Fix options (not yet decided)
 
-1. Check `drupal/simple_oauth`'s issue queue for a known Access Policy API
-   incompatibility — 6.1.1 may predate proper support, or there may be a required companion
-   config/patch.
-2. Debug `AccessPolicyProcessor::processAccessPolicies()` directly against a
-   `TokenAuthUser` instance to find which registered `AccessPolicyInterface` plugin is
-   returning an empty/forbidding result for it specifically (likely the core `PermissionAccessPolicy`
-   plugin doing a type check or role-lookup that doesn't recognize the decorator).
-3. Consider whether upgrading/downgrading `simple_oauth` resolves it, once (1) is checked.
+1. **Add a `Permission` granularity to the `openid` scope itself**, granting `access
+   content` (the specific permission the `/oauth/userinfo` route requires). Simplest,
+   but muddies an identity-only scope with an authorization grant.
+2. **Add a new, separate scope** (e.g. `solrproxy_access` or similar) configured with
+   `Permission` granularity for `access content`, and have `solr-proxy`'s `auth.php`
+   request it alongside `openid` (`'scope' => 'openid solrproxy_access'` in the
+   `getAccessToken()`/authorization URL calls). Cleaner separation of identity vs.
+   authorization scopes, but touches both the Drupal scope config and the proxy's
+   requested-scope list.
+3. Consider `Role` granularity instead of `Permission` if more than just `access
+   content` ends up needed once the Redis visibility-token read (the next unproven
+   link) is exercised for real.
+
+Decision needs a human call on scope design before implementing — not purely a bug fix.
 
 ## Related
 
 - [oauth2-signing-keys-not-persisted-across-deploy.md](oauth2-signing-keys-not-persisted-across-deploy.md)
 - [solr-proxy-genericprovider-no-bearer-header-on-userinfo.md](solr-proxy-genericprovider-no-bearer-header-on-userinfo.md) — both fixed and verified working this session; this note is the next blocker in the same chain
 - [ADR 014 — hybrid Solr proxy design](../adr/014-hybrid-solr-proxy-design.md)
-- `docs/session-logs/2026-08-19-...md` (session log for this session, to be written)
+- [Spike 10 findings](../spikes/spike-10-saml-oauth2-coexistence.md) — original `openid` scope design intent
+- `docs/session-logs/2026-08-19-oauth2-fixes-deployed-and-third-defect-found.md`
