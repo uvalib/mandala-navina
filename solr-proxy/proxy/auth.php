@@ -13,6 +13,11 @@
  *    The Redis visibility token (`mandala_solr_fq:{uid}`) is written by
  *    Drupal itself on login/logout/Group-membership-change -- see the D11
  *    event-hook module (1b.1 part 3), not this proxy.
+ *  - Uses BearerGenericProvider (src/BearerGenericProvider.php), not the
+ *    library's own GenericProvider directly -- the base class never sends an
+ *    Authorization: Bearer header on authenticated requests (getResourceOwner()
+ *    included), which left /oauth/userinfo looking anonymous to Drupal. See
+ *    docs/deferred/solr-proxy-genericprovider-no-bearer-header-on-userinfo.md.
  **/
 
 require_once 'check.php';
@@ -20,6 +25,8 @@ require_once __DIR__ . '/vendor/autoload.php';
 require_once '/usr/local/etc/settings/creds.php';
 require_once '/usr/local/etc/settings/paths.php';
 require_once 'Searcher.php';
+
+use mandala\oauth\BearerGenericProvider;
 
 function safeSession() {
     if (isset($_COOKIE[session_name()]) AND preg_match('/^[-,a-zA-Z0-9]{1,128}$/', $_COOKIE[session_name()])) {
@@ -56,7 +63,7 @@ safeSession();
 $currsid = session_id();
 // error_log("Session ID in auth.php: $currsid");
 
-$provider = new \League\OAuth2\Client\Provider\GenericProvider($CREDS);
+$provider = new BearerGenericProvider($CREDS);
 
 // If we don't have an authorization code then get one using urlAuthorize from credentials
 if (!isset($myget['code'])) {

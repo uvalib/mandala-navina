@@ -135,3 +135,12 @@ ADR 014 visibility-filtering path, not just admin's bypass-everything case.
 Once the UserInfo bug is fixed, the next unproven link is the proxy's own Redis
 visibility-token read for a *real* OAuth2-authenticated session (previously only proven
 with a hand-written Redis key) — natural next step once picked back up.
+
+---
+
+**Correction (2026-08-19):** this log and its deferred note both say the UserInfo bug
+lives in "a different repo, `uvalib/mandala-solr-proxy`." That repo doesn't exist. ADR
+014 forked the D11 proxy into this monorepo at `solr-proxy/` (commit `1b8e682`); the bug
+is in `solr-proxy/proxy/auth.php` right here. Likely confused with `shanti-uva/mandala-
+solr-proxy`, the unrelated D7 proxy ADR 014 leaves untouched. The deferred note has been
+corrected in place.
