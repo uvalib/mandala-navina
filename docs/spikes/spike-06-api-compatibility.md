@@ -349,6 +349,37 @@ change described above. Three decisions worth recording, because two of them are
    `mandala.library.virginia.edu.attacker.com` — verified: that spoof matches the substring
    test and does **not** match the parsed-hostname test. `mandala-wp-proxy`'s server-side
    allowlist remains the real guard, but the client shouldn't be handing it attacker-controlled
+   URLs. Checked against 12 cases (all five app subdomains, the bare domain, two spoofs,
+   unrelated + malformed input); all pass.
+2. **The AV `'p'` append moved into the direct-JSONP branch only.** Leaving it applied on the
+   proxy path would have sent the proxy to `.jsonp`, which returns `text/javascript` wrapped as
+   `mdldata({...})` and does not parse as JSON — an AV-only, silent regression. AV still needs
+   the suffix on the direct path, since it serves JSONP from a path variant rather than a query
+   parameter (see the JSONP correction above).
+3. **The no-proxy fall-through was deliberately kept.** See the new deferred note —
+   `REACT_APP_WP_PROXY` exists in only 2 of 11 env files, so falling through to direct JSONP is
+   a supported configuration for the non-WordPress deployments, not an error to fail loudly on.
+   An earlier framing of it as a possible bug was withdrawn.
+
+**Verification is partial.** `node_modules` is not installed in that checkout, so the app test
+suite and prettier could not be run; syntax was checked with `node --check` and the host matcher
+was unit-tested standalone. The proxy and JSONP request paths themselves are **unexercised** —
+this needs a real browser check against a tibet build before merge.
+
+**⚠️ Scope limit this surfaced:** Option A only covers the WordPress-embedded deployments. See
+[option-a-proxy-unavailable-on-standalone-deployments.md](../deferred/option-a-proxy-unavailable-on-standalone-deployments.md).
+
+#### Client generalization IMPLEMENTED (2026-08-20) — `mandala-om` `feat/generalize-json-proxy-all-sites`
+
+Commit `e6e712ae` (branch off `release/v1.1.0-rc`, **not yet pushed or merged**) makes the
+change described above. Three decisions worth recording, because two of them are traps:
+
+1. **Host matching uses `URL()` parsing, not a widened substring test.** Simply broadening
+   `.includes('sources.mandala.library.virginia.edu')` to
+   `.includes('mandala.library.virginia.edu')` would also match lookalike hosts such as
+   `mandala.library.virginia.edu.attacker.com` — verified: that spoof matches the substring
+   test and does **not** match the parsed-hostname test. `mandala-wp-proxy`'s server-side
+   allowlist remains the real guard, but the client shouldn't be handing it attacker-controlled
    URLs.
 
    **Revised same day (commit `d83fa707`): the host set is now derived from the

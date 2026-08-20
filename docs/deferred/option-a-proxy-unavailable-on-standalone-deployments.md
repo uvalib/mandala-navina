@@ -3,6 +3,8 @@
 **Area:** Spike 6 / URL strategy / mandala-om deployment topology / WAF
 **Raised during:** Spike 6 (2026-08-20) — generalizing the `/proxy/json` gate in `mandala-om`
 **Jira:** (add when available)
+**Priority:** Medium — no known break today, but it means the decided URL strategy covers only
+part of the deployment matrix, which matters at D11 cutover
 **Priority:** Medium → **raised 2026-08-20**: browser evidence now indicates the WAF fires for
 browser cross-origin requests generally, not just from the thlib.org origin — so the standalone
 deployments (including production `mandala.kmaps.virginia.edu`) are very likely genuinely
@@ -61,6 +63,11 @@ covered by the decided strategy either.
 
 ## What's undecided
 
+1. **Are the standalone deployments actually WAF-exposed?** The 503 was observed against
+   `sources.mandala.library.virginia.edu` from a browser on thlib.org. Whether the same rule
+   fires for a browser on `mandala.kmaps.virginia.edu` was never tested — different origin,
+   possibly different WAF evaluation. **This is the cheapest thing to check and should come
+   first**; if they aren't exposed, the gap is theoretical.
 1. ~~**Are the standalone deployments actually WAF-exposed?**~~ **Substantially answered
    2026-08-20 — and the answer points to "yes, exposed."** A real Chrome browser on
    `http://localhost:3000` (a non-Mandala, non-WordPress origin) requesting
