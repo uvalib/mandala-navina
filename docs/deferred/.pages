@@ -81,4 +81,3 @@ nav:
   - "checkAuthStatus() forces logout on OAuth2 Bearer requests (FIXED 2026-08-20)": simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md
   - "Drupal logout does not end the NetBadge IdP session (no SP-initiated SLO)": saml-logout-does-not-terminate-netbadge-idp-session.md
   - "SAML session expires at 8h vs Drupal's 23d, force-logging-out users mid-session": saml-session-expires-8h-forcing-logout-mid-session.md
-  - "Dev test-IdP identity is linked to a real user account (PII in verification output)": test-idp-identity-linked-to-a-real-user-account.md
