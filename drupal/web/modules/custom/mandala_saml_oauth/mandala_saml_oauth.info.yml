@@ -1,0 +1,8 @@
+name: 'Mandala SAML/OAuth2 Coexistence'
+type: module
+description: 'Exempts stateless OAuth2 Bearer requests from simplesamlphp_auth''s SAML-liveness check, which would otherwise force a Drupal logout on every hop of the ADR 014 authenticated Solr proxy path (Spike 10).'
+package: Mandala
+core_version_requirement: ^11
+dependencies:
+  - drupal:simple_oauth
+  - drupal:simplesamlphp_auth
