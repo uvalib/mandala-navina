@@ -1,0 +1,489 @@
+# Session Log: Spike 6 — AV Audit Correction And Client Proxy Generalization
+
+**Date:** 2026-08-20
+**Participants:** Than Grove, Claude Code
+**Outcome:** Corrects three independent errors in
+[Spike 6](../spikes/spike-06-api-compatibility.md)'s 2026-08-07 AV endpoint audit against live
+evidence, implements the client-side `/proxy/json` generalization in `mandala-om`
+(`feat/generalize-json-proxy-all-sites`, unmerged), and files a new scope gap in the Option A
+URL strategy:
+[option-a-proxy-unavailable-on-standalone-deployments.md](../deferred/option-a-proxy-unavailable-on-standalone-deployments.md).
+
+---
+
+## Summary
+
+Session ran in parallel with Yuji's OAuth2 session-handling work (the fourth defect from
+2026-08-19); nothing here touches that code path.
+
+**Started as:** build the AV node-JSON controller. **Became:** a documentation correction, once
+it emerged that AV isn't migrated to D11 yet (no `video`-equivalent bundle, no
+`mandala_kmassets_sync` entry), so there was nothing to build a curated controller against.
+Than's call: fix the docs now, defer the code.
+
+**1. The 2026-08-07 AV audit row was wrong in three independent ways.** That audit was done by
+reading D7 source rather than calling the live endpoint. Live `curl`s against three real
+production `video` nodes (42016, 42167, 42158) showed:
+
+| Claimed (2026-08-07) | Actual (2026-08-20) |
+|---|---|
+| Served by `mediabase/mb_solr`, `mb_solr_get_solrdoc()` | Services module, per-content-type "JSON Path" setting |
+| Bespoke Solr-derived flat `doc` | Augmented raw node, same family as Images/Sources/Texts |
+| No JSONP | `.jsonp?callback=` returns 200 `text/javascript`; the client depends on it |
+
+Two consequences beyond the row itself: the believed **Terraform/ALB server-rewrite requirement
+for AV doesn't exist** (it's a normal Drupal route), and gotcha #4's "JSONP satisfiable on only
+3 of 4 sites" is wrong — it's all four. **Reliability caveat now flagged on the spike:** the
+Sources and Texts rows come from the same source-read pass and have never been live-verified.
+
+**2. Client proxy generalization implemented** (`mandala-om` `e6e712ae`, branched from
+`release/v1.1.0-rc`, unpushed). Widens the gate from Sources-only to all Drupal hosts. Two traps
+found in the process:
+
+- **A widened substring test would have opened a spoofing hole.** Broadening
+  `.includes('sources.mandala…')` to `.includes('mandala.library.virginia.edu')` also matches
+  `mandala.library.virginia.edu.attacker.com`. Verified both spoofs match the substring test and
+  neither matches the `URL()`-parsed hostname test. 12 host-matching cases pass.
+- **The AV `.jsonp` append had to move to the direct-JSONP branch only.** A server-side proxy
+  fetch of `.jsonp` returns `mdldata({...})`, which won't parse as JSON — this would have shipped
+  as a silent, AV-only regression.
+
+Verification is partial: `node_modules` isn't installed in that checkout, so the app test suite
+and prettier couldn't run. Syntax checked via `node --check`; host matcher unit-tested
+standalone. **The proxy and JSONP request paths are unexercised and need a real browser check
+against a tibet build before merge.**
+
+**3. New deferred note — Option A's scope is narrower than recorded.** `REACT_APP_WP_PROXY` is
+defined in only **2 of 11** `mandala-om` env files (`.env.tibet.prod`, `.env.tibet.staging`).
+The proxy is a WordPress plugin; the standalone builds — including production
+`mandala.kmaps.virginia.edu` — have no `/proxy/json` at all and still make the direct
+cross-origin call that caused the 2026-07-29 Sources 503. This also **withdrew an earlier
+suggestion** made this session: the no-proxy fall-through looked like a bug worth failing loudly
+on, but it's load-bearing for exactly those deployments. Cheapest next step is checking whether
+the WAF actually fires on the standalone origin — never tested.
+
+**Also corrected mid-session:** an earlier claim that the Sources proxy routing dated from
+2026-08-12. It's 2026-07-29 (`6a2ef22b`), with the env rename 2026-07-30 (`27a21c63`), both by
+Than. 2026-08-12 was the URL-strategy decision and the SSRF fix.
+
+## Branches left open
+
+| Repo | Branch | State |
+|---|---|---|
+| `mandala-navina` | `feat/av-node-json-controller` | 5 doc commits, unpushed. Branch name is now a misnomer — no controller was built |
+| `mandala-om` | `feat/generalize-json-proxy-all-sites` | 1 commit (`e6e712ae`), unpushed, browser-unverified |
+
+---
+
+*Below is the raw conversation transcript. Tool calls and code output are omitted; only*
+*the text exchanges are recorded.*
+
+---
+
+## User — 2026-08-20 13:48
+
+assess where we are
+
+---
+
+## Claude — 2026-08-20 13:48
+
+Working tree is clean and up to date with origin/main. Now let me read the orientation docs to catch up on where things stand.
+
+---
+
+## Claude — 2026-08-20 13:48
+
+This is great — Yuji (not me) has been driving today's OAuth2 debugging session. Let me read the full latest session log to get the complete current picture, especially the newly-found fourth defect.
+
+---
+
+## Claude — 2026-08-20 13:48
+
+## Where things stand
+
+**Repo:** clean, up to date with `origin/main` @ `a498be5`. Yuji drove the last two sessions (2026-08-19), not you — worth knowing before assuming continuity.
+
+**Sprint 1 (Images) — 1b.3 OAuth2 authenticated path is deep in a debugging chain, 3 of 4 defects resolved:**
+
+1. ✅ solr-proxy wasn't sending `Authorization: Bearer` on UserInfo calls — fixed (PR #121), deployed, verified live.
+2. ✅ OAuth2 signing keys weren't persisted across deploys — fixed via Ansible bind-mount (PR #122 area, terraform-infrastructure), verified live.
+3. ✅ `openid` scope granted zero permissions (`simple_oauth`'s `Oauth2AccessPolicy` intersects real permissions with scope-granted ones; `openid` is `umbrella:true` so its own granularity config was dead code) — root-caused, fixed by setting `umbrella:false` directly via `drush config:set` on dev-0, confirmed correct against a real live token (PR #125).
+4. 🔴 **Open, not yet root-caused:** with the scope fix live, `/oauth/userinfo` still doesn't return JSON — instead there's a redirect loop (`TooManyRedirectsException` after 5 hops) with watchdog logging repeated `Session closed for [uid 600]` / `session_destroy(): Trying to destroy uninitialized session`. Looks like Drupal's session layer treating a stateless Bearer-authenticated request as a logout event. This is the designated starting point for the next session — deliberately left uninvestigated at end of a long session.
+
+Once #4 is fixed, the next and reportedly last unproven link in 1b.3 is the proxy's Redis visibility-token read for a real OAuth2-authenticated session.
+
+**Other live threads worth knowing about:**
+- `docs/deferred/images-missing-interactive-viewing-surfaces.md` — flagged for team discussion after Sprint 1 closes (OpenSeadragon viewer, sibling carousel, masonry gallery — none exist in D11 yet). Not a blocker.
+- A small housekeeping commit (`a498be5`) just landed redacting the real name of the test user (uid 600) from public docs per the private/public docs split convention.
+- Longer-standing high-priority open items still sitting in the deferred queue: `d7-editor-permissions-og-group-scoped-not-migrated.md`, `authenticated-contributor-crud-not-wired-in-d11.md`, `staging-migration-execution-prerequisites.md`, `d7-shared-user-database.md` — none touched this week.
+
+If you want to pick up the session-handling redirect loop (defect #4), I can start there — it likely needs stepping through Drupal core's `SessionManager` to find what's triggering `session_destroy()` on a stateless Bearer request. Let me know if that's the target.
+
+---
+
+## User — 2026-08-20 13:58
+
+what's the login to dev simplesaml, u/n staff but what's the password
+
+---
+
+## Claude — 2026-08-20 13:58
+
+Found it — it's SimpleSAMLphp's standard test IdP fixture, documented in `docs/deferred/dev-0-needs-test-idp-for-saml-login-testing.md`:
+
+**Username:** `staff` **Password:** `staffpass`
+
+This is one of three canned `example-userpass` test identities (`student:studentpass`, `staff:staffpass`, `faculty:facultypass`) — SimpleSAMLphp's built-in no-real-IdP-needed test mechanism, gated on `SIMPLESAML_ENABLE_EXAMPLE_AUTH`, used against dev-0's `default-sp`. The `staff` identity is the one linked to the real migrated non-admin private-collection user (uid 600) via `ExternalAuth::linkExistingAccount()`.
+
+---
+
+## User — 2026-08-20 14:22
+
+So Yuji is looking in to the login issue. What is something I can work on on my own?
+
+---
+
+## Claude — 2026-08-20 14:22
+
+Good candidate, and it's entirely independent of Yuji's session-handling debugging. Given your ownership, here's what fits best:
+
+**Spike 6 (API compatibility) — several unstarted, self-contained pieces, all yours already:**
+1. **Sources/Texts/AV node-JSON controllers** — each D7 site has a materially different response shape (AV has no Drupal route at all today, bespoke Solr-derived flat doc; Texts embeds rendered HTML via `views_embed_view()`). Building these follows the exact pattern you already proved for Images (`mandala_node_api`, PR #101).
+2. **Client-side generalization** — `useMandala.js` currently only routes `sources.mandala.library.virginia.edu` through the proxy path; needs to route all sites.
+3. **Validate the Images response shape** against the live React client's actual field usage — the current shape was a first draft, never checked against `mandala-om`'s real consumption.
+4. **Texts embed endpoint** (`node_embed`) + `/general/api/user/current` — identified as in-scope, not yet audited.
+
+None of these touch OAuth2/session/solr-proxy code, so zero collision risk with Yuji's work.
+
+Other options if you'd rather not do Spike 6 right now:
+- **`d7-editor-permissions-og-group-scoped-not-migrated.md`** (High priority, migration/access) — D7's real editor permissions are per-collection via OG group roles, not the sitewide `content_editor` role D11 currently has; needs design work.
+- **Spike 4b's production transform** (`texts-footnotes-production-transform.md`) — the footnotes spike is proven, this is the actual build-out for the Texts migration whenever that track starts.
+
+Want me to start on one of the Spike 6 items — I'd suggest the AV or Sources node-JSON controller since those are the biggest unstarted gaps?
+
+---
+
+## User — 2026-08-20 14:25
+
+Start on the AV node-JSON controller issue but let's do it in our own branch for now, as we may not finish today. Also, I think I already told you that AV uses Services to create it's JSON API and the all the API endpoints for each asset type are registered as a setting for that content type in its admin page. You can look at the old AV Video content type at https://av.mandala.library.virginia.edu/admin/structure/types/manage/video and see it's "JSON Path" setting is 'api/v1/media/node/__NID__.json'
+
+---
+
+## Claude — 2026-08-20 14:26
+
+Got a live sample. Let me pull the full response and try a couple more nodes to see field variety (kmap terms populated, transcript, etc.)
+
+---
+
+## Claude — 2026-08-20 14:27
+
+Before I build the controller, I found something important that changes the picture — worth flagging before I write code against the wrong assumption.
+
+I pulled three live JSON responses directly from `av.mandala.library.virginia.edu/api/v1/media/node/{nid}.json` (nodes 42016, 42167, 42158). They're **raw D7 node dumps** (`vid`, `uid`, `title`, `field_pbcore_*`, `field_kmap_terms` with the familiar `raw/id/header/domain/path` shape, `field_og_collection_ref`, etc.), plus a few computed extras (`thumbnail_url`, `duration`, `path`). This matches exactly what you described — a Services-module endpoint driven by the content type's "JSON Path" setting.
+
+That **contradicts** the existing audit in `docs/spikes/spike-06-api-compatibility.md`, which currently says AV's endpoint is a "Solr-derived flat `doc`" served by `mb_solr_get_solrdoc()` with no real Drupal route — i.e. it claims a totally different shape and origin module. That earlier finding was based on reading D7 source, not hitting the live endpoint, and it looks wrong. I'll correct that doc as part of this work regardless.
+
+The bigger issue: **AV hasn't been migrated to D11 at all yet** (no `shanti_video`-equivalent content type, no fields, not in `mandala_kmassets_sync.settings.yml`'s bundle list — Images is still the only migrated site, per ADR 009's sequencing). So there's no bundle/field set to build a curated controller against yet, the way `NodeJsonController::buildData()` does for `shanti_image`.
+
+---
+
+## Claude — 2026-08-20 14:30
+
+Now the "AV is the exception" paragraph:
+
+---
+
+## Claude — 2026-08-20 14:30
+
+Now let me add a new subsection documenting the live AV field inventory as evidence/reference for whenever the AV migration is actually scoped.
+
+---
+
+## Claude — 2026-08-20 14:31
+
+Now let me clean up the temp JSON files and commit this doc-only fix on the branch.
+
+---
+
+## Claude — 2026-08-20 14:31
+
+Committed on `feat/av-node-json-controller`, not pushed yet.
+
+**Summary:** Corrected the Spike 6 audit doc's AV entry — it previously claimed AV serves a Solr-derived flat doc via `mb_solr` with no real Drupal route. Live evidence (three `curl`s against real production nodes) shows it's actually an augmented raw node via the standard Services-module content-type "JSON Path" setting, same mechanism as the other three sites — matching what you told me. Also captured a field inventory (PBCore paragraphs, KMaps term references, `field_video`/Kaltura, collection ref, a `field_pbcore_description` double-encoding oddity worth a second look) as reference for whenever AV migration actually starts, since no bundle/fields exist in D11 yet.
+
+Didn't touch any Drupal code, per your call — building the controller itself is blocked on the AV migration being scoped (content type, field names). Left on the branch, uncommitted push, so you can pick this up or redirect. Want me to push the branch, or keep going toward opening a PR for just the doc fix?
+
+---
+
+## User — 2026-08-20 14:34
+
+Is there something else in this spike?
+
+---
+
+## Claude — 2026-08-20 14:34
+
+Found two more stale references to the old (wrong) AV claim further down — let me fix those too while I have the context loaded.
+
+---
+
+## Claude — 2026-08-20 14:35
+
+Yes — several unstarted items in this spike, and most are self-contained (no dependency on AV/Sources/Texts migration or on Yuji's OAuth2 work):
+
+1. **Generalize the client's proxy gate** (`useMandala.js` in `mandala-om`) — currently only routes `sources.mandala.library.virginia.edu` through `mandala-wp-proxy`'s same-origin `/proxy/json`. The server side is already generic and hardened; this is pure client-side work in a separate repo. Directly named as the spike's "remaining work" #1.
+
+2. **Validate the Images response shape against the live client** — `NodeJsonController`'s curated shape was built from the D7 audit + kmassets logic, never checked against what `mandala-om`'s detail view actually reads out of the response. Could turn up mismatches before the pattern gets reused for other sites.
+
+3. **Audit the Texts embed endpoint** (`node_embed`, reached via `url_ajax`) and **`/general/api/user/current`** — both identified as in-scope, neither audited yet for response shape.
+
+4. **Confirm whether the browse-by-KMap / generic AJAX endpoints have any remaining consumer** — the React client doesn't use them, but the WordPress `wp-kmaps` plugin and other server-side consumers are unaudited. Needed before formally dropping them from the D11 requirement.
+
+5. **End-to-end node-ID preservation check** — `field_legacy_nid` is assumed correct across migration but never verified against real `url_json` values end-to-end; the Images endpoint now surfaces `legacy_nid` so this check is possible but hasn't been run.
+
+Of these, #1 (client proxy generalization) is probably the highest-value next step since it's explicitly called out as the last piece of the decided URL-strategy work. Want me to start there, still on this branch?
+
+---
+
+## User — 2026-08-20 14:35
+
+Describe what you mean by #1
+
+---
+
+## Claude — 2026-08-20 14:35
+
+Here's the concrete picture, based on what the spike doc's audit found in the `mandala-om` React app (I don't have that repo cloned locally, so this is from the documented findings, not a fresh read):
+
+**What exists today:** The React app fetches each asset's detail JSON from the URL in its Solr record's `url_json` field. Since 2026-08-12, `mandala-om`'s `useMandala.js` will route that fetch through `mandala-wp-proxy`'s same-origin `/proxy/json` endpoint (avoiding the WAF cross-origin block that broke Sources) — but **only when the URL matches `sources.mandala.library.virginia.edu`**. It's a hardcoded substring gate, not a general rule. Everything else (Images, AV, Texts, Visuals) presumably still tries a direct cross-origin fetch, which is exactly the pattern that triggered the WAF 503 for Sources in the first place.
+
+**What "generalize the gate" means:** widen that check so *any* `url_json` value — regardless of which of the five sites it points at — gets routed through the proxy, not just Sources'. Since the proxy's server-side handler (`json_proxy` in `mandala-proxy.php`) is already fully generic (`$base_url = $params['url']; wp_remote_get($base_url);`, now with the host allowlist), no server-side change is needed — it already accepts any Mandala host. The work is entirely in that one client-side conditional.
+
+**Why it matters:** this is the last unfinished piece of the URL-strategy decision (Option A) the team already made on 2026-08-12. Until it's generalized, only Sources actually benefits from the fix; Images (now that `mandala_node_api` is live) and any future AV/Texts/Sources endpoints are still exposed to the same WAF block that caused the original incident.
+
+**Caveat:** I haven't seen the actual `useMandala.js` source — I'd need to clone `mandala-om` to find the exact line and confirm the gate is really a plain substring check versus something more structured. Want me to go find and clone that repo so I can point to the real code before making the change?
+
+---
+
+## User — 2026-08-20 14:37
+
+<local-command-caveat>Caveat: The messages below were generated by the user while running local commands. DO NOT respond to these messages or otherwise consider them in your response unless the user explicitly asks you to.</local-command-caveat>
+
+---
+
+## User — 2026-08-20 14:37
+
+<command-name>/model</command-name>
+            <command-message>model</command-message>
+            <command-args></command-args>
+
+---
+
+## User — 2026-08-20 14:37
+
+<local-command-stdout>Set model to [1mOpus 5[22m and saved as your default for new sessions</local-command-stdout>
+
+---
+
+## User — 2026-08-20 14:38
+
+Ok review where we are and tell me what's left to do in Sprint 6.
+
+---
+
+## Claude — 2026-08-20 14:38
+
+Assuming you mean **Spike 6** (API compatibility) — there's no Sprint 6; sprints here are Sprint 1 with 1a/1b sub-steps.
+
+**Branch state:** `feat/av-node-json-controller` has two doc commits from today (the AV audit correction), not yet pushed.
+
+## Against the spike's own four pass criteria
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | All 8 D7 API response formats documented | ◐ JSON done for all 4 sites (AV corrected today); **all 4 AJAX endpoints unaudited** |
+| 2 | URL strategy agreed | ✅ Done 2026-08-12 — Option A, generalized |
+| 3 | Feasible in D11 + Terraform ALB config | ✅ Done — and Option A needs no ALB/WAF change; today's AV correction *removed* the one believed piece of Terraform work (the server-rewrite that turned out not to exist) |
+| 4 | D11 implementation approach clear per endpoint | ◐ Images built + live-verified; everything else unbuilt |
+
+## Actionable now (not blocked on any migration)
+
+1. **Generalize the client proxy gate** — `useMandala.js` still routes only Sources through `/proxy/json`. Last piece of the decided Option A. Needs `mandala-om` cloned (not on this machine).
+2. **Validate the Images response shape against the live client** — `NodeJsonController`'s curated shape was never checked against what the React detail view actually reads. Should happen *before* the pattern is reused for other sites. Also needs `mandala-om`.
+3. **Audit the AJAX endpoints** — Texts' `node_embed` (the only one the client uses) and `/general/api/user/current` (used, but missing from the 8-endpoint matrix). D7 source appears to be local at `~/Sandbox/Mandala/Site/`, so this is a source-read, no clone needed.
+4. **Confirm the browse-by-KMap endpoints have no remaining consumer** — React doesn't use them, but `wp-kmaps` and server-side consumers are unaudited.
+5. **End-to-end nid-preservation check** — `field_legacy_nid` assumed correct, never verified; the Images endpoint now surfaces `legacy_nid`, so the check is finally possible.
+
+## Blocked on other work
+
+- **Sources/Texts/AV controllers** — each blocked on that site's migration (ADR 009 sequencing puts Images first, AV last). Today confirmed AV's D11 bundle doesn't exist yet.
+- **Identity forwarding through the JSON proxy** — deliberately deferred 2026-08-12; private-collection assets unreachable via the React detail view.
+
+## One inconsistency I noticed while reading
+
+The Spike 2 pre-findings section (line ~447) states *"D11 needs equivalent [browse-by-KMap] endpoints"*, but the later 2026-08-07 client audit concluded they're **not consumed** and likely don't need reproducing. Those two claims sit in the same document unreconciled. Item #4 above is what settles it — worth resolving explicitly rather than leaving both statements standing.
+
+Of the actionable set, #3 is the only one I can start immediately without cloning anything. Want me to take that, or clone `mandala-om` and go after #1/#2?
+
+---
+
+## User — 2026-08-20 14:39
+
+when you say 'useMandala.js still routes only Sources through /proxy/json' when was this implemented?
+
+---
+
+## Claude — 2026-08-20 14:40
+
+**2026-07-29**, in `mandala-om` (branch `release/v1.1.0-rc`) — commits `6a2ef22b` and `27a21c63`. It was the same-day mitigation for the live Sources WAF-503 incident, not planned spike work.
+
+What each commit did, per the doc's source refs:
+- `6a2ef22b` — the Sources 503 → `/proxy/json` routing itself
+- `27a21c63` — split `REACT_APP_WP_PROXY` out from the pre-existing geoserver env var
+
+The mechanism: `{REACT_APP_WP_PROXY}/json/?url=<encoded target>` via a plain `axios.get` instead of JSONP, so the browser request is same-origin and the WordPress plugin does the cross-origin fetch server-side. Config `REACT_APP_JSON_PROXY=/proxy/json?url=`, with `kmaps-app/src/setupProxy.js` proxying `/proxy/*` to DDEV WordPress for local dev. Verified at the time against `#/sources/127668`.
+
+Two clarifications worth making:
+
+**I misspoke earlier.** In an earlier message I said this routing existed "since 2026-08-12" — that's wrong. 2026-08-12 was the URL-strategy decision and the `mandala-wp-proxy` SSRF fix. The client-side Sources routing predates it by two weeks.
+
+**The characterization of the gate as a substring check is a separate, later observation.** The specific claim that `useMandala.js` gates on `query.includes('sources.mandala.library.virginia.edu')` was recorded 2026-08-12, in the "Implementation reality" section, while tracking down the proxy plugin. So the implementation is 07-29; the note about *how narrowly it's scoped* is 08-12.
+
+Worth noting the sequencing: the code came first as a stopgap, and the spike's Option A decision (2026-08-12) retroactively ratified it as the permanent architecture — which is exactly why generalizing it is now "finish the decided thing" rather than new design work.
+
+All of the above is from the spike doc's own records, not from my reading the code — `mandala-om` isn't cloned on this machine. If you want the commits confirmed as describing what actually shipped, I'd need to clone it.
+
+---
+
+## User — 2026-08-20 14:41
+
+Mandala-om can be found at: /Users/ndg8f/Sandbox/Mandala/Standalone/mandala-om
+
+---
+
+## Claude — 2026-08-20 14:42
+
+Confirmed against the real code. Three things:
+
+**1. Your dates — slightly different from what I said.** Both commits are yours (`ThanGrove <than@virginia.edu>`):
+- `6a2ef22b` — **Wed Jul 29 2026, 14:16** — "Fix source pages: route sources JSONP body fetch through /proxy/json"
+- `27a21c63` — **Thu Jul 30 2026, 06:20** — the env var rename (next morning, not same day as I implied)
+
+**2. The substring-gate characterization is accurate**, `useMandala.js:28`:
+```js
+if (query.includes('sources.mandala.library.virginia.edu')) {
+```
+One nuance the spike doc doesn't capture: it's not a hard switch. If `REACT_APP_WP_PROXY` is unset, the proxy branch falls through to the direct JSONP path anyway (lines 29–35). So an env misconfiguration silently reverts Sources to the broken direct fetch rather than failing loudly.
+
+**3. New finding — the doc's AV JSONP claim is also wrong.** The table says AV has JSONP: **"No** (plain `drupal_json_output`)", and gotcha #4 concludes the client's JSONP dependency "is only satisfiable on 3 of the 4 today." Live:
+
+```
+GET /api/v1/media/node/42016.jsonp?callback=mdldata
+→ HTTP 200, content-type: text/javascript, body: mdldata({"vid":"42016",...})
+```
+
+AV supports JSONP fine. And `useMandala.js:78-80` **depends** on it — it appends `'p'` to turn `.json` into `.jsonp` for `asset_type === 'audio-video'`. So that's the third error in the AV row from the same 2026-08-07 source-reading pass.
+
+**This matters for the generalization work.** Widening the substring check isn't the whole job — that AV `.jsonp` special case has to go too, since a server-side proxy fetch doesn't need JSONP at all and would receive a `text/javascript` callback wrapper it can't parse as JSON. So generalizing is: widen the gate, drop the AV `p` append, and decide whether the silent fall-through should stay.
+
+Let me fold the JSONP correction into the AV fixes already on this branch:
+
+---
+
+## Claude — 2026-08-20 14:43
+
+Three commits on the branch now, all doc corrections to Spike 6, none pushed.
+
+**Answering your original question:** the Sources proxy routing was implemented by you on **2026-07-29** (`6a2ef22b`), with the env var rename the next morning, **2026-07-30** (`27a21c63`).
+
+**What reading the actual code changed:**
+
+The 2026-08-07 AV audit row now has **three** confirmed errors, all from reading D7 source instead of hitting the live endpoint — wrong module (`mb_solr` vs Services), wrong response shape (Solr flat doc vs augmented raw node), and wrong JSONP status (none vs `.jsonp?callback=`, which the client actively depends on). That's a pattern worth noting for the remaining Sources/Texts audit rows, which came from the same pass and haven't been live-checked.
+
+**And the generalization job is bigger than "widen the substring check":**
+1. Widen the host gate (the easy part)
+2. **Drop the AV `'p'` append** — otherwise the proxy gets `mdldata({...})` back and can't parse it as JSON
+3. Decide the fall-through: right now an unset `REACT_APP_WP_PROXY` silently reverts to the 503-ing direct fetch instead of erroring
+
+Item 2 is the one that would have bitten during implementation — it's invisible until you actually try AV through the proxy.
+
+Want me to make that client-side change in `mandala-om` now? It's a small, contained edit to one file, though it lands in a different repo than this branch, so it'd need its own branch and PR over there.
+
+---
+
+## User — 2026-08-20 14:45
+
+yes, make the change in mandala-om
+
+---
+
+## Claude — 2026-08-20 14:46
+
+Found something important before writing code: `REACT_APP_WP_PROXY` is set in only **2 of 11** env files — `.env.tibet.prod` and `.env.tibet.staging`. The standalone builds (`.env.production` → `mandala.kmaps.virginia.edu`, plus `.env.uf`, `.env.cj`, `.env.contport`, `.env.development`) have no WordPress, so no `/proxy/json` exists for them at all.
+
+That means the fall-through I flagged as a possible bug is actually **load-bearing** — non-WordPress deployments legitimately must use direct JSONP. Making it "fail loudly" would break them. I'll keep it and design around it.
+
+---
+
+## Claude — 2026-08-20 14:47
+
+All 12 cases pass. Worth noting the comparison at the bottom: had I just widened the substring test to `.includes('mandala.library.virginia.edu')`, **both spoof hosts would match** — so the `URL()` parse isn't gold-plating, it's fixing a hole the naive generalization would have opened.
+
+---
+
+## Claude — 2026-08-20 14:48
+
+Done — committed to `feat/generalize-json-proxy-all-sites` in `mandala-om`, branched off `release/v1.1.0-rc`. Not pushed.
+
+**What the change does:** widens the proxy gate from Sources-only to all five Drupal hosts, so Images/AV/Texts/Visuals stop making the direct cross-origin JSONP call that WAF-503s.
+
+**Three things that weren't obvious from the doc:**
+
+1. **The naive generalization would have opened a spoofing hole.** Widening `.includes('sources.mandala…')` to `.includes('mandala.library.virginia.edu')` matches `mandala.library.virginia.edu.attacker.com` — I verified both spoof cases match under the substring approach and neither does under `URL()` hostname parsing. The proxy's server-side allowlist is still the real guard, but the client shouldn't be handing it attacker-controlled URLs.
+
+2. **The AV `.jsonp` append would have broken AV specifically.** It had to move into the direct-JSONP branch only — a proxy fetch gets `mdldata({...})` back, which won't parse as JSON. This is the one that would have shipped as a silent AV-only regression.
+
+3. **The fall-through stays.** `REACT_APP_WP_PROXY` exists in only 2 of 11 env files; the standalone builds have no WordPress at all. My earlier suggestion to make it fail loudly was wrong — I withdrew it.
+
+**Verification is partial.** `node_modules` isn't installed in that checkout, so I couldn't run the app's test suite or prettier. I confirmed syntax via `node --check` and unit-tested the host matcher standalone against 12 cases (all passing). The proxy and JSONP request paths themselves are unexercised — worth a real browser check on a tibet build before merging.
+
+**One thing this surfaces for Spike 6:** Option A as recorded says "generalize the same-origin proxy to all apps," but the proxy is a WordPress plugin and 9 of 11 deployments have no WordPress. So Option A covers the thlib.org embeds only — the standalone `mandala.kmaps.virginia.edu` build has no proxy path available and remains WAF-exposed. The spike doc doesn't acknowledge that gap. Want me to file it as a deferred note?
+
+---
+
+## User — 2026-08-20 14:59
+
+Please note all these things in the appropriate place in the docs, the session log, and your memory
+
+---
+
+## Claude — 2026-08-20 14:59
+
+Now the deferred note for the Option A gap — the most significant new finding:
+
+---
+
+## Claude — 2026-08-20 15:00
+
+Now the deferred README index table:
+
+---
+
+## Claude — 2026-08-20 15:00
+
+Now update the spike doc to record the client change and the Option A scope caveat:
+
+---
+
+## Claude — 2026-08-20 15:01
+
+Now the spike doc's status header and deferred-notes list:
+
+---
+
+## Claude — 2026-08-20 15:01
+
+Now the session log:
+
+---
