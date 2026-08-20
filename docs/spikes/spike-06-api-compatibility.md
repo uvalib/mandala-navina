@@ -55,7 +55,7 @@ for JSONP/route-existence reasons now, not because AV's shape is categorically d
 
 | Site | Public path | Module / file | Callback | Response shape | JSONP |
 |---|---|---|---|---|---|
-| **AV** | `/api/v1/media/node/{nid}.json` | Services module (per-content-type "JSON Path" setting, same mechanism as Images/Sources/Texts — see below) | Services `node` resource `retrieve` action | Augmented **raw node** (`vid`, `uid`, `title`, `field_*` incl. `field_kmap_terms`/`field_subject`/etc. in the usual `raw/id/header/domain/path` shape, `field_og_collection_ref`) **+ computed extras** (`thumbnail_url`, `duration: {seconds, formatted}`, `path`) — **not** a Solr-style flat doc | **No** (plain JSON) |
+| **AV** | `/api/v1/media/node/{nid}.json` (and `.jsonp`) | Services module (per-content-type "JSON Path" setting, same mechanism as Images/Sources/Texts — see below) | Services `node` resource `retrieve` action | Augmented **raw node** (`vid`, `uid`, `title`, `field_*` incl. `field_kmap_terms`/`field_subject`/etc. in the usual `raw/id/header/domain/path` shape, `field_og_collection_ref`) **+ computed extras** (`thumbnail_url`, `duration: {seconds, formatted}`, `path`) — **not** a Solr-style flat doc | **Yes** — `.jsonp?callback=` (see correction) |
 | **Images** | `/api/json/{nid}` | `shanti_images.module` | `shanti_images_node_json()` | Augmented **raw node** (entity-refs expanded in place); `?extend=true` gives a reshaped flat variant w/ IIIF url + dims | **Yes** (`?callback=`) |
 | **Sources** | `/sources-api/json/{nid}` | `shanti_biblio_modules/sources_misc/sources_misc.module` | `sources_misc_node_json()` | Augmented **raw node** (+`description` from body, collection/subcollection relations); sends `Access-Control-Allow-Origin: *` | **Yes** (`?callback=`) |
 | **Texts** | `/shanti_texts/node_json/{nid}` | `shanti_texts.module` | `shanti_texts_node_json()` | Augmented **raw node** **+ embedded rendered HTML** (`full_markup`, `toc_links`, `bibl_summary`, `views_links` via `views_embed_view()`) + book `toc`/`parent`/`children` | **Yes** (`?callback=` **or** `?json_wrf=`) |
@@ -74,6 +74,15 @@ for JSONP/route-existence reasons now, not because AV's shape is categorically d
 > **no special server-level path rewrite is needed for AV**, and it is not tied to the Solr/
 > kmassets write path the way the 2026-08-07 note assumed. See also the "AV is the exception"
 > paragraph below, which needs the same correction.
+>
+> **Third error in the same row, found the same day: AV *does* support JSONP.** The row
+> originally said "No (plain `drupal_json_output`)", and gotcha #4 concluded the client's JSONP
+> dependency was "only satisfiable on 3 of the 4 today." Live evidence:
+> `GET /api/v1/media/node/42016.jsonp?callback=mdldata` → **HTTP 200**,
+> `content-type: text/javascript`, body wrapped as `mdldata({...})`. The React client
+> **depends on this** — `useMandala.js:78-80` appends `'p'` to the `url_json` value whenever
+> `asset_type === 'audio-video'`, specifically to hit the `.jsonp` variant. All four sites are
+> JSONP-capable; gotcha #4 is corrected below.
 
 **Load-bearing gotchas for D11:**
 
@@ -96,9 +105,16 @@ for JSONP/route-existence reasons now, not because AV's shape is categorically d
    just on node data. This overlaps the Texts book-display model (see
    [Spike 4b](spike-04b-ckeditor5-footnotes.md)).
 4. **JSONP is per-endpoint inconsistent** — Images/Sources use `?callback=`, Texts adds
-   `?json_wrf=`, AV has none. The client's JSONP dependency (pre-findings) is only
-   satisfiable on 3 of the 4 today; the D11 reachability decision (proxy-everything vs.
-   CORS) should standardize this rather than replicate the inconsistency.
+   `?json_wrf=`, ~~AV has none. The client's JSONP dependency (pre-findings) is only
+   satisfiable on 3 of the 4 today~~ **and AV serves it from a separate `.jsonp` path
+   variant** (`/api/v1/media/node/{nid}.jsonp?callback=`), which the client reaches by
+   appending `'p'` to `url_json` for `asset_type === 'audio-video'`
+   (`useMandala.js:78-80`). **Corrected 2026-08-20:** the client's JSONP dependency is
+   satisfiable on **all four** sites today, not three. The inconsistency is in *how* the
+   callback is requested (query param vs. path suffix vs. `json_wrf`), not in whether JSONP
+   exists. The D11 reachability decision (proxy-everything vs. CORS) should standardize this
+   rather than replicate the inconsistency — and note that under Option A none of it is
+   needed, since a server-to-server proxy fetch wants plain JSON.
 5. **Private-content gating is shared** — all four call `shanti_general_api_check($node)`
    before emitting. D11 must enforce the equivalent access check (ties to the ADR 015 /
    Group access model) in whatever replaces these endpoints, or private assets leak via
@@ -287,6 +303,27 @@ Sources fix.
 single host. What's hardcoded today is only the **client** (`useMandala.js` in `mandala-om`
 gates the proxy path on `query.includes('sources.mandala.library.virginia.edu')`). Generalizing
 to all four remaining sites is a client-side change, not a server-side one.
+
+**Client-side specifics, read directly from `mandala-om` `release/v1.1.0-rc` (2026-08-20)** —
+the generalization is slightly more than widening the substring test:
+
+- **The gate is a plain substring check** (`useMandala.js:28`), confirming the 2026-08-12
+  characterization above.
+- **It falls through, it does not switch.** If `REACT_APP_WP_PROXY` is unset or empty, the
+  proxy branch is skipped and the code proceeds to the direct JSONP path (lines 29–35) — so an
+  env misconfiguration silently reverts Sources to the exact fetch that 503s, with no error.
+  Worth deciding whether that should fail loudly once the proxy is the architecture rather
+  than a patch.
+- **AV's `.jsonp` special case must go with it.** Lines 78–80 append `'p'` to `url_json` when
+  `asset_type === 'audio-video'`, converting `.json` → `.jsonp`. Under Option A the proxy does
+  a server-side fetch and wants plain JSON; leaving the append in place would hand the proxy a
+  `text/javascript` callback-wrapped body (`mdldata({...})`) that won't parse as JSON.
+- Scheme handling is round-tripped oddly but harmlessly — `useMandala.js:74` strips the scheme
+  to make the URL protocol-relative, then `getMandalaAPI()` lines 19–21 re-add `https:`.
+
+So the change is: widen the host gate, drop the AV `'p'` append, and decide the fall-through
+behavior. The D11 endpoint (`mandala_node_api`) already serves plain JSON with no JSONP, which
+is the correct target shape for all of this.
 
 **✅ FIXED (2026-08-12).** `json_proxy` was an open proxy (SSRF risk) — any `url` param, fetched
 server-side with no host restriction. **Host allowlist + `X-Content-Type-Options: nosniff` added
