@@ -270,19 +270,67 @@ on it.
 (8.1.6). Neither carries React context and both build clean, but they're the remaining
 candidates if something else surfaces.
 
-## Branches left open
+## Where things stand at session end
+
+**Both branches pushed, both working trees clean, no PRs opened** (Than's call — no PR yet on
+the docs branch).
 
 | Repo | Branch | State |
 |---|---|---|
-| `mandala-navina` | `feat/av-node-json-controller` | 5 doc commits, unpushed. Branch name is now a misnomer — no controller was built |
-| `mandala-om` | `feat/generalize-json-proxy-all-sites` | 1 commit (`e6e712ae`), unpushed, browser-unverified |
+| `uvalib/mandala-navina` | `feat/av-node-json-controller` | 15 doc commits, pushed. **Branch name is a misnomer** — no controller was built; it is entirely documentation |
+| `shanti-uva/mandala-om` | `feat/generalize-json-proxy-all-sites` | 4 commits, pushed, off the **D7** branch `release/v1.1.0-rc` |
+
+`mandala-om` commits: `e6e712ae` generalize the gate → all Drupal hosts · `d83fa707` derive
+hosts from `REACT_APP_DRUPAL_*` · `eeefb203` fix `setupProxy.js` · plus the phantom-dependency
+declaration with two load-bearing exact pins.
+
+### Verified
+
+- The same-origin proxy path, **end to end in a browser** — the first time on any codebase.
+  503 direct → 200 through the proxy → Sources detail page renders its full record.
+- Sources browse (26,429 hits) and Images browse (108,084 hits) render after the react-router
+  pin.
+- AV's `/api/v1/media/node/{nid}.json` and `.jsonp` behaviour, against live production.
+
+### NOT verified — the honest list
+
+- **AV, Images, Texts and Visuals detail pages.** Only Sources was exercised.
+- **The AV direct-JSONP fallback specifically** — the exact code that was moved in
+  `e6e712ae`. It was reasoned about, never run. Given this session's record on reasoning
+  (see below), that is the first thing to check before merge.
+- **The Solr double-callback-wrap claim.** Observed in curl; a corresponding browser console
+  error was never found, so the claim that "every Solr call emits a stray TypeError" is
+  unsubstantiated. Not filed as a deferred note for that reason.
+
+### Environment left running
+
+Dev server on `:3000` with `REACT_APP_WP_PROXY=/proxy`, pointed at **production** Solr and
+Drupal via the untracked `.env.development.local` (caveat documented inside the file). DDEV
+WordPress at `thlddev.ddev.site` up. Delete `.env.development.local` to revert — but that
+returns local dev to hosts where detail pages cannot render at all.
+
+### Five verification mistakes made this session
+
+Recorded because each would mislead the next person the same way:
+
+1. **Artifact presence read as build success** — CRA emits `build/` before the `CI=true` lint
+   gate, so artifacts appear on failed builds.
+2. **"Item not found!" attributed to the node-JSON fetch as fact** before checking; `useSolr`
+   uses the same JSONP adapter and throws the identical string. Than pushed back and was right
+   that the evidence was ambiguous (the attribution happened to be correct on mechanism).
+3. **curl treated as a proxy for a browser against the WAF** — a header-spoofed replay returned
+   200 where the real browser got 503, and a whole content-type/ORB theory got built on that
+   false negative.
+4. **A caret range shipped for `react-router`**, breaking every browse page via duplicate React
+   context — with the risk named in the commit message and not acted on.
+5. **The dev-host 404s written up as breakage** — they are expected fallout of the D11 takeover
+   of `*-dev` hostnames. Asking Than first avoided filing a non-issue.
+
+The throughline: reasoning was repeatedly substituted for evidence, and piped exit codes and
+build artifacts were repeatedly mistaken for verification.
 
 ---
 
-*Below is the raw conversation transcript. Tool calls and code output are omitted; only*
-*the text exchanges are recorded.*
-
----
 
 ## User — 2026-08-20 13:48
 
@@ -689,5 +737,1263 @@ Now the spike doc's status header and deferred-notes list:
 ## Claude — 2026-08-20 15:01
 
 Now the session log:
+
+---
+
+## Claude — 2026-08-20 15:02
+
+Now memory — updating the Spike 6 memory and the project state memory:
+
+---
+
+## Claude — 2026-08-20 15:03
+
+Now marking the superseded AV claim in the older section of that memory:
+
+---
+
+## Claude — 2026-08-20 15:03
+
+Let me address that build error — you're blocked.
+
+---
+
+## Claude — 2026-08-20 15:03
+
+Found it — and it's **not** caused by my change (that touched only `useMandala.js`).
+
+**Root cause:** this repo is two *separate* npm projects, not workspaces:
+
+- Root `package.json` (`mandala-om`, 13 deps) — **declares `date-fns`** ✅
+- `kmaps-app/package.json` (`kmaps-app`, 62 deps) — **does not declare `date-fns`** ❌
+
+But the files importing it live in `kmaps-app/src/`:
+- `src/catalog/biblrecord/BiblMetadata.js:2` — `import { format } from 'date-fns'`
+- `src/views/Terms/TermDictionaries/TermDictionaries.js:21` — `import { km } from 'date-fns/locale'`
+
+You installed into `kmaps-app/` only — root `node_modules` is absent. Node/webpack resolution walks *up* the directory tree, so previously `date-fns` resolved out of the **root** `node_modules`. Without it, the import dead-ends. That's a latent packaging bug that only shows when root isn't installed.
+
+Two fixes:
+
+---
+
+## Claude — 2026-08-20 15:04
+
+The `date-fns` dep landed in the **root** `package.json` during commit `382af4d9` ("migrating more of catalog components") — almost certainly `npm install date-fns` run from the repo root instead of from `kmaps-app/`. Root also carries duplicate app deps (`react`, `axios`, `react-router`…) for its jest suite, which is why the mistake went unnoticed.
+
+Installing it where it's actually imported — pinned to `^2.30.0` to match root, since date-fns v3/v4 have breaking changes to `format` and to `date-fns/locale` import paths that would break both call sites:
+
+---
+
+## Claude — 2026-08-20 15:04
+
+Fixed — `date-fns@2.30.0` installed, both import styles resolve (`format` from the package root, `km` from `date-fns/locale`). Try your build again; the dev server should hot-reload.
+
+I left the `package.json`/`package-lock.json` changes **uncommitted** — they're unrelated to the proxy change on that branch, so you may want them as their own commit rather than folded into the PR.
+
+Now finishing the memory updates that your message interrupted:
+
+---
+
+## Claude — 2026-08-20 15:05
+
+Good instinct — let me check all 13 root deps systematically rather than one at a time:
+
+---
+
+## Claude — 2026-08-20 15:05
+
+6 more, and yes — `react-image-magnify` is one of them. But they're not all equally broken. Let me check which actually resolve right now (some may be present as transitive deps):
+
+---
+
+## Claude — 2026-08-20 15:05
+
+Clear split: **6 will fail to compile** (you'd hit them one by one as webpack reaches each import), and `react-router` currently resolves as a *phantom* dep via `react-router-dom@5.2.0` — works today but breaks silently if that ever gets bumped.
+
+Installing all of them into `kmaps-app/` at root's pinned versions:
+
+---
+
+## Claude — 2026-08-20 15:06
+
+All 8 resolve now. npm picked the newest patch/minor within each caret range, so a few landed slightly above root's pins (`react-rnd` 10.5.3, `react-router` 5.3.4 vs the transitive 5.2.0 that was there) — all same-major, so safe, but `react-router` did move under 14 files' feet.
+
+Let me verify it actually compiles rather than guessing:
+
+---
+
+## Claude — 2026-08-20 15:06
+
+Build running in background. While it goes, let me finish the memory index:
+
+---
+
+## Claude — 2026-08-20 15:06
+
+Build's still compiling (CRA is slow on first run). Let me append the dependency finding to the session log, since it happened after the transcript was generated:
+
+---
+
+## Claude — 2026-08-20 15:07
+
+Build **failed** — and this one's on me. (Exit code 0 was just `tail`'s.)
+
+```
+./node_modules/react-draggable/build/cjs/chunk-ACOTSM7X.mjs
+Can't import the named export 'Children' from non EcmaScript module (only default export is available)
+```
+
+`react-draggable` is a transitive dep of `react-rnd`. I installed at the caret range, so npm resolved `react-rnd` to **10.5.3** (root declared `^10.3.7`), which pulls a newer `react-draggable` shipping `.mjs` chunks that this app's webpack 4 / `react-scripts` 3.4.3 can't consume.
+
+---
+
+## Claude — 2026-08-20 15:07
+
+`react-rnd@10.3.7` (root's declared floor) pins `react-draggable` to exactly **4.4.4** — pre-`.mjs`. The caret let npm jump to 10.5.3, which wants `^4.5.0` and pulled 4.7.1. Pinning to what root actually declared:
+
+---
+
+## Claude — 2026-08-20 15:08
+
+Rebuild running. Status while it compiles:
+
+**Where the `mandala-om` dependency work landed:**
+
+| Package | Root declared | Installed | Note |
+|---|---|---|---|
+| `date-fns` | `^2.30.0` | 2.30.0 | pinned deliberately — v3/v4 break `format` + locale subpaths |
+| `iso-639-1` | `^2.1.10` | 2.1.15 | minor drift |
+| `iso-639-3` | `^3.0.1` | 3.0.1 | |
+| `react-image-magnify` | `^2.7.4` | 2.7.4 | |
+| `react-rnd` | `^10.3.7` | **10.3.7 (exact)** | caret broke the build; now pinned |
+| `react-router` | `^5.2.0` | 5.3.4 | was phantom at 5.2.0, now declared |
+| `react-split-pane` | `^0.1.92` | 0.1.92 | |
+| `react-tiny-popover` | `^8.0.4` | 8.1.6 | minor drift |
+
+**The lesson from the failure:** on this toolchain (webpack 4 / `react-scripts` 3.4.3), caret ranges are not safe — anything published since the ESM transition ships `.mjs` chunks webpack 4 can't parse. `react-rnd` is now pinned exact. Three others (`iso-639-1`, `react-router`, `react-tiny-popover`) still drifted above root's floor; if the rebuild passes they're fine, but that's the next place to look if something misbehaves at runtime.
+
+**On my earlier claim:** I said the first build "verified" nothing was broken — I shouldn't have launched it and moved on. The exit code was `tail`'s, not the build's, and the build had in fact failed. I only caught it by reading the output.
+
+Still outstanding from your original request — docs, session log, and memory are all written and committed (5 doc commits + 2 session-log commits on `feat/av-node-json-controller`; memory updated across `project-spike-6-api-compatibility`, `project-mandala-state` including marking the wrong AV claim superseded, plus a new `reference-mandala-om-repo-structure`). Nothing pushed on either repo.
+
+I'll report the rebuild result when it lands.
+
+---
+
+## User — 2026-08-20 15:08
+
+<task-notification>
+<task-id>bky6ku2tw</task-id>
+<tool-use-id>toolu_01V7n3pagefCNgRyhLHkAjR1</tool-use-id>
+<output-file>/private/tmp/claude-503/-Users-ndg8f-Sandbox-Mandala-mandala-navina/78e01f3f-95bf-412b-a8e6-159717f9b429/tasks/bky6ku2tw.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /Users/ndg8f/Sandbox/Mandala/Standalone/mandala-om/kmaps-app &amp;&amp; CI=true npx --no-install env-cmd -f ./.env.development npm run-script build 2&gt;&amp;1 | grep -vE "^(WARNING|\s|╷|╵|[0-9]+ │|$)" | tail -30" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+## Claude — 2026-08-20 15:08
+
+My grep filter over-stripped — that's a file list, not a verdict. Let me get the real exit code (not the pipe's) and decisive evidence:
+
+---
+
+## Claude — 2026-08-20 15:08
+
+**Build succeeded.** `build/index.html` written 10 seconds before that check, JS chunks and `asset-manifest.json` emitted — CRA doesn't emit on a compile failure (which is why the first attempt left no fresh artifacts). Compiled with warnings (the file list was the ESLint section), not errors.
+
+Let me correct the session-log addendum, since what I committed there is now inaccurate:
+
+---
+
+## Claude — 2026-08-20 15:09
+
+Everything's recorded. Final state:
+
+**`mandala-om` builds cleanly now.** The `react-rnd` pin fixed it; verified by fresh build artifacts, not by a piped exit code.
+
+**Branches — neither pushed:**
+
+| Repo | Branch | Contents |
+|---|---|---|
+| `mandala-navina` | `feat/av-node-json-controller` | 7 doc commits. Branch name is a misnomer — no controller was built |
+| `mandala-om` | `feat/generalize-json-proxy-all-sites` | 1 commit (`e6e712ae`), the proxy generalization |
+
+`kmaps-app/package.json` + `package-lock.json` are **still uncommitted** in `mandala-om` — the dependency fixes are unrelated to the proxy change, so they want their own commit rather than being folded into that PR.
+
+**Documented in `docs/`:**
+- Spike 6 doc — AV row corrected (three errors), Option A scope caveat, client-generalization specifics, audit-reliability warning on the status header
+- New deferred note `option-a-proxy-unavailable-on-standalone-deployments.md`, added to `.pages` and the README index
+- Session log with the dependency addendum
+
+**Memory:** `project-spike-6-api-compatibility` (rewritten), `project-mandala-state` (new 08-20 section + the old wrong AV claim marked superseded), new `reference-mandala-om-repo-structure`, index updated.
+
+**Two things I got wrong this session, both corrected in the record rather than quietly fixed:**
+1. Claimed the Sources proxy routing dated from 2026-08-12 — it's 2026-07-29 (`6a2ef22b`), yours.
+2. Suggested the no-proxy fall-through should fail loudly — it's load-bearing for the 9 non-WordPress deployments. Withdrawn.
+
+And one process note: I launched the first build, reported it as verification, and moved on — the exit code was the pipe's, and the build had actually failed. I only caught it by reading the output afterward. Worth not repeating.
+
+**Highest-value follow-up** from all this: nobody has tested whether the WAF actually fires for a browser on the standalone origin (`mandala.kmaps.virginia.edu`). If it doesn't, the Option A gap is theoretical; if it does, production has an unprotected deployment. That's one browser check.
+
+---
+
+## User — 2026-08-20 15:09
+
+Running it on localhost:3000 now, I'm seing: Failed to compile
+./node_modules/react-draggable/build/cjs/chunk-ACOTSM7X.mjs
+Can't import the named export 'Children' from non EcmaScript module (only default export is available)
+
+---
+
+## Claude — 2026-08-20 15:09
+
+The production build passed after the pin, so the dev server is seeing something different. Let me find out what rather than guess — most likely a stale server or a second copy on disk:
+
+---
+
+## Claude — 2026-08-20 15:10
+
+Definitive: the error references a file that **no longer exists on disk**.
+
+- Only one copy of `react-draggable` in the tree: **4.4.4**, with **zero** `.mjs` chunks
+- `chunk-ACOTSM7X.mjs` isn't there at all — that was 4.7.1's build layout
+
+Your dev server was started **before** the pin landed and is serving a stale in-memory module graph, backed by `node_modules/.cache` (babel-loader, eslint-loader, terser). It's compiling against a package version that's been replaced underneath it.
+
+---
+
+## Claude — 2026-08-20 15:10
+
+Dev server confirmed running (PIDs 58745/58755, plus the fork-ts-checker worker). It's in a known-broken state serving a phantom error, so stopping it loses nothing — and the cache can't be cleared safely while it holds it:
+
+---
+
+## Claude — 2026-08-20 15:10
+
+Dev server stopped and `node_modules/.cache` cleared. Restart it:
+
+```
+cd ~/Sandbox/Mandala/Standalone/mandala-om/kmaps-app && npm start
+```
+
+It should compile now — the same code path just built successfully in production mode against `react-draggable@4.4.4`.
+
+**What happened:** you started the dev server before the `react-rnd` pin landed. webpack-dev-server holds its module graph in memory and leans on `node_modules/.cache`, so it kept compiling against `react-draggable@4.7.1` even after npm replaced it with 4.4.4 on disk. That's why the error named `chunk-ACOTSM7X.mjs`, a file that no longer exists anywhere in the tree.
+
+Worth knowing generally: **`npm install` while the dev server is running doesn't take effect** in this setup. Any dependency change needs a server restart, and a cache clear if the error persists or references files that don't exist.
+
+If it still fails after restart, that would mean something genuinely different is wrong — send me the error and I'll dig in rather than assume.
+
+---
+
+## User — 2026-08-20 15:11
+
+it compiles now, let me test the sources page but how do I do that?
+
+---
+
+## Claude — 2026-08-20 15:11
+
+Good. But there's a catch worth knowing before you start clicking — let me check what your dev config actually exercises:
+
+---
+
+## Claude — 2026-08-20 15:12
+
+Important: **`npm start` will not exercise your change at all.** Let me confirm the testing options before you waste time:
+
+---
+
+## Claude — 2026-08-20 15:12
+
+Two independent blockers mean **you cannot test the proxy path locally right now** — and one of them is a real flaw in my change. Let me check the routing so I can at least give you a working URL:
+
+---
+
+## Claude — 2026-08-20 15:12
+
+Router is `BrowserRouter` in dev (`REACT_APP_STANDALONE` unset), so plain paths, not `#/`. Checking the dev endpoint actually responds before sending you there:
+
+---
+
+## Claude — 2026-08-20 15:13
+
+Honest answer: **you can't meaningfully test the Sources page locally as things stand.** Four independent blockers, and one of them is a flaw in my code:
+
+**1. The dev Sources endpoint doesn't exist.** Dev Solr's `url_json` points at `mandala-sources-dev.internal.lib.virginia.edu/sources-api/json/{nid}` — that **404s**, and the error page is Drupal 10/11 chrome (Claro/Olivero CSS vars). That host is running a newer Drupal without the D7 `sources-api` route. So even the *existing* fallback path can't render a Sources page against dev.
+
+**2. `.env.development` has no `REACT_APP_WP_PROXY`** — so the proxy branch is skipped entirely; `npm start` only ever exercises direct JSONP.
+
+**3. The DDEV WordPress that `setupProxy.js` targets (`thlddev.ddev.site`) is down** — so there's no proxy to route to even if you set the var.
+
+**4. My host matcher is scoped to production hostnames only** — this is the real problem. It matches `mandala.library.virginia.edu` and its subdomains. It will **not** match `mandala-sources-dev.internal.lib.virginia.edu`, and it won't match whatever host D11 lands on after cutover either. The old Sources-only substring had the same limitation, so this isn't a regression — but I mirrored the production allowlist without thinking about other environments, which makes the change untestable in dev *by construction*.
+
+**The fix that solves 4 and makes it testable:** derive the matched hosts from the `REACT_APP_DRUPAL_*` env vars instead of a hardcoded domain. Every env file already enumerates exactly which hosts are the Drupal backends for that deployment:
+
+```
+REACT_APP_DRUPAL_SOURCES=https://mandala-sources-dev.internal.lib.virginia.edu
+REACT_APP_DRUPAL_IMAGES=…
+```
+
+Matching against those hostnames makes the gate correct in dev, staging, production, *and* after D11 cutover with no code change — and keeps the exact-hostname comparison that blocks the spoofing case.
+
+Two things I'd want your call on:
+
+---
+
+## Claude — 2026-08-20 15:17
+
+Implementing the env-driven matcher. One CRA subtlety to be careful about: `process.env` is statically replaced at build time, so I need to confirm `Object.keys()` over it actually works rather than assume it:
+
+---
+
+## Claude — 2026-08-20 15:17
+
+Now verifying the CRA `Object.keys(process.env)` assumption empirically rather than trusting it — building and checking the dev hostnames actually land in the bundle:
+
+---
+
+## Claude — 2026-08-20 15:17
+
+While that builds, testing the new matcher logic against both dev and production env sets:
+
+---
+
+## Claude — 2026-08-20 15:18
+
+All 13 pass. Notably: production derives the same 6 hosts (deduping `PLACES`, which shares the bare domain), correctly drops `SOURCES_API` (a path template, not a URL), doesn't collect `WP_PROXY` (so no self-proxy loop), spoofs stay blocked — and **dev now matches**, which was impossible before.
+
+Checking the build:
+
+---
+
+## Claude — 2026-08-20 15:18
+
+Build dir is empty — CRA clears it at start, so it's likely still running. Let me check rather than guess:
+
+---
+
+## Claude — 2026-08-20 15:18
+
+Build still running. While it finishes — you chose local DDEV testing, so let me check whether the dev Sources host can actually serve *anything* renderable, since it 404s on the D7 path:
+
+---
+
+## Claude — 2026-08-20 15:18
+
+Mixed signals — exit 1 but fresh artifacts. Need the full log to see which file:
+
+---
+
+## Claude — 2026-08-20 15:18
+
+Two corrections, one of them about my own verification:
+
+---
+
+## Claude — 2026-08-20 15:19
+
+My file has 2 lint warnings — both **pre-existing code I preserved**, not introduced: an unused `GetSessionID` import and a `==` on line 86 (`query.substring(0,2) == '//'`). 188 files have complaints; it's the codebase's baseline.
+
+**Correction to what I told you earlier.** I said build #2 "succeeded" based on fresh artifacts. That was wrong reasoning — CRA emits artifacts *before* the `CI=true` lint gate fails, so artifact presence proves nothing. Build #2 very likely also exited 1 on these same pre-existing warnings. `CI=true` was my own addition; the real npm scripts don't set it. Verifying properly:
+
+---
+
+## Claude — 2026-08-20 15:19
+
+Running without `CI=true` this time, capturing the real exit code. While it goes — the answer to your actual question:
+
+## How to test the Sources page
+
+**Right now, `http://localhost:3000/sources/137238`** (plain path — dev uses `BrowserRouter`, not the `#/` hash form the WordPress builds use).
+
+But be aware what that does and doesn't prove:
+
+**It will not render.** The dev Sources host has no JSON API at all — I probed `/sources-api/json/{nid}`, `/api/json/{nid}`, `/node/{nid}`, and `/jsonapi`: all **404**, only `/` returns 200. The site root serves Drupal 10/11 chrome, so `mandala-sources-dev.internal.lib.virginia.edu` isn't the D7 Sources site the dev Solr index thinks it is. The index's `url_json` values point at an endpoint that doesn't exist.
+
+So a blank body on that page is **expected and pre-existing**, not caused by your change or mine.
+
+**What the env-var fix did buy you:** with `REACT_APP_DRUPAL_SOURCES` set to the dev host, the matcher now *matches* dev URLs — verified, 13/13 cases pass including the previously-impossible dev case, with spoof protection intact and no self-proxy loop on the `WP_PROXY` host itself. Before, dev could never take the proxy branch under any configuration.
+
+**For the local DDEV test you chose, you'd need three things:**
+1. `thlddev.ddev.site` up (currently down) with `mandala-wp-proxy` active
+2. `REACT_APP_WP_PROXY=/proxy` added to `.env.development` (`setupProxy.js` already forwards `/proxy/*` there)
+3. A `url_json` that resolves — which dev doesn't have
+
+Even with 1 and 2, you'd only be able to confirm **the request routes through `/proxy/json?url=…` instead of direct JSONP** (visible in the Network tab), with a 404 payload. Confirming an actual rendered Sources page needs a `url_json` pointing at a live endpoint — production, or a D7 Sources instance that still serves the route.
+
+That's worth knowing before you spend time starting DDEV: the routing is testable locally, the end-to-end render isn't.
+
+I'll report the clean build result when it lands, and I owe you a corrected note in the session log about the artifact-presence mistake.
+
+---
+
+## User — 2026-08-20 15:19
+
+<task-notification>
+<task-id>b1krs8fyx</task-id>
+<tool-use-id>toolu_01KnsNyqkY5U3kve1jkvcLj7</tool-use-id>
+<output-file>/private/tmp/claude-503/-Users-ndg8f-Sandbox-Mandala-mandala-navina/78e01f3f-95bf-412b-a8e6-159717f9b429/tasks/b1krs8fyx.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /Users/ndg8f/Sandbox/Mandala/Standalone/mandala-om/kmaps-app &amp;&amp; npx --no-install env-cmd -f ./.env.development npm run-script build &gt; /tmp/build3.log 2&gt;&amp;1; echo "REAL build exit code: $?"; grep -cE "Failed to compile|Compiled successfully|Compiled with warnings" /tmp/build3.log &gt;/dev/null; grep -E "Failed to compile|Compiled successfully|Compiled with warnings" /tmp/build3.log | head -3" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+## Claude — 2026-08-20 15:19
+
+**Exit code 0, "Compiled with warnings."** Definitive — the build genuinely succeeds. The earlier failures were entirely pre-existing lint warnings escalated to errors by the `CI=true` flag *I* added; the real npm scripts don't set it.
+
+Committing the env-driven matcher:
+
+---
+
+## Claude — 2026-08-20 15:20
+
+Committed — and husky's pre-commit hook (prettier/lint-staged) passed on the file, an independent formatting check. Dependency changes still uncommitted as intended.
+
+Updating the docs with the design change and my verification error:
+
+---
+
+## Claude — 2026-08-20 15:20
+
+That matches what I predicted — but let me confirm *which* step is failing rather than assume, since "Item not found" could come from the Solr lookup or the JSON fetch:
+
+---
+
+## Claude — 2026-08-20 15:20
+
+Confirmed empirically — and it's exactly the predicted failure, not a regression.
+
+`Item not found!` comes from `src/logic/axios-jsonp/index.js:91`, the JSONP adapter's `script.onerror`. So the chain is:
+
+1. Solr lookup **succeeded** (that's why the page frame loads)
+2. `useMandala` → `REACT_APP_WP_PROXY` is undefined in `.env.development` → **falls through to direct JSONP** (by design)
+3. It injects `<script src="https://mandala-sources-dev.internal.lib.virginia.edu/sources-api/json/137238?callback=…">`
+4. That URL 404s and returns HTML, not executable JS → `onerror` → "Item not found!"
+
+**This is pre-existing.** The old code would fail identically: its Sources-only substring didn't match the dev host either, so it also took the direct-JSONP branch to the same 404. Your change is confirmed non-regressive — and the error actually *proves* the fallback path still behaves correctly.
+
+Checking whether production has a working endpoint you could point at for a real test:
+
+---
+
+## Claude — 2026-08-20 15:21
+
+Good challenge — let me check rather than defend my earlier read. The key question is whether the **Solr** call also goes through that same JSONP adapter:
+
+---
+
+## Claude — 2026-08-20 15:21
+
+You're right to push back — I was wrong to state that confidently. `useSolr.js:58-59` uses the **same** `logic/axios-jsonp` adapter (with `callbackParamName: 'json.wrf'`), so a failing Solr call throws the identical `Item not found!`. My "page frame loaded, so Solr succeeded" inference wasn't sound.
+
+Testing the dev Solr the way the browser actually calls it:
+
+---
+
+## Claude — 2026-08-20 15:21
+
+Found something unexpected — look at the body: **`testcb(testcb({...`** — the callback is wrapped **twice**. Note `x-powered-by: PHP/7.4.33`, so this is going through the PHP solr-proxy, which appears to be adding its own callback wrapper on top of Solr's `json.wrf` one.
+
+Let me read the adapter carefully to work out whether that double-wrap actually breaks the call:
+
+---
+
+## Claude — 2026-08-20 15:22
+
+Now I can be precise. Reading the adapter (`index.js:53-61`):
+
+```js
+window[jsonp] = function (responseData) {
+    window[jsonp] = old;      // restores itself on the FIRST call
+    ...
+    resolve({ data: responseData, status: 200 });
+};
+```
+
+**On the ambiguity — you were right and I was overconfident.** Both calls share the adapter, so the error text alone can't distinguish them. But the *mechanism* does: `script.onerror` fires on **load/HTTP failures**, not on runtime exceptions inside a script that loaded fine.
+
+- **Dev Solr returns HTTP 200** with `application/javascript` → the script loads → `onerror` never fires → no "Item not found!" from this path.
+- **Dev Sources returns HTTP 404** → script tag fails to load → `onerror` fires → "Item not found!"
+
+So the error is still most likely `useMandala`'s fetch. But that's inference, and the ground truth is in your browser.
+
+**Separately, I found a real bug while checking:** the Solr response is **double-wrapped** — `testcb(testcb({...}))`. The PHP solr-proxy is adding a callback wrapper on top of Solr's own `json.wrf` one. Traced through the adapter: the inner call resolves the promise correctly, then restores `window[jsonp] = old` (undefined), so the outer call hits `undefined(...)` → **uncaught TypeError in the console**. It doesn't break the fetch — the data already resolved — but it means every Solr call in this app throws a stray console error. That's independent of your change and worth filing.
+
+**To settle it definitively**, in DevTools:
+- **Network tab** — filter for `137238`. You'll see two requests. Check which one is red: the `mandala-index-dev…/solr/kmassets/select?…json.wrf=` call, or the `mandala-sources-dev…/sources-api/json/137238?callback=` one.
+- **Console** — a `TypeError: axiosJsonpCallback_… is not a function` is the (harmless) double-wrap; a failed-resource error on the `sources-api` URL is the real cause.
+
+If it's the Solr request that's red, my diagnosis is wrong and I'll dig into that instead. What does Network show?
+
+---
+
+## User — 2026-08-20 15:22
+
+Oh no I think I'm wrong about SOLR not returning.
+
+---
+
+## Claude — 2026-08-20 15:22
+
+No harm — the shared adapter made it genuinely ambiguous, and I'd asserted it too confidently before checking, which is what prompted the doubt.
+
+So the picture holds: Solr returns fine, and the failing call is `useMandala` fetching the dev Sources URL that 404s. **Pre-existing dev-data problem, not a regression** — the old code would fail identically.
+
+The useful consequence: **dev can't render a Sources page at all**, so it can't verify your change end-to-end. But production's Sources API *does* work — I checked, HTTP 200 on both the plain and `?callback=` forms. That opens a real test path:
+
+---
+
+## Claude — 2026-08-20 15:22
+
+`.env.development.local` is gitignored and CRA gives it precedence over `.env.development` — so I can set up a test config without touching tracked files. Checking production Solr is reachable first:
+
+---
+
+## Claude — 2026-08-20 15:23
+
+Production Solr is reachable and its `url_json` values point at the live Sources host that returns 200. So a local test config against production will actually render. Creating a gitignored override:
+
+---
+
+## Claude — 2026-08-20 15:23
+
+Set up and confirmed untracked. **Restart the dev server** (env changes need a restart), then:
+
+## Stage 1 — no proxy, tests the fallback path
+
+```
+http://localhost:3000/sources/25581
+```
+
+Two possible outcomes, **both informative**:
+- **Page renders** → direct JSONP to production works from localhost; the WAF doesn't block this origin. That would mean the standalone-deployment gap I filed is theoretical.
+- **"Item not found!" again** → you've reproduced the original 2026-07-29 WAF 503, the exact bug the proxy exists to fix. Check Network for a `503` on the `sources.mandala.library.virginia.edu` request to confirm it's the WAF and not something else.
+
+## Stage 2 — with proxy, tests your actual change
+
+Bring up `thlddev.ddev.site` with `mandala-wp-proxy` active, uncomment the last line of `.env.development.local`, restart. Then the same URL should fetch via `/proxy/json?url=…` — visible in Network as a **same-origin** request to `localhost:3000/proxy/json`, not a cross-origin one to `sources.mandala.library.virginia.edu`.
+
+That Network-tab distinction *is* the verification. It's the one thing about this change nobody has yet observed working.
+
+**Caveats worth stating plainly:**
+- This points your dev app at **production** Solr and production Drupal. Read-only `select` queries, so no write risk — but you're exercising live data.
+- Delete `.env.development.local` to revert; nothing tracked was touched.
+- Stage 1's outcome is genuinely interesting either way. If it renders fine, that's evidence about the standalone-deployment question I couldn't answer earlier.
+
+Two things still on my list that I haven't done: committing the doc updates for the env-var redesign (written, uncommitted), and I owe the session log a correction about the artifact-presence verification mistake. Want me to finish those while you test, or hold in case testing turns up something that changes the write-up?
+
+---
+
+## User — 2026-08-20 15:27
+
+I started up https://thlddev.ddev.site/ locally.
+
+---
+
+## Claude — 2026-08-20 15:27
+
+Let me verify it's actually serving and that the proxy route works, before you spend time in the browser:
+
+---
+
+## Claude — 2026-08-20 15:28
+
+DDEV is serving, but WordPress itself is in **maintenance mode** — that's a `.maintenance` lock file in the WP root, usually left behind by an interrupted plugin/core update. Let me look before touching anything:
+
+---
+
+## Claude — 2026-08-20 15:28
+
+`mandala-proxy` plugin is present ✓. The `.maintenance` file was created **11:28** — just minutes ago. Let me check whether an update is genuinely in flight or it's a stale lock:
+
+---
+
+## Claude — 2026-08-20 15:28
+
+The timestamp is **1 second old** — something is actively regenerating the lock. Let me sample it again to confirm it's looping rather than a one-off:
+
+---
+
+## Claude — 2026-08-20 15:28
+
+Right — and I overstated a moment ago: I said it was "actively regenerating," but across three rapid samples it's stable at `11:28:35`. It changed once between two of my calls (cron firing), not continuously.
+
+Since it's cron, it should clear itself — and WordPress ignores the lock after 600s regardless. Let me wait for it and test the proxy the moment it's up:
+
+---
+
+## Claude — 2026-08-20 15:29
+
+Polling in the background — I'll test `/proxy/json` automatically the moment WordPress exits maintenance mode, and report what comes back.
+
+While that runs, let me commit the doc updates that are sitting written-but-uncommitted, including the correction I owe about my verification mistake:
+
+---
+
+## Claude — 2026-08-20 15:29
+
+Docs committed. The maintenance-mode poll is still waiting — I'll report as soon as it clears and the proxy test runs.
+
+**Where everything stands:**
+
+**`mandala-om`** — branch `feat/generalize-json-proxy-all-sites`, 2 commits, unpushed:
+- `e6e712ae` — generalize the gate from Sources-only to all Drupal hosts
+- `d83fa707` — derive hosts from `REACT_APP_DRUPAL_*` instead of hardcoding production
+
+Plus uncommitted: `package.json`/`package-lock.json` (the 8 phantom deps), and an untracked `.env.development.local` for testing.
+
+**`mandala-navina`** — branch `feat/av-node-json-controller`, 9 doc commits, unpushed. Covers the AV audit corrections, the Option A scope gap note, the client-generalization record, and both verification mistakes.
+
+**Still genuinely unverified:** nobody has watched a `/proxy/json` request succeed in a browser. That's what the pending test settles.
+
+**Two things I found that aren't yours and aren't filed:**
+1. The double-callback-wrap in the Solr path (`testcb(testcb({...}))`) — the PHP solr-proxy wrapping on top of Solr's `json.wrf`. Throws an uncaught TypeError on every Solr call; harmless to data, noisy in console.
+2. `mandala-sources-dev.internal.lib.virginia.edu` serves no JSON API while the dev Solr index advertises `url_json` pointing at it — meaning dev asset detail pages are broken across the board, independent of any of this.
+
+Both are worth deferred notes if you agree they're real. Say the word and I'll write them up — otherwise I'll leave them in the session log where they're at least recorded.
+
+---
+
+## User — 2026-08-20 15:30
+
+<task-notification>
+<task-id>bzauhtfs7</task-id>
+<tool-use-id>toolu_01LQ7Kzdg2WguTu1fRG82wde</tool-use-id>
+<output-file>/private/tmp/claude-503/-Users-ndg8f-Sandbox-Mandala-mandala-navina/78e01f3f-95bf-412b-a8e6-159717f9b429/tasks/bzauhtfs7.output</output-file>
+<status>completed</status>
+<summary>Background command "U=$(python3 -c "import urllib.parse;print(urllib.parse.quote('https://sources.mandala.library.virginia.edu/sources-api/json/25581',safe=''))")
+echo "waiting for thlddev to leave maintenance mode..."
+for i in $(seq 1 60); do
+  code=$(curl -s -o /dev/null -m 8 -k -w "%{http_code}" https://thlddev.ddev.site/)
+  if [ "$code" = "200" ]; then
+    echo "site UP after ~$((i*10))s (HTTP 200)"
+    echo "=== testing /proxy/json ==="
+    curl -s -o /tmp/px.json -m 25 -k -w "  HTTP %{http_code}  type=%{content_type}  bytes=%{size_download}\n" "https://thlddev.ddev.site/proxy/json/?url=$U"
+    echo "  --- first bytes ---"; head -c 200 /tmp/px.json; echo
+    rm -f /tmp/px.json
+    exit 0
+  fi
+  sleep 10
+done
+echo "still not up after 10 min (last code: $code) — .maintenance may need manual removal"" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+## Claude — 2026-08-20 15:30
+
+**The proxy works end-to-end server-side.** WordPress cleared maintenance after ~70s, and:
+
+```
+GET https://thlddev.ddev.site/proxy/json/?url=<production sources url>
+→ HTTP 200, application/json, 4677 bytes
+{"vid":"6636","uid":"69","title":"A Theoretically and Ethically Grounded Approach
+ to Mindfulness Practices in the Primary Grades.", ...}
+```
+
+That title matches exactly what production Solr reported for `sources-25581`, so the whole chain is coherent. Three things confirmed at once:
+- `mandala-proxy` is active and its route works
+- Its **host allowlist permits** `sources.mandala.library.virginia.edu` (the SSRF fix from 08-12 isn't over-blocking)
+- It returns **plain JSON, not JSONP** — exactly what the proxy branch of `getMandalaAPI` expects
+
+What's still unverified is the **browser leg**: that `useMandala` actually chooses that path.
+
+## Two tests, in this order
+
+**Stage 1 first — it answers an open question.** `.env.development.local` is currently configured *without* the proxy, so just restart the dev server and load:
+
+```
+http://localhost:3000/sources/25581
+```
+
+This does direct cross-origin JSONP to production. If it **renders**, the WAF doesn't block the localhost origin — which is real evidence on the standalone-deployment gap I filed (it'd suggest that gap is theoretical). If it **fails with a 503** in Network, you've reproduced the original 2026-07-29 bug.
+
+**Stage 2 — verifies your change.** Uncomment the last line of `kmaps-app/.env.development.local`:
+
+```
+REACT_APP_WP_PROXY=/proxy
+```
+
+Restart, reload the same URL. In Network you should now see a **same-origin** request to `localhost:3000/proxy/json?url=…` instead of a cross-origin one to `sources.mandala.library.virginia.edu`. That request going same-origin *is* the verification.
+
+Worth noting Stage 1's result either way — it's the one piece of evidence that would let me close or confirm the Option A standalone-deployment note rather than leaving it open on speculation.
+
+---
+
+## User — 2026-08-20 15:33
+
+So http://localhost:3000/sources/25581 still gives Error: Item not found!
+
+---
+
+## Claude — 2026-08-20 15:34
+
+Let me determine *why* rather than assume the WAF. Two candidates: the WAF actually blocking a browser-origin request, or the env override not being picked up.
+
+---
+
+## Claude — 2026-08-20 15:34
+
+Two findings, and the second is decisive.
+
+**The env override is live** — dev server restarted 11:32:04, after the file was created 11:23:19. Not a stale-config problem.
+
+**The WAF is not blocking.** I replayed the request with full browser headers (`Origin: http://localhost:3000`, `Referer`, `Sec-Fetch-Dest: script`, `Sec-Fetch-Mode: no-cors`, `Sec-Fetch-Site: cross-site`, Chrome UA) — **HTTP 200**, same as plain curl. So the 2026-07-29 WAF hypothesis doesn't reproduce today.
+
+But look at the content type: **`application/json`**, not `text/javascript`. That's the problem. JSONP works by injecting `<script src=…>`, and Chrome's Opaque Response Blocking refuses to hand a cross-origin `application/json` response to a script context. The script never executes → `onerror` → `Item not found!`
+
+Supporting evidence: `.env.tibet.prod` carries the comment `# SOLR must return content-type: text/javascript; charset=UTF-8` — the team already hit this class of bug on the Solr endpoint. And AV's `.jsonp` correctly returns `text/javascript`, while Sources returns `application/json` even with `?callback=`.
+
+Let me confirm in a real browser rather than leave it as theory:
+
+---
+
+## Claude — 2026-08-20 15:35
+
+Tab title is now the real Sources title — so Solr resolved. But tracking started after load; let me reload to capture the actual requests:
+
+---
+
+## Claude — 2026-08-20 15:35
+
+**I was wrong, and the browser proves it.** Request #13:
+
+```
+https://sources.mandala.library.virginia.edu/sources-api/json/25581?_=…&callback=axiosJsonpCallback_926307301699
+statusCode: 503
+```
+
+**HTTP 503 — the WAF block, reproduced live right now.** Every one of the other 19 requests (all Solr) returned 200.
+
+My curl replay with browser headers returned 200, and I concluded from that "the WAF doesn't reproduce today," then built a content-type/ORB theory on top. Both wrong. **curl with spoofed headers is not a valid proxy for a real browser against a WAF** — it's keyed on something curl can't fake (TLS/JA3 fingerprint, header ordering, or similar). The ORB theory was unnecessary; the plain 503 explains everything.
+
+This is actually the ideal Stage 1 result: **you've reproduced the original 2026-07-29 incident exactly.** Now Stage 2 is a real test. Enabling the proxy:
+
+---
+
+## Claude — 2026-08-20 15:37
+
+Dev server exited unexpectedly (exit 0) and it reported binding to `172.23.166.250`, not localhost. Let me look:
+
+---
+
+## Claude — 2026-08-20 15:38
+
+Root cause: CRA's `start.js` registers `process.stdin.on('end', () => process.exit())`. Backgrounded with no stdin attached, stdin ends immediately and the server exits — nothing to do with your config. Keeping stdin open:
+
+---
+
+## Claude — 2026-08-20 15:38
+
+**The routing change works.** The request is now:
+
+```
+http://localhost:3000/proxy/json/?url=https%3A%2F%2Fsources.mandala.library.virginia.edu%2F…
+```
+
+**Same-origin**, through `/proxy/json/` — exactly what the change is meant to do, and no direct cross-origin call to the Sources host. (The 503 in the second list is the stale entry from the pre-change page load.)
+
+But it returns **404**, where my direct curl to `thlddev.ddev.site/proxy/json/` returned 200. So the last hop — CRA's `setupProxy.js` → DDEV — is failing. Isolating which:
+
+---
+
+## Claude — 2026-08-20 15:39
+
+Isolated cleanly:
+- **A. Direct to DDEV → 200** JSON ✓
+- **B. Through CRA setupProxy → 404**, returning 115KB of WordPress HTML (a WP 404 page)
+- **C. DDEV is up** (not maintenance again)
+
+So the request *reaches* WordPress but doesn't match the `/proxy/json` rewrite. Testing the two likeliest causes — query-string mangling by the proxy middleware, and forwarded-proto confusion:
+
+---
+
+## Claude — 2026-08-20 15:39
+
+All three ruled out — every direct variant returns 200. But **H3 is a clue**: `/proxy/json` without the trailing slash **301-redirects**, and `http-proxy-middleware` doesn't follow redirects by default.
+
+Let me get the actual request WordPress sees rather than keep guessing:
+
+---
+
+## Claude — 2026-08-20 15:40
+
+Strong signal: `/proxy/` → **200**, `/proxy/json/` → **404**. That pattern points at Express mount-path stripping. Confirming with a deliberately doubled prefix — if the mount strips `/proxy`, then `/proxy/proxy/json/` should reach WordPress correctly:
+
+---
+
+## Claude — 2026-08-20 15:40
+
+**Confirmed.** `/proxy/proxy/json/?url=…` through port 3000 returns **200 with the real JSON**, 4677 bytes.
+
+So Express strips the `/proxy` mount path before `http-proxy-middleware` (v3.0.5) sees it, and the existing `pathRewrite: {'^/proxy': '/proxy'}` never matches because the prefix is already gone. **`setupProxy.js` has never worked** — and the comment in it (`// ensure /proxy/ttt -> /proxy/ttt`) shows someone diagnosed the symptom but the fix doesn't hold under v3 + Express mounting. That's why the Sources proxy fix was only ever verified in production, never locally.
+
+---
+
+## Claude — 2026-08-20 15:41
+
+Fix works: `/proxy/json/?url=…` through port 3000 now returns **200 with real JSON**. Verifying end-to-end in the browser:
+
+---
+
+## Claude — 2026-08-20 15:41
+
+**Verified end-to-end.** The network log now tells the whole story in sequence:
+
+| # | Request | Status | What it shows |
+|---|---|---|---|
+| 1 | direct JSONP → `sources.mandala.library.virginia.edu` | **503** | the original 2026-07-29 WAF bug, reproduced live |
+| 2–3 | `localhost:3000/proxy/json/?url=…` | **404** | your change works — proxy path taken — but blocked by the `setupProxy.js` bug |
+| 4 | `localhost:3000/proxy/json/?url=…` | **200** | after the setupProxy fix: same-origin proxy request succeeds |
+
+No cross-origin call to the Sources host any more. Let me confirm the body actually renders for a user:
+
+---
+
+## Claude — 2026-08-20 15:41
+
+**Fully verified.** The page now renders the complete Sources record — title, journal (*Childhood Education*), format, pages, publication year, record creator, visibility, and the full abstract. Previously this was the blank body / "Item not found!".
+
+Committing the `setupProxy.js` fix as its own concern:
+
+---
+
+## Claude — 2026-08-20 15:42
+
+Updating the Option A deferred note — the browser evidence directly addresses its main open question:
+
+---
+
+## Claude — 2026-08-20 15:43
+
+Everything's recorded. **Your change is verified working end to end.**
+
+## What the browser proved
+
+One network sequence told the whole story:
+
+| Request | Status |
+|---|---|
+| direct JSONP → production Sources | **503** — the 2026-07-29 WAF bug, reproduced live |
+| `localhost:3000/proxy/json/?url=…` | **404** — your gate works, but `setupProxy.js` was broken |
+| same, after fixing `setupProxy.js` | **200**, 4,677 bytes of real JSON |
+
+The Sources page renders its full record — journal, format, pages, year, creator, visibility, complete abstract. First time this path has been observed working from a browser on any codebase.
+
+## Two findings beyond your change
+
+**`setupProxy.js` had never worked.** Express strips the `/proxy` mount path before `http-proxy-middleware` v3 sees it, so `'^/proxy' → '/proxy'` could never match. Requests reached WordPress as `/json/…` and 404'd. Proven by doubling the prefix. **This is why the July fix was only ever verified in production** — local verification was impossible, and the failure looked like the feature rather than the tooling.
+
+**curl cannot test this WAF.** My replay with full browser headers got **200** where the real browser got **503**. It keys on TLS fingerprint or header ordering. I'd built a whole content-type/ORB theory on that false negative — retracted. Recorded as a rule in the spike doc, deferred note, and memory, because it'll mislead the next person too.
+
+That also **raises the Option A gap** I filed: the 503 came from `localhost:3000`, unrelated to thlib.org, so the WAF isn't scoped to the WordPress embeds. Standalone deployments — including production `mandala.kmaps.virginia.edu` — should be treated as genuinely exposed, not theoretically.
+
+## State
+
+**`mandala-om`** (`feat/generalize-json-proxy-all-sites`, unpushed): 3 commits — generalize the gate, derive hosts from env, fix setupProxy. Uncommitted: `package.json`/`package-lock.json` (the 8 phantom deps) — still want their own commit.
+
+**`mandala-navina`** (`feat/av-node-json-controller`, unpushed): 11 doc commits.
+
+**Left running for you:** dev server on :3000 with the proxy enabled, and Chrome tab showing the working page. `.env.development.local` is untracked — delete it to revert to normal dev config, but note that reverts you to the dev hosts where Sources can't render at all.
+
+I count three verification mistakes I made today — artifact-presence as build success, over-confident attribution of "Item not found!", and the curl/WAF false negative. All three are written into the docs rather than quietly dropped, since each would mislead the next person the same way.
+
+---
+
+## User — 2026-08-20 15:44
+
+So this url doesn't work now http://localhost:3000/sources/all/list?filters=id.asset_type%3Asources__lb.sources__op.AND
+
+---
+
+## Claude — 2026-08-20 15:44
+
+Let me look rather than speculate — and specifically check whether my `setupProxy` change affected it, since that fix touches *all* `/proxy/*` routes, not just `/proxy/json`:
+
+---
+
+## Claude — 2026-08-20 15:45
+
+Those are accumulated from the previous page. Let me clear and reload to isolate this page's requests:
+
+---
+
+## Claude — 2026-08-20 15:45
+
+Both failing identically points at a shared browse/search path — and I have a prime suspect: **my `.env.development.local` switched Solr from dev to production**, and `.env.tibet.prod` carries the comment *"production solr needs schema update"*. Let me check:
+
+---
+
+## Claude — 2026-08-20 15:45
+
+No Solr requests captured and no errors — tracking likely reset on navigation. Let me see what the page actually shows first:
+
+---
+
+## Claude — 2026-08-20 15:45
+
+No Solr search request is being issued at all — only `ping.php`. And the page has no text content. Let me see what's actually on screen:
+
+---
+
+## Claude — 2026-08-20 15:46
+
+**This is my fault, and the stack trace shows exactly how.**
+
+```
+TypeError: Cannot read properties of undefined (reading 'match')
+  useParams → const match = useContext(RouterContext).match;
+  AssetHomeCollection.js:15 → const { view_mode } = useParams();
+```
+
+`useContext(RouterContext)` returning `undefined` is the classic signature of **two copies of react-router** in the tree — the context the `<Router>` provider fills isn't the one `useParams` reads.
+
+I caused it. When I "fixed" the phantom dependency by declaring `react-router` explicitly, npm resolved it to **5.3.4**, while `react-router-dom` carries its own nested copy at a different version. Two instances, two distinct `RouterContext` objects.
+
+---
+
+## Claude — 2026-08-20 15:46
+
+Exactly confirmed:
+
+| Copy | Version |
+|---|---|
+| `node_modules/react-router` (mine) | **5.3.4** |
+| `node_modules/react-router-dom/node_modules/react-router` (nested) | **5.2.0** |
+
+`react-router-dom@5.2.0` pins `react-router: 5.2.0` **exactly**, so my `^5.3.4` forced npm to nest a second copy. The `<Router>` provider and `useParams` end up reading different `RouterContext` objects.
+
+I flagged this exact risk in my own commit message ("moved 5.2.0 → 5.3.4, same-major but under 14 files") and should have pinned it then. Fixing:
+
+---
+
+## Claude — 2026-08-20 15:46
+
+Single copy now at 5.2.0, nested duplicate removed. Restarting and re-testing both URLs:
+
+---
+
+## Claude — 2026-08-20 15:47
+
+Fixed — Sources browse renders fully: **26,429 hits, page 1 of 265**, results listing with KMaps browse tree. Verifying the other two URLs didn't regress:
+
+---
+
+## Claude — 2026-08-20 15:48
+
+All three URLs verified working:
+
+| URL | Result |
+|---|---|
+| `/sources/all/list?filters=…` | **26,429 hits**, page 1 of 265, renders |
+| `/images/all/list?filters=…` | **108,084 hits**, page 1 of 1081, renders |
+| `/sources/25581` | proxy request **200**, full record + abstract renders |
+
+Recording the regression and its lesson:
+
+---
+
+## Claude — 2026-08-20 15:48
+
+That memory still carries the build-verification advice I later proved wrong — fixing it:
+
+---
+
+## Claude — 2026-08-20 15:49
+
+Fixed. That was **my regression**, not a pre-existing issue.
+
+**What broke:** my "fix" for the phantom dependencies. Declaring `react-router` at the root's range `^5.2.0` let npm resolve **5.3.4** at top level, while `react-router-dom@5.2.0` pins `react-router: 5.2.0` *exactly* and kept its own nested copy. Two copies → two distinct `RouterContext` objects → `useContext(RouterContext)` returns `undefined` → `useParams` throws. It broke every browse/list page for every asset type.
+
+**Fix:** pinned `react-router` to exactly **5.2.0**, matching what `react-router-dom` already resolved. One copy remains.
+
+**Verified after:**
+
+| URL | Result |
+|---|---|
+| `/sources/all/list` | 26,429 hits, renders |
+| `/images/all/list` | 108,084 hits, renders |
+| `/sources/25581` | proxy 200, full record + abstract |
+
+**Two things worth carrying forward, both recorded:**
+
+1. **Pin a phantom dep to the version already resolved in the tree, never to a range.** This is the second time today the same class of mistake bit — `react-rnd`'s caret pulled a newer `react-draggable` and broke the build. For anything carrying a React context, a duplicate instance is a *silent runtime break*, not a version warning. I'd even flagged this exact risk in my own commit message ("moved 5.2.0 → 5.3.4, same-major but under 14 files") and didn't act on it.
+
+2. **A green build doesn't mean the app works.** This compiled cleanly with warnings and only failed at runtime. I'd been treating build success as sufficient verification; it isn't. I've corrected the memory that gave that advice.
+
+**Still uncommitted in `mandala-om`:** `package.json` + `package-lock.json`. That blob now contains two load-bearing exact pins (`react-rnd@10.3.7`, `react-router@5.2.0`) alongside the 8 dependency additions — worth keeping together in one commit rather than splitting, since the pins are what make the additions safe.
+
+Two packages remain above root's floor: `iso-639-1` (2.1.15) and `react-tiny-popover` (8.1.6). Neither carries React context and both build clean, but they're the first suspects if anything else surfaces.
+
+---
+
+## User — 2026-08-20 15:52
+
+So looks good from my point of view now.
+
+---
+
+## Claude — 2026-08-20 15:53
+
+Good. Let me clean up and close out the session properly.
+
+---
+
+## Claude — 2026-08-20 15:53
+
+Docs branch pushed. Two decisions left that are yours:
+
+---
+
+## Claude — 2026-08-20 15:54
+
+Diff is clean — 8 additions, with `react-rnd` and `react-router` correctly pinned exact (no caret). Checking the lockfile for anything that shouldn't be published before I push:
+
+---
+
+## Claude — 2026-08-20 15:54
+
+Careless of me — that's the same piped-exit-code trap I flagged earlier; `head` returns 0 regardless, so the `&&` fired on no matches. Redoing with counts:
+
+---
+
+## Claude — 2026-08-20 15:54
+
+Clean: 0 credential-shaped lines, all 50 added `resolved` URLs point at the public npm registry, no local or git refs. Committing and pushing:
+
+---
+
+## Claude — 2026-08-20 15:55
+
+Both branches pushed, nothing left uncommitted.
+
+## Final state
+
+**`shanti-uva/mandala-om` → `feat/generalize-json-proxy-all-sites`** (4 commits, no PR)
+- Generalize the `/proxy/json` gate from Sources-only to all Drupal hosts
+- Derive the host set from `REACT_APP_DRUPAL_*` rather than hardcoding production
+- Fix `setupProxy.js` — the local dev proxy had never worked
+- Declare the 8 phantom deps, with two load-bearing exact pins
+
+**`uvalib/mandala-navina` → `feat/av-node-json-controller`** (13 doc commits, no PR per your call)
+- Spike 6 AV audit corrections, the Option A gap note, the end-to-end verification record
+
+## What actually got proven today
+
+The proxy path went from "decided but never observed working anywhere" to verified in a browser, with the failing and passing states both captured: **503** direct → **200** through the proxy → page renders.
+
+## Loose ends I'd flag
+
+**Two findings not yet filed as deferred notes** — I left them in the session log only, since you hadn't weighed in:
+1. The Solr double-callback-wrap (`testcb(testcb({...}))`) throwing an uncaught TypeError on every Solr call
+2. `mandala-sources-dev` serving no JSON API while the dev Solr index advertises `url_json` pointing at it — dev asset detail pages are broken across the board
+
+**The Option A gap note got upgraded** — the 503 came from `localhost:3000`, an origin unrelated to thlib.org, so the WAF isn't scoped to the WordPress embeds. Standalone deployments including production `mandala.kmaps.virginia.edu` should be treated as genuinely exposed. That's now the most consequential open item from this session.
+
+**Still running:** dev server on `:3000` with the proxy config, and `.env.development.local` pointing at production Solr. Delete that file to return to normal dev — but note that reverts you to hosts where Sources can't render at all.
+
+For the record, I made four verification mistakes today — artifact-presence as build success, over-confident attribution of "Item not found!", the curl/WAF false negative, and shipping a react-router range that broke every list page. All four are written into the docs rather than dropped, since each would mislead the next person the same way.
+
+---
+
+## User — 2026-08-20 15:57
+
+Can't we just fix Solr double-callback-wrap now, just answer first, also explain what mandala-sources-dev serving no JSON API means what is the domain you are trying that against? Just talk for now. Don't do any coding
+
+---
+
+## Claude — 2026-08-20 15:58
+
+Talking only, no code.
+
+## Can we just fix the double-wrap?
+
+Short answer: not safely yet, and I need to walk back part of what I claimed about it.
+
+**What I actually observed** was a curl against the dev Solr endpoint with `json.wrf=testcb`, which came back as `testcb(testcb({...}))` — genuinely wrapped twice.
+
+**What I claimed** was that this "means every Solr call in the app emits a stray console error." I did not verify that. When I read the browser console on those page loads, the only message was a Google Maps warning — no `TypeError: axiosJsonpCallback_… is not a function`. And the app plainly works: 26,429 Sources hits, 108,084 Images hits, all rendering. So either the browser path isn't double-wrapping the way my curl was, or the error is being swallowed somewhere I didn't look. That's my fifth overstatement today, and it's the reason I don't want to "just fix" it — I'd be fixing something whose real-world symptom I haven't established.
+
+Three things I'd want settled first:
+
+1. **Does it actually happen in the browser?** My curl passed `json.wrf` explicitly. It's possible the proxy adds a wrapper only when it sees that param, and that the browser's request shape differs enough to matter. Needs a console check on a page load with the wrap confirmed in the response body.
+
+2. **Which codebase serves it?** The response headers said `Apache/2.4.54 (Debian)`, `PHP/7.4.33` — a PHP proxy, not raw Solr. But I don't know whether `mandala-index-dev` is served by the D11 `solr-proxy/` in the monorepo or the legacy `mandala-solr-proxy`. Those are different repos with different deploy paths, and I'd be guessing.
+
+3. **Does production share it?** If the same proxy code fronts production Solr, a wrapper change alters JSONP behavior for every live consumer — the React app, `wp-kmaps`, anything else. The fix is small either way (stop the proxy wrapping, or stop passing `json.wrf` through), but picking wrong breaks JSONP entirely rather than just tidying it.
+
+So: cheap to fix, cheap to verify, but genuinely worth ten minutes of confirmation rather than a same-turn patch.
+
+## What "mandala-sources-dev serves no JSON API" means
+
+**The domain is `https://mandala-sources-dev.internal.lib.virginia.edu`** — VPN-only, from `.env.development`'s `REACT_APP_DRUPAL_SOURCES`.
+
+It matters because the **dev Solr index advertises it**. Querying `mandala-index-dev…/solr/kmassets` for Sources records returns `url_json` values like:
+
+```
+https://mandala-sources-dev.internal.lib.virginia.edu/sources-api/json/137238
+```
+
+That's the contract the React client follows — read `url_json` off the Solr record, fetch it. I probed four candidate paths on that host: `/sources-api/json/{nid}`, `/api/json/{nid}`, `/node/{nid}`, `/jsonapi` — **all 404**. Only `/` returned 200, and it served Drupal 10/11 admin chrome (I inferred that from Claro/Olivero CSS custom properties like `--color--primary-hue`, which is decent evidence but not proof).
+
+So the index points at a D7-shaped path on a host that appears to be running D10/11, where that route doesn't exist. Practical effect: **dev asset detail pages can't render for Sources at all**, regardless of the proxy work — the fetch has nowhere to land.
+
+**What I don't know**, and would want you or Yuji to say:
+- Whether that host is a legacy D7 dev box that got rebuilt, or something in the D11 rebuild that inherited the old naming
+- Whether the dev kmassets index is simply stale — `url_json` is a placeholder by `mandala_kmassets_sync`'s own admission, so stale values there may be entirely expected rather than a defect
+- Whether Images/AV/Texts on dev have the same problem — **I only tested Sources**
+
+That last gap is why I hedged on filing it. If the dev index is just carrying placeholder URLs nobody has repointed, it's a known consequence of the deferred URL-strategy decision, not a new finding — and filing it as a defect would add noise. If instead that host is supposed to serve an API and doesn't, it's real. You'd know which, and that's the call I'd want before writing it up.
+
+---
+
+## User — 2026-08-20 16:03
+
+All the -dev urls such as https://mandala-sources-dev.internal.lib.virginia.edu/ have been taken over by the new D11 site. so those endpoints are no longer there. But staging does: https://mandala-sources-staging.internal.lib.virginia.edu/sources-api/json/137238 (though that ID doesn't work), but this one works https://sources.mandala.library.virginia.edu/sources-api/json/62716 and https://mandala-sources-staging.internal.lib.virginia.edu/sources-api/json/62716
+
+---
+
+## Claude — 2026-08-20 16:04
+
+That clears it up, and it means my "finding" wasn't one — good thing I asked rather than filed it.
+
+## Retracting that item
+
+`mandala-sources-dev` not serving `/sources-api/json/` is **expected behavior**, not a defect: the D11 site took over the `-dev` hostnames, and the D7 route simply doesn't exist there. Nothing to file. I'd have added noise to the deferred queue by writing it up as breakage.
+
+## But it relocates the problem to something real and small
+
+`.env.development` still has:
+
+```
+REACT_APP_DRUPAL_SOURCES=https://mandala-sources-dev.internal.lib.virginia.edu
+```
+
+That's now pointing at a **D11 site while asking it for a D7 API path**. So local dev can't render any asset detail — not because anything is broken, but because the config is stale relative to the `-dev` takeover. That's a genuine, fixable thing, and it's the actual explanation for the `Item not found!` you hit at the very start.
+
+The right target for local dev is **staging**, which you've confirmed still serves the D7 endpoints. That's also a better choice than what I set up — my `.env.development.local` points at **production**, which works but means local dev exercises live data and live load for no good reason. Staging gets the same D7 API without that.
+
+## One gotcha for whoever writes test instructions
+
+Your two examples show the environments carry **different data**: `62716` resolves on both staging and production, `137238` only on production. So a test nid has to be chosen per-environment — and the dev Solr index advertises ids (like 137238) that staging can't serve. Anyone testing against staging needs to pick an id from a source that agrees with staging, not from the dev index.
+
+## The question I'd actually want answered
+
+Is `.env.development` *meant* to point at staging D7, or at the D11 dev site with the new `/api/json/{nid}` paths?
+
+Those are different intents:
+- **Staging D7** — local dev works against the current production-shaped API. Good for front-end work now, but it's developing against the thing being retired.
+- **D11 dev** — local dev works against `mandala_node_api`'s `/api/json/{nid}`. That's the target architecture, and it's exactly what Spike 6 exists to make work. But only `shanti_image` has an endpoint today, so Sources/Texts/AV would have nothing to hit.
+
+That choice is really a Spike 6 decision, not a config tweak, and it connects to the URL-strategy work: the dev kmassets index still carries D7-format uids (`sources-137238`, no `-11-` infix) and D7-path `url_json` values aimed at hosts that are now D11. That divergence is precisely what the `url_json` strategy has to resolve as each site migrates.
+
+If you want, I can repoint `.env.development.local` at staging so local testing stops touching production — small and reversible. And separately, the stale `REACT_APP_DRUPAL_SOURCES` in the tracked `.env.development` is worth either fixing or noting, depending on which of the two intents above is right.
+
+---
+
+## User — 2026-08-20 16:08
+
+Repoint .env.development.local at staging instead of production. And we have to be careful to delineate work done for developing mandala-om for the D7 environment versus that done for the D11 environment. The branch 'release/v1.1.0-rc' is a D7 branch. Is the branch 'feat/generalize-json-proxy-all-sites' still D7 compatible?
+
+---
+
+## Claude — 2026-08-20 16:08
+
+Let me check something before editing, because repointing may not be as simple as swapping hostnames — the fetch URL comes from Solr's `url_json`, not from `REACT_APP_DRUPAL_*`:
+
+---
+
+## Claude — 2026-08-20 16:09
+
+## The staging repoint isn't achievable by config — here's the blocker
+
+I stopped before editing because the swap doesn't do what it looks like it does. **The fetch URL comes from the Solr record's `url_json`, not from `REACT_APP_DRUPAL_*`.** `useMandala` reads `solrdoc.url_json` and fetches it; the `REACT_APP_DRUPAL_*` vars only feed my host gate and other links.
+
+And there's no staging index to point at:
+
+| Index | Reachable | `url_json` it serves |
+|---|---|---|
+| `mandala-index` (prod) | ✅ | `https://sources.mandala.library.virginia.edu/...` |
+| `mandala-index-dev` | ✅ | `https://mandala-sources-dev.internal...` — the now-D11 hosts |
+| `mandala-index-staging` | ❌ unreachable | — |
+| `mandala-solr-proxy-staging` | ❌ unreachable | — |
+
+So to fetch from staging I'd need either a staging kmassets index whose `url_json` carries staging hosts, or a client-side host rewrite that doesn't exist and that I wouldn't add just for local testing.
+
+Practical options, none of which I've done:
+1. **Leave it on production** — read-only `GET`s of public records; works today
+2. **Delete the override** — reverts to dev, where detail pages can't render at all
+3. **Someone stands up a staging kmassets index** — real infrastructure work, not a config tweak
+
+Tell me which and I'll do it. My instinct is (1) with the caveat documented, since the load is negligible and it's the only configuration that actually exercises the path.
+
+## Is `feat/generalize-json-proxy-all-sites` D7-compatible?
+
+**Yes** — and it's mostly environment-agnostic rather than D7-specific.
+
+| Change | D7/D11 status |
+|---|---|
+| `setupProxy.js` fix | Neither — local dev tooling, not shipped in a build |
+| `package.json` deps | Neither — no D7/D11 semantics |
+| Host gate from `REACT_APP_DRUPAL_*` | **Agnostic by construction** — follows whatever hosts the build's env declares. This is exactly why I replaced the hardcoded production domain |
+| Proxy branch | Agnostic — passes `url_json` through; verified working against **D7 production Sources** |
+| **AV `.jsonp` append in the fallback** | **D7-specific** |
+
+That last row is the one to watch for your delineation. D7's AV serves JSONP from a `.jsonp` path variant, so the `'p'` append is required there. D11's `mandala_node_api` deliberately serves **no JSONP at all** — so that line is D7-only logic. It's harmless in D11 (under Option A everything goes through the proxy and the fallback isn't taken), but it is D7 behavior living in the file.
+
+**A gap I should flag rather than let you discover:** I *moved* that AV append into the fallback branch and **never exercised it**. I verified Sources through the proxy; I did not test an AV detail page, and specifically not AV via direct JSONP — the exact path I changed. Reasoning says it's correct, but that's reasoning, not evidence, and today has already produced four cases where my reasoning was wrong. Images/Texts/Visuals detail pages are likewise untested.
+
+**On branch topology:** in the branches I saw (`master`, `release/v1.1.0-rc`, several `*/release/v1.1.0-rc` feature branches, `chore/react-upgrade`, dependabot) there's **no D11 branch** in `mandala-om`. So the D7/D11 fork you're describing hasn't happened in that repo yet. If it does, this work should carry over cleanly — the config-driven host gate was designed for exactly that — with the AV `.jsonp` line being the one thing needing a D11-side decision.
+
+---
+
+## User — 2026-08-20 16:11
+
+Leave it on production and document the caveat
+
+---
+
+## Claude — 2026-08-20 16:12
+
+Adding the D7/D11 delineation point, since that's a standing concern beyond this session:
+
+---
+
+## Claude — 2026-08-20 16:12
+
+Done and pushed.
+
+**`.env.development.local` stays on production**, with the caveat written into the file itself so it explains itself to whoever opens it next:
+- **Why not dev** — the `*-dev` hostnames were taken over by D11; the missing D7 endpoints are expected, not breakage
+- **Why not staging** — even though staging *does* serve the D7 endpoints, `url_json` is a field **in the Solr record**, not derived from `REACT_APP_DRUPAL_*`. Repointing needs a staging kmassets index, and neither `mandala-index-staging` nor `mandala-solr-proxy-staging` is reachable. Changing the `DRUPAL_*` vars only changes which hosts the *gate* considers eligible, not which host is fetched
+- **What production means here** — read-only selects and GETs of public records; negligible load, but live data
+- **Test ids don't transfer** — `62716` works on both; `137238` is production-only
+
+**On the D7/D11 delineation**, I added a table to the spike doc. Summary: the branch is D7-compatible and mostly environment-*neutral* rather than D7-specific. `setupProxy` and the dependency work carry no D7/D11 semantics; the env-derived host gate is agnostic by construction — that's precisely why I replaced the hardcoded production domain.
+
+**The one genuinely D7-specific line** is AV's `.jsonp` append in the direct-JSONP fallback. D7's AV serves JSONP from a path variant; D11's `mandala_node_api` serves none at all. Harmless under Option A in D11 since the fallback isn't taken, but it needs a D11-side decision whenever the client is pointed at D11.
+
+Two things I want to leave visible rather than buried:
+
+**No D11 branch exists in `mandala-om`** among the branches I could see. The fork you're describing hasn't happened in that repo yet — worth deciding before more work accumulates on `release/v1.1.0-rc`.
+
+**The AV fallback is untested.** I moved that code and never ran it. Only the Sources detail page was exercised; AV, Images, Texts and Visuals detail pages weren't. Given the day's track record I'd treat that as the first thing to check before this merges — it's the one place I changed behavior and then reasoned rather than verified.
+
+---
+
+## User — 2026-08-20 16:17
+
+Can you document where we are, do a session log, and make sure everything is commited and pushed
+
+---
+
+## Claude — 2026-08-20 16:17
+
+Let me first check the state of both repos, then regenerate the session log so it captures the full transcript (it was written mid-session and its raw portion is stale):
 
 ---
