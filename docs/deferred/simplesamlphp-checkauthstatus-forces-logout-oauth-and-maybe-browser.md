@@ -4,10 +4,12 @@
 **Raised during:** Session 2026-08-20
 **Jira:** (add when available)
 **Priority:** High — root cause of the tracked 4th OAuth2 defect
-**Status:** 🟢 **FIXED 2026-08-20** by a service override in the new `mandala_saml_oauth`
-custom module. Behaviour proven locally (DDEV): a Bearer request now passes through where a
-browser-style request still redirects. **Not yet verified live on dev-0** — needs a deploy,
-then the curl replay of the SAML→OAuth2→`/oauth/userinfo` chain.
+**Status:** 🟢 **FIXED 2026-08-20 and VERIFIED LIVE on dev-0.** Service override in the new
+`mandala_saml_oauth` module. The full SAML→OAuth2→`/oauth/userinfo` chain was replayed against
+the deployed image (`build-20260820151220`): `/oauth/userinfo` now returns `HTTP 200
+application/json` with the correct `sub`, via the ALB and direct to the container. The same
+replay against the previous image (`build-20260819195654`) returns `302 → /`, so the
+before/after is measured, not asserted.
 
 > **Scope correction (2026-08-20, later in the same session).** This note originally also
 > carried Xiaoming's "logout doesn't work" report as a "Case 2", on the strength of watchdog
@@ -90,6 +92,30 @@ Bearer token                 -> response=NONE (request proceeds) propagation sto
 ```
 
 `Authorization: Basic ...` and a missing header both correctly stay unexempted.
+
+### Verified live on dev-0
+
+Same replay script, two images, everything else identical:
+
+| step | pre-fix `build-20260819195654` | post-fix `build-20260820151220` |
+|---|---|---|
+| 1–4 SAML login → `/user/600` | 200 | 200 |
+| 5 `GET /oauth/authorize` | 302 + code | 302 + code |
+| 6 `POST /oauth/token` | 200, access_token | 200, access_token |
+| **7 `GET /oauth/userinfo` + Bearer** | **302 → `/`** | **200 `application/json`** |
+
+`X-Consumer-ID: solrproxy` is present in both, which is what makes the before case unambiguous:
+`simple_oauth` authenticated the token successfully and `checkAuthStatus()` discarded the
+session anyway. Post-fix, watchdog records the `Session opened` for the login with **no**
+matching `Session closed` — `user_logout()` no longer runs on the Bearer hop.
+
+**Testing trap worth recording.** The first post-deploy run still failed, and it was the test
+that was wrong, not the fix: the watcher triggered on the module *directory* appearing, which is
+true the moment the container starts, but a `ServiceProvider` only runs for an **enabled**
+module, and `deploy_backend.yml` enables it ~50s later in `import full site configuration`. The
+replay landed 12 seconds inside that window. Gate post-deploy verification on the pipeline
+reaching *Deploy Succeeded*, or on `drush pm:list` showing the module enabled — never on files
+being present.
 
 ## Separate real bug behind the same subscriber
 
