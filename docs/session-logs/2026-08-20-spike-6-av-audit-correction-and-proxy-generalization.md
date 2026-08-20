@@ -171,6 +171,46 @@ therefore renders blank regardless of this change — pre-existing dev-data brea
 regression. Local verification requires pointing at production (whose Sources API returns 200)
 via an untracked `.env.development.local`, plus the DDEV WordPress for the proxy leg.
 
+## Addendum 3 — VERIFIED end to end in a browser, and two more findings
+
+Than brought up the DDEV WordPress, which made a real browser test possible. Result: **the full
+chain is verified for the first time on any codebase.**
+
+| Request (Chrome, localhost:3000, production Solr + hosts) | Status |
+|---|---|
+| direct JSONP → `sources.mandala.library.virginia.edu/sources-api/json/25581?callback=…` | **503** — the 2026-07-29 WAF bug, reproduced live |
+| `localhost:3000/proxy/json/?url=…` | **404** — gate works, but `setupProxy.js` was broken |
+| `localhost:3000/proxy/json/?url=…` (after fix) | **200**, 4,677 bytes of real JSON |
+
+The Sources page then rendered its full record — title, journal, format, pages, year, record
+creator, visibility, complete abstract — where it had shown a blank body. No cross-origin
+request to the Sources host remains.
+
+**Finding A — `setupProxy.js` had never worked** (`mandala-om` `eeefb203`). Express strips the
+`/proxy` mount path before `http-proxy-middleware` (v3.0.5) sees it, so the existing
+`pathRewrite: {'^/proxy': '/proxy'}` could never match — the prefix was already gone when it ran.
+Requests reached WordPress as `/json/…` and 404'd. Proven by deliberately doubling the prefix:
+`/proxy/proxy/json/…` → 200 while `/proxy/json/…` → a WordPress 404 page. **This explains why
+the July 2026 Sources fix was only ever verified against production** — local verification was
+impossible, and the failure looked like the feature rather than the dev tooling. The comment on
+the old rule (`// ensure /proxy/ttt -> /proxy/ttt`) shows the symptom had been noticed; the fix
+just doesn't hold under v3 + Express mounting.
+
+**Finding B — curl cannot test this WAF, and a third verification mistake.** A curl replay with
+full browser headers (`Origin`, `Referer`, `Sec-Fetch-Dest: script`, `Sec-Fetch-Mode: no-cors`,
+`Sec-Fetch-Site: cross-site`, Chrome UA) returned **200** on the exact URL a real browser got
+**503** on. The rule keys on something header-spoofing can't fake — TLS/JA3 fingerprint, header
+ordering, or similar. On the strength of that false negative this session declared "the WAF
+doesn't reproduce today" and constructed a content-type/ORB theory to explain the failure
+instead. Both were wrong; the browser showed a plain 503. **Rule going forward: only a real
+browser is evidence about this WAF.**
+
+**Consequence for the Option A gap note:** its first open question ("are the standalone
+deployments actually WAF-exposed?") is now substantially answered — the 503 came from
+`localhost:3000`, an origin with no relationship to thlib.org, so the rule is not origin-scoped
+to the WordPress embeds. The standalone deployments should be treated as genuinely exposed.
+Priority on that note raised accordingly.
+
 ## Branches left open
 
 | Repo | Branch | State |

@@ -382,9 +382,42 @@ files carry pre-existing lint warnings; the two in `useMandala.js` — an unused
 import and a `==` on line 86 — are pre-existing code this change preserved). Husky's
 prettier/lint-staged pre-commit hook passes. Host matching is unit-tested (13 cases).
 
-**Still unexercised: the proxy and JSONP request paths themselves.** Nobody has watched a real
-`/proxy/json?url=…` request succeed from a browser. **This cannot be done in dev**, for a reason
-worth recording: the dev Solr index's `url_json` values point at
+**✅ VERIFIED END TO END IN A BROWSER (2026-08-20).** Chrome, against production Solr +
+production Drupal hosts via an untracked `.env.development.local`, with the DDEV WordPress
+running. The network log captures the entire story in one sequence:
+
+| Request | Status | Meaning |
+|---|---|---|
+| direct JSONP → `sources.mandala.library.virginia.edu/sources-api/json/25581?callback=…` | **503** | the 2026-07-29 WAF bug, **reproduced live** |
+| `localhost:3000/proxy/json/?url=…` | **404** | the generalized gate works (proxy path taken) but `setupProxy.js` was broken |
+| `localhost:3000/proxy/json/?url=…` | **200** | after the `setupProxy.js` fix — same-origin, 4,677 bytes of real JSON |
+
+The Sources detail page then renders its full record (title, journal, format, pages, year,
+record creator, visibility, complete abstract) where it previously showed a blank body. **No
+cross-origin request to the Sources host remains.** This is the first time the same-origin proxy
+path has been observed working from a browser on any codebase.
+
+**Two findings that fell out of doing this:**
+
+1. **The WAF block is real and current — and curl cannot reproduce it.** A curl replay carrying
+   full browser headers (`Origin`, `Referer`, `Sec-Fetch-Dest: script`, `Sec-Fetch-Mode:
+   no-cors`, `Sec-Fetch-Site: cross-site`, Chrome UA) returned **200**, while the actual browser
+   got **503** for the same URL. The rule keys on something header-spoofing can't fake (TLS/JA3
+   fingerprint, header ordering, or similar). **Any future "is the WAF blocking?" check must use
+   a real browser** — a curl result is not evidence either way. An intermediate diagnosis in this
+   session (a content-type/ORB theory) was built on exactly that mistaken curl evidence and was
+   wrong.
+2. **`setupProxy.js` had never worked** — see
+   [the mandala-om fix](https://github.com/shanti-uva/mandala-om) commit `eeefb203`. Express
+   strips the `/proxy` mount path before `http-proxy-middleware` (v3.0.5) sees it, so the
+   existing `pathRewrite: {'^/proxy': '/proxy'}` could never match — the prefix was already gone.
+   Requests reached WordPress as `/json/…` and 404'd. Proven by deliberately doubling the prefix
+   (`/proxy/proxy/json/…` → 200). **This is why the July 2026 Sources fix was only ever verified
+   against production** — local verification was impossible, and nobody had reason to suspect the
+   dev tooling rather than the feature.
+
+**Remaining dev-environment limitation** (unrelated to the above, still true): the dev Solr
+index's `url_json` values point at
 `mandala-sources-dev.internal.lib.virginia.edu`, which serves **no JSON API at all** —
 `/sources-api/json/{nid}`, `/api/json/{nid}`, `/node/{nid}` and `/jsonapi` all return 404, and
 `/` returns Drupal 10/11 chrome. That host is not the D7 Sources site the dev index assumes.

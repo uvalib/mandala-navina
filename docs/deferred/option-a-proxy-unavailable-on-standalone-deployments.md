@@ -3,8 +3,10 @@
 **Area:** Spike 6 / URL strategy / mandala-om deployment topology / WAF
 **Raised during:** Spike 6 (2026-08-20) — generalizing the `/proxy/json` gate in `mandala-om`
 **Jira:** (add when available)
-**Priority:** Medium — no known break today, but it means the decided URL strategy covers only
-part of the deployment matrix, which matters at D11 cutover
+**Priority:** Medium → **raised 2026-08-20**: browser evidence now indicates the WAF fires for
+browser cross-origin requests generally, not just from the thlib.org origin — so the standalone
+deployments (including production `mandala.kmaps.virginia.edu`) are very likely genuinely
+exposed, not theoretically so. Matters at D11 cutover and arguably before.
 
 ## What we found
 
@@ -59,11 +61,23 @@ covered by the decided strategy either.
 
 ## What's undecided
 
-1. **Are the standalone deployments actually WAF-exposed?** The 503 was observed against
-   `sources.mandala.library.virginia.edu` from a browser on thlib.org. Whether the same rule
-   fires for a browser on `mandala.kmaps.virginia.edu` was never tested — different origin,
-   possibly different WAF evaluation. **This is the cheapest thing to check and should come
-   first**; if they aren't exposed, the gap is theoretical.
+1. ~~**Are the standalone deployments actually WAF-exposed?**~~ **Substantially answered
+   2026-08-20 — and the answer points to "yes, exposed."** A real Chrome browser on
+   `http://localhost:3000` (a non-Mandala, non-WordPress origin) requesting
+   `sources.mandala.library.virginia.edu/sources-api/json/25581?callback=…` received a **503**,
+   while every Solr request on the same page load returned 200. So the WAF rule is **not**
+   scoped to the thlib.org origin — it fires for browser cross-origin requests generally, which
+   is precisely what a standalone deployment does. This is strong evidence rather than proof for
+   `mandala.kmaps.virginia.edu` specifically, since that exact origin still hasn't been tested;
+   but the "maybe standalone origins are evaluated differently" hope is no longer the likely
+   case, and the gap should be treated as **real, not theoretical**.
+
+   **Methodological warning for whoever re-tests this:** a `curl` replay carrying full browser
+   headers (`Origin`, `Referer`, `Sec-Fetch-*`, Chrome UA) returned **200** for the very same
+   URL that the real browser got 503 on. The rule keys on something header-spoofing cannot
+   reproduce (TLS/JA3 fingerprint, header ordering, or similar). **Only a real browser is valid
+   evidence here** — a curl 200 means nothing. An intermediate diagnosis in the 2026-08-20
+   session was built on exactly that false negative and had to be retracted.
 2. **If they are exposed, what covers them?** Options that don't depend on WordPress:
    - Native CORS on D11 (the spike's Option B, currently marked superseded) — the standalone
      deployments are exactly the case Option B was suited to.
