@@ -44,29 +44,53 @@ node-JSON endpoints (2026-08-07, against `Site/mandala-drupal`), documented belo
 
 Located and read all four per-site individual-asset detail endpoints (the ones the React
 client reaches via each Solr record's `url_json` field). This resolves Pass Criterion #1
-for the JSON endpoints. **Key takeaway: the four endpoints are not uniform** — three
-return the augmented raw node (JSONP-capable), one returns a bespoke flat "doc" shape (no
-JSONP), and one embeds rendered HTML. A single generic D11 controller will not reproduce
-them; each needs its own response shaping.
+for the JSON endpoints. **Key takeaway: the four endpoints are not uniform** — all four
+return some variant of the augmented raw node, but differ in JSONP support (three
+JSONP-capable via `?callback=`, AV has none) and Texts additionally embeds rendered HTML.
+**Corrected 2026-08-20:** the original version of this takeaway (below, in the table and
+gotchas) mischaracterized AV as a bespoke Solr-derived flat "doc" with no real Drupal
+route — live evidence contradicts that; see the correction notes inline. A single generic
+D11 controller still will not reproduce all four; each needs its own response shaping, but
+for JSONP/route-existence reasons now, not because AV's shape is categorically different.
 
 | Site | Public path | Module / file | Callback | Response shape | JSONP |
 |---|---|---|---|---|---|
-| **AV** | `/api/v1/media/node/{nid}.json` | `mediabase/mb_solr/mb_solr.module` | `mb_solr_get_solrdoc()` | **Bespoke flat `doc`** (Solr-style: `service`, `asset_type="audio-video"`, `id`, `uid`, `collection`, `duration_s`, `url_*`, `caption`, `kmapid`…) — **not** the node | **No** (plain `drupal_json_output`) |
+| **AV** | `/api/v1/media/node/{nid}.json` | Services module (per-content-type "JSON Path" setting, same mechanism as Images/Sources/Texts — see below) | Services `node` resource `retrieve` action | Augmented **raw node** (`vid`, `uid`, `title`, `field_*` incl. `field_kmap_terms`/`field_subject`/etc. in the usual `raw/id/header/domain/path` shape, `field_og_collection_ref`) **+ computed extras** (`thumbnail_url`, `duration: {seconds, formatted}`, `path`) — **not** a Solr-style flat doc | **No** (plain JSON) |
 | **Images** | `/api/json/{nid}` | `shanti_images.module` | `shanti_images_node_json()` | Augmented **raw node** (entity-refs expanded in place); `?extend=true` gives a reshaped flat variant w/ IIIF url + dims | **Yes** (`?callback=`) |
 | **Sources** | `/sources-api/json/{nid}` | `shanti_biblio_modules/sources_misc/sources_misc.module` | `sources_misc_node_json()` | Augmented **raw node** (+`description` from body, collection/subcollection relations); sends `Access-Control-Allow-Origin: *` | **Yes** (`?callback=`) |
 | **Texts** | `/shanti_texts/node_json/{nid}` | `shanti_texts.module` | `shanti_texts_node_json()` | Augmented **raw node** **+ embedded rendered HTML** (`full_markup`, `toc_links`, `bibl_summary`, `views_links` via `views_embed_view()`) + book `toc`/`parent`/`children` | **Yes** (`?callback=` **or** `?json_wrf=`) |
 
+> **Correction (2026-08-20, Than + Claude Code):** the AV row above (module, callback, and
+> response shape) as originally written 2026-08-07 was **wrong**. It was based on reading D7
+> source (`mb_solr.module`) rather than hitting the live endpoint, and concluded AV served a
+> bespoke Solr-derived flat `doc` with no real Drupal route. Live evidence contradicts this:
+> `curl https://av.mandala.library.virginia.edu/api/v1/media/node/{42016,42167,42158}.json`
+> returns an **augmented raw node** — the same family of shape as Images/Sources/Texts, not a
+> Solr doc — via the Services module's standard per-content-type "JSON Path" setting (visible on
+> `/admin/structure/types/manage/video`, value `api/v1/media/node/__NID__.json`), the exact same
+> mechanism `shanti_kmaps_fields` documents for the other three sites. The table row and gotchas
+> #1–#2 below are corrected accordingly; the original (incorrect) claims are struck through for
+> the record rather than silently removed. This changes the D11 implementation picture:
+> **no special server-level path rewrite is needed for AV**, and it is not tied to the Solr/
+> kmassets write path the way the 2026-08-07 note assumed. See also the "AV is the exception"
+> paragraph below, which needs the same correction.
+
 **Load-bearing gotchas for D11:**
 
-1. **AV's public path has no Drupal route.** `/api/v1/media/node/{nid}.json` is a
+1. ~~**AV's public path has no Drupal route.** `/api/v1/media/node/{nid}.json` is a
    **server/proxy-level rewrite** to the internal `services/solrdoc/%` route
    (`mb_solr_get_solrdoc`) — verified: the string `api/v1/media/node/` appears in the D7
    codebase *only* where the endpoint self-documents its own URL (`mb_solr.module:885`),
    never as a `hook_menu` key. **D11 must recreate this path mapping explicitly** (route
-   alias or rewrite); it will not fall out of a straight module port.
-2. **AV is Solr-derived, not node-derived.** Its `doc` shape mirrors the kmassets Solr
+   alias or rewrite); it will not fall out of a straight module port.~~ **Corrected
+   2026-08-20:** live evidence shows this is a standard Services-module content-type JSON
+   Path route, the same mechanism the other three sites use — no rewrite/alias needed, D11
+   can register a normal route at this path like `mandala_node_api` already does for Images.
+2. ~~**AV is Solr-derived, not node-derived.** Its `doc` shape mirrors the kmassets Solr
    record, which ties the AV endpoint to the kmassets write path (1a.8 / reindeer_x),
-   consistent with the client already reading `url_json` from Solr.
+   consistent with the client already reading `url_json` from Solr.~~ **Corrected 2026-08-20:**
+   live evidence shows AV's response is an augmented raw node like Images/Sources/Texts, not
+   Solr-derived. It is not tied to the kmassets write path.
 3. **Texts bakes rendered HTML into JSON** via four `views_embed_view()` panes — so the
    D11 equivalent depends on those Views (or replacements) existing and rendering, not
    just on node data. This overlaps the Texts book-display model (see
@@ -79,6 +103,45 @@ them; each needs its own response shaping.
    before emitting. D11 must enforce the equivalent access check (ties to the ADR 015 /
    Group access model) in whatever replaces these endpoints, or private assets leak via
    the API.
+
+### AV live endpoint field inventory (2026-08-20, against real production data)
+
+Captured to correct the 2026-08-07 audit above and to give the future AV migration a real
+starting contract instead of re-deriving it from D7 source later. Fetched
+`https://av.mandala.library.virginia.edu/api/v1/media/node/{nid}.json` for three real public
+`video` nodes (42016, 42167, 42158) covering both a KMaps-term-sparse and a
+KMaps-term-populated case. **AV migration has not started** (no D11 `video`-equivalent
+bundle exists yet, and `mandala_kmassets_sync.settings.yml`'s `bundles` map only has
+`shanti_image`) — this is reference material for that future work, not something acted on
+now.
+
+Confirmed field groups, beyond the base node keys (`vid`, `uid`, `title`, `nid`, `type`,
+`language`, `created`, `changed`):
+- **PBCore metadata paragraphs** (D7 field-collections): `field_pbcore_creator`,
+  `field_pbcore_title`, `field_pbcore_description`, `field_pbcore_coverage`,
+  `field_pbcore_extension`, `field_pbcore_identifier`, `field_pbcore_relation` (used for
+  "Is Part Of" episode/series links via `field_relation_identifier` target_id +
+  `field_relation_type`), each wrapped in the usual `item_id`/`revision_id`/`field_name`
+  field-collection envelope.
+- **KMaps term references**, all in the standard `raw`/`id`/`header`/`domain`/`path` shape
+  already used elsewhere in this codebase (`shanti_kmaps_fields_default`-equivalent):
+  `field_kmap_terms` (domain `terms`), `field_subject` and `field_subcollection_new`
+  (domain `subjects`), `field_recording_location_new` (domain `places`).
+- **Collection membership**: `field_og_collection_ref` → `target_id` (Group node id), same
+  pattern as Images' owning-collection lookup.
+- **Video asset**: `field_video` → `{entryid, mediatype, settings}` — a Kaltura entry id, not
+  a file/media entity D11 would recognize directly.
+- **Computed, not raw field data**: `thumbnail_url` (Kaltura CDN URL), `duration` (`{seconds,
+  formatted}`), `path` (canonical alias URL).
+- **Oddity worth a closer look whenever AV migration starts**: `field_pbcore_description`
+  appears **twice** in the same response under two different keys — once as a
+  **JSON-encoded string** (double-encoded) under its own field name, and again as a properly
+  decoded object under an unrelated-looking key `field_pb_desc`. Not investigated further
+  here; flag for whoever builds the AV migration/controller.
+
+Raw sample responses were not committed (ephemeral `curl` output, not needed once this
+summary exists); re-fetch directly from the URLs above if a future session needs the exact
+bytes again.
 
 ### How the endpoint URL is configured & discovered — `url_json` is per-content-type config, not a hardcoded route (2026-08-07)
 
@@ -98,8 +161,13 @@ This closes the loop on the pre-finding that *"the node-JSON URL is data carried
   design from the endpoint that serves it — the settings form itself notes the paths *"may not
   exist, so they may need to be created … by Services, Views, or a module"* (which is why the
   endpoint implementations audited above live in separate modules per site).
-- **AV is the exception**: it uses `mb_solr` (not `shanti_kmaps_fields`) to build its doc, so
-  its `url_json` (`/api/v1/media/node/__NID__.json`) is set there, not via content-type config.
+- ~~**AV is the exception**: it uses `mb_solr` (not `shanti_kmaps_fields`) to build its doc, so
+  its `url_json` (`/api/v1/media/node/__NID__.json`) is set there, not via content-type
+  config.~~ **Corrected 2026-08-20:** AV is **not** the exception. Its "JSON Path" setting
+  (`api/v1/media/node/__NID__.json`) lives on the `video` content type's edit form exactly
+  like the other three sites (confirmed by inspection of
+  `/admin/structure/types/manage/video`), driven by the same Services-module mechanism, not
+  `mb_solr`.
 
 **D11 state — the mechanism was relocated & redesigned, NOT dropped** (verified across all D11
 custom modules; it is **not** in the pared-down D11 `shanti_kmaps_fields`, which is field-type
