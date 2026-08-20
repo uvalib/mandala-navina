@@ -10,14 +10,20 @@ declared. **Pass-criteria scorecard:** URL strategy agreed ✅; feasible in D11 
 whole point is that no ALB/WAF change is needed at all); D11 implementation approach clear —
 ◐ Images only, Sources/Texts/AV still need their own controllers (confirmed different shapes,
 none built); all 8 D7 response formats documented — ◐ JSON done for all 4 sites, AJAX endpoints
-(Texts' `node_embed`, `/user/current`) still unaudited. **Remaining work:** generalize the React
-client past its current Sources-only proxy gate, build Sources/Texts/AV controllers when each
+(Texts' `node_embed`, `/user/current`) still unaudited. **The client-side proxy generalization
+is now implemented** (2026-08-20, `mandala-om` `feat/generalize-json-proxy-all-sites` —
+unpushed, browser-unverified). **Remaining work:** build Sources/Texts/AV controllers when each
 site migrates, audit + build the AJAX endpoints, and validate the Images response shape against
 what the live client actually reads (built from the D7 audit + kmassets logic, not yet checked
-against client rendering code). A known, deferred gap: private-collection assets can't be
-fetched through the JSON-proxy path today because no caller identity reaches
-`mandala_node_api` — see
-[mandala-node-api-no-identity-forwarded-through-json-proxy.md](../deferred/mandala-node-api-no-identity-forwarded-through-json-proxy.md).
+against client rendering code). Two known, deferred gaps: private-collection assets can't be
+fetched through the JSON-proxy path because no caller identity reaches `mandala_node_api`
+([note](../deferred/mandala-node-api-no-identity-forwarded-through-json-proxy.md)), and Option A's
+proxy doesn't exist on the standalone non-WordPress deployments
+([note](../deferred/option-a-proxy-unavailable-on-standalone-deployments.md)).
+**⚠️ Audit-reliability caveat:** the 2026-08-07 D7 endpoint audit was done by reading source
+rather than calling the live endpoints, and its AV row was later found to be wrong in **three**
+independent ways (2026-08-20). The Sources and Texts rows come from that same pass and have
+**not** been live-verified.
 **Lead:** Than Grove (owns React app and D7 API contracts)
 **Mode:** Team spike (candidate)
 **Date:** —
@@ -274,6 +280,13 @@ into a sharper question. Two facts drove it:
 
 **Decision: Option A, generalized to all apps, no Option C migration planned.**
 
+> **Scope caveat added 2026-08-20:** "all apps" turns out to mean *all apps on the
+> WordPress-embedded deployments*. The proxy is a WordPress plugin, and `REACT_APP_WP_PROXY` is
+> configured in only 2 of `mandala-om`'s 11 env files — the standalone builds (including
+> production `mandala.kmaps.virginia.edu`) have no `/proxy/json` to route through at all. The
+> decision below isn't wrong, but its stated scope is broader than what it actually covers. See
+> [option-a-proxy-unavailable-on-standalone-deployments.md](../deferred/option-a-proxy-unavailable-on-standalone-deployments.md).
+
 - Generalize the same-origin `/proxy/json` proxy to Images/AV/Texts/Visuals (today it's
   Sources-only in the client). Already proven in production for Sources, needs no D11 CORS/WAF
   allow-listing, and the server side is already generic (see Implementation reality below) — the
@@ -324,6 +337,37 @@ the generalization is slightly more than widening the substring test:
 So the change is: widen the host gate, drop the AV `'p'` append, and decide the fall-through
 behavior. The D11 endpoint (`mandala_node_api`) already serves plain JSON with no JSONP, which
 is the correct target shape for all of this.
+
+#### Client generalization IMPLEMENTED (2026-08-20) — `mandala-om` `feat/generalize-json-proxy-all-sites`
+
+Commit `e6e712ae` (branch off `release/v1.1.0-rc`, **not yet pushed or merged**) makes the
+change described above. Three decisions worth recording, because two of them are traps:
+
+1. **Host matching uses `URL()` parsing, not a widened substring test.** Simply broadening
+   `.includes('sources.mandala.library.virginia.edu')` to
+   `.includes('mandala.library.virginia.edu')` would also match lookalike hosts such as
+   `mandala.library.virginia.edu.attacker.com` — verified: that spoof matches the substring
+   test and does **not** match the parsed-hostname test. `mandala-wp-proxy`'s server-side
+   allowlist remains the real guard, but the client shouldn't be handing it attacker-controlled
+   URLs. Checked against 12 cases (all five app subdomains, the bare domain, two spoofs,
+   unrelated + malformed input); all pass.
+2. **The AV `'p'` append moved into the direct-JSONP branch only.** Leaving it applied on the
+   proxy path would have sent the proxy to `.jsonp`, which returns `text/javascript` wrapped as
+   `mdldata({...})` and does not parse as JSON — an AV-only, silent regression. AV still needs
+   the suffix on the direct path, since it serves JSONP from a path variant rather than a query
+   parameter (see the JSONP correction above).
+3. **The no-proxy fall-through was deliberately kept.** See the new deferred note —
+   `REACT_APP_WP_PROXY` exists in only 2 of 11 env files, so falling through to direct JSONP is
+   a supported configuration for the non-WordPress deployments, not an error to fail loudly on.
+   An earlier framing of it as a possible bug was withdrawn.
+
+**Verification is partial.** `node_modules` is not installed in that checkout, so the app test
+suite and prettier could not be run; syntax was checked with `node --check` and the host matcher
+was unit-tested standalone. The proxy and JSONP request paths themselves are **unexercised** —
+this needs a real browser check against a tibet build before merge.
+
+**⚠️ Scope limit this surfaced:** Option A only covers the WordPress-embedded deployments. See
+[option-a-proxy-unavailable-on-standalone-deployments.md](../deferred/option-a-proxy-unavailable-on-standalone-deployments.md).
 
 **✅ FIXED (2026-08-12).** `json_proxy` was an open proxy (SSRF risk) — any `url` param, fetched
 server-side with no host restriction. **Host allowlist + `X-Content-Type-Options: nosniff` added
@@ -416,7 +460,10 @@ per-user cache context is real, not just declared) and `X-Content-Type-Options: 
   the open-proxy/SSRF finding in `json_proxy`, blocking generalized rollout
 - [wp-kmaps-mandala-proxy-dependency.md](../deferred/wp-kmaps-mandala-proxy-dependency.md) —
   the plugin-dependency declaration needed since the two plugins stay separate repos
-- Still to file: the client-side change to generalize the proxy gate beyond Sources. (A prior
+- [option-a-proxy-unavailable-on-standalone-deployments.md](../deferred/option-a-proxy-unavailable-on-standalone-deployments.md) —
+  Option A's proxy is a WordPress plugin, absent from 9 of `mandala-om`'s 11 deployment configs
+- ~~Still to file: the client-side change to generalize the proxy gate beyond Sources.~~
+  **Done 2026-08-20** (`mandala-om` `feat/generalize-json-proxy-all-sites`, unmerged). (A prior
   version of this bullet also flagged an AV `/api/v1/media/node` server-rewrite requirement for
   Terraform/ALB config — dropped 2026-08-20: live evidence showed no rewrite is needed, it's a
   normal Drupal route like Images'.)

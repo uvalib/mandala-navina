@@ -78,3 +78,4 @@ nav:
   - "solr-proxy GenericProvider sends no Bearer header to /oauth/userinfo (FIXED 2026-08-19)": solr-proxy-genericprovider-no-bearer-header-on-userinfo.md
   - "OAuth2 openid scope grants zero permissions (no ScopeGranularity configured)": simple-oauth-tokenauthuser-permission-checker-returns-no-permissions.md
   - "Images missing interactive viewing surfaces (viewer, carousel, gallery)": images-missing-interactive-viewing-surfaces.md
+  - "Option A's proxy is absent on standalone (non-WordPress) deployments": option-a-proxy-unavailable-on-standalone-deployments.md
