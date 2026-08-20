@@ -360,10 +360,10 @@ per-user cache context is real, not just declared) and `X-Content-Type-Options: 
   `mandala-wp-proxy`'s open `json_proxy` route with a host allowlist, and wire the
   `wp-kmaps`↔`mandala-wp-proxy` dependency declaration.
 - **D11 endpoint exists and is verified for Images only** (`mandala_node_api`, see above).
-  Sources' bespoke-flat-doc shape, AV's Solr-derived `doc` shape, and Texts' embedded-Views-HTML
-  shape each still need their own controller when that site migrates — none of that work has
-  started, and this endpoint's shape is not yet confirmed against the live React client's actual
-  field usage (see the caveat above).
+  Sources' bespoke-flat-doc shape, AV's augmented-raw-node shape (corrected 2026-08-20 — see
+  above), and Texts' embedded-Views-HTML shape each still need their own controller when that
+  site migrates — none of that work has started, and this endpoint's shape is not yet confirmed
+  against the live React client's actual field usage (see the caveat above).
 - **The D11 single-site URL path scheme is still formally deferred for the *unmigrated* sites**
   — Sources/Texts/AV bundles have no `mandala_kmassets_sync.settings.yml` entry yet at all
   (`shanti_image` is the only bundle configured). Images' scheme (`/api/json/{nid}`) is now real
@@ -379,8 +379,10 @@ per-user cache context is real, not just declared) and `X-Content-Type-Options: 
   the open-proxy/SSRF finding in `json_proxy`, blocking generalized rollout
 - [wp-kmaps-mandala-proxy-dependency.md](../deferred/wp-kmaps-mandala-proxy-dependency.md) —
   the plugin-dependency declaration needed since the two plugins stay separate repos
-- Still to file: a note on the AV `/api/v1/media/node` server-rewrite requirement for the D11
-  Terraform/ALB config, and the client-side change to generalize the proxy gate beyond Sources
+- Still to file: the client-side change to generalize the proxy gate beyond Sources. (A prior
+  version of this bullet also flagged an AV `/api/v1/media/node` server-rewrite requirement for
+  Terraform/ALB config — dropped 2026-08-20: live evidence showed no rewrite is needed, it's a
+  normal Drupal route like Images'.)
 
 ---
 
