@@ -4,7 +4,7 @@
 **Raised during:** Session 2026-08-19 (re-verifying the two 2026-08-18 OAuth2 defects after fixing both)
 **Jira:** (add when available)
 **Priority:** High — blocks the entire OAuth2-authenticated path (proxy UserInfo call, and by extension anything else that authenticates via a `simple_oauth` Bearer token) regardless of the two defects fixed this session
-**Status:** 🟡 The scope-permission fix itself is CONFIRMED CORRECT live on dev-0 (2026-08-19) — `TokenAuthUser->hasPermission('access content')` now YES, route access ALLOWED, both verified directly, not assumed. The live end-to-end call still failed for a **fourth** reason (a session-handling redirect loop) — **root-caused and fixed 2026-08-20; live verification of the full chain still pending a deploy.** Full detail in its own note: [simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md](simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md)
+**Status:** 🟡 The scope-permission fix itself is CONFIRMED CORRECT live on dev-0 (2026-08-19) — `TokenAuthUser->hasPermission('access content')` now YES, route access ALLOWED, both verified directly, not assumed. The live end-to-end call still failed for a **fourth** reason (a session-handling redirect loop) — **root-caused, fixed, and verified live on dev-0 2026-08-20 — the full chain now returns JSON.** Full detail in its own note: [simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md](simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md)
 
 ## Issue
 
@@ -148,8 +148,8 @@ response is still a redirect loop bouncing between `/oauth/userinfo` and `/`
 current account isn't proven to hold a live SimpleSAMLphp browser session — which a stateless
 Bearer-authenticated request never has, by design. Fixed by a service override in the new
 `mandala_saml_oauth` custom module, which exempts OAuth2 Bearer requests using simple_oauth's
-own `SimpleOauthRequestPolicyInterface::isOauth2Request()`. Behaviour proven locally;
-**live verification on dev-0 still pending a deploy.** Full writeup:
+own `SimpleOauthRequestPolicyInterface::isOauth2Request()`. **Verified live on dev-0 2026-08-20** — the full SAML→OAuth2→`/oauth/userinfo` replay now returns
+HTTP 200 JSON where the pre-fix image returns `302 → /`. Full writeup:
 [simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md](simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md).
 
 If a permission beyond `access content` turns out to be needed once the Redis
