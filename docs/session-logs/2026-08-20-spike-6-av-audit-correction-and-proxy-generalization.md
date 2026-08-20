@@ -66,6 +66,45 @@ the WAF actually fires on the standalone origin — never tested.
 2026-08-12. It's 2026-07-29 (`6a2ef22b`), with the env rename 2026-07-30 (`27a21c63`), both by
 Than. 2026-08-12 was the URL-strategy decision and the SSRF fix.
 
+## Addendum — `mandala-om` has 8 phantom dependencies (found while trying to run the app)
+
+Than installed `mandala-om` to browser-verify the proxy change and hit
+`Module not found: Can't resolve 'date-fns'`. Root cause is a repo-structure trap worth
+recording, since it will bite anyone else who tries to run this app:
+
+**`mandala-om` is two separate npm projects, not npm workspaces.** The root `package.json`
+(`mandala-om`, 13 deps, exists for the root `__tests__/` jest suite) and
+`kmaps-app/package.json` (`kmaps-app`, 62 deps, the actual CRA app) are independent. All app
+source lives in `kmaps-app/src/`.
+
+Eight packages are **imported from `kmaps-app/src/` but declared only in the root
+`package.json`** — someone ran `npm install <pkg>` from the repo root instead of from
+`kmaps-app/`. This only ever worked via Node's walk-up module resolution finding them in the
+parent `node_modules`. Install into `kmaps-app/` alone and the build fails.
+
+| Package | Files importing it | Was |
+|---|---|---|
+| `date-fns` | 2 | absent → compile error |
+| `iso-639-1` | 6 | absent → compile error |
+| `iso-639-3` | 6 | absent → compile error |
+| `react-image-magnify` | 1 | absent → compile error |
+| `react-rnd` | 1 | absent → compile error |
+| `react-split-pane` | 2 | absent → compile error |
+| `react-tiny-popover` | 1 | absent → compile error |
+| `react-router` | 14 | resolved as a *phantom* transitive dep of `react-router-dom` — worked by accident |
+
+All eight installed into `kmaps-app/` at root's declared ranges (`date-fns` deliberately pinned
+to `^2.30.0` — v3/v4 break both `format` and the `date-fns/locale` subpath imports the code
+uses). `react-router` was additionally *declared* rather than left phantom; it moved 5.2.0 →
+5.3.4 in the process, same-major but under 14 files.
+
+`kmaps-app/package.json` + `package-lock.json` changes were left **uncommitted** — unrelated to
+the proxy change on that branch, so they want their own commit.
+
+**Not investigated:** whether the root `package.json`'s duplicated app deps (`react`, `axios`,
+`react-router-dom`, …) should exist at all, or whether the two projects should become real npm
+workspaces. That's a repo-hygiene question for whoever owns `mandala-om` packaging.
+
 ## Branches left open
 
 | Repo | Branch | State |
