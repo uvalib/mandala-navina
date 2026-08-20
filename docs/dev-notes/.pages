@@ -7,4 +7,5 @@ nav:
   - "How-to: Access Mandala nodes (SSH)": howto-access-mandala-nodes.md
   - "How-to: Long-running jobs on dev/staging (nightly shutdown)": howto-long-running-jobs-on-dev-staging.md
   - "How-to: Verify the OAuth2-authenticated Solr proxy path": howto-verify-oauth2-authenticated-path.md
+  - "How-to: Verify Solr proxy visibility filtering (ADR 014)": howto-verify-solr-proxy-visibility.md
   - "How-to template": howto-template.md
