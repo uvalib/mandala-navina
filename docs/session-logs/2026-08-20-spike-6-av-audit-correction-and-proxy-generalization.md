@@ -211,6 +211,49 @@ deployments actually WAF-exposed?") is now substantially answered — the 503 ca
 to the WordPress embeds. The standalone deployments should be treated as genuinely exposed.
 Priority on that note raised accordingly.
 
+## Addendum 4 — a regression I introduced, and the rule that prevents it
+
+Fixing the phantom dependencies **broke every browse/list page** (`/sources/all/list`,
+`/images/all/list`, and by implication all asset types). Symptom:
+
+```
+TypeError: Cannot read properties of undefined (reading 'match')
+  useParams → const match = useContext(RouterContext).match;
+  AssetHomeCollection.js:15 → const { view_mode } = useParams();
+```
+
+`useContext(RouterContext)` returning `undefined` is the signature of **two copies of
+react-router** in the tree — the context the `<Router>` provider fills is not the one
+`useParams` reads.
+
+**Cause:** declaring the previously-phantom `react-router` at the root's range (`^5.2.0`) let
+npm resolve it to **5.3.4** at top level, while `react-router-dom@5.2.0` pins
+`react-router: 5.2.0` **exactly** and therefore kept its own nested 5.2.0 copy. Two instances,
+two distinct `RouterContext` objects.
+
+```
+node_modules/react-router                          → 5.3.4   (added by the "fix")
+node_modules/react-router-dom/node_modules/react-router → 5.2.0   (what <Router> uses)
+```
+
+**Fix:** `react-router` pinned to exactly **5.2.0**, matching what `react-router-dom` already
+resolved. One copy remains; all three pages verified rendering afterwards (26,429 Sources hits /
+108,084 Images hits / the Sources detail record).
+
+**The generalizable rule — this is the second time the same class of mistake bit today.** When
+converting a phantom dependency into a declared one, pin it to **exactly the version already
+resolved in the tree**, not to a range. A range is not "the same dependency written down"; it
+invites a different resolution, and for a library carrying React context (react-router, react,
+react-dom, anything with a provider/consumer pair) a duplicate instance is a silent runtime
+break, not a version warning. The earlier `react-rnd` failure was the same shape — a caret
+pulling a newer transitive `react-draggable` — and the risk had even been flagged in the commit
+message for react-router ("moved 5.2.0 → 5.3.4, same-major but under 14 files") without acting
+on it.
+
+**Still unpinned and above the root's floor:** `iso-639-1` (2.1.15) and `react-tiny-popover`
+(8.1.6). Neither carries React context and both build clean, but they're the remaining
+candidates if something else surfaces.
+
 ## Branches left open
 
 | Repo | Branch | State |
