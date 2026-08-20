@@ -416,6 +416,28 @@ path has been observed working from a browser on any codebase.
    against production** — local verification was impossible, and nobody had reason to suspect the
    dev tooling rather than the feature.
 
+**Local testing must point at PRODUCTION, and cannot point at staging** (decided 2026-08-20,
+Than — documented in the untracked `.env.development.local`):
+
+- **Not dev.** The `*-dev.internal.lib.virginia.edu` hostnames have been **taken over by the
+  new D11 site**, so the D7 endpoints no longer exist there. The dev kmassets index still
+  advertises `url_json` values aimed at those now-D11 hosts, so a dev asset-detail page can
+  never render. **Expected fallout of the takeover, not a defect** — an earlier draft of this
+  session's notes wrongly treated it as breakage.
+- **Not staging, even though staging still serves the D7 endpoints**
+  (`mandala-sources-staging.internal.lib.virginia.edu/sources-api/json/62716` works). The URL
+  actually fetched is **`url_json`, a field stored in the Solr record** — it is *not* derived
+  from `REACT_APP_DRUPAL_*`. Repointing to staging therefore needs a staging kmassets index
+  whose `url_json` carries staging hosts, and none is reachable (`mandala-index-staging` and
+  `mandala-solr-proxy-staging` both fail to connect). Changing the `DRUPAL_*` vars only changes
+  which hosts the proxy gate treats as eligible, not which host is fetched.
+- **So: production.** Read-only `select` queries and GETs of public records — no write risk,
+  negligible load — but local dev is exercising live data, which anyone repeating this should
+  know.
+- **Test ids are environment-specific.** `62716` resolves on both staging and production;
+  `137238` resolves on production but **not** staging (older snapshot). Do not carry an id from
+  one index to another.
+
 **Remaining dev-environment limitation** (unrelated to the above, still true): the dev Solr
 index's `url_json` values point at
 `mandala-sources-dev.internal.lib.virginia.edu`, which serves **no JSON API at all** —
@@ -437,6 +459,34 @@ the wrong flag for a smoke test here.
 
 **⚠️ Scope limit this surfaced:** Option A only covers the WordPress-embedded deployments. See
 [option-a-proxy-unavailable-on-standalone-deployments.md](../deferred/option-a-proxy-unavailable-on-standalone-deployments.md).
+
+#### D7 vs D11 delineation for `mandala-om` work (raised by Than, 2026-08-20)
+
+`mandala-om` work needs to be kept clear about which environment it targets. `release/v1.1.0-rc`
+is a **D7 branch**, and `feat/generalize-json-proxy-all-sites` branches from it. Assessment of
+that branch:
+
+| Change | D7 / D11 |
+|---|---|
+| `setupProxy.js` fix | **Neither** — local dev tooling, not shipped in a build |
+| `package.json` / lockfile | **Neither** — no D7/D11 semantics |
+| Host gate derived from `REACT_APP_DRUPAL_*` | **Agnostic by construction** — follows whatever hosts the build's env declares; this is precisely why the hardcoded production domain was replaced |
+| Proxy branch (passes `url_json` through) | **Agnostic** — verified working against D7 production Sources |
+| AV `.jsonp` append in the direct-JSONP fallback | **D7-specific** |
+
+So the branch is **D7-compatible and D11-forward-compatible**, with one exception worth tracking:
+D7's AV serves JSONP from a `.jsonp` path variant, so the `'p'` append is required there, while
+D11's `mandala_node_api` deliberately serves **no JSONP at all**. That line is D7-only logic. It
+is harmless under Option A in D11 (everything goes through the proxy, so the fallback isn't
+taken), but it needs a D11-side decision whenever the client is pointed at D11.
+
+**Note:** there is **no D11 branch in `mandala-om`** among the branches visible as of
+2026-08-20 (`master`, `release/v1.1.0-rc`, several `*/release/v1.1.0-rc` feature branches,
+`chore/react-upgrade`, dependabot branches). The D7/D11 fork hasn't happened in that repo yet.
+
+**Untested paths in that branch:** only the Sources detail page was exercised. **AV, Images,
+Texts and Visuals detail pages were not tested**, and specifically the AV direct-JSONP fallback
+— the exact code that was moved — has never been run.
 
 **✅ FIXED (2026-08-12).** `json_proxy` was an open proxy (SSRF risk) — any `url` param, fetched
 server-side with no host restriction. **Host allowlist + `X-Content-Type-Options: nosniff` added

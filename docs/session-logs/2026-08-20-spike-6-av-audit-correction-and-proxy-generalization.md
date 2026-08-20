@@ -166,10 +166,26 @@ every Solr call in the app emits a stray console error. Not filed yet.
 **Why dev cannot verify this change end-to-end:** the dev Solr index's `url_json` values point at
 `mandala-sources-dev.internal.lib.virginia.edu`, which serves **no JSON API at all** — 404 on
 `/sources-api/json/{nid}`, `/api/json/{nid}`, `/node/{nid}` and `/jsonapi`; `/` returns Drupal
-10/11 chrome. That host is not the D7 Sources site the dev index assumes. A dev Sources page
-therefore renders blank regardless of this change — pre-existing dev-data breakage, not a
-regression. Local verification requires pointing at production (whose Sources API returns 200)
-via an untracked `.env.development.local`, plus the DDEV WordPress for the proxy leg.
+10/11 chrome.
+
+**Explained by Than (2026-08-20), and it is NOT a defect:** all the
+`*-dev.internal.lib.virginia.edu` hostnames have been **taken over by the new D11 site**, so the
+D7 endpoints are simply gone there. This session initially wrote it up as breakage and nearly
+filed it as a deferred note; asking first avoided adding a non-issue to the queue. **Staging
+still serves the D7 endpoints** — e.g.
+`mandala-sources-staging.internal.lib.virginia.edu/sources-api/json/62716`.
+
+**Local testing therefore points at PRODUCTION, and cannot point at staging** (decided by Than;
+caveat documented in the untracked `.env.development.local`). The reason staging is unreachable
+by config is worth remembering: **the URL actually fetched is `url_json`, a field stored in the
+Solr record — not derived from `REACT_APP_DRUPAL_*`.** Pointing at staging would need a staging
+kmassets index whose `url_json` carries staging hosts, and none is reachable
+(`mandala-index-staging`, `mandala-solr-proxy-staging` both fail to connect). Changing the
+`DRUPAL_*` vars only changes which hosts the proxy gate considers eligible. Production means
+read-only selects and GETs of public records — no write risk, negligible load, but live data.
+
+**Test ids are environment-specific:** `62716` resolves on staging and production; `137238`
+resolves on production but not staging (older snapshot).
 
 ## Addendum 3 — VERIFIED end to end in a browser, and two more findings
 
