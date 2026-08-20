@@ -124,6 +124,53 @@ the proxy change on that branch, so they want their own commit.
 `react-router-dom`, …) should exist at all, or whether the two projects should become real npm
 workspaces. That's a repo-hygiene question for whoever owns `mandala-om` packaging.
 
+## Addendum 2 — the host gate was redesigned, and two verification mistakes
+
+**Design change (`mandala-om` commit `d83fa707`).** The first version of the host gate hardcoded
+the production domain, mirroring `mandala-wp-proxy`'s server-side allowlist. Trying to actually
+test it exposed the flaw: dev's Drupal hosts are `*-dev.internal.lib.virginia.edu`, so the proxy
+branch **could never fire in dev under any configuration** — the change was untestable there by
+construction, and would break again at D11 cutover when the consolidated host changes. The gate
+now derives its host set from the `REACT_APP_DRUPAL_*` env vars each `.env.*` file already
+defines, which are the authoritative per-deployment list. Exact-hostname matching is retained
+(spoof case still blocked); non-URL vars like `REACT_APP_DRUPAL_SOURCES_API` drop out of the
+`URL()` parse, and `REACT_APP_WP_PROXY` isn't a `DRUPAL_` var so the proxy can't self-proxy.
+13 cases pass across simulated prod and dev env sets.
+
+**Verification mistake 1 — artifact presence is not build success.** An earlier check in this
+session reported the build "succeeded" on the strength of freshly-written `build/index.html` and
+JS chunks. That reasoning is wrong: CRA emits `build/` *before* the `CI=true` lint gate runs, so
+artifacts appear even on a failed build. The build had in fact exited 1. Correct method: read the
+exit code of an **unpiped** build (a piped exit code is the pipe's), or grep for
+`Compiled successfully` / `Compiled with warnings` / `Failed to compile`. Also: `CI=true`
+escalates this repo's **188 files** of pre-existing lint warnings into hard errors, so it's the
+wrong flag for a smoke test here. Re-run without it: **exit 0, "Compiled with warnings."**
+
+**Verification mistake 2 — over-confident attribution of a runtime error.** When a Sources page
+showed `Error: Item not found!`, this was asserted to be the node-JSON fetch, reasoning "the page
+frame loaded, so Solr succeeded." Than pushed back. He was right that the evidence was
+ambiguous: `useSolr.js:58` uses the **same** `logic/axios-jsonp` adapter (with
+`callbackParamName: 'json.wrf'`) that throws that exact string, so the message alone cannot
+distinguish the Solr call from the node-JSON call. The mechanism does distinguish them —
+`script.onerror` fires on HTTP/load failure, not on runtime exceptions in a script that loaded —
+and dev Solr returns 200 while dev Sources returns 404, so the original attribution held. But it
+was stated as fact before being checked.
+
+**Incidental bug found while checking (unrelated to this work):** the dev Solr response comes
+back **double-wrapped** — `testcb(testcb({...}))`. The PHP solr-proxy adds a callback wrapper on
+top of Solr's own `json.wrf` wrapper. Traced through the adapter: the inner call resolves the
+promise with correct data and restores `window[jsonp] = old` (undefined), so the outer call hits
+`undefined(...)` and throws an **uncaught TypeError** in the console. Harmless to the fetch, but
+every Solr call in the app emits a stray console error. Not filed yet.
+
+**Why dev cannot verify this change end-to-end:** the dev Solr index's `url_json` values point at
+`mandala-sources-dev.internal.lib.virginia.edu`, which serves **no JSON API at all** — 404 on
+`/sources-api/json/{nid}`, `/api/json/{nid}`, `/node/{nid}` and `/jsonapi`; `/` returns Drupal
+10/11 chrome. That host is not the D7 Sources site the dev index assumes. A dev Sources page
+therefore renders blank regardless of this change — pre-existing dev-data breakage, not a
+regression. Local verification requires pointing at production (whose Sources API returns 200)
+via an untracked `.env.development.local`, plus the DDEV WordPress for the proxy leg.
+
 ## Branches left open
 
 | Repo | Branch | State |

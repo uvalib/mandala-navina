@@ -349,8 +349,23 @@ change described above. Three decisions worth recording, because two of them are
    `mandala.library.virginia.edu.attacker.com` — verified: that spoof matches the substring
    test and does **not** match the parsed-hostname test. `mandala-wp-proxy`'s server-side
    allowlist remains the real guard, but the client shouldn't be handing it attacker-controlled
-   URLs. Checked against 12 cases (all five app subdomains, the bare domain, two spoofs,
-   unrelated + malformed input); all pass.
+   URLs.
+
+   **Revised same day (commit `d83fa707`): the host set is now derived from the
+   `REACT_APP_DRUPAL_*` env vars, not hardcoded.** The first version hardcoded the production
+   domain, mirroring the wp-proxy allowlist. That is correct for production and wrong
+   everywhere else — dev's Drupal hosts are `*-dev.internal.lib.virginia.edu`, so the proxy
+   branch **could never fire in dev under any configuration**, which also made the change
+   untestable there; and it would break again at D11 cutover when the consolidated host
+   changes. Each `.env.*` file already enumerates its own deployment's Drupal hosts, so
+   deriving from them makes the gate correct across dev/staging/prod and survives cutover with
+   no code edit. Exact-hostname comparison is retained, so the spoof case stays blocked;
+   non-URL vars (`REACT_APP_DRUPAL_SOURCES_API`, a path template) drop out of the `URL()`
+   parse, and `REACT_APP_WP_PROXY` isn't a `DRUPAL_` var so the proxy can never self-proxy.
+   **13 cases pass** across simulated production and dev env sets, including the
+   previously-impossible dev match. Confirmed empirically that CRA inlines `process.env` as a
+   whole object literal (the dev hostname appears in the emitted bundle), so enumerating it is
+   build-time static rather than a runtime lookup.
 2. **The AV `'p'` append moved into the direct-JSONP branch only.** Leaving it applied on the
    proxy path would have sent the proxy to `.jsonp`, which returns `text/javascript` wrapped as
    `mdldata({...})` and does not parse as JSON — an AV-only, silent regression. AV still needs
@@ -361,10 +376,31 @@ change described above. Three decisions worth recording, because two of them are
    a supported configuration for the non-WordPress deployments, not an error to fail loudly on.
    An earlier framing of it as a possible bug was withdrawn.
 
-**Verification is partial.** `node_modules` is not installed in that checkout, so the app test
-suite and prettier could not be run; syntax was checked with `node --check` and the host matcher
-was unit-tested standalone. The proxy and JSONP request paths themselves are **unexercised** —
-this needs a real browser check against a tibet build before merge.
+**Verification status (updated after actually installing and building).** The app now builds:
+`npm run-script build` against `.env.development` exits **0, "Compiled with warnings"** (188
+files carry pre-existing lint warnings; the two in `useMandala.js` — an unused `GetSessionID`
+import and a `==` on line 86 — are pre-existing code this change preserved). Husky's
+prettier/lint-staged pre-commit hook passes. Host matching is unit-tested (13 cases).
+
+**Still unexercised: the proxy and JSONP request paths themselves.** Nobody has watched a real
+`/proxy/json?url=…` request succeed from a browser. **This cannot be done in dev**, for a reason
+worth recording: the dev Solr index's `url_json` values point at
+`mandala-sources-dev.internal.lib.virginia.edu`, which serves **no JSON API at all** —
+`/sources-api/json/{nid}`, `/api/json/{nid}`, `/node/{nid}` and `/jsonapi` all return 404, and
+`/` returns Drupal 10/11 chrome. That host is not the D7 Sources site the dev index assumes.
+So a dev Sources page renders blank regardless of this change — a **pre-existing dev-data
+problem**, not a regression. Testing the routing locally additionally needs the DDEV WordPress
+(`thlddev.ddev.site`, currently down) and `REACT_APP_WP_PROXY` set in `.env.development`; even
+then it would only confirm the request *routes* through the proxy, with a 404 payload. A real
+end-to-end render needs a `url_json` that resolves — production, or a live D7 Sources instance.
+
+**Method note for whoever verifies next:** do **not** judge a CRA build by artifact presence.
+CRA emits `build/` *before* the `CI=true` lint gate runs, so fresh artifacts appear even on a
+failed build — this misled an earlier check in this session into reporting success. Read the
+exit code of the unpiped build (a piped exit code is the pipe's), or grep for
+`Compiled successfully` / `Compiled with warnings` / `Failed to compile`. Note also that
+`CI=true` escalates this repo's 188 files of pre-existing warnings into hard errors, so it is
+the wrong flag for a smoke test here.
 
 **⚠️ Scope limit this surfaced:** Option A only covers the WordPress-embedded deployments. See
 [option-a-proxy-unavailable-on-standalone-deployments.md](../deferred/option-a-proxy-unavailable-on-standalone-deployments.md).
