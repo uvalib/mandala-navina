@@ -93,10 +93,29 @@ parent `node_modules`. Install into `kmaps-app/` alone and the build fails.
 | `react-tiny-popover` | 1 | absent → compile error |
 | `react-router` | 14 | resolved as a *phantom* transitive dep of `react-router-dom` — worked by accident |
 
-All eight installed into `kmaps-app/` at root's declared ranges (`date-fns` deliberately pinned
-to `^2.30.0` — v3/v4 break both `format` and the `date-fns/locale` subpath imports the code
-uses). `react-router` was additionally *declared* rather than left phantom; it moved 5.2.0 →
-5.3.4 in the process, same-major but under 14 files.
+All eight installed into `kmaps-app/`. `react-router` was additionally *declared* rather than
+left phantom; it moved 5.2.0 → 5.3.4 in the process, same-major but under 14 files.
+
+**Installing at caret ranges broke the build, and this is the durable lesson.** The first
+rebuild failed with:
+
+```
+./node_modules/react-draggable/build/cjs/chunk-ACOTSM7X.mjs
+Can't import the named export 'Children' from non EcmaScript module
+```
+
+`react-rnd`'s caret (`^10.3.7`) let npm resolve **10.5.3**, which requires
+`react-draggable ^4.5.0` and pulled **4.7.1** — a post-ESM-transition build shipping `.mjs`
+chunks that this app's **webpack 4 / `react-scripts` 3.4.3** cannot parse. Root's declared
+floor `react-rnd@10.3.7` pins `react-draggable` to exactly **4.4.4**, which predates that.
+Fixed by installing `react-rnd@10.3.7` with `--save-exact`. Build then compiled successfully
+(with pre-existing ESLint/SASS warnings).
+
+**Generalize this before adding any dependency to `mandala-om`:** on this toolchain, caret
+ranges are unsafe — anything published since the ESM transition may ship `.mjs` and fail the
+same way. Prefer the exact versions root declares. Three packages still sit above root's floor
+(`iso-639-1` 2.1.15, `react-router` 5.3.4, `react-tiny-popover` 8.1.6); the build passes with
+them, but they're the first place to look if something misbehaves at runtime.
 
 `kmaps-app/package.json` + `package-lock.json` changes were left **uncommitted** — unrelated to
 the proxy change on that branch, so they want their own commit.
