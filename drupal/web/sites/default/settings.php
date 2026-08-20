@@ -958,6 +958,101 @@ $settings['config_sync_directory'] = '../config/sync';
 $config['simple_oauth.settings']['public_key'] = '../keys/public.key';
 $config['simple_oauth.settings']['private_key'] = '../keys/private.key';
 
+// -----------------------------------------------------------------------------
+// Reverse proxy (AWS ALB) and trusted hosts
+// -----------------------------------------------------------------------------
+// Every deployed environment sits behind an Application Load Balancer that
+// terminates TLS and forwards plain HTTP to Apache in the container. Without
+// the settings below Drupal never learns that, so $request->isSecure() is FALSE
+// and Request::getUri() returns an http:// URL on a request the browser made
+// over https.
+//
+// That is not cosmetic. SimplesamlphpAuthManager::externalAuthenticate() passes
+// getUri() to the IdP as the SAML ReturnTo/RelayState, so the SAML round trip
+// was being built with an http:// return URL. It only worked because Apache
+// 301-redirects plain HTTP back to HTTPS before anything depending on cookies
+// runs -- an incidental webserver behaviour masking an application-level bug.
+// The same wrong scheme reaches every absolute URL Drupal generates: password
+// reset links, canonical URLs, and anything cached with them baked in.
+//
+// Observed live on dev-0 before this was configured:
+//   HTTP_X_FORWARDED_PROTO = https      <- the ALB does send it
+//   HTTP_X_FORWARDED_PORT  = 443
+//   REMOTE_ADDR            = 10.130.109.26
+//   REQUEST_SCHEME         = http       <- what Drupal believed
+//
+// Both values may be overridden by environment so terraform-infrastructure can
+// change them without a code deploy; the defaults below are correct for the
+// current UVA Library VPCs.
+
+$settings['reverse_proxy'] = TRUE;
+
+// The ALB nodes' own addresses, which is what REMOTE_ADDR is on a proxied
+// request. Docker's bridge DNAT rewrites the destination only, so the real ALB
+// address survives and these are matched directly.
+//
+// GOTCHA: each of these VPCs carries TWO CIDR blocks, not one. Listing only the
+// primary looks correct and half-works -- Drupal silently falls back to the
+// untrusted values rather than erroring, so requests arriving via an ALB node in
+// the second block keep the wrong scheme, intermittently and without a log line.
+//   uva-vpc-staging     10.130.109.0/24  +  10.130.112.0/24
+//   uva-vpc-production  10.130.110.0/24  +  10.130.113.0/24
+// Symfony's IpUtils matches CIDR notation, so ranges are fine here.
+$settings['reverse_proxy_addresses'] = array_filter(array_map('trim', explode(
+  ',',
+  getenv('DRUPAL_REVERSE_PROXY_ADDRESSES') ?:
+    '10.130.109.0/24,10.130.112.0/24,10.130.110.0/24,10.130.113.0/24'
+)));
+
+// Narrower than core's default, which core's own comment describes as "the most
+// relaxed setting possible and not recommended for production"
+// (ReverseProxyMiddleware::setSettingsOnRequest). We trust only what the ALB
+// actually sends. X-Forwarded-Host is deliberately NOT trusted: the ALB passes
+// the real Host header through untouched, so trusting it would add a host
+// injection vector for no benefit. RFC 7239 Forwarded is likewise unused here.
+$settings['reverse_proxy_trusted_headers'] =
+  \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_FOR |
+  \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PORT |
+  \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PROTO;
+
+// Host header allow-list. Only enforced when non-empty, and skipped under DDEV
+// where each developer's hostname set differs and the risk does not apply.
+//
+// WARNING: getting this wrong takes the site down rather than degrading. An
+// unmatched Host makes DrupalKernel throw BadRequestHttpException -> HTTP 400,
+// and the ALB health check on "/" expects 200-299, so every target would go
+// unhealthy.
+//
+// Health checks therefore need a matching pattern. AWS documents that an ALB
+// sends the target's IP (and port) as the Host header rather than a DNS name,
+// which is what the IPv4 pattern below is for. That specific value could NOT be
+// captured directly here -- ALB access logs deliberately exclude health-check
+// requests, and dev-0 has no packet-capture tooling -- so the pattern is
+// deliberately broad, matching any bare IPv4 rather than the current target
+// addresses. If a health check ever arrives with some other Host, targets go
+// unhealthy within ~2-5 intervals; check target health straight after any deploy
+// that touches this block. Patterns are matched against Request::getHost(),
+// which has the port stripped, so no ":port" alternative is needed.
+if (getenv('IS_DDEV_PROJECT') !== 'true') {
+  $mandala_trusted_hosts = getenv('DRUPAL_TRUSTED_HOST_PATTERNS');
+  $settings['trusted_host_patterns'] = $mandala_trusted_hosts
+    ? array_filter(array_map('trim', explode(',', $mandala_trusted_hosts)))
+    : [
+      // Public production: mandala.library.virginia.edu and its per-site
+      // subdomains (images., texts., sources., av., ...).
+      '^mandala\.library\.virginia\.edu$',
+      '^[a-z0-9-]+\.mandala\.library\.virginia\.edu$',
+      // Every internal dev/staging/production hostname the ALBs route here:
+      // mandala-dev, mandala-images-dev, mandala-staging, mandala-av-staging,
+      // and so on. A suffix pattern rather than 17 literals, so adding a site
+      // hostname does not silently 400 until someone remembers this file.
+      '^[a-z0-9-]+\.internal\.lib\.virginia\.edu$',
+      // ALB health checks (Host: <target-ip>) and container-local requests.
+      '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$',
+      '^localhost$',
+    ];
+}
+
 // Automatically generated include for settings managed by ddev.
 if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev.php')) {
   include __DIR__ . '/settings.ddev.php';
