@@ -252,8 +252,8 @@ browser-tested endpoints returned real, populated HTML fragments. Nothing here i
 | **Images** | `api/ajax/%` | `shanti_images_node_embed()` | `'access callback' => TRUE` | ✅ full metadata fragment (derivative sizes, agent, dimensions, license, UID, technical metadata) |
 | **Sources** | `sources-api/ajax/%` | `sources_misc_node_embed()` | `access content` | ✅ bibliographic summary fragment |
 | **Sources** | `sources-api/ajax/%/%` | `sources_misc_node_embed($nid, $type)` | `access content` | **not in the endpoint matrix** — see below |
-| **AV** | `services/node/ajax/%` | `mb_services_node_ajax()` | `access content` | ⏳ source-read only — see blocker |
-| **AV** | `services/node/ajax/%/player` | `mb_services_node_player()` | `access content` | ⏳ redirects to the Kaltura player |
+| **AV** | `services/node/ajax/%` | `mb_services_node_ajax()` | `access content` | ✅ HTML fragment — and it renders the **full internal `Workflow` field group** (see below) |
+| **AV** | `services/node/ajax/%/player` | `mb_services_node_player()` | `access content` | ✅ confirmed live — a **cross-domain redirect off-site to the Kaltura CDN** (`cdnapisec.kaltura.com/.../mwEmbedFrame.php`, partner `381832`, per-node `entry_id`) |
 | **Texts** | `shanti_texts/node_embed/%` | `shanti_texts_node_embed()` | `access content` | ✅ embed container: body + Contents + About + Views panes |
 
 **All four return HTML fragments, never JSON.** This is the cleanest reason they are a different
@@ -308,11 +308,26 @@ response contracts; it does not change the scope steer above.
 > up. This supersedes the narrower pointer in the Sources + Texts verification section, which was
 > one instance of the same question.
 
-**⏳ Not finished: AV was not live-verified.** `av.mandala.library.virginia.edu` is not in the
-browser extension's permitted-domains list, so both AV routes are **source-read only**. Given the
-AV row's history of being wrong precisely where it was only ever source-read, **this should not be
-treated as verified** until someone loads `services/node/ajax/42016` in a browser. Everything
-above about AV is a source claim, not evidence.
+**AV live-verified 2026-08-21 — all six routes are now evidence-based.** Two AV-specific results:
+
+1. **`services/node/ajax/{nid}` renders the entire internal `Workflow` field group to an
+   unauthenticated request** — ~25 cataloging/production status fields (`Video Quality
+   Acceptable`, `Masters Archived`, `Transcribed`, `Timecoded`, the `Media Problem`/`Timecoding
+   problem` slots, translation-language proofing state), almost all reading `Not Reviewed` on the
+   node checked. This is a **response-contract fact**, observed on a public node with an ordinary
+   browser GET. Whether it *should* be visible is a different question and is part of the
+   access-control review referred to privately below — note that `field_workflow` is the one field
+   D7 protects with `field_permissions` for the AV-only `workflow editor` role (rid 5). **For D11
+   the practical point stands regardless:** an AV embed equivalent should decide deliberately
+   which field groups it exposes, rather than rendering the node's full display.
+2. **`/player` is a cross-domain redirect off the Mandala estate entirely** — to
+   `cdnapisec.kaltura.com/html5/html5lib/v2.27.1/mwEmbedFrame.php` with Kaltura partner id
+   `381832`, a `uiconf_id`, and a per-node `entry_id`. Any D11 AV work inherits this Kaltura
+   dependency; it is not a Drupal-internal route.
+
+*(Method note: the AV domain initially refused automation inside a `browser_batch` call but
+navigated normally as a standalone call — the "approved sites" list was empty throughout, so the
+block was not a missing site approval.)*
 
 ### Scope steer: the AJAX endpoints are low-importance for *this* spike (Than, 2026-08-21)
 
@@ -863,11 +878,10 @@ per-user cache context is real, not just declared) and `X-Content-Type-Options: 
   omitted from these responses, so the sampled field inventories are lower bounds, not complete
   lists. See "Open consideration: empty fields are omitted" above. Recorded 2026-08-21, no
   approach chosen.
-- **AJAX/embed audit — DONE 2026-08-21** for Images, Sources and Texts (browser-verified); see
-  "AJAX / embed endpoint audit". **AV remains source-read only** — its domain is not in the
-  browser extension's permitted list, and `curl` cannot reach these endpoints (the edge
-  bot-challenge returns `202`/empty for every HTML-typed response). Given the AV row's history,
-  AV should not be counted as verified until someone loads it in a browser.
+- **AJAX/embed audit — DONE 2026-08-21, all four sites browser-verified.** See "AJAX / embed
+  endpoint audit". Six routes documented, not the four the matrix listed. Note for future work:
+  `curl` cannot reach any of these (the edge bot-challenge returns `202`/empty for every
+  HTML-typed response) — use a browser.
 - **The Texts embed endpoint** (`node_embed`, reached via `url_ajax`) and the
   **`/general/api/user/current`** endpoint are identified as in-scope but **not yet audited**
   for response shape / D11 approach.
