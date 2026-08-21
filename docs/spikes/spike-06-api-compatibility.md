@@ -238,6 +238,40 @@ types) and one Texts book (5 page nids). Random nid sampling on both sites mostl
 not-found, so a second Texts book was not located; the book-root normalization is nonetheless
 unambiguous in source and consistent across every nid tested.
 
+### ⚠️ Open consideration: empty fields are omitted, so no single record proves a contract
+
+**Raised by Than, 2026-08-21. Recorded for the record — no approach chosen, nothing to act on
+yet.**
+
+The D7 JSON endpoints generally **omit a field entirely when it is empty** rather than emitting
+it null or blank. The Sources finding below is one instance of the pattern (`description` absent
+whenever `body` is empty), but the observation is broader and is not specific to the conditional
+augmentations: it applies to ordinary `field_*` values across all four sites.
+
+**The consequence is methodological, and it qualifies work already done.** Every endpoint
+contract in this spike was captured by fetching a small number of real production nodes — AV from
+three (42016/42167/42158), Sources from three, Texts from one book. A sampled record shows the
+fields *that node happens to populate*, so **absence of a field in a captured sample is not
+evidence that the endpoint never emits it.** The field inventories here should be read as
+*lower bounds on the response contract*, not as complete field lists. Nothing captured so far is
+known to be wrong; it is the completeness claim that is unsupported.
+
+This matters most for the D11 controllers, since a controller built to match a sampled inventory
+will silently under-implement whatever the samples did not exercise — and, per the migration
+convention, will only be caught later against real client rendering.
+
+Two candidate approaches were floated and **neither has been chosen or investigated**:
+
+1. **Purpose-built test records** — one fully-populated node per content type, every field filled,
+   as a fixture that makes the maximal response shape observable in one fetch.
+2. **A programmatic derivation** — enumerate each content type's field definitions from D7 config
+   directly, rather than inferring the contract from sampled instances.
+
+Open questions if this is picked up: whether the omit-when-empty behaviour is uniform across the
+four sites or per-module; whether it applies to the computed/augmented keys as well as raw
+`field_*` ones; and whether fixtures would live in D7 (to capture the source contract) or in D11
+(to test the replacement).
+
 ### AV live endpoint field inventory (2026-08-20, against real production data)
 
 Captured to correct the 2026-08-07 audit above and to give the future AV migration a real
@@ -709,6 +743,10 @@ per-user cache context is real, not just declared) and `X-Content-Type-Options: 
   plugin and any server-side consumers are unaudited** — confirm before dropping them from the
   D11 requirement. Their exact D7 response shapes were not documented (deprioritized as likely
   out of scope for the React app).
+- **⚠️ Field-coverage caveat on every endpoint contract in this spike** — empty fields are
+  omitted from these responses, so the sampled field inventories are lower bounds, not complete
+  lists. See "Open consideration: empty fields are omitted" above. Recorded 2026-08-21, no
+  approach chosen.
 - **⚠️ Before starting the AJAX audit:** `curl` cannot fetch any of these endpoints — the edge
   bot-challenge returns `202`/empty for every HTML-typed response across all sites tested. Use a
   real browser. See the tooling-constraint box in "Sources + Texts live endpoint verification".
