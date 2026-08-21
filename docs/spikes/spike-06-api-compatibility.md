@@ -139,6 +139,29 @@ against **live production** with `curl`; the D7 source was then read to explain 
 the **WAF's treatment of a browser cross-origin request**, which is a separate question and is
 unchanged by this pass.)
 
+> **⚠️ Tooling constraint for the pending AJAX audit — `curl` cannot fetch the AJAX/embed
+> endpoints at all** (found 2026-08-21, raised by Than). The edge bot-challenge keys on the
+> **response content type**, not the site or the path: every JSON endpoint sails through, and
+> every HTML-returning endpoint gets a `202` with an empty body. Measured the same minute, same
+> nids:
+>
+> | endpoint | result |
+> |---|---|
+> | `sources-api/json/62716` | `200` `application/json` 8,066 B |
+> | `shanti_texts/node_json/62716` | `200` `application/json` 19,329 B |
+> | `api/v1/media/node/42016.json` | `200` `application/json` 3,160 B |
+> | `sources-api/ajax/62716` | **`202` `text/html` 0 B** |
+> | `shanti_texts/node_embed/62716` | **`202` `text/html` 0 B** |
+> | `services/node/ajax/42016` | **`202` `text/html` 0 B** |
+>
+> The same `202`-empty is what the Sources *homepage* returns to `curl`, so this is the bot
+> challenge, **not** a broken endpoint — all three AJAX endpoints work normally in a browser
+> (confirmed by Than). **Anyone auditing the AJAX endpoints must use a real browser**, as the
+> 2026-08-20 proxy verification did. A `curl`-based audit would conclude they are all dead, which
+> is the same class of false negative that produced the retracted content-type/ORB diagnosis.
+> This is a sharper form of the standing "curl cannot test this WAF" rule: it is not that `curl`
+> always fails, it is that `curl` fails on the HTML-returning responses.
+
 **Headline: both rows were substantially right — no repeat of the AV situation.** Unlike the AV
 row, neither Sources nor Texts was wrong about its module, callback, route, or general response
 family. Two refinements and one significant behavioural discovery follow.
@@ -686,6 +709,9 @@ per-user cache context is real, not just declared) and `X-Content-Type-Options: 
   plugin and any server-side consumers are unaudited** — confirm before dropping them from the
   D11 requirement. Their exact D7 response shapes were not documented (deprioritized as likely
   out of scope for the React app).
+- **⚠️ Before starting the AJAX audit:** `curl` cannot fetch any of these endpoints — the edge
+  bot-challenge returns `202`/empty for every HTML-typed response across all sites tested. Use a
+  real browser. See the tooling-constraint box in "Sources + Texts live endpoint verification".
 - **The Texts embed endpoint** (`node_embed`, reached via `url_ajax`) and the
   **`/general/api/user/current`** endpoint are identified as in-scope but **not yet audited**
   for response shape / D11 approach.
