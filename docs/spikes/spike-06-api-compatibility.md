@@ -1,34 +1,41 @@
 # Spike 6: API Compatibility for React Application
-**Status:** ◐ In progress — **headline architecture question is decided and proven**, but the
-spike is not complete. **URL strategy DECIDED 2026-08-12: Option A**, the same-origin proxy,
-generalized to every site (superseding the original pre-spike sketch — see "URL-strategy
-DECISION" below). Proven end-to-end for one real site: `mandala_node_api`'s
-`GET /api/json/{nid}` for Images is **live and verified against real migrated data in DDEV**
-(public node → 200 with shaped JSON; private-collection node → real 403 via group membership,
-not a stub). `mandala-wp-proxy`'s SSRF gap is fixed and pushed; the `wp-kmaps` dependency is
-declared. **Pass-criteria scorecard:** URL strategy agreed ✅; feasible in D11 ✅ (and Option A's
-whole point is that no ALB/WAF change is needed at all); D11 implementation approach clear —
-◐ Images only, Sources/Texts/AV still need their own controllers (confirmed different shapes,
-none built); all 8 D7 response formats documented — ◐ JSON done for all 4 sites, AJAX endpoints
-(Texts' `node_embed`, `/user/current`) still unaudited. **The client-side proxy generalization
-is now implemented** (2026-08-20, `mandala-om` `feat/generalize-json-proxy-all-sites` —
-**pushed, and the proxy path is browser-verified end to end**; no PR yet, and only the Sources
-detail page was exercised — AV/Images/Texts/Visuals remain untested). **Remaining work:** build Sources/Texts/AV controllers when each
-site migrates, audit + build the AJAX endpoints, and validate the Images response shape against
-what the live client actually reads (built from the D7 audit + kmassets logic, not yet checked
-against client rendering code). Two known, deferred gaps: private-collection assets can't be
-fetched through the JSON-proxy path because no caller identity reaches `mandala_node_api`
-([note](../deferred/mandala-node-api-no-identity-forwarded-through-json-proxy.md)), and Option A's
-proxy doesn't exist on the standalone non-WordPress deployments
-([note](../deferred/option-a-proxy-unavailable-on-standalone-deployments.md)).
-**⚠️ Audit-reliability caveat — now CLOSED (2026-08-21).** The 2026-08-07 D7 endpoint audit was
-done by reading source rather than calling the live endpoints, and its AV row was later found to
-be wrong in **three** independent ways (2026-08-20). **All four rows have since been live-tested**
-— AV on 2026-08-20, Sources and Texts on 2026-08-21. Sources and Texts held up: correct module,
-callback, route and response family, no AV-scale errors. Two refinements were made (Sources'
-augmentations are conditional by node type; Texts' `parent`/`children` are unreachable dead code)
-plus one behavioural discovery — **the Texts endpoint normalizes any page nid to its book root**,
-so `nid → document` is many-to-one. See "Sources + Texts live endpoint verification" below.
+**Status:** ● **PROVEN — closed 2026-08-21 (Than).** All four pass criteria are met.
+**URL strategy DECIDED 2026-08-12: Option A**, the same-origin proxy, generalized to every site.
+Proven end-to-end: `mandala_node_api`'s `GET /api/json/{nid}` for Images is live and verified
+against real migrated data in DDEV (public → 200 shaped JSON; private-collection → real 403 via
+group membership), and the client-side proxy path is **browser-verified** (direct JSONP → 503 WAF
+block, via proxy → 200 with the record rendering). `mandala-wp-proxy`'s SSRF gap is fixed; the
+`wp-kmaps` dependency is declared.
+
+**Pass-criteria scorecard — all four ✅:**
+
+1. **All eight D7 response formats documented** ✅ — and all **live-verified**, not source-read:
+   four JSON endpoints (AV 08-20; Sources, Texts 08-21) and the AJAX/embed side (08-21), which
+   turned out to be **six routes, not four**.
+2. **URL strategy agreed** ✅ — Option A.
+3. **Feasible in D11 + Terraform ALB config** ✅ — stronger than feasible: Option A needs **no**
+   ALB/WAF change at all.
+4. **D11 implementation approach clear per endpoint** ✅ — the *approach* is clear and proven on
+   Images; **building** Sources/Texts/AV controllers is gated on each site's migration and is now
+   owned by the per-site migration checklist, not by this spike.
+
+**Deliberately NOT closed by this spike, and handed off rather than dropped:**
+
+- **Per-site node-JSON controllers** → the per-site migration checklist in
+  [`migration-legacy-nid-required-convention.md`](../deferred/migration-legacy-nid-required-convention.md).
+  Cannot be built before each site migrates; AV has no `video`-equivalent bundle in D11 yet.
+- **Field inventories are lower bounds** (empty fields are omitted from these responses) →
+  [deferred note](../deferred/endpoint-field-inventories-are-lower-bounds.md).
+- **No caller identity reaches `mandala_node_api`** through the proxy path →
+  [deferred note](../deferred/mandala-node-api-no-identity-forwarded-through-json-proxy.md).
+- **Option A's proxy is absent on standalone deployments** →
+  [deferred note](../deferred/option-a-proxy-unavailable-on-standalone-deployments.md).
+- **Kaltura playback** → [Spike 7](spike-07-kaltura-av-integration.md).
+- **A D7 node-level access-control question** raised by the AJAX audit — legacy-stack, tracked
+  privately; ask Than. Not a D11 blocker and not a Spike 6 deliverable.
+- **The `mandala-om` client branch** `feat/generalize-json-proxy-all-sites` is pushed but
+  **unmerged, no PR**, and only the Sources detail page was exercised in a browser.
+
 **Lead:** Than Grove (owns React app and D7 API contracts)
 **Mode:** Team spike (candidate)
 **Date:** —

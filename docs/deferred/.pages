@@ -82,3 +82,4 @@ nav:
   - "Drupal logout does not end the NetBadge IdP session (no SP-initiated SLO)": saml-logout-does-not-terminate-netbadge-idp-session.md
   - "SAML session expires at 8h vs Drupal's 23d, force-logging-out users mid-session": saml-session-expires-8h-forcing-logout-mid-session.md
   - "Option A's proxy is absent on standalone (non-WordPress) deployments": option-a-proxy-unavailable-on-standalone-deployments.md
+  - "D7 endpoint field inventories are lower bounds, not complete contracts": endpoint-field-inventories-are-lower-bounds.md
