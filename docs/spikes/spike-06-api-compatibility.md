@@ -1,7 +1,7 @@
 # Spike 6: API Compatibility for React Application
 **Status:** ◐ In progress — **headline architecture question is decided and proven**, but the
 spike is not complete. **URL strategy DECIDED 2026-08-12: Option A**, the same-origin proxy,
-generalized to every site (superseding the original Option A/B/C framing — see "URL-strategy
+generalized to every site (superseding the original pre-spike sketch — see "URL-strategy
 DECISION" below). Proven end-to-end for one real site: `mandala_node_api`'s
 `GET /api/json/{nid}` for Images is **live and verified against real migrated data in DDEV**
 (public node → 200 with shaped JSON; private-collection node → real 403 via group membership,
@@ -259,8 +259,9 @@ subdomains) for the same reason the doc already flagged: it doesn't defeat a bro
 WAF rule. That leaves **Option A, generalized to every app**, as the strategy — not a cutover
 stopgap with a later migration to C.
 
-This is the spike's headline deliverable. The findings below reframe the original Option A/B/C
-into a sharper question. Two facts drove it:
+This is the spike's headline deliverable. The findings below reframe the original pre-spike sketch
+(now relabelled under "Reference: original pre-spike URL-strategy sketch") into a sharper
+question. Two facts drove it:
 
 - **`url_json` is a lever D11 already controls** — `mandala_kmassets_sync` writes the client's
   fetch URL per bundle (`__BASE_URL__/api/json/__NID__` today, a *placeholder* by the config's
@@ -622,7 +623,8 @@ per-user cache context is real, not just declared) and `X-Content-Type-Options: 
 
 ## Reference: Pass Criteria
 - All eight D7 API response formats are fully documented
-- A URL strategy is agreed upon between Drupal and React teams (Option A/B/C)
+- A URL strategy is agreed upon between Drupal and React teams (decided: **Option A** — see
+  "URL-strategy DECISION" above; the lettering there is authoritative)
 - The agreed strategy is technically feasible in D11 and in Terraform ALB config
 - The D11 API implementation approach is clear per endpoint
 
@@ -634,15 +636,26 @@ per-user cache context is real, not just declared) and `X-Content-Type-Options: 
 | Sources | `/sources-api/json/{nid}` | `/sources-api/ajax/{nid}` |
 | Texts | `/shanti_texts/node_json/{nid}` | `/shanti_texts/node_embed/{nid}` |
 
-## Reference: URL Strategy Options
-- **Option A:** Single domain, same paths — React app updated to use new domain
-- **Option B:** Old subdomains kept as ALB aliases to single D11 instance — no React changes
-- **Option C:** 301 redirects from old subdomain paths — may break React depending on redirect handling
+## Reference: original pre-spike URL-strategy sketch (SUPERSEDED)
+
+> **Superseded by the "URL-strategy DECISION" section above, which re-lettered the options.**
+> Kept for provenance only. **Do not cite these letters** — "Option A" elsewhere in this doc and
+> in the deferred notes always means the decision section's Option A (generalize the same-origin
+> proxy). Named, not lettered, to avoid the collision:
+>
+> - **Single domain, same paths** — React app updated to use the new domain.
+> - **ALB-aliased subdomains** — old subdomains kept as ALB aliases to the single D11 instance,
+>   no React changes. *This is the only one that carried forward: it is **Option D** in the
+>   decision table, where it was rejected for not defeating a browser-targeted WAF rule.*
+> - **301 redirects** from old subdomain paths — may break React depending on redirect handling.
+>
+> The sketch predates the 2026-07-29 WAF incident, which is why none of its three options
+> addresses a browser cross-origin block.
 
 ## Reference: Fail Criteria
 | Finding | Response |
 |---|---|
-| React app cannot be changed | Must use Option B — coordinate with Dave Goldstein on ALB config |
+| React app cannot be changed | Must use ALB-aliased subdomains (**Option D** in the decision table) — coordinate with Dave Goldstein on ALB config. Note the decision rejected Option D as insufficient against a browser-targeted WAF rule, so this row's remedy is no longer a safe fallback on its own |
 | Expensive computed fields in D7 response | Design caching strategy before implementing |
 | Node IDs change during migration | Implement nid mapping table; update API to accept old or new nid |
 | API response structure inconsistent across nodes | Document exceptions; handle in D11 controller logic |
@@ -773,7 +786,7 @@ direct JSONP and are one WAF-config change away from the same 503.
 2. **Evaluate generalizing the same-origin proxy to all asset JSON** as the primary
    URL strategy — one same-origin `/proxy/json?url=<D11 endpoint>` call sidesteps CORS +
    JSONP + WAF in one move and is already proven for Sources. This is more concrete than
-   the abstract Option A/B/C above and reframes the choice as **proxy-everything vs.
+   the abstract pre-spike sketch above and reframes the choice as **proxy-everything vs.
    move the client to native `fetch` + CORS**.
 3. **WAF must explicitly allow the server-to-server fetch path** — the fix works
    precisely because server-side requests bypass the browser rule. Add this to the
@@ -799,7 +812,8 @@ Candidate alternatives to weigh against "generalize `/proxy/json` to all apps":
   client and depends on the WAF allowing the browser cross-origin call.
 - **Same-origin serving** — if the React app ends up served from the same origin as the
   D11 API (or an ALB path on it), there is no cross-origin call at all (no proxy, no CORS).
-- **ALB-aliased subdomains** (the doc's Option B) — keep per-app hostnames as ALB
+- **ALB-aliased subdomains** (the pre-spike sketch's second option; **Option D** in the
+  decision table) — keep per-app hostnames as ALB
   aliases to the single D11 instance; may not by itself defeat a browser-cross-origin
   WAF rule.
 - **A dedicated proxy service** (vs. the WordPress plugin) — if a proxy tier is chosen,
