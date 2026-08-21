@@ -6,6 +6,39 @@
 ## Theory
 The D7 Kaltura module's two responsibilities — uploading AV content to Kaltura and embedding the Kaltura player in node display — can both be satisfied on D11 using a combination of Drupal core Media, a D11-compatible Kaltura contrib module or custom Media Source plugin, and the Kaltura API v3, without loss of workflow or playback capability.
 
+## Live evidence available before this spike starts (found 2026-08-21 during Spike 6)
+
+Spike 6's AJAX/embed audit walked into the live D7 playback path incidentally. Recorded here so
+this spike does not re-derive it — **none of it is a finding of this spike, and none of it is
+verified beyond the single node checked.**
+
+D7's `services/node/ajax/{nid}/player` (`mb_services_node_player()`, `mb_services.module`) is a
+**redirect off the Mandala estate** to the Kaltura CDN. Observed live for AV node `42016`:
+
+```
+https://cdnapisec.kaltura.com/html5/html5lib/v2.27.1/mwEmbedFrame.php
+  /p/381832 /uiconf_id/24762821 /entry_id/1_lbuv4kg1
+  ?wid=_381832&iframeembed=true&playerId=js-kaltura-media-1_lbuv4kg1
+  &entry_id=1_lbuv4kg1&flashvars[streamerType]=auto
+```
+
+What this gives the spike for free:
+
+- **Partner id `381832`** and **`uiconf_id` `24762821`** — concrete values for the "confirm
+  Kaltura partner/credential model for consolidated single-instance D11" step, and a real player
+  UI configuration to compare any D11 embed against.
+- **The `entry_id` shape** (`1_lbuv4kg1`) and confirmation that D7 stores a per-node entry id, so
+  the "D7 AV nodes → D11 nodes referencing Kaltura Media entities, **no re-upload**" migration
+  strategy has a real identifier to key on.
+- **The embed mechanism actually in production is the `mwEmbedFrame.php` iFrame player**, on
+  `html5lib` **v2.27.1** — relevant to the "no Kaltura oEmbed endpoint → use iFrame/JS embed"
+  fallback row in this spike's risk table, which can be treated as the likely path rather than a
+  contingency.
+
+Caveats: one node, one observation, read from a redirect rather than from the D7 Kaltura module's
+configuration. Player library v2.27.1 is old and its support status was **not** checked. Nothing
+here addresses the **upload/ingest** half of this spike, which remains completely unexplored.
+
 ## Background
 
 The D7 AV site uses the `kaltura` contributed module (7.x branch) to:

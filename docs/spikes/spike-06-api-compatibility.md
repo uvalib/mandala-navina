@@ -326,8 +326,11 @@ response contracts; it does not change the scope steer above.
    small.
 2. **`/player` is a cross-domain redirect off the Mandala estate entirely** — to
    `cdnapisec.kaltura.com/html5/html5lib/v2.27.1/mwEmbedFrame.php` with Kaltura partner id
-   `381832`, a `uiconf_id`, and a per-node `entry_id`. Any D11 AV work inherits this Kaltura
-   dependency; it is not a Drupal-internal route.
+   `381832`, `uiconf_id` `24762821`, and a per-node `entry_id` (`1_lbuv4kg1` for node 42016).
+   **This is [Spike 7](spike-07-kaltura-av-integration.md)'s territory, not Spike 6's** — it is not
+   a Drupal-internal route and carries no API-compatibility question for the React client. Noted
+   here only because the audit walked into it; the live values are recorded in Spike 7 as a
+   starting point.
 
 *(Method note: the AV domain initially refused automation inside a `browser_batch` call but
 navigated normally as a standalone call — the "approved sites" list was empty throughout, so the
