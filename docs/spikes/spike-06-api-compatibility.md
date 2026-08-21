@@ -516,6 +516,19 @@ taken), but it needs a D11-side decision whenever the client is pointed at D11.
 2026-08-20 (`master`, `release/v1.1.0-rc`, several `*/release/v1.1.0-rc` feature branches,
 `chore/react-upgrade`, dependabot branches). The D7/D11 fork hasn't happened in that repo yet.
 
+**Policy confirmed by Than, 2026-08-21 — the client is modifiable, and that is not a spike
+risk.** `mandala-om` is Mandala's own repo; the constraint is *not* "the app can't be changed"
+(an old fail-criteria assumption, now retired below) but "changes must not break the running D7
+integration." So D11-targeted client work is done on **a dedicated branch or fork**, cut when
+the cutover work starts, rather than by conditionally reshaping `release/v1.1.0-rc`. Two
+consequences for this spike:
+
+- **Option A's client-side cost is real but bounded and takeable.** Widening the proxy gate,
+  and later dropping the D7-only AV `.jsonp` append, are ordinary changes on a D11 branch — not
+  blocked work.
+- **Option B (native CORS) was never rejected for being unchangeable-client**, only for WAF
+  exposure. Retiring this premise does not reopen it.
+
 **Untested paths in that branch:** only the Sources detail page was exercised. **AV, Images,
 Texts and Visuals detail pages were not tested**, and specifically the AV direct-JSONP fallback
 — the exact code that was moved — has never been run.
@@ -655,7 +668,7 @@ per-user cache context is real, not just declared) and `X-Content-Type-Options: 
 ## Reference: Fail Criteria
 | Finding | Response |
 |---|---|
-| React app cannot be changed | Must use ALB-aliased subdomains (**Option D** in the decision table) — coordinate with Dave Goldstein on ALB config. Note the decision rejected Option D as insufficient against a browser-targeted WAF rule, so this row's remedy is no longer a safe fallback on its own |
+| ~~React app cannot be changed~~ **Premise retired (Than, 2026-08-21)** | **This row no longer applies.** The React app *can* be changed — `mandala-om` is Mandala's own repo and is already being modified on `feat/generalize-json-proxy-all-sites`. The real constraint is narrower: changes must not break the client's **current interaction with the live D7 site**, so D11-targeted work goes on a separate branch or fork, cut when the cutover work actually starts. See "D7 vs D11 delineation" above. (The original remedy here prescribed ALB-aliased subdomains — **Option D** — which the 2026-08-12 decision rejected as insufficient against a browser-targeted WAF rule, so it was never a usable fallback anyway.) |
 | Expensive computed fields in D7 response | Design caching strategy before implementing |
 | Node IDs change during migration | Implement nid mapping table; update API to accept old or new nid |
 | API response structure inconsistent across nodes | Document exceptions; handle in D11 controller logic |
