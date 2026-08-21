@@ -238,6 +238,82 @@ types) and one Texts book (5 page nids). Random nid sampling on both sites mostl
 not-found, so a second Texts book was not located; the book-root normalization is nonetheless
 unambiguous in source and consistent across every nid tested.
 
+### AJAX / embed endpoint audit (2026-08-21)
+
+Completes the second half of the "all eight D7 API response formats" criterion. Method: D7 source
+read for all four, then live verification **in a real browser** (the `curl` constraint recorded
+below makes browser use mandatory). Public nodes only — `62716` on Sources/Images/Texts.
+
+**First result: the `curl` `202`s were the bot challenge, not dead endpoints.** All three
+browser-tested endpoints returned real, populated HTML fragments. Nothing here is broken.
+
+| Site | Route | Handler | Route access | Live |
+|---|---|---|---|---|
+| **Images** | `api/ajax/%` | `shanti_images_node_embed()` | `'access callback' => TRUE` | ✅ full metadata fragment (derivative sizes, agent, dimensions, license, UID, technical metadata) |
+| **Sources** | `sources-api/ajax/%` | `sources_misc_node_embed()` | `access content` | ✅ bibliographic summary fragment |
+| **Sources** | `sources-api/ajax/%/%` | `sources_misc_node_embed($nid, $type)` | `access content` | **not in the endpoint matrix** — see below |
+| **AV** | `services/node/ajax/%` | `mb_services_node_ajax()` | `access content` | ⏳ source-read only — see blocker |
+| **AV** | `services/node/ajax/%/player` | `mb_services_node_player()` | `access content` | ⏳ redirects to the Kaltura player |
+| **Texts** | `shanti_texts/node_embed/%` | `shanti_texts_node_embed()` | `access content` | ✅ embed container: body + Contents + About + Views panes |
+
+**All four return HTML fragments, never JSON.** This is the cleanest reason they are a different
+problem from the JSON endpoints: there is no JSONP, no `?callback=`, and nothing here participates
+in the `url_json` Solr-record mechanism except Texts via `url_ajax`.
+
+**The matrix undercounts them — there are six routes, not four.** Two surfaces were missing:
+
+1. **`sources-api/ajax/{nid}/{type}`** — `$type='cite'` renders a formatted **citation** rather
+   than a summary, with the biblio style taken from `arg(4)` (defaults to `chicago`, falls back to
+   `biblio_style_chicago` if the requested style will not load). An entire citation-rendering
+   surface the audit never listed. Relevant to [Spike 5](spike-05-bibcite-sources.md), which owns
+   Sources citations.
+2. **`services/node/ajax/{nid}/player`** — an AV-only redirect to the Kaltura player.
+
+**Dead code found: `sources_misc_node_ajax()`.** The function exists and does
+`node_load` → `node_view('full')` → `drupal_render`, but **no route points at it** —
+`sources-api/ajax/%` is wired to `sources_misc_node_embed()` instead. Nothing to port.
+
+**Texts: `node_embed` and `node_json` disagree about nid handling, and this is the more useful
+behaviour of the two.** Both load the book root, but only `node_json` reassigns `$nid`:
+
+```php
+// node_json — swaps BOTH, so the response is the book root (many nids -> one document)
+if (!shanti_texts_is_book($node)) { $nid = $node->book['bid']; $node = node_load($nid); }
+
+// node_embed — swaps only $node, then passes the ORIGINAL $nid to the views
+if ($node->book['bid'] != $nid) { $node = node_load($node->book['bid']); }
+$content = views_embed_view('single_text_body', 'panel_pane_embed', $nid);
+```
+
+So **`node_embed` renders the page you asked for**, while `node_json` collapses to the book root.
+A consequence worth noting for anyone porting it: in `node_embed` the reloaded `$node` is then
+used **only** for the `if ($node)` guard — the book-root load is otherwise dead work.
+`node_embed` also accepts **`?nostyle=true`** to suppress the inline `<style>` block it otherwise
+injects, which is the flag a D11 equivalent would want if the fragment is being embedded into a
+host page with its own CSS.
+
+**Texts' four panes are `views_embed_view()` calls** — `single_text_body` /
+`single_text_toc` / `single_text_meta` / `single_text_views` — confirming gotcha #3: a D11
+equivalent depends on those Views (or replacements) existing and rendering, not just on node data.
+
+**Consumer picture is unchanged by this audit** — still only `legacy/texts.js` (via `url_ajax`)
+for Texts, and no identified consumer for the other five routes. This audit documents the
+response contracts; it does not change the scope steer above.
+
+> **Access-control review deliberately not written up here.** Reading these four handlers side by
+> side raised a question about the live D7 stack that this public repo is the wrong place for, per
+> [non-public documentation policy](../non-public-documentation.md). It concerns how these
+> endpoints gate non-public nodes, it was **not** tested against production, and no private
+> content was fetched. **Ask Than Grove**; it belongs in `uvalib/mandala-legacy-docs` if it holds
+> up. This supersedes the narrower pointer in the Sources + Texts verification section, which was
+> one instance of the same question.
+
+**⏳ Not finished: AV was not live-verified.** `av.mandala.library.virginia.edu` is not in the
+browser extension's permitted-domains list, so both AV routes are **source-read only**. Given the
+AV row's history of being wrong precisely where it was only ever source-read, **this should not be
+treated as verified** until someone loads `services/node/ajax/42016` in a browser. Everything
+above about AV is a source claim, not evidence.
+
 ### Scope steer: the AJAX endpoints are low-importance for *this* spike (Than, 2026-08-21)
 
 **Than's steer:** the AJAX endpoints "are not that important. I'm not even sure they are used but
@@ -787,9 +863,11 @@ per-user cache context is real, not just declared) and `X-Content-Type-Options: 
   omitted from these responses, so the sampled field inventories are lower bounds, not complete
   lists. See "Open consideration: empty fields are omitted" above. Recorded 2026-08-21, no
   approach chosen.
-- **⚠️ Before starting the AJAX audit:** `curl` cannot fetch any of these endpoints — the edge
-  bot-challenge returns `202`/empty for every HTML-typed response across all sites tested. Use a
-  real browser. See the tooling-constraint box in "Sources + Texts live endpoint verification".
+- **AJAX/embed audit — DONE 2026-08-21** for Images, Sources and Texts (browser-verified); see
+  "AJAX / embed endpoint audit". **AV remains source-read only** — its domain is not in the
+  browser extension's permitted list, and `curl` cannot reach these endpoints (the edge
+  bot-challenge returns `202`/empty for every HTML-typed response). Given the AV row's history,
+  AV should not be counted as verified until someone loads it in a browser.
 - **The Texts embed endpoint** (`node_embed`, reached via `url_ajax`) and the
   **`/general/api/user/current`** endpoint are identified as in-scope but **not yet audited**
   for response shape / D11 approach.
