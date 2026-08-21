@@ -107,6 +107,12 @@ development going forward, not just migrations.
         and no ALB/server rewrite is needed. Blocked until a `video`-equivalent bundle exists.
       - Field inventories in the spike are **lower bounds, not complete contracts** — see
         [endpoint-field-inventories-are-lower-bounds.md](endpoint-field-inventories-are-lower-bounds.md).
+- [ ] **Endpoint enforces node access — public-only by default.** Gate on the real
+      `node->access('view')` check, as `mandala_node_api` does; no endpoint exempt, no per-site
+      variation. See
+      [d11-asset-endpoints-uniform-access-and-authenticated-fetch.md](d11-asset-endpoints-uniform-access-and-authenticated-fetch.md)
+      — this is a **required property**, not a nice-to-have, and the D7 endpoints are **not** a
+      safe model to copy here.
 - [ ] **Decide whether the site needs an AJAX/embed equivalent** — D7 has one per site (six routes
       across the four sites), all returning HTML fragments rather than JSON. Only Texts'
       `node_embed` has an identified consumer (`legacy/texts.js`); the rest have none. Per Than
