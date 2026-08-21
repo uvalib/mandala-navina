@@ -92,6 +92,27 @@ development going forward, not just migrations.
       in the same commit — verify with `drush config:status` before and after
 - [ ] Post-import verification: row count + 0 mismatches against
       `migrate_map_*`
+- [ ] **Node-JSON endpoint built for the site's asset bundle(s)** — the D11 equivalent of
+      D7's per-site detail endpoint, following `mandala_node_api`'s `GET /api/json/{nid}`
+      (Images, the proven pattern). **Handed to this checklist when [Spike 6](../spikes/spike-06-api-compatibility.md)
+      closed 2026-08-21:** the spike proved the approach and documented every D7 response
+      contract, but the controllers cannot be built before their site migrates. Each site's D7
+      shape differs — see the endpoint table and the live-verification sections in that spike,
+      and note especially:
+      - **Sources** — augmentations are conditional by node type (`description` only when `body`
+        is non-empty, `subcollections` only on `collection`, `parent` only on `subcollection`).
+      - **Texts** — D7 collapses any page nid to its **book root**, and bakes rendered HTML from
+        four `views_embed_view()` panes, so the D11 equivalent depends on those Views existing.
+      - **AV** — a Services-module route returning an augmented raw node; **not** Solr-derived,
+        and no ALB/server rewrite is needed. Blocked until a `video`-equivalent bundle exists.
+      - Field inventories in the spike are **lower bounds, not complete contracts** — see
+        [endpoint-field-inventories-are-lower-bounds.md](endpoint-field-inventories-are-lower-bounds.md).
+- [ ] **Decide whether the site needs an AJAX/embed equivalent** — D7 has one per site (six routes
+      across the four sites), all returning HTML fragments rather than JSON. Only Texts'
+      `node_embed` has an identified consumer (`legacy/texts.js`); the rest have none. Per Than
+      (2026-08-21) these are low-importance and same-origin, so **the default answer is "no"** —
+      but it should be a recorded decision per site, not an omission. Contracts documented in
+      Spike 6's AJAX audit.
 - [ ] `content_editor` granted full create/edit/delete on the site's new
       content types, on the same footing Images has for `shanti_image` — per
       [ADR 015](../adr/015-editorial-access-model-global-content-editor.md).
