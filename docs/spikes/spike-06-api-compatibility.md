@@ -21,10 +21,14 @@ fetched through the JSON-proxy path because no caller identity reaches `mandala_
 ([note](../deferred/mandala-node-api-no-identity-forwarded-through-json-proxy.md)), and Option A's
 proxy doesn't exist on the standalone non-WordPress deployments
 ([note](../deferred/option-a-proxy-unavailable-on-standalone-deployments.md)).
-**⚠️ Audit-reliability caveat:** the 2026-08-07 D7 endpoint audit was done by reading source
-rather than calling the live endpoints, and its AV row was later found to be wrong in **three**
-independent ways (2026-08-20). The Sources and Texts rows come from that same pass and have
-**not** been live-verified.
+**⚠️ Audit-reliability caveat — now CLOSED (2026-08-21).** The 2026-08-07 D7 endpoint audit was
+done by reading source rather than calling the live endpoints, and its AV row was later found to
+be wrong in **three** independent ways (2026-08-20). **All four rows have since been live-tested**
+— AV on 2026-08-20, Sources and Texts on 2026-08-21. Sources and Texts held up: correct module,
+callback, route and response family, no AV-scale errors. Two refinements were made (Sources'
+augmentations are conditional by node type; Texts' `parent`/`children` are unreachable dead code)
+plus one behavioural discovery — **the Texts endpoint normalizes any page nid to its book root**,
+so `nid → document` is many-to-one. See "Sources + Texts live endpoint verification" below.
 **Lead:** Than Grove (owns React app and D7 API contracts)
 **Mode:** Team spike (candidate)
 **Date:** —
@@ -64,8 +68,8 @@ for JSONP/route-existence reasons now, not because AV's shape is categorically d
 |---|---|---|---|---|---|
 | **AV** | `/api/v1/media/node/{nid}.json` (and `.jsonp`) | Services module (per-content-type "JSON Path" setting, same mechanism as Images/Sources/Texts — see below) | Services `node` resource `retrieve` action | Augmented **raw node** (`vid`, `uid`, `title`, `field_*` incl. `field_kmap_terms`/`field_subject`/etc. in the usual `raw/id/header/domain/path` shape, `field_og_collection_ref`) **+ computed extras** (`thumbnail_url`, `duration: {seconds, formatted}`, `path`) — **not** a Solr-style flat doc | **Yes** — `.jsonp?callback=` (see correction) |
 | **Images** | `/api/json/{nid}` | `shanti_images.module` | `shanti_images_node_json()` | Augmented **raw node** (entity-refs expanded in place); `?extend=true` gives a reshaped flat variant w/ IIIF url + dims | **Yes** (`?callback=`) |
-| **Sources** | `/sources-api/json/{nid}` | `shanti_biblio_modules/sources_misc/sources_misc.module` | `sources_misc_node_json()` | Augmented **raw node** (+`description` from body, collection/subcollection relations); sends `Access-Control-Allow-Origin: *` | **Yes** (`?callback=`) |
-| **Texts** | `/shanti_texts/node_json/{nid}` | `shanti_texts.module` | `shanti_texts_node_json()` | Augmented **raw node** **+ embedded rendered HTML** (`full_markup`, `toc_links`, `bibl_summary`, `views_links` via `views_embed_view()`) + book `toc`/`parent`/`children` | **Yes** (`?callback=` **or** `?json_wrf=`) |
+| **Sources** ✅ *live-verified 2026-08-21* | `/sources-api/json/{nid}` | `shanti_biblio_modules/sources_misc/sources_misc.module` | `sources_misc_node_json()` | Augmented **raw node**; sends `Access-Control-Allow-Origin: *` (confirmed live). The three augmentations are **conditional and mutually exclusive by node type**, *not* present on every response: `description` only when `body` is non-empty, `subcollections` only on `collection`, `parent` only on `subcollection`. A plain `biblio` node — the common case the client fetches — gets **none** of them | **Yes** (`?callback=`) — but served as `content-type: application/json`, not `text/javascript` |
+| **Texts** ✅ *live-verified 2026-08-21* | `/shanti_texts/node_json/{nid}` | `shanti_texts.module` | `shanti_texts_node_json()` | Augmented **raw node** **+ embedded rendered HTML** (`full_markup`, `toc_links`, `bibl_summary`, `views_links` via `views_embed_view()` — all four confirmed live as HTML strings). **⚠️ The endpoint normalizes any page nid to its book root**, so the response is keyed to `book.bid`, not to the nid requested. `toc` is therefore always present and `parent`/`children` are **unreachable via the public route** — see the verification note below | **Yes** (`?callback=` **or** `?json_wrf=`, both `text/javascript`) |
 
 > **Correction (2026-08-20, Than + Claude Code):** the AV row above (module, callback, and
 > response shape) as originally written 2026-08-07 was **wrong**. It was based on reading D7
@@ -126,6 +130,90 @@ for JSONP/route-existence reasons now, not because AV's shape is categorically d
    before emitting. D11 must enforce the equivalent access check (ties to the ADR 015 /
    Group access model) in whatever replaces these endpoints, or private assets leak via
    the API.
+
+### Sources + Texts live endpoint verification (2026-08-21)
+
+Closes the audit-reliability caveat for the two remaining un-live-tested rows. Both were fetched
+against **live production** with `curl`; the D7 source was then read to explain each observation.
+(`curl` is valid evidence for *response shape and route behaviour* — the thing it cannot test is
+the **WAF's treatment of a browser cross-origin request**, which is a separate question and is
+unchanged by this pass.)
+
+**Headline: both rows were substantially right — no repeat of the AV situation.** Unlike the AV
+row, neither Sources nor Texts was wrong about its module, callback, route, or general response
+family. Two refinements and one significant behavioural discovery follow.
+
+**Both endpoints are live and healthy.** `sources-api/json/62716` → 200 `application/json`
+(8,066 B); `shanti_texts/node_json/62716` → 200 `application/json` (19,329 B). Both return an
+augmented raw node, as claimed.
+
+**Sources — the augmentations are conditional, which the row read as unconditional.** All three
+were proven live rather than inferred, by walking a real collection tree:
+
+| node | type | result |
+|---|---|---|
+| 62716 | `biblio` | **no** `description` / `subcollections` / `parent` — its `body` is `[]` |
+| 62311 | `subcollection` | `parent` = `"University of Flourishing\|24466"` |
+| 24466 | `collection` | `subcollections` = 33 entries (`"Title\|nid"`), `description` present |
+
+`sources_misc_node_json()` adds `description` only `if (!empty($node->body['und'][0]['safe_value']))`,
+`subcollections` only for `type == 'collection'`, `parent` only for `type == 'subcollection'`.
+**For D11 this means the Sources response shape is not uniform** — a generic controller that
+always emits these keys would not match D7, and one that never emits them breaks collections.
+`Access-Control-Allow-Origin: *` confirmed present on the live response.
+
+**Texts — the real finding: the endpoint resolves any page nid to its book root.**
+
+```
+shanti_texts/node_json/{62701,62706,62711,62716,62721}
+  -> all five return byte-identical 19,329 B documents for nid 62701
+```
+
+`shanti_texts_node_json()` does this explicitly: after the access check it runs
+`if (!shanti_texts_is_book($node)) { $nid = $node->book['bid']; $node = node_load($nid); }`, and
+`shanti_texts_is_book()` is true only when `book['nid'] == book['bid']`. So **the response is
+keyed to the book, not to the nid requested**, and `nid → document` is many-to-one.
+
+Two consequences the audit row did not capture:
+
+1. **`parent` and `children` are dead code on this route.** They are set only in the
+   `subtype == 'page'` branch, which the book-root swap makes unreachable — `hook_menu` registers
+   `'page arguments' => array(2)` (the nid only), so the function's `$is_page` parameter is never
+   passed and is always `FALSE`. Live confirmation: every response carried `subtype: "book"`,
+   `is_page: false`, and a `toc`; none ever carried `parent` or `children`. **D11 need not
+   implement `parent`/`children` for parity — D7 never serves them here.**
+2. **`url_json` per-page is ambiguous for Texts.** If kmassets writes a page-level nid into
+   `url_json`, D7 answers with the whole book. Whatever D11 does must be a deliberate decision,
+   not an accident of porting.
+
+**Error handling diverges between the two sites** — worth pinning before either D11 controller is
+written:
+
+| | missing nid |
+|---|---|
+| Sources | **HTTP 200** with a JSON body `{"nid": -1, "status": 404, "messsage": "..."}` (the key really is misspelled `messsage` in D7 source) |
+| Texts | **HTTP 404** with a Drupal HTML error page — not JSON at all |
+
+**JSONP confirmed on both**, as claimed: Sources `?callback=`, Texts both `?callback=` and
+`?json_wrf=`, all wrapping as `cb({...});`. One quirk: **Sources returns its JSONP with
+`content-type: application/json`** while Texts and AV use `text/javascript`. Recorded as an
+observation only — no browser-level consequence was tested, and an earlier content-type/ORB
+diagnosis in this spike was retracted after being built on a bad `curl` result.
+
+**Gotcha #5 (shared private-content gating) holds for both** — `sources_misc_node_json()` and
+`shanti_texts_node_json()` both call `shanti_general_api_check($node)` before emitting. This was
+confirmed by reading source, not by fetching private content.
+
+> **One access-control question is deliberately not documented here.** Reading
+> `shanti_texts_node_json()` raised a question about the live D7 stack that this public repo is
+> the wrong place for, per [non-public documentation policy](../non-public-documentation.md). It
+> is not known to be exploitable and was not tested against production. **Ask Than Grove**; it
+> belongs in `uvalib/mandala-legacy-docs` if it holds up.
+
+**Evidence scope, stated honestly:** one Sources collection tree (3 nodes across all three
+types) and one Texts book (5 page nids). Random nid sampling on both sites mostly returned
+not-found, so a second Texts book was not located; the book-root normalization is nonetheless
+unambiguous in source and consistent across every nid tested.
 
 ### AV live endpoint field inventory (2026-08-20, against real production data)
 
