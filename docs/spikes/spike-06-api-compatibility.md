@@ -315,11 +315,15 @@ response contracts; it does not change the scope steer above.
    Acceptable`, `Masters Archived`, `Transcribed`, `Timecoded`, the `Media Problem`/`Timecoding
    problem` slots, translation-language proofing state), almost all reading `Not Reviewed` on the
    node checked. This is a **response-contract fact**, observed on a public node with an ordinary
-   browser GET. Whether it *should* be visible is a different question and is part of the
-   access-control review referred to privately below — note that `field_workflow` is the one field
-   D7 protects with `field_permissions` for the AV-only `workflow editor` role (rid 5). **For D11
-   the practical point stands regardless:** an AV embed equivalent should decide deliberately
-   which field groups it exposes, rather than rendering the node's full display.
+   browser GET. **Not a concern — resolved by Than, 2026-08-21: "Workflow fields being viewable by
+   unauthenticated user is ok. Those fields are rarely used."** Recorded so it is not re-raised as
+   a defect by a later reader; `field_workflow` being the one field D7 protects with
+   `field_permissions` (for the AV-only `workflow editor` role, rid 5) makes it look more
+   significant than it is. **This disposes of the field-level question only** — the separate
+   node-level access question referred to privately below is unaffected and still open. **For D11
+   the design point stands on its own merits:** an AV embed equivalent should choose which field
+   groups it exposes rather than rendering the node's full display, if only to keep the fragment
+   small.
 2. **`/player` is a cross-domain redirect off the Mandala estate entirely** — to
    `cdnapisec.kaltura.com/html5/html5lib/v2.27.1/mwEmbedFrame.php` with Kaltura partner id
    `381832`, a `uiconf_id`, and a per-node `entry_id`. Any D11 AV work inherits this Kaltura
