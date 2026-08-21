@@ -4,7 +4,7 @@
 **Raised during:** Session 2026-08-19 (re-verifying the two 2026-08-18 OAuth2 defects after fixing both)
 **Jira:** (add when available)
 **Priority:** High — blocks the entire OAuth2-authenticated path (proxy UserInfo call, and by extension anything else that authenticates via a `simple_oauth` Bearer token) regardless of the two defects fixed this session
-**Status:** 🟡 The scope-permission fix itself is CONFIRMED CORRECT live on dev-0 (2026-08-19) — `TokenAuthUser->hasPermission('access content')` now YES, route access ALLOWED, both verified directly, not assumed. But the live end-to-end call still fails, for a **fourth**, distinct, not-yet-root-caused reason (a session-handling redirect loop) — see the bottom of the Fix section
+**Status:** 🟡 The scope-permission fix itself is CONFIRMED CORRECT live on dev-0 (2026-08-19) — `TokenAuthUser->hasPermission('access content')` now YES, route access ALLOWED, both verified directly, not assumed. The live end-to-end call still failed for a **fourth** reason (a session-handling redirect loop) — **root-caused and fixed 2026-08-20; live verification of the full chain still pending a deploy.** Full detail in its own note: [simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md](simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md)
 
 ## Issue
 
@@ -142,11 +142,15 @@ allowed) — instead it logs repeated `Session closed for [uid 600]` /
 `session_destroy(): Trying to destroy uninitialized session` pairs, and the HTTP
 response is still a redirect loop bouncing between `/oauth/userinfo` and `/`
 (`GuzzleHttp\Exception\TooManyRedirectsException` after 5 hops on the proxy side).
-This looks like something in Drupal's session-handling layer reacting badly to a
-*stateless* Bearer-authenticated request that resolves to a real user identity with no
-matching session cookie — repeatedly treating it as a logout event. Not yet
-root-caused; a genuinely new problem layered under this one, only reachable now that
-this scope-permission fix works. **Next-session starting point.**
+
+**Root-caused and FIXED 2026-08-20:** `simplesamlphp_auth`'s
+`SimplesamlSubscriber::checkAuthStatus()` forces a Drupal logout on every request where the
+current account isn't proven to hold a live SimpleSAMLphp browser session — which a stateless
+Bearer-authenticated request never has, by design. Fixed by a service override in the new
+`mandala_saml_oauth` custom module, which exempts OAuth2 Bearer requests using simple_oauth's
+own `SimpleOauthRequestPolicyInterface::isOauth2Request()`. Behaviour proven locally;
+**live verification on dev-0 still pending a deploy.** Full writeup:
+[simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md](simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md).
 
 If a permission beyond `access content` turns out to be needed once the Redis
 visibility-token path is exercised, extend the same `granularity_configuration`
@@ -157,6 +161,7 @@ visibility-token path is exercised, extend the same `granularity_configuration`
 
 - [oauth2-signing-keys-not-persisted-across-deploy.md](oauth2-signing-keys-not-persisted-across-deploy.md)
 - [solr-proxy-genericprovider-no-bearer-header-on-userinfo.md](solr-proxy-genericprovider-no-bearer-header-on-userinfo.md) — both fixed and verified working this session; this note is the next blocker in the same chain
+- [simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md](simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md) — root cause of the fourth defect described just above, plus a related-but-unproven browser-session logout report
 - [ADR 014 — hybrid Solr proxy design](../adr/014-hybrid-solr-proxy-design.md)
 - [Spike 10 findings](../spikes/spike-10-saml-oauth2-coexistence.md) — original `openid` scope design intent
 - `docs/session-logs/2026-08-19-oauth2-fixes-deployed-and-third-defect-found.md`
