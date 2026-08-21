@@ -12,7 +12,8 @@ whole point is that no ALB/WAF change is needed at all); D11 implementation appr
 none built); all 8 D7 response formats documented — ◐ JSON done for all 4 sites, AJAX endpoints
 (Texts' `node_embed`, `/user/current`) still unaudited. **The client-side proxy generalization
 is now implemented** (2026-08-20, `mandala-om` `feat/generalize-json-proxy-all-sites` —
-unpushed, browser-unverified). **Remaining work:** build Sources/Texts/AV controllers when each
+**pushed, and the proxy path is browser-verified end to end**; no PR yet, and only the Sources
+detail page was exercised — AV/Images/Texts/Visuals remain untested). **Remaining work:** build Sources/Texts/AV controllers when each
 site migrates, audit + build the AJAX endpoints, and validate the Images response shape against
 what the live client actually reads (built from the D7 audit + kmassets logic, not yet checked
 against client rendering code). Two known, deferred gaps: private-collection assets can't be
@@ -341,7 +342,7 @@ is the correct target shape for all of this.
 
 #### Client generalization IMPLEMENTED (2026-08-20) — `mandala-om` `feat/generalize-json-proxy-all-sites`
 
-Commit `e6e712ae` (branch off `release/v1.1.0-rc`, **not yet pushed or merged**) makes the
+Commit `e6e712ae` (branch off `release/v1.1.0-rc`, **pushed; not merged, no PR**) makes the
 change described above. Three decisions worth recording, because two of them are traps:
 
 1. **Host matching uses `URL()` parsing, not a widened substring test.** Simply broadening
@@ -372,7 +373,7 @@ this needs a real browser check against a tibet build before merge.
 
 #### Client generalization IMPLEMENTED (2026-08-20) — `mandala-om` `feat/generalize-json-proxy-all-sites`
 
-Commit `e6e712ae` (branch off `release/v1.1.0-rc`, **not yet pushed or merged**) makes the
+Commit `e6e712ae` (branch off `release/v1.1.0-rc`, **pushed; not merged, no PR**) makes the
 change described above. Three decisions worth recording, because two of them are traps:
 
 1. **Host matching uses `URL()` parsing, not a widened substring test.** Simply broadening
