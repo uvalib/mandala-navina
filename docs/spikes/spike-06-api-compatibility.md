@@ -238,6 +238,46 @@ types) and one Texts book (5 page nids). Random nid sampling on both sites mostl
 not-found, so a second Texts book was not located; the book-root normalization is nonetheless
 unambiguous in source and consistent across every nid tested.
 
+### Scope steer: the AJAX endpoints are low-importance for *this* spike (Than, 2026-08-21)
+
+**Than's steer:** the AJAX endpoints "are not that important. I'm not even sure they are used but
+it would be in the context of JS / React or else same origin."
+
+**The evidence already in this doc corroborates that**, and was gathered independently of the
+steer:
+
+| endpoint group | known consumer |
+|---|---|
+| Generic AJAX (`/api/ajax`, `/services/node/ajax`, `/sources-api/ajax`) | **None found** — no React client references |
+| Browse-by-KMap Drupal endpoints | **None found** — no client references |
+| Texts `node_embed` (via `url_ajax`) | **The only one with a live consumer** — and it is `legacy/texts.js`, a legacy path, rewriting `node_ajax`→`node_embed` with `?callback=pfunc` for an embeddable HTML fragment |
+
+So three of the four have no identified consumer at all, and the fourth is reached only from
+legacy client code.
+
+**The structural argument is stronger than the usage argument, and it is what actually matters
+here.** Spike 6 exists to resolve **cross-origin API reachability** — the WAF/CORS/JSONP problem.
+An endpoint consumed same-origin, or from a JS context inside the embedding page, is **not
+exposed to that problem at all**. So the AJAX endpoints are arguably out of scope for *this
+spike* independent of whether they turn out to be used — they belong to whichever site's
+migration owns them (Texts' `node_embed` is already noted as Texts-phase work).
+
+**Consequence for the pass criteria — Than's call, not recorded as decided.** The criterion "all
+eight D7 API response formats are fully documented" counts 4 JSON + 4 AJAX. If the AJAX half is
+out of scope for Spike 6, that criterion is **over-scoped**, and the JSON half — now documented
+*and* live-verified for all four sites (2026-08-20/21) — would satisfy it as narrowed. That would
+leave the AJAX audit as **not a closure blocker**. The `curl`-cannot-reach-them constraint
+recorded above then becomes a note for whoever picks the endpoints up later, rather than a
+prerequisite for finishing this spike.
+
+**One live observation while checking this** — D11 *does* write `url_ajax` into every kmassets
+record (`KmassetDocBuilder.php:126`, `mandala_kmassets_sync.settings.yml`), so the field is
+populated whether or not anything reads it. In the deployed `config/sync`, `url_ajax` — along
+with `url_html` and `url_json` — currently points at the **D7 production host**
+(`https://images.mandala.library.virginia.edu/api/ajax/__NID__`), not at `__BASE_URL__` as the
+install config does. Flagged as an observation only: during D7/D11 coexistence that may well be
+deliberate, and it was not investigated.
+
 ### ⚠️ Open consideration: empty fields are omitted, so no single record proves a contract
 
 **Raised by Than, 2026-08-21. Recorded for the record — no approach chosen, nothing to act on
