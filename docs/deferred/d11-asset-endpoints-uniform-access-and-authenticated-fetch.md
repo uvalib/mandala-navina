@@ -38,8 +38,9 @@ tracked privately — **ask Than**. **Access resolved 2026-08-24:** Than now has
 private docs repos, clearing the blocker recorded in the 2026-08-21 session log. Per
 [CONVENTION.md](https://github.com/uvalib/mandala-legacy-docs/blob/main/CONVENTION.md) the
 write-up files in `uvalib/mandala-legacy-docs` — routing is by which stack the *fix* serves, and
-this fix serves D7. Filing is still outstanding: the 08-21 draft did not survive as a document,
-so it needs to be rewritten from Than's knowledge of the defect rather than recovered.
+this fix serves D7. **Filed there 2026-08-24**, rewritten (the 08-21 draft did not survive as a
+document) and re-verified against production before filing. Status OPEN. The group can read it in
+that repo; it is not described here.
 
 ## Why this exists
 
