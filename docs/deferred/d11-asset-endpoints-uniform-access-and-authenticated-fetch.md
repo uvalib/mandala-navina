@@ -34,8 +34,12 @@ Questions to put to the group:
    Yuji's stack rather than on anything in the endpoint layer.
 
 Related context the group will want: a legacy D7 access-control defect motivated this and is
-tracked privately — **ask Than**. Note that Than currently has no access to the private docs repos
-(see the 2026-08-21 session log), so that write-up is not yet filed anywhere the team can read.
+tracked privately — **ask Than**. **Access resolved 2026-08-24:** Than now has access to both
+private docs repos, clearing the blocker recorded in the 2026-08-21 session log. Per
+[CONVENTION.md](https://github.com/uvalib/mandala-legacy-docs/blob/main/CONVENTION.md) the
+write-up files in `uvalib/mandala-legacy-docs` — routing is by which stack the *fix* serves, and
+this fix serves D7. Filing is still outstanding: the 08-21 draft did not survive as a document,
+so it needs to be rewritten from Than's knowledge of the defect rather than recovered.
 
 ## Why this exists
 
