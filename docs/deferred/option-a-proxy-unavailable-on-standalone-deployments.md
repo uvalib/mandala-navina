@@ -79,6 +79,22 @@ covered by the decided strategy either.
    but the "maybe standalone origins are evaluated differently" hope is no longer the likely
    case, and the gap should be treated as **real, not theoretical**.
 
+   **Narrowed 2026-08-24: the exposure is Sources-only.** The four other Drupal hosts were
+   tested cross-origin for the first time, from a real browser on `https://thlib.org` using
+   `<script>`-tag injection: **texts, images, visuals and audio-video all served cross-origin
+   JSONP normally**, while sources returned the 503. Sources is also specifically blocked rather
+   than merely unhealthy — the same URL returns 200 to `curl` even with a browser `User-Agent`,
+   `Origin` and `Referer`, and the site root is 200.
+
+   So the standalone deployments are exposed **for Sources detail views only**, not for asset
+   JSON generally. That shrinks the gap considerably, and it retires the assumption — recorded
+   in this note's own framing, and inherited by the `mandala-om` branch — that the WAF rule is a
+   general property of the Drupal hosts. It never was; the original July fix's own code comment
+   said so, and the broader claim was inference that nobody had tested. See
+   [session log 2026-08-24](../session-logs/2026-08-24-json-proxy-rescoped-and-endpoint-access-escalated.md).
+
+   Still untested: the `mandala.kmaps.virginia.edu` origin specifically.
+
    **Methodological warning for whoever re-tests this:** a `curl` replay carrying full browser
    headers (`Origin`, `Referer`, `Sec-Fetch-*`, Chrome UA) returned **200** for the very same
    URL that the real browser got 503 on. The rule keys on something header-spoofing cannot
