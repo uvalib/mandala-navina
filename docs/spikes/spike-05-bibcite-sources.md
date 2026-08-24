@@ -55,12 +55,50 @@ carrying junk type ids (`0`, `1`, `200` — one row each, almost certainly data 
 | Book (multiple authors) | 45 | collapses into `book` |
 | Multi-Chapter Volume | 8 | collapses into `book` |
 
-Two of these are cheap: `Book (single author)` + `Book (multiple authors)` +
+Three of these are not real gaps: `Book (single author)`, `Book (multiple authors)` and
 `Multi-Chapter Volume` (300 rows) are **authorship distinctions D7 encoded as separate types**,
-which bibcite expresses through contributor roles instead — they should collapse into `book`
-rather than become bundles. That leaves four genuine candidates for custom bundles, of which
-**`Block Print` is the only one with no analogue in any citation vocabulary** and is exactly
-the kind of thing the fail-criteria row "a critical reference type is missing" anticipated.
+which bibcite expresses through contributor roles instead — they collapse into `book`.
+
+### 2a. The four remaining types are all wanted, and all are config-only to add — **the fail criterion does not fire**
+
+**Than, 2026-08-24: all four are to be kept as real types**, with these meanings:
+
+| Type | Rows | What it is |
+|---|---|---|
+| Review | 599 | **book reviews** |
+| Dictionary | 375 | dictionaries |
+| Block Print | 140 | a **wood-block print (xylograph) of a Tibetan text** |
+| Obituary | 63 | obituaries |
+
+Two findings make this cheap rather than risky:
+
+**A bibcite reference type is pure configuration.** Each is a single
+`bibcite_entity.bibcite_reference_type.*.yml` selecting from a shared field pool, with
+per-type `required` flags and `label` overrides. No code, no new fields, no schema change.
+The shipped `manuscript` type is a working precedent for exactly this kind of domain
+relabelling — it renames the shared fields to `Library/Archive`, `Folio Number`,
+`Volume/Storage Container`, `Abbreviation`. **`Block Print` should be modelled on it.**
+
+**Citation rendering is not lost either.** bibcite maps each reference type to a CSL type
+through a configurable mapping (`bibcite_entity`'s `CslMappingForm`), and the selectable
+CSL vocabulary is the full CSL type list — which contains precise targets for all four:
+
+| Custom type | CSL target | Quality |
+|---|---|---|
+| Review | `review-book` | exact — CSL has a dedicated book-review type |
+| Dictionary | `entry-dictionary` | exact |
+| Obituary | `article-newspaper` | good |
+| Block Print | `manuscript` | closest available; renders as a hand-produced artifact |
+
+So the fail-criteria row *"a critical reference type is missing → assess whether a custom
+bundle can fill the gap"* resolves affirmatively: **a custom bundle can fill all four gaps,
+config-only, with correct CSL rendering.** `Block Print` is the only one where the CSL target
+is an approximation rather than a match — acceptable, since CSL has no xylograph concept and
+`manuscript` carries the right physical-artifact semantics.
+
+**Not yet verified:** that the CSL mapping UI accepts a *custom* reference type id (the form
+builds its type list from a fixed CSL vocabulary, but the mapping is per-reference-type — this
+needs confirming against a real install, not source reading).
 
 Ten bibcite types have no D7 usage at all (`bill`, `chart`, `government_report`, `hearing`,
 `legal_ruling`, `miscellaneous_section`, `patent`, `statute`, `unpublished`, `web_service`) —
@@ -84,7 +122,9 @@ imported field data, with no live-feed requirement at all.
 
 ## What this does NOT establish
 
-- **Citation styles** (criterion 3) — not investigated. Note [Spike 6](spike-06-api-compatibility.md)
+- **Citation styles** (criterion 3) — partially: bibcite ships five CSL styles (APA, Chicago
+  author-date, AMA, MLA, MLA 8th). Whether these cover what Sources actually uses is
+  **not investigated**. Note [Spike 6](spike-06-api-compatibility.md)
   found `sources-api/ajax/{nid}/{type}` renders citations with the biblio style taken from
   `arg(4)`, so the set of styles actually reachable is broader than the site's default and needs
   enumerating from that route as well as from config.
