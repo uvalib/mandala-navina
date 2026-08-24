@@ -6,8 +6,36 @@ ADR 014 / migration consistency
 endpoint audit
 **Priority:** **High** — a required property of every asset endpoint D11 builds; the per-site
 migration checklist depends on it
-**Status:** Requirement stated, design not started. Candidate for an ADR (the API-endpoint analogue
-of [ADR 014](../adr/014-hybrid-solr-proxy-design.md)) — Than's call whether it needs one.
+**Status:** **AGENDA ITEM — bring to the next group meeting.** Requirement stated, design not
+started. An ADR is the likely destination (the API-endpoint analogue of
+[ADR 014](../adr/014-hybrid-solr-proxy-design.md)), but Than has explicitly declined to draft it
+solo — see "Needs a team decision" below.
+
+## Needs a team decision — raise this at the next group meeting
+
+**Whoever is driving: this item is waiting on a group conversation, not on implementation work.**
+
+Than raised the requirement (2026-08-21) and still stands behind it, but on 2026-08-24 decided
+**not to write the ADR alone**. The decision spans services owned by different people — Yuji's
+SAML/OAuth2/Redis stack and the deployment topology, Xiaoming's D11 module and deployment work —
+and it is a deliberate departure from a team-agreed rule, so it needs the people who agreed to that
+rule in the room. **Yuji Shinozaki and Xiaoming Wang are the required participants.**
+
+Questions to put to the group:
+
+1. **Do we accept the convergence at all?** Uniform node-access enforcement across every D11 asset
+   endpoint, public-only by default, no per-site exemptions.
+2. **Is it in scope for the MVP, or deferred?** It is an improvement, not a faithful port. Whether
+   [ADR 010](../adr/010-adr-008-scope-clarification.md)'s "internal architecture" clause already
+   covers it, or whether it is user-facing enough to need [ADR 008](../adr/008-mvp-migrate-not-improve.md)
+   to be explicitly excepted, is the crux — and is genuinely arguable both ways.
+3. **Does it get an ADR?** If yes, who drafts it and does it supersede or merely refine ADR 008.
+4. **Who owns half 2** (authenticated fetch), which is blocked on the identity-forwarding gap in
+   Yuji's stack rather than on anything in the endpoint layer.
+
+Related context the group will want: a legacy D7 access-control defect motivated this and is
+tracked privately — **ask Than**. Note that Than currently has no access to the private docs repos
+(see the 2026-08-21 session log), so that write-up is not yet filed anywhere the team can read.
 
 ## Why this exists
 
@@ -62,7 +90,8 @@ a new bespoke trust channel.
   one directly, or the architecture changes, is undecided.
 - **Whether this needs an ADR.** It is an access-control architecture decision spanning several
   services, which is ADR-shaped — and it is a deliberate departure from "migrate, don't improve",
-  which is exactly the kind of thing ADRs exist to record.
+  which is exactly the kind of thing ADRs exist to record. **Escalated 2026-08-24 to a group-meeting
+  agenda item** — see "Needs a team decision" above.
 - **Interaction with the standalone deployments**, which have no proxy at all — see
   [option-a-proxy-unavailable-on-standalone-deployments.md](option-a-proxy-unavailable-on-standalone-deployments.md).
 - **Whether any AJAX/embed equivalents get built at all.** Per Than, the D7 AJAX endpoints are
