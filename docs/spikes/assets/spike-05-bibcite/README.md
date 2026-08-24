@@ -67,5 +67,10 @@ takes the style from the URL, and D7 serves at least **eight** — `cse`, `apa`,
 and MLA; **`harvard`, `vancouver` and `ieee` would each need importing too**, exactly as CSE
 did here. Which of the eight clients actually request is still unknown.
 
+**Decision (Than, 2026-08-24): leave those three until something actually requests them.**
+Importing styles nobody uses is speculative work, and the question "which styles do clients
+request" is cheap to answer later from logs or the React call sites. CSE was done now because
+it is the *site default* — it is requested on every page that renders a citation.
+
 **One node.** The baseline covers nid 25581 (a `journal_article`) only. A real comparison
 needs at least one record per reference type in use, including the four custom types.
