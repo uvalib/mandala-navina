@@ -120,11 +120,35 @@ subsystem. **Whether that single feed is still actively syncing has not been che
 the next thing to establish — if it is dormant, this criterion may reduce to preserving the
 imported field data, with no live-feed requirement at all.
 
+### 4. Sources' configured style is `cse`, which bibcite does **not** ship — **gap, solvable**
+
+Production D7 has `biblio_style = "cse"` (Council of Science Editors), with
+`biblio_user_style = "system"` — so every user gets the site style; there is no per-user
+override to migrate.
+
+bibcite ships five CSL styles: **APA, Chicago author-date, AMA, MLA, MLA 8th**. **CSE is not
+among them.**
+
+This is a gap but not a blocker: CSE exists in the Zotero/CSL style repository, and bibcite
+supports uploading arbitrary CSL style files (`CslStyleFileForm`). The work is to source the
+correct CSE CSL file and import it — plus confirm it renders acceptably, which is criterion 6.
+
+Two things widen this question:
+
+- **The style is per-request on one route.** [Spike 6](spike-06-api-compatibility.md) found
+  `sources-api/ajax/{nid}/{type}` renders citations with the biblio style taken from `arg(4)`,
+  so styles beyond the site default are reachable by URL. **Which styles are actually requested
+  in practice is unknown** and would need either log analysis or a survey of the React client's
+  call sites. If clients request styles bibcite lacks, each needs importing too.
+- **`cse` is a D7 biblio style name, not a CSL style id.** D7 biblio had its own PHP style
+  plugins; bibcite is CSL-only. So this is not a rename — it is a substitution of one rendering
+  engine's "CSE" for another's, and the output will not be byte-identical. That makes criterion
+  6 (output comparability) the place where this actually gets settled.
+
 ## What this does NOT establish
 
-- **Citation styles** (criterion 3) — partially: bibcite ships five CSL styles (APA, Chicago
-  author-date, AMA, MLA, MLA 8th). Whether these cover what Sources actually uses is
-  **not investigated**. Note [Spike 6](spike-06-api-compatibility.md)
+- **Citation styles** (criterion 3) — see finding 4 below; the shipped set does **not** include
+  the style Sources actually uses. Note [Spike 6](spike-06-api-compatibility.md)
   found `sources-api/ajax/{nid}/{type}` renders citations with the biblio style taken from
   `arg(4)`, so the set of styles actually reachable is broader than the site's default and needs
   enumerating from that route as well as from config.
