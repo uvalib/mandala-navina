@@ -43,6 +43,44 @@ These two are genuine gaps in the current repo, not just steps. Resolve/confirm 
 Tracked as a deferred item:
 [staging-migration-execution-prerequisites](../deferred/staging-migration-execution-prerequisites.md).
 
+- [ ] **⚠ RE-BASELINE `EXPECT_LIST` FIRST — the committed values do not match dev-0.**
+      Measured live on dev-0, 2026-08-25, against the committed baseline in
+      `scripts/migration-cycle.sh`:
+
+      | key | EXPECT_LIST | dev-0 | diff |
+      |---|---:|---:|---:|
+      | `node:shanti_image` | 111,343 | 111,341 | −2 |
+      | `paragraph:image_agent` | 111,350 | 111,345 | −5 |
+      | `paragraph:image_descriptions` | 55,112 | 55,041 | −71 |
+      | `paragraph:external_classification` | 9 | 9 | ✓ |
+      | `field:field_subjects` | 79,174 | 79,338 | +164 |
+      | `field:field_places` | 68,790 | 68,755 | −35 |
+      | `field:field_kmap_terms` | 55,553 | **61,668** | **+6,115** |
+      | `field:field_kmap_collections` | 83,493 | 83,494 | +1 |
+
+      **Seven of eight keys differ, and the data is not wrong** — the two environments are
+      running *different D7 source dumps*. The committed baseline was calibrated on the
+      2026-07-07 staging dump (local DDEV `d7_images`: 288,023 nodes); dev-0's source was
+      loaded 2026-07-17 from production (`mandala_d7_images`: 287,939 nodes). The
+      `field_kmap_terms` figure is the tell: **61,668 is exactly the value the script's own
+      header records as the superseded 2026-06-11 baseline**, which the newer local dump
+      moved to 55,553.
+
+      `migration-cycle.sh` says this in its header — *"These are DUMP-SPECIFIC; a newer dump
+      means new expected values"* — but nothing enforces it, so `validate` would report
+      **seven spurious FAILs** on dev-0 and send someone hunting migration defects that do
+      not exist.
+
+      Before running: `./scripts/migration-cycle.sh baseline` against dev-0's imported data,
+      paste the output over `EXPECT_LIST`, and **commit it as a dev-0-specific baseline** —
+      noting the two environments cannot share one until they share a dump.
+
+      The same applies to the two alias keys added 2026-08-25 (`entity:path_alias 111304`,
+      `entity:group_path_alias 174`): both were measured against the *local* dump. dev-0
+      currently has **0** node aliases (the migration is not deployed there yet) and **171**
+      groups against the local 174 — 55 collections either way, but 116 subcollections vs
+      119, another symptom of the differing dumps.
+
 - [ ] **⚠ DECIDE FIRST: does the `url_alias` migration land before this run?**
       [ADR 016](../adr/016-public-url-structure-single-host.md) decision 7 makes preserving
       D7's pathauto paths a requirement, and no `url_alias` migration exists yet for any
