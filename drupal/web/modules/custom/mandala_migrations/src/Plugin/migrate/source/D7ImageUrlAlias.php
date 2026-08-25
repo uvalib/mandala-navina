@@ -18,12 +18,20 @@ use Drupal\migrate\Plugin\migrate\source\SqlBase;
  * here. Anything whose source path is not `node/{nid}` (taxonomy terms, views,
  * user paths) is likewise out of scope.
  *
- * MULTIPLE ALIASES PER NODE ARE EXPECTED AND KEPT. D7 pathauto can leave older
- * alias rows in place when a title changes, and each is a real URL somebody may
- * have saved. Keying on `pid` migrates every one, so old aliases keep resolving;
- * Drupal serves the most recent as canonical and treats the rest as additional
- * inbound paths. Deduplicating here would silently break saved links, which is
- * the opposite of the point.
+ * KEYED ON `pid`, ONE ROW PER ALIAS — not per node. D7 pathauto *can* leave older
+ * alias rows in place when a title changes, and each of those is a real URL
+ * somebody may have saved, so deduplicating would silently break saved links.
+ *
+ * Measured against the 2026-06-11 production Images dump, this dump happens to
+ * carry **exactly one alias per node** — 111,304 alias rows across 111,304
+ * distinct nodes, with **zero** nodes holding more than one. So the duplicate
+ * case does not arise here; keying on `pid` simply means it is handled correctly
+ * if a later dump or another site does carry duplicates.
+ *
+ * Also measured: **39 of the 111,343 `shanti_image` nodes have no alias at all**
+ * (111,343 − 111,304). That is a property of the source data, not a migration
+ * defect — those nodes simply keep `/node/{nid}` as their only path. It is why
+ * the expected alias count is *below* the node count, not above it.
  *
  * @MigrateSource(
  *   id = "d7_image_url_alias",
