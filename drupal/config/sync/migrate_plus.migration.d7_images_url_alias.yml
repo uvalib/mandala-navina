@@ -1,0 +1,52 @@
+uuid: c5e058e2-69f2-4c69-b638-40f89cd95f11
+langcode: en
+status: true
+dependencies: {  }
+id: d7_images_url_alias
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'ADR 016'
+migration_group: mandala_images
+label: 'D7 Images: url_alias rows → D11 path_alias entities (preserve legacy pathauto paths)'
+source:
+  plugin: d7_image_url_alias
+  constants:
+    node_path_prefix: /node/
+    leading_slash: /
+process:
+  _d11_nid:
+    plugin: migration_lookup
+    migration: d7_images_shanti_image
+    source: nid
+  _skip_unmigrated:
+    plugin: skip_on_empty
+    method: row
+    source: '@_d11_nid'
+  path:
+    plugin: concat
+    source:
+      - constants/node_path_prefix
+      - '@_d11_nid'
+  alias:
+    plugin: concat
+    source:
+      - constants/leading_slash
+      - alias
+  langcode:
+    plugin: default_value
+    source: language
+    default_value: und
+  status:
+    plugin: default_value
+    default_value: 1
+destination:
+  plugin: 'entity:path_alias'
+idMap: {  }
+migration_dependencies:
+  required:
+    - d7_images_shanti_image
+include: null

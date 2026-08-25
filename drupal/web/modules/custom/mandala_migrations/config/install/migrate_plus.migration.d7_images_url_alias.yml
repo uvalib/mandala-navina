@@ -1,0 +1,73 @@
+id: d7_images_url_alias
+label: 'D7 Images: url_alias rows → D11 path_alias entities (preserve legacy pathauto paths)'
+migration_group: mandala_images
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'ADR 016'
+
+# Preserves D7's pathauto paths in D11 — a requirement per ADR 016 decision 7,
+# because those are the URLs people bookmarked, shared and cited.
+#
+# Runs LAST in the group: it needs d7_images_shanti_image's map to translate D7
+# nids to D11 nids. Those two nid spaces differ, and rollback does not reset
+# AUTO_INCREMENT, so the D11 nid changes on every re-import — which is exactly
+# why the alias must be derived through migration_lookup at import time rather
+# than backfilled afterwards against whatever nids happened to exist.
+
+source:
+  plugin: d7_image_url_alias
+  constants:
+    # concat joins with no delimiter, so these carry their own separators.
+    node_path_prefix: '/node/'
+    leading_slash: '/'
+
+process:
+  # --- resolve the D7 nid to its D11 counterpart -----------------------------
+  _d11_nid:
+    plugin: migration_lookup
+    migration: d7_images_shanti_image
+    source: nid
+
+  # An alias whose node did not migrate (or whose row is dangling) has nothing
+  # to point at. Skip the row rather than writing an alias to a nonexistent
+  # path, which would 404 more confusingly than having no alias at all.
+  _skip_unmigrated:
+    plugin: skip_on_empty
+    method: row
+    source: '@_d11_nid'
+
+  # --- the alias itself ------------------------------------------------------
+  # D11 path_alias stores both sides WITH a leading slash; D7 stored neither.
+  path:
+    plugin: concat
+    source:
+      - constants/node_path_prefix
+      - '@_d11_nid'
+
+  alias:
+    plugin: concat
+    source:
+      - constants/leading_slash
+      - alias
+
+  # D7 leaves `language` empty for language-neutral aliases. D11 wants a real
+  # langcode, and 'und' (LANGCODE_NOT_SPECIFIED) is the faithful equivalent —
+  # Drupal's alias lookup falls back to it for any request language, so a
+  # neutral D7 alias keeps resolving exactly as it did. Do NOT "improve" this to
+  # 'en': that would stop it matching on any other language negotiation.
+  langcode:
+    plugin: default_value
+    source: language
+    default_value: und
+
+  status:
+    plugin: default_value
+    default_value: 1
+
+destination:
+  plugin: 'entity:path_alias'
+
+migration_dependencies:
+  required:
+    - d7_images_shanti_image
