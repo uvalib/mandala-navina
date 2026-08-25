@@ -114,7 +114,23 @@ All 1a code merged to `main`; migration pattern (Migrate API → KMaps → Solr 
 
 ## Acceptance criteria
 
-Sprint 1 closes when, against a copy of the production Images DB in staging:
+Sprint 1 closes when, against a copy of the production Images DB on **dev-0**:
+
+> **Scope decision (2026-08-25, Yuji): the acceptance run targets `dev-0`.** These criteria
+> were written saying "in staging", when a D11 staging environment was assumed to exist.
+> It does not. The `terraform-infrastructure` workspace *named* `staging` holds two hosts,
+> and only one runs D11: `uva-mandala-drupal-staging-0` → `mandala-drupal-dev-0`. The other,
+> `…-staging-1` → `mandala-drupal-dev-1`, still runs **legacy D7** and is the migration
+> *source* (decided 2026-07-13: "replace dev-0 in place; dev-1 stays as D7 staging source").
+> For now we are working **only on dev-0**.
+>
+> This is a reasonable substitution, not a weakening: dev-0 carries the full production
+> Images dump on real RDS and real containers, which is what the criteria were reaching for.
+> **What it does not prove**, and should not be claimed: a promotion rehearsal between two
+> D11 environments, and the per-environment config-override mechanism — which stays
+> untested while only one D11 environment exists (the residual open in
+> [`spike-solr-demo-enabled-with-anonymous-route.md`](../deferred/spike-solr-demo-enabled-with-anonymous-route.md)).
+> Revisit before production rollout, not before Sprint 1 closes.
 
 - [ ] `shanti_image` + the three paragraph types + the scheme vocabulary install via CMI config.
 - [ ] A full migration run completes; per-type counts reconcile against the

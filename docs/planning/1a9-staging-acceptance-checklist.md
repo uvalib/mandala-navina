@@ -1,7 +1,13 @@
 # 1a.9 Staging Acceptance Checklist
 
 **Task:** Sprint 1, 1a.9 — execute the migrate → validate → rollback cycle against a
-copy of the production Images DB **in staging**, and evidence the acceptance criteria.
+copy of the production Images DB **on dev-0**, and evidence the acceptance criteria.
+
+> **Target environment settled 2026-08-25 (Yuji): `dev-0`.** This checklist says "staging"
+> throughout; read it as dev-0. There is no D11 staging environment — the terraform
+> workspace named `staging` holds `…-staging-0` (D11, = `mandala-drupal-dev-0`) and
+> `…-staging-1` (still legacy **D7**, the migration source). Rationale and what the
+> substitution does not prove: see the sprint doc's acceptance-criteria preamble.
 **Runbook (mechanics):** [Migration Cycle Runbook](migration-cycle-runbook.md)
 **Script:** `scripts/migration-cycle.sh`
 **Acceptance criteria source:** [sprint doc](../sprints/sprint-01-images-implementation.md) §Acceptance criteria
@@ -37,26 +43,35 @@ These two are genuine gaps in the current repo, not just steps. Resolve/confirm 
 Tracked as a deferred item:
 [staging-migration-execution-prerequisites](../deferred/staging-migration-execution-prerequisites.md).
 
-- [ ] **⚠ Migrate source DB in staging.** The `migrate` DB connection is wired *only*
-      inside the DDEV block of `settings.php` (`$databases['migrate']['default']` →
-      local `d7_images`). Staging has **no** migrate-source provision. Decide + implement:
-      where the D7 dump is loaded (secondary schema on the staging DB server vs. a
-      throwaway RDS) and add the `migrate` connection to the staging settings (outside
-      the DDEV conditional, env-driven). **Owner: Xiaoming + Yuji/Dave.** Related:
-      [prod packaging pass](../deferred/images-prod-packaging-monorepo-pass.md).
-- [ ] **⚠ Drush execution path in staging.** The CodePipeline (`pipeline/buildspec.yml`,
-      `deployspec.yml`) runs **no** migrate/drush steps — migrations are manual. Confirm
-      how drush is run against the staging container (ECS `execute-command` / one-off
-      task / Ansible), and that whoever runs it has that access. **Owner: DevOps/Yuji.**
-
-Then the ordinary prerequisites:
-
-- [ ] Staging D11 deployed at the target commit (PR #19 branch or merged `main`).
-- [ ] `drush cim -y` applied on staging so the content model matches committed config
+- [x] **Migrate source DB — ✅ RESOLVED.** Both halves are done, and the note above is
+      stale on this point. *App side:* `settings.php` has defined env-driven `migrate` and
+      `migrate_users` connections **outside** the DDEV conditional since 2026-07-16, taking
+      only the DB names and falling back to the primary `MYSQL_*` vars for host/user/password.
+      *Data side:* `mandala_d7_images` (287,939 nodes) and `mandala_d7_shared` (1,543 users)
+      were loaded onto the staging RDS 2026-07-17, row-count verified.
+      *Config side:* `MIGRATE_SOURCE_DATABASE` / `MIGRATE_USERS_DATABASE` were being passed
+      ad-hoc per `docker exec`; now persisted in `container_0.env.managed`
+      (`terraform-infrastructure` `eabf068c6`, 2026-08-25).
+      **⚠ That commit does not reach dev-0 until the next app deploy** — the pipeline pulls
+      `terraform-infrastructure` at deploy time. Confirm the vars are in the container
+      before running, or pass them ad-hoc for this run.
+- [x] **Drush execution path — ✅ RESOLVED 2026-07-15.** Plain `docker exec`; the deploy is
+      Ansible over SSH onto EC2, not ECS, and `deploy_backend.yml` already does it. No ECS
+      `execute-command`, no one-off task, no new IAM.
+- [ ] dev-0 deployed at the target commit (merged `main`).
+- [ ] `drush cim -y` applied on dev-0 so the content model matches committed config
       (installs `field_iiif_*`, `field_description_title`, the KMaps fields, scheme vocab).
-- [ ] D7 Images dump obtained out-of-band and loaded into the staging migrate source
-      (analogue of `scripts/load-d7-source.sh`; the dump is gitignored ~70MB).
-- [ ] `base_url` set to the staging site URL (per-env `$config[...]['base_url']`).
+      Since 2026-08-17 the deploy runs a full `updb` + `cim` and fails the build on drift,
+      so this should already hold — verify with `drush config:status` rather than assume.
+- [x] **D7 Images dump loaded — ✅ done 2026-07-17** (see the migrate-source row above).
+- [x] **`base_url` — N/A for this run, and not a no-op to "fix".** The committed
+      `shanti_image` URL templates are absolute production URLs with no `__BASE_URL__`
+      token, so `base_url` substitutes nothing and setting it changes nothing. The docs this
+      run writes will carry known-wrong URLs; that is no worse than the 111,340 already
+      indexed, they are namespaced `images-11-*` and cleanable, and **no acceptance
+      criterion covers URL correctness**. The real fix is
+      [ADR 016](../adr/016-public-url-structure-single-host.md) (Proposed), which is a
+      coordinated change with `mandala-om` — deliberately not folded into this run.
 - [x] `solr_master_url` confirmed → staging kmassets master and reachable from the
       container. **Correction (2026-08-13):** this was NOT already the config default on
       dev-0/staging — the committed `config/sync` export predated the key and only carried
@@ -84,9 +99,21 @@ Then the ordinary prerequisites:
   Reversible to *clean*, not to *identical*. Harmless per-run; it's why cutover is
   a full reindex.
 
-- [ ] Confirm the target D11 site is a **dedicated / disposable migration-test
-      environment**, OR take a DB snapshot first — a full import loads 111,340 nodes into
-      the staging content DB.
+- [ ] **Take a `pre-import` checkpoint** — a full import loads 111,340 nodes into dev-0's
+      content DB. dev-0 is a development environment, not disposable: it carries the
+      migrated users, Group memberships and ADR 015 access config.
+
+      ```bash
+      ./scripts/db-checkpoint.sh save pre-import
+      ```
+
+      Use this rather than an RDS snapshot. RDS backups are **instance-wide and up to ~24h
+      stale**, so recovering one database from one means standing up a replacement instance
+      — impractical mid-run (decision 2026-08-25; see
+      [pre-deploy-rds-snapshot-gate.md](../deferred/pre-deploy-rds-snapshot-gate.md)).
+      ⚠ `CHECKPOINT_DIR` must be on a **persistent bind mount**, or the checkpoint dies with
+      the container. ⚠ The script is **untested against a real DB** — exercise `restore` on
+      something disposable before relying on it.
 - [ ] Confirm the kmassets staging index is the agreed target and that dumping D11 test
       docs into it (namespace `images-11-*`, cleanable) is acceptable this run.
 
@@ -94,12 +121,25 @@ Then the ordinary prerequisites:
 
 ## C. Execution — the cycle
 
-Run from a shell with staging drush access. Use the `DRUSH` override so the script
-targets staging drush rather than `ddev drush`:
+Run from a shell with dev-0 drush access. Two overrides are needed — `DRUSH` to target
+dev-0 instead of `ddev drush`, and `DRUSH_HEAVY` to survive the import:
 
 ```bash
-DRUSH="<staging drush invocation>" ./scripts/migration-cycle.sh cycle
+export DRUSH="docker exec mandala-drupal-0 /opt/drupal/app/drupal/vendor/bin/drush"
+
+# The 128M CLI memory_limit has killed a long run TWICE (migrate:import
+# 2026-07-17/18 at ~48,900 of 111,340; kmassets:index-all 2026-08-13). A resume
+# re-iterates the FULL source count, so an OOM costs the whole run, not the
+# remainder. The flag must target drush.php directly -- `drush` is a shell
+# script, so `php -d` on the wrapper never reaches the PHP that matters.
+export DRUSH_HEAVY="docker exec mandala-drupal-0 php -d memory_limit=1024M \
+  /opt/drupal/app/drupal/vendor/bin/drush.php"
+
+./scripts/migration-cycle.sh cycle
 ```
+
+`migration-cycle.sh` prints a warning if `DRUSH_HEAVY` is unset, so an unset limit is
+visible before the hour is lost rather than after.
 
 - [ ] **`cycle`** completes: rollback (clean) → import → validate. Capture the full
       output. (Or run phases individually: `rollback`, `import`, `validate`.)
