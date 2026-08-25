@@ -1,67 +1,68 @@
 #!/bin/bash
-# Logical DB checkpoints for the migration cycle — save / list / restore.
+# Logical DB checkpoints for the deployed Mandala hosts — save / list / restore.
 #
 # WHY THIS EXISTS
-#   The deploy now runs a fail-loud full `updb` + `cim` on every run, and a
-#   1a.9 acceptance cycle imports 111k nodes. Neither has a rollback point of
-#   its own. The RDS instance has daily automated snapshots, but those are
-#   INSTANCE-WIDE and up to ~24h stale, which makes them impractical for
-#   routine use: restoring one to recover a single database means standing up
-#   a whole replacement instance, and nobody will realistically do that
-#   mid-development. In practice that means the safety net does not exist.
+#   The deploy runs a fail-loud full `updb` + `cim` on every run, and a 1a.9
+#   acceptance cycle imports 111k nodes. Neither has a rollback point of its own.
+#   RDS automated backups are INSTANCE-WIDE and up to ~24h stale, so recovering
+#   one database means standing up a whole replacement instance — nobody does
+#   that mid-development, which means for the "undo the last hour" case the
+#   safety net does not exist. So we take our own logical dumps.
+#   Decision: Yuji, 2026-08-25. See docs/deferred/pre-deploy-rds-snapshot-gate.md.
 #
-#   So we take our own logical dumps at defined checkpoints. A restore is then
-#   a targeted reload of ONE database, in minutes, by whoever is running the
-#   cycle. This does not replace the RDS snapshots — those remain the
-#   disaster-recovery story. It covers the "I want to undo the last hour"
-#   case they are bad at.
+# SCOPE: the deployed hosts (dev-0 etc.), run over SSH on the host itself.
+#   NOT for DDEV — use `ddev export-db` / `ddev import-db` locally instead.
 #
-#   Decision: Yuji, 2026-08-25. See
-#   docs/deferred/pre-deploy-rds-snapshot-gate.md.
-#
-# HOW IT TALKS TO THE DATABASE
-#   Through drush, using the SAME $DRUSH override that migration-cycle.sh
-#   takes — so it inherits the site's own credentials and needs no MYSQL_*
-#   plumbing, no mysqldump client, and no separate secret. If drush can reach
-#   the database, so can this.
+# WHY NOT `drush sql:dump`  ⚠ THE ORIGINAL VERSION OF THIS SCRIPT USED IT, AND
+# IT SILENTLY PRODUCED EMPTY BACKUPS.
+#   Drush's SQL commands are wrappers, not native implementations: Sql/SqlMysql.php
+#   returns 'mysqldump' and drush execs it. The Drupal container has NO mysql
+#   client, so Commands/sql/SqlCommands.php logs a *warning* from a validate hook
+#   and returns false — drush exits **0**. A redirect therefore creates a file,
+#   the shell reports success, and you own a "backup" that is empty. You find out
+#   at restore time. Verified live 2026-08-25.
+#   => We shell out to mysqldump inside a mysql:8.0 container instead, and we
+#      VERIFY THE ARTIFACT rather than trusting any exit code.
 #
 # USAGE
-#   ./scripts/db-checkpoint.sh save <label>        # dump the D11 DB
-#   ./scripts/db-checkpoint.sh list                # show saved checkpoints
-#   ./scripts/db-checkpoint.sh restore <label>     # DESTRUCTIVE — needs --yes
+#   ./db-checkpoint.sh save <label>              # dump; never overwrites
+#   ./db-checkpoint.sh list                      # newest first, with age
+#   ./db-checkpoint.sh restore <label|file> --yes  # DESTRUCTIVE
 #
-#   Suggested labels around an acceptance run:
-#       pre-import      before migration-cycle.sh cycle
-#       post-import     after import, before validate
-#       post-validate   the known-good state worth keeping
+#   Labels around an acceptance run: pre-import, post-import, post-validate.
+#   Files are named {label}-{UTC}.sql.gz so a save can never clobber an earlier
+#   checkpoint — the original version wrote a bare {label}.sql.gz, so running
+#   `save pre-import` twice destroyed the very artifact you might need.
 #
-#   On dev-0, point both the drush invocation and the checkpoint directory at
-#   the container, with the directory on a PERSISTENT bind mount:
+# ENV
+#   APP_CONTAINER   container to read MYSQL_* from   (default mandala-drupal-0)
+#   CHECKPOINT_DIR  host dir for dumps               (default /mnt/data/$APP_CONTAINER/checkpoints)
+#   DOCKER          docker invocation                (default "sudo -E docker")
+#   MYSQL_IMAGE     client image                     (default mysql:8.0)
 #
-#     export DRUSH="docker exec mandala-drupal-0 /opt/drupal/app/drupal/vendor/bin/drush"
-#     export CHECKPOINT_DIR=/opt/drupal/app/drupal/../checkpoints   # under /mnt/data
+#   CHECKPOINT_DIR is a HOST path, deliberately. Writing from inside the
+#   container would need a persistent bind mount, and dev-0 has no suitable one:
+#   its only mounts are the SimpleSAMLphp dirs, keys/, and sites/default/files —
+#   and that last is WEB-SERVED, so a dump there would be publicly downloadable.
 #
-#   ⚠ CHECKPOINT_DIR is a path INSIDE the container (drush resolves it there).
-#     If it is not on a bind mount, the checkpoints die with the container —
-#     which is exactly the failure the OAuth2 signing keys hit in August.
-#
-# NOT COMPRESSED BY DEFAULT
-#   `drush sql:dump --gzip` would be smaller, but restoring it needs a shell
-#   inside the container to gunzip first, which this script deliberately does
-#   not assume it has. Uncompressed keeps restore a single drush call. Gzip the
-#   files yourself if disk is tight; `restore` will refuse a .gz and say so.
+# CREDENTIALS
+#   Read into shell variables and forwarded to docker via a bare `-e MYSQL_PWD`
+#   (value comes from the environment, never argv, so it stays out of `ps`).
+#   Never written to a file, not even a mode-600 one.
 
-set -euo pipefail
+set -uo pipefail   # deliberately NOT -e: we check outcomes explicitly, because
+                   # an aborting shell skips verification and leaves bad artifacts.
 
-DRUSH="${DRUSH:-ddev drush}"
-CHECKPOINT_DIR="${CHECKPOINT_DIR:-/var/www/html/.db-checkpoints}"
+APP_CONTAINER="${APP_CONTAINER:-mandala-drupal-0}"
+CHECKPOINT_DIR="${CHECKPOINT_DIR:-/mnt/data/$APP_CONTAINER/checkpoints}"
+DOCKER="${DOCKER:-sudo -E docker}"
+MYSQL_IMAGE="${MYSQL_IMAGE:-mysql:8.0}"
+SUDO="${SUDO:-sudo}"
 
 log()  { printf "\n\033[1m== %s ==\033[0m\n" "$*"; }
 info() { printf "   %s\n" "$*"; }
 die()  { printf "\n\033[31mERROR: %s\033[0m\n" "$*" >&2; exit 1; }
 
-# Labels become filenames and are interpolated into shell/drush arguments.
-# Constrain them rather than trusting the caller.
 validate_label() {
   local l="${1:-}"
   [ -n "$l" ] || die "a label is required (e.g. pre-import)"
@@ -71,81 +72,144 @@ validate_label() {
   esac
 }
 
-# Ask drush which database it is actually pointed at, so every destructive
-# action can name its target. Never assume the environment from the label.
-current_db() {
-  $DRUSH php:eval 'echo \Drupal::database()->getConnectionOptions()["database"] ?? "UNKNOWN";' 2>/dev/null || echo UNKNOWN
+# Populate DB_HOST/DB_USER/DB_NAME and export MYSQL_PWD. Never echoes the password.
+read_db_env() {
+  DB_HOST=$($DOCKER exec "$APP_CONTAINER" printenv MYSQL_HOST 2>/dev/null)
+  DB_USER=$($DOCKER exec "$APP_CONTAINER" printenv MYSQL_USER 2>/dev/null)
+  DB_NAME=$($DOCKER exec "$APP_CONTAINER" printenv MYSQL_DATABASE 2>/dev/null)
+  MYSQL_PWD=$($DOCKER exec "$APP_CONTAINER" printenv MYSQL_PASSWORD 2>/dev/null)
+  export MYSQL_PWD
+  [ -n "$DB_HOST" ] && [ -n "$DB_USER" ] && [ -n "$DB_NAME" ] && [ -n "$MYSQL_PWD" ] \
+    || die "could not read MYSQL_* from container '$APP_CONTAINER' (is it running, and is \$DOCKER right?)"
+}
+
+# The only trustworthy success signal. mysqldump writes the trailer ONLY on clean
+# completion, so it catches truncation that a size check would pass.
+verify_dump() {
+  local f="$1"
+  $SUDO gzip -t "$f" 2>/dev/null || return 1
+  $SUDO zcat "$f" 2>/dev/null | tail -5 | grep -q -- "-- Dump completed" || return 2
+  return 0
+}
+
+human_age() {
+  local mtime now diff
+  mtime=$($SUDO date -u -r "$1" +%s 2>/dev/null) || { echo "unknown age"; return; }
+  now=$(date -u +%s); diff=$(( now - mtime ))
+  if   [ "$diff" -lt 3600 ];  then echo "$(( diff / 60 )) min ago"
+  elif [ "$diff" -lt 86400 ]; then echo "$(( diff / 3600 )) h ago"
+  else echo "$(( diff / 86400 )) days ago"; fi
 }
 
 phase_save() {
-  local label="$1" target
+  local label="$1" ts target
   validate_label "$label"
-  target="$CHECKPOINT_DIR/$label.sql"
+  read_db_env
+  ts=$(date -u +%Y%m%dT%H%M%SZ)
+  target="$CHECKPOINT_DIR/$label-$ts.sql.gz"
 
   log "CHECKPOINT SAVE — $label"
-  info "database:   $(current_db)"
-  info "written to: $target  (container-side path)"
+  info "database: $DB_NAME on $DB_HOST"
+  info "target:   $target"
 
-  # Drush creates the parent directory itself; --result-file makes the dump a
-  # file rather than stdout, which keeps the bytes off the docker exec pipe.
-  $DRUSH sql:dump --result-file="$target"
+  $SUDO mkdir -p "$CHECKPOINT_DIR" && $SUDO chmod 700 "$CHECKPOINT_DIR" \
+    || die "cannot create $CHECKPOINT_DIR"
 
-  log "SAVED — $label"
-  info "Restore with:  ./scripts/db-checkpoint.sh restore $label --yes"
+  # --single-transaction: consistent snapshot without locking out the running site.
+  # --no-tablespaces / --set-gtid-purged=OFF: required for RDS, which withholds
+  # the PROCESS privilege and manages GTIDs itself.
+  $DOCKER run --rm -e MYSQL_PWD "$MYSQL_IMAGE" \
+      mysqldump -h "$DB_HOST" -u "$DB_USER" \
+      --single-transaction --quick --no-tablespaces --set-gtid-purged=OFF "$DB_NAME" \
+    | gzip | $SUDO tee "$target" >/dev/null
+
+  # Do NOT trust the exit code above; the pipeline hides mysqldump's status and
+  # this is exactly how the drush version produced empty "successful" backups.
+  verify_dump "$target"
+  case "$?" in
+    0) : ;;
+    1) $SUDO rm -f "$target"; die "dump is not valid gzip — removed. Nothing was saved." ;;
+    2) $SUDO rm -f "$target"; die "dump has no '-- Dump completed' trailer (truncated) — removed. Nothing was saved." ;;
+  esac
+
+  log "SAVED — $($SUDO ls -lh "$target" | awk '{print $5}')"
+  info "verified: gzip integrity + mysqldump completion trailer"
+  info "restore:  $0 restore $(basename "$target") --yes"
 }
 
 phase_list() {
   log "CHECKPOINTS in $CHECKPOINT_DIR"
-  # ls runs inside the container, so go through drush's own shell-less path:
-  # a php:eval glob avoids assuming `sh` exists in the exec context.
-  $DRUSH php:eval '
-    $d = getenv("MANDALA_CHECKPOINT_DIR") ?: "'"$CHECKPOINT_DIR"'";
-    if (!is_dir($d)) { echo "   (no checkpoint directory yet: $d)\n"; return; }
-    $f = glob("$d/*.sql");
-    if (!$f) { echo "   (none)\n"; return; }
-    foreach ($f as $p) {
-      printf("   %-28s %8.1f MB   %s\n", basename($p, ".sql"),
-        filesize($p) / 1048576, date("Y-m-d H:i", filemtime($p)));
-    }
-  '
+  local found=0 f
+  # The glob MUST expand as root: CHECKPOINT_DIR is root-owned mode 700, so a
+  # caller-shell glob silently matches nothing and `list` reports "(none)" even
+  # when checkpoints exist. Caught live on dev-0, 2026-08-25.
+  for f in $($SUDO sh -c "ls -1t '$CHECKPOINT_DIR'/*.sql.gz 2>/dev/null"); do
+    found=1
+    printf "   %-46s %6s  %-12s %s\n" \
+      "$(basename "$f")" \
+      "$($SUDO ls -lh "$f" | awk '{print $5}')" \
+      "$(human_age "$f")" \
+      "$(verify_dump "$f" && echo 'verified' || echo '*** INVALID ***')"
+  done
+  [ "$found" -eq 1 ] || info "(none)"
+}
+
+# Accepts an exact filename or a bare label (resolves to the newest match).
+resolve_checkpoint() {
+  local want="$1" f
+  if $SUDO test -f "$CHECKPOINT_DIR/$want"; then echo "$CHECKPOINT_DIR/$want"; return 0; fi
+  # Same root-glob requirement as phase_list.
+  f=$($SUDO sh -c "ls -1t '$CHECKPOINT_DIR/$want'-*.sql.gz 2>/dev/null" | head -1)
+  [ -n "$f" ] && { echo "$f"; return 0; }
+  return 1
 }
 
 phase_restore() {
-  local label="$1" confirm="${2:-}" source db
-  validate_label "$label"
+  local want="$1" confirm="${2:-}" source
+  [ -n "$want" ] || die "a label or filename is required"
+  read_db_env
 
-  case "$label" in
-    *.gz) die "restore does not decompress. gunzip '$label' first, then restore the .sql." ;;
+  source=$(resolve_checkpoint "$want") || die "no checkpoint matching '$want' in $CHECKPOINT_DIR"
+
+  log "CHECKPOINT RESTORE"
+  info "from:     $(basename "$source")"
+  info "taken:    $(human_age "$source")"
+  info "size:     $($SUDO ls -lh "$source" | awk '{print $5}')"
+  info "INTO:     $DB_NAME on $DB_HOST   <-- every table is dropped first"
+
+  # Verify BEFORE dropping anything. A drop followed by a failed load leaves an
+  # empty site, which is worse than doing nothing.
+  verify_dump "$source"
+  case "$?" in
+    1) die "refusing: '$source' is not valid gzip." ;;
+    2) die "refusing: '$source' has no completion trailer — it is truncated." ;;
   esac
-
-  source="$CHECKPOINT_DIR/$label.sql"
-  db="$(current_db)"
-
-  log "CHECKPOINT RESTORE — $label"
-  info "This DROPS EVERY TABLE in '$db' and reloads it from:"
-  info "  $source"
+  info "verified: gzip integrity + completion trailer"
 
   if [ "$confirm" != "--yes" ]; then
-    die "refusing without explicit confirmation. Re-run with: restore $label --yes"
+    die "refusing without explicit confirmation. Re-run with: restore $want --yes"
   fi
 
-  # Fail before dropping anything if the dump is missing — a drop followed by
-  # a failed reload leaves an empty site, which is worse than doing nothing.
-  $DRUSH php:eval '
-    $p = "'"$source"'";
-    if (!is_file($p) || filesize($p) === 0) {
-      fwrite(STDERR, "missing or empty checkpoint: $p\n");
-      exit(1);
-    }
-  ' || die "checkpoint '$label' not found or empty at $source"
+  info "dropping existing tables…"
+  $DOCKER run --rm -i -e MYSQL_PWD "$MYSQL_IMAGE" \
+      mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" <<SQL
+SET FOREIGN_KEY_CHECKS = 0;
+SET @t := (SELECT IFNULL(GROUP_CONCAT(CONCAT('\`', table_name, '\`')), '')
+           FROM information_schema.tables WHERE table_schema = DATABASE());
+SET @s := IF(@t = '', 'SELECT 1', CONCAT('DROP TABLE IF EXISTS ', @t));
+PREPARE stmt FROM @s; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET FOREIGN_KEY_CHECKS = 1;
+SQL
+  [ $? -eq 0 ] || die "table drop failed — database may be in a partial state. Do NOT deploy; investigate."
 
-  info "dropping current schema…"
-  $DRUSH sql:drop -y
-  info "reloading…"
-  $DRUSH sql:query --file="$source"
+  info "loading…"
+  $SUDO zcat "$source" | $DOCKER run --rm -i -e MYSQL_PWD "$MYSQL_IMAGE" \
+      mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME"
+  [ $? -eq 0 ] || die "load FAILED after the drop — the database is EMPTY. Re-run the restore."
 
-  log "RESTORED — $label"
-  info "Caches are stale after a reload. Run:  $DRUSH cache:rebuild"
+  log "RESTORED — $(basename "$source")"
+  info "Caches are stale after a reload. Run:"
+  info "  $DOCKER exec $APP_CONTAINER /opt/drupal/app/drupal/vendor/bin/drush cache:rebuild"
 }
 
 case "${1:-}" in
@@ -153,8 +217,8 @@ case "${1:-}" in
   list)    phase_list ;;
   restore) shift; phase_restore "${1:-}" "${2:-}" ;;
   *)
-    echo "Usage: $0 {save <label>|list|restore <label> --yes}" >&2
-    echo "Env:   DRUSH, CHECKPOINT_DIR  (see header)" >&2
+    echo "Usage: $0 {save <label>|list|restore <label|file> --yes}" >&2
+    echo "Env:   APP_CONTAINER, CHECKPOINT_DIR, DOCKER, MYSQL_IMAGE  (see header)" >&2
     exit 2
     ;;
 esac

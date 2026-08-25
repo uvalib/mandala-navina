@@ -120,10 +120,13 @@ Suggested checkpoints around an acceptance run: `pre-import`, `post-import`,
 - ⚠ The checkpoint directory must sit on a **persistent bind mount**. If it does not,
   the checkpoints die with the container — the same failure mode the OAuth2 signing
   keys hit in August.
-- ⚠ **`scripts/db-checkpoint.sh` is UNTESTED against a real database.** Syntax and its
-  label/confirmation guards are verified; the dump and restore paths are not. Exercise
-  it on something disposable before trusting it. (Same caveat as
-  `scripts/refresh-d7-staging-source.sh`.)
+- ✅ **`save` and `list` are now PROVEN on dev-0 (2026-08-25).** Two verified checkpoints
+  exist (`pre-import-20260825T183428Z.sql.gz`, `post-deploy-20260825T193637Z.sql.gz`,
+  75M each). Running it caught three real defects the earlier static checks had missed —
+  see the script header.
+- ⚠ **`restore` is still UNPROVEN.** It is the destructive path and has never been
+  executed. Prove it against a scratch database before relying on it, not against the
+  live one.
 
 RDS snapshots remain the disaster-recovery story; this covers what they are bad at.
 
