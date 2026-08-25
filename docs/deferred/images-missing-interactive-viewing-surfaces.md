@@ -8,6 +8,11 @@ render through the existing IIIF server with `i3fid` linkage intact"
 **Priority:** **To be discussed by the team as the next item after Sprint 1 closes.** Not
 a Sprint 1 blocker — Sprint 1's AC as written is satisfied by 1a.5's URL-contract proof
 (see below); this note captures a materially bigger scope the AC didn't actually cover.
+**Related:** the broader [D7 theme / UI commonalities
+audit](../planning/theme-ui-commonalities-audit.md) (2026-08-25) confirms this viewer is
+Images-specific — it doesn't factor into the shared-base-theme question, since D7 delivered
+it as a per-site theme addition on top of a common `shanti_sarvaka` base, same as every
+other site's content-specific viewer (Kaltura for AV, etc.).
 
 ## What we found
 
