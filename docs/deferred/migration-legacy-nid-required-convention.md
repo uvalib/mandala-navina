@@ -92,6 +92,18 @@ development going forward, not just migrations.
       in the same commit — verify with `drush config:status` before and after
 - [ ] Post-import verification: row count + 0 mismatches against
       `migrate_map_*`
+- [ ] **Migrate the site's D7 `url_alias` rows.** D7 used pathauto to present
+      user-friendly paths, and preserving those legacy paths in D11 is a **requirement**
+      ([ADR 016](../adr/016-public-url-structure-single-host.md) decision 7) — they are
+      the URLs people bookmarked, shared and cited. Migrate the **actual D7 alias
+      strings**; do not regenerate them from titles, because a slug differing by one
+      character breaks the link it was meant to preserve. No `url_alias` migration exists
+      yet for any site, and `pathauto` is not installed.
+      **Check for cross-site alias collisions before importing:** each D7 site had its own
+      `url_alias` table, so uniqueness was only ever per-site, and they merge into one D11
+      alias table. D7's patterns appear to carry a type prefix (`image/…`) which likely
+      keeps sites apart — verify it rather than assume, since this is the same
+      per-domain-uniqueness trap described below for `field_legacy_nid`.
 - [ ] **Node-JSON endpoint built for the site's asset bundle(s)** — the D11 equivalent of
       D7's per-site detail endpoint, following `mandala_node_api`'s `GET /api/json/{nid}`
       (Images, the proven pattern). **Handed to this checklist when [Spike 6](../spikes/spike-06-api-compatibility.md)

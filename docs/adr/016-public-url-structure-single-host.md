@@ -117,22 +117,37 @@ happen where the mapping data lives. `field_legacy_nid` is already migrated on
 Neither `redirect` nor `pathauto` is currently installed (`core.extension` carries only
 core `path`/`path_alias`), so both the module and the generation step are new work.
 
-### The two real redirect source forms
+**7. D7's pathauto aliases are preserved in D11**, migrated from D7's `url_alias` table
+as real Drupal path aliases. D7 used pathauto to present user-friendly paths; those paths
+are the ones people bookmarked, shared and cited, and preserving them is a **requirement**,
+not a best-effort. They must resolve in D11.
 
-Than's evidence gives two D7 URL shapes to redirect, with **different** requirements:
+This meaningfully changes decision 6. A preserved alias is not a redirect at all — Drupal
+resolves `/image/village-and-houses-2` to its node natively, with no lookup, no
+`field_legacy_nid` translation and no host-awareness needed. So the two source forms split
+cleanly by mechanism:
 
-| D7 form | Example | What the redirect needs |
+| D7 form | Mechanism | Needs the legacy host? |
 |---|---|---|
-| **Slug alias** — the bookmarked form | `/image/village-and-houses-2` | The *slug*, not the nid. No id translation — **but D11 has no slugs at all** (see below) |
-| **Core canonical** | `/node/1631632` | D7 nid → D11 nid via `field_legacy_nid` |
+| `/image/{slug}` — the bookmarked form | **Preserved alias** (migrate `url_alias`) | No |
+| `/node/{d7nid}` | **Redirect** with composite-key translation | **Yes** — see below |
 
-**D7 path aliases are not migrated.** `mandala_migrations` has no `url_alias` job, and
-`pathauto` is not installed, so D11 nodes are reachable only at `/node/{nid}` and carry no
-slug. There is therefore *nothing to redirect the bookmarked form to* until aliases are
-either migrated from D7 (preserving the exact strings, which is what makes the redirect a
-pure path mapping) or regenerated. Migrating the real D7 aliases is strongly preferable to
-regenerating them: a regenerated slug that differs by even one character breaks the link
-it was meant to save.
+The harder half of decision 6 therefore applies only to the bare-nid form. That is the
+better outcome by a distance: the form most likely to be in someone's bookmarks is also
+the one needing the least machinery.
+
+**Two things this requires that do not exist yet.** `mandala_migrations` has **no
+`url_alias` migration**, and `pathauto` is not installed (`core.extension` carries only
+core `path`/`path_alias`). Migrating D7's actual alias strings is required — regenerating
+them from titles is not equivalent, because a regenerated slug that differs by one
+character breaks the very link it was meant to preserve.
+
+**Cross-site alias collision must be checked before the second collection migrates.** Each
+D7 site had its own `url_alias` table, so uniqueness was only ever per-site. They merge
+into one D11 alias table. D7's pathauto patterns appear to carry a type prefix
+(`image/…`), which likely keeps sites apart, but "likely" is not "verified" — and this is
+the same per-domain-uniqueness trap that `field_legacy_nid` fell into. Audit the alias
+sets for overlap rather than assuming the prefixes save us.
 
 ### The legacy host is part of the identity — it cannot be discarded
 
@@ -182,29 +197,35 @@ populating it during the migration that creates the rows.
    distinct internal prefix that Drupal then translates, or use a host-aware request
    subscriber. Paired with this: bundle-scoped lookup vs a new `field_legacy_site`, which
    must be decided **before the next collection migrates**.
-2. **Do D11 asset pages use the nid or a slug?** Decision 2 fixes `/images/{nid}`, chosen
-   before browser verification established that D7's *only* human-facing form is
-   `/image/{slug}` — the plural and the id forms both 404. `/node/{nid}` works but is the
-   canonical fallback, not the form people share. So decision 2 currently departs from D7
-   on **both** axes (plural vs singular, id vs slug) with only ADR 005's `/images/...`
-   sketch supporting it. If D7's slugs are migrated to preserve inbound links, D11
-   plausibly wants `/images/{slug}` canonical with the nid form secondary. **Unresolved,
-   and it changes decision 2.** It also decides whether a D7 alias migration is required
-   work or optional — and note D7 serves both forms without redirecting one to the other,
-   so "which is canonical" is a genuinely new choice, not an inherited one.
+2. **Which path is *canonical* in D11 — the preserved D7 alias, or `/images/{nid}`?**
+   Decision 7 settles that legacy paths must **resolve**; it does not settle which path
+   D11 *generates* when it renders a link, emits `url_html`, or canonicalises for search
+   engines. Both can coexist (Drupal routinely serves a node at its alias and its
+   `/node/{nid}`), so this is not a conflict — but leaving it unstated means different
+   subsystems will pick differently. Note decision 2's `/images/{nid}` departs from the
+   D7 alias shape on **both** axes (plural vs singular, id vs slug), and that D7 itself
+   served both its forms without redirecting one to the other — so "which is canonical"
+   is a genuinely new choice, not an inherited one. It also interacts with open item 3:
+   whatever D11 emits as `url_html` is what `MandalaMarkup.js` will reverse-look-up.
 3. **`mandala-om` coordination on `url_html`.** Per ADR 013 this is an active
    compatibility requirement, not a courtesy. Needs Than, and needs to cover the
    `MandalaMarkup.js` reverse lookup as well as the forward links.
 
 ## Consequences
 
-- **Deep links survive cutover only if decision 6 is actually built** — host-aware, with a
-  composite legacy key — and the bookmarked slug form additionally needs a D7 alias
-  migration that does not yet exist. Two deferred notes already anticipate part of this
-  work:
+- **Deep links survive cutover only if decisions 6 and 7 are both built** — a `url_alias`
+  migration for the slug form (which does not exist yet), and a host-aware, composite-key
+  redirect for the bare-nid form. Two deferred notes already anticipate part of this work:
   [`kmassets-uid-identity-across-migration.md`](../deferred/kmassets-uid-identity-across-migration.md)
   ("wire redirect module to `field_legacy_nid`") and the High-priority
   [`kmassets-uid-consumer-analysis.md`](../deferred/kmassets-uid-consumer-analysis.md).
+- **Images needs an alias backfill, not just a checklist entry.** Images has already
+  migrated — 111,340 nodes, none of which carry a D7 alias, because no `url_alias`
+  migration existed when it ran. Decision 7 is therefore retroactive work for the pilot
+  collection as well as forward work for Texts/Sources/AV/Home. It is a safe backfill (a
+  new migration reading D7 `url_alias` and writing `path_alias` entities, keyed on
+  `field_legacy_nid`) rather than a re-run of the content migration, so it does not
+  disturb existing nids or the 1a.9 acceptance run.
 - **New dependency and new migration output.** `drupal/redirect` must be added, enabled and
   exported to `config/sync`, and the migration gains a redirect-generation step — one entry
   per migrated node, so on the order of 111k rows for Images alone and more per site as the
