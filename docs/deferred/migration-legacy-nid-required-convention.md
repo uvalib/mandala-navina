@@ -126,3 +126,47 @@ development going forward, not just migrations.
       config (`global_role: content_editor`) granting `create` / `update any` /
       `delete any group_node:<type> entity`. Omitting it leaves editors unable
       to manage that site's content.
+
+## ⚠ Gap in the convention: `field_legacy_nid` alone is not unique across sites
+
+**Raised 2026-08-25 (Yuji), during the [ADR 016](../adr/016-public-url-structure-single-host.md)
+URL-structure work. Must be resolved BEFORE the next collection migrates.**
+
+The convention above says to map `field_legacy_nid: nid`. That is correct but
+insufficient, because **D7 nids are unique per domain, not globally.** Each legacy
+site had its own database and its own nid sequence, so `node/1631632` on
+`images.mandala.library.virginia.edu` and `node/1631632` on
+`av.mandala.library.virginia.edu` are *different assets*.
+
+`field.storage.node.field_legacy_nid` is a bare unsigned integer on `entity_type: node`,
+shared by every bundle, with a single-column index and **no companion field recording the
+source site**. So a lookup by `field_legacy_nid` alone can match several nodes once more
+than one collection has migrated.
+
+**This is latent, not broken, today** — Images is the only migrated collection, so every
+value is currently unambiguous. It becomes a live defect the moment Texts, Sources or AV
+lands, and it will not announce itself: the lookup returns *a* node, just not reliably the
+right one.
+
+Two consumers already depend on this mapping being unique:
+
+1. **Legacy URL redirects** ([ADR 016](../adr/016-public-url-structure-single-host.md)
+   decision 6) — resolving an old `/node/{d7nid}` to its D11 node.
+2. **The `uid_legacy_s` kmassets compatibility shim**
+   ([kmassets-uid-identity-across-migration.md](kmassets-uid-identity-across-migration.md)).
+   Note the kmassets uid contract already solved this problem the same way — `images-1631632`
+   vs `av-1631632` carry a **service prefix**, making service+nid the real composite key.
+   That is precedent for the options below, not a coincidence.
+
+**Two ways to close it — pick one before the next migration:**
+
+- **Scope lookups by bundle**, mapping legacy site → candidate D11 bundles
+  (`images…` → `shanti_image`; `av…` → the audio *and* video bundles). Sound, because one
+  D7 site was one database with one nid sequence, so site-plus-nid stays unique even where
+  a site carries two bundles. No schema change; the mapping lives in code.
+- **Add a `field_legacy_site`** companion field, populated per migration, so the pair is
+  self-describing and no consumer has to know the host→bundle mapping.
+
+Retrofitting a discriminator across already-migrated rows is materially harder than
+populating it in the migration that creates them — which is why this belongs in the
+convention, before Texts/Sources/AV, rather than in whatever later work first trips over it.
