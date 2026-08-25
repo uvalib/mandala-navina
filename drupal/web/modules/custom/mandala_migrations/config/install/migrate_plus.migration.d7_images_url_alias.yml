@@ -17,6 +17,8 @@ migration_tags:
 
 source:
   plugin: d7_image_url_alias
+  node_types:
+    - shanti_image
   constants:
     # concat joins with no delimiter, so these carry their own separators.
     node_path_prefix: '/node/'

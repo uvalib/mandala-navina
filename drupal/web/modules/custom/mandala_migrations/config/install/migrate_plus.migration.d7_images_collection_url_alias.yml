@@ -1,0 +1,80 @@
+id: d7_images_collection_url_alias
+label: 'D7 Images: collection/subcollection url_alias rows → D11 path_alias entities (Group paths)'
+migration_group: mandala_images
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Images'
+  - 'ADR 016'
+
+# The second half of ADR 016 decision 7. d7_images_url_alias preserves the
+# shanti_image aliases; this preserves the collection ones.
+#
+# These matter more than their row count suggests. `collection/poor-peoples-campaign`
+# is the kind of URL a curator puts in a syllabus or an email — 174 rows, but
+# high-value ones. See docs/deferred/d7-alias-preservation-scope-beyond-shanti-image.md.
+#
+# The difference from d7_images_url_alias is the DESTINATION PATH, not the source:
+# D7 collection/subcollection nodes became D11 **Groups**, whose canonical route is
+# `/group/{group}` (contrib Group's own entity annotation), not `/node/{nid}`. Same
+# source plugin, different path construction — which is why the plugin takes
+# `node_types` and each migration builds its own `path`.
+
+source:
+  plugin: d7_image_url_alias
+  node_types:
+    - collection
+    - subcollection
+  constants:
+    # concat joins with no delimiter, so these carry their own separators.
+    group_path_prefix: '/group/'
+    leading_slash: '/'
+
+process:
+  # Look through BOTH group migrations: a D7 nid is either a collection or a
+  # subcollection, never both, so exactly one map can resolve it. migration_lookup
+  # returns the first hit, and both destinations are entity:group, so either way
+  # the value is a group id.
+  _gid:
+    plugin: migration_lookup
+    migration:
+      - d7_images_collections
+      - d7_images_subcollections
+    source: nid
+
+  # A collection that did not migrate has no group to point at. Skip rather than
+  # writing an alias to a nonexistent path.
+  _skip_unmigrated:
+    plugin: skip_on_empty
+    method: row
+    source: '@_gid'
+
+  path:
+    plugin: concat
+    source:
+      - constants/group_path_prefix
+      - '@_gid'
+
+  alias:
+    plugin: concat
+    source:
+      - constants/leading_slash
+      - alias
+
+  # As in d7_images_url_alias: D7's empty/neutral language maps to 'und', which is
+  # what makes the alias resolve under any language negotiation. Not 'en'.
+  langcode:
+    plugin: default_value
+    source: language
+    default_value: und
+
+  status:
+    plugin: default_value
+    default_value: 1
+
+destination:
+  plugin: 'entity:path_alias'
+
+migration_dependencies:
+  required:
+    - d7_images_collections
+    - d7_images_subcollections

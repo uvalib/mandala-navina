@@ -18,8 +18,8 @@ Measured against the 2026-06-11 production Images dump (`d7_images`, 350,921 ali
 | `image_agent` nodes | 103,521 | became **paragraphs** — no URL | ❌ no destination exists |
 | `image_descriptions` nodes | 70,909 | became **paragraphs** — no URL | ❌ no destination exists |
 | `file/*` | 64,933 | file entities | ⚠ unassessed |
-| `subcollection` nodes | 119 | became **Groups** (`/group/{id}`) | ⚠ **real gap** |
-| `collection` nodes | 55 | became **Groups** (`/group/{id}`) | ⚠ **real gap** |
+| `subcollection` nodes | 119 | `path_alias` → `/group/{id}` | ✅ migrated |
+| `collection` nodes | 55 | `path_alias` → `/group/{id}` | ✅ migrated |
 | `external_classification` | 13 | taxonomy / paragraph | ⚠ unassessed |
 | `asset_link` | 13 | — | ⚠ unassessed |
 | `page` | 6 | — | ⚠ unassessed |
@@ -45,22 +45,53 @@ silently:
 So the likely answer is "drop them", but per the Spike 6 convention on the AJAX endpoints,
 **the default answer should be a recorded decision, not an omission.**
 
-## Collection aliases ARE a real gap
+## ⚠ Collection aliases now migrate — but their destination is 403 for everyone
+
+`d7_images_collection_url_alias` was built and verified 2026-08-25: 174 created, 0 failed,
+**0 mismatches** against the D7 source, 55 collection + 119 subcollection matching the group
+counts exactly. `/group/1` → `/collection/poor-peoples-campaign`.
+
+**The aliases are correct and the pages are still unreachable.** Serving test, anonymous:
+
+| Request | Result |
+|---|---|
+| `/collection/{slug}`, **public** collection | **403** |
+| `/collection/{slug}`, private collection | **403** |
+| `/collection/{bogus}` | 404 |
+
+403 rather than 404 proves the alias resolves — it is an *access* decision, not a routing
+failure. The cause is that **no group role grants the `view group` permission**. Every role
+in `config/sync` (`collection-anonymous`, `-outsider`, `-member`, both content_editor roles,
+and the subcollection equivalents) grants `view group_node:shanti_image entity` — permission
+to see the *content in* the group — but never `view group`, permission to see the group
+entity's own canonical page.
+
+So a D7 collection page that was public becomes forbidden in D11, for anonymous and members
+alike. **This is not an alias defect and must not be "fixed" in the alias migration.** It is
+an access-model gap, and granting `view group` is a real decision: it has to respect
+`field_group_access` (0=public / 1=private / 2=subscribable) rather than opening every
+collection, and it interacts with [ADR 011](../adr/011-group-collections-inheritance.md)'s
+inheritance hooks and [ADR 015](../adr/015-editorial-access-model-global-content-editor.md).
+
+Closely related to
+[images-missing-interactive-viewing-surfaces.md](images-missing-interactive-viewing-surfaces.md),
+already flagged as a team topic — a collection landing page is one of the missing surfaces.
+
+## Why collection aliases were worth doing
 
 `collection/poor-peoples-campaign`, `collection/women-natural-history-illustrators` — 174
 rows, and unlike the satellites these are exactly the sort of URL a curator puts in a syllabus
-or an email. They point at D7 nodes that became **D11 Groups**, whose canonical path is
-`/group/{id}`, so `d7_images_url_alias` deliberately excludes them (it writes `/node/{nid}`
-paths only).
-
-Preserving them needs a second migration writing `path_alias` rows against the Group
-canonical path, keyed on the Groups' own `field_legacy_nid` (already migrated on both group
-types). Small — 174 rows — and independent of the node alias work.
+or an email. They point at D7 nodes that became **D11 Groups**, whose canonical path is `/group/{id}`, so
+`d7_images_url_alias` deliberately excludes them (it writes `/node/{nid}` paths only) and
+`d7_images_collection_url_alias` handles them separately. Both share one source plugin, which
+takes a `node_types` list; only the destination path construction differs.
 
 ## Open questions
 
-1. **Collection/subcollection aliases: preserve or drop?** Recommend preserve; it is 174 rows
-   and they are genuinely user-facing.
+1. **Should any group role grant `view group`, and to whom?** ~~Collection aliases: preserve
+   or drop~~ — done, they migrate. The live question is the 403 above: the preserved URLs
+   resolve to a page nobody can see. Must respect `field_group_access` rather than opening
+   every collection wholesale.
 2. **Satellite aliases: confirm the drop.** No D11 destination exists; the recommendation is
    to drop, recorded rather than assumed.
 3. **`file/*` aliases (64,933): unassessed.** Note they share the `image/{slug}` namespace

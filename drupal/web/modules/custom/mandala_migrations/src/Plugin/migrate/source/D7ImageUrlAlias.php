@@ -12,11 +12,21 @@ use Drupal\migrate\Plugin\migrate\source\SqlBase;
  * requirement, not best-effort — they are the URLs people bookmarked, shared
  * and cited. See ADR 016 decision 7.
  *
- * SCOPE — shanti_image nodes only. D7 collection/subcollection nodes migrate to
- * D11 *Groups*, whose canonical path is `/group/{id}` rather than `/node/{nid}`,
- * so their aliases need a different destination and are deliberately not handled
- * here. Anything whose source path is not `node/{nid}` (taxonomy terms, views,
- * user paths) is likewise out of scope.
+ * SCOPE — configurable via `node_types`, defaulting to `['shanti_image']`.
+ *
+ * The *source* shape is identical for every node type (a `url_alias` row whose
+ * `source` is `node/{nid}`), but the *destination path* is not: `shanti_image`
+ * nodes became D11 nodes (`/node/{nid}`) while collection/subcollection nodes
+ * became D11 **Groups** (`/group/{id}`). So the node-type filter lives here and
+ * the path construction lives in each migration's `process`. Two migrations,
+ * one source plugin.
+ *
+ * Anything whose source path is not `node/{nid}` — `file/*`, `user/*`, taxonomy,
+ * views — is out of scope entirely; see
+ * docs/deferred/d7-alias-preservation-scope-beyond-shanti-image.md.
+ *
+ * ("Image" in the plugin name is the *site* — the D7 Images install, which holds
+ * collections as well as images — not the `shanti_image` bundle.)
  *
  * KEYED ON `pid`, ONE ROW PER ALIAS — not per node. D7 pathauto *can* leave older
  * alias rows in place when a title changes, and each of those is a real URL
@@ -60,8 +70,9 @@ class D7ImageUrlAlias extends SqlBase {
     // string and coerces per row, which both defeats the index and quietly
     // matches things like 'node/12abc'.
     $query->join('node', 'n', 'n.nid = CAST(SUBSTRING(ua.source, 6) AS UNSIGNED)');
-    $query->condition('n.type', 'shanti_image');
+    $query->condition('n.type', $this->nodeTypes(), 'IN');
     $query->addField('n', 'nid', 'nid');
+    $query->addField('n', 'type', 'node_type');
 
     return $query;
   }
@@ -76,7 +87,22 @@ class D7ImageUrlAlias extends SqlBase {
       'alias' => 'D7 alias path, no leading slash (image/village-and-houses-2)',
       'language' => "D7 language code; '' means language-neutral",
       'nid' => 'D7 node nid, extracted from the source path',
+      'node_type' => 'D7 node type (shanti_image, collection, subcollection)',
     ];
+  }
+
+  /**
+   * Node types whose aliases this instance should yield.
+   *
+   * Defaults to shanti_image so an existing migration that does not declare
+   * `node_types` keeps its previous behaviour exactly.
+   *
+   * @return string[]
+   *   D7 node type machine names.
+   */
+  protected function nodeTypes() {
+    $types = $this->configuration['node_types'] ?? ['shanti_image'];
+    return is_array($types) ? $types : [$types];
   }
 
   /**
