@@ -22,3 +22,4 @@ get a new ADR that references the old one, rather than editing in place.
 | [013](013-drupal-source-of-truth-solr-client-compatibility.md) | Drupal is the source of truth; Solr/client compatibility is an essential active requirement (supersedes ADR 004) | Accepted |
 | [014](014-hybrid-solr-proxy-design.md) | Hybrid Solr proxy: Drupal writes Redis visibility tokens; lightweight standalone proxy reads them; D11 proxy forked into monorepo | Accepted |
 | [015](015-editorial-access-model-global-content-editor.md) | D11 editorial access model: global non-admin `content_editor` (shanti_editor equivalent), assigned only to former shanti_editors; per-group editors deferred to Group roles | Accepted |
+| [016](016-public-url-structure-single-host.md) | Public URL structure: one host, asset-type-namespaced paths (`/images/{nid}`, `/audio/{nid}`, `/video/{nid}`), flat `/api/json/{nid}`; legacy URLs redirected via `field_legacy_nid` | **Proposed** |
