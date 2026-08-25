@@ -43,6 +43,22 @@ These two are genuine gaps in the current repo, not just steps. Resolve/confirm 
 Tracked as a deferred item:
 [staging-migration-execution-prerequisites](../deferred/staging-migration-execution-prerequisites.md).
 
+- [ ] **⚠ DECIDE FIRST: does the `url_alias` migration land before this run?**
+      [ADR 016](../adr/016-public-url-structure-single-host.md) decision 7 makes preserving
+      D7's pathauto paths a requirement, and no `url_alias` migration exists yet for any
+      site. This cycle is `rollback → import → validate` — it deletes and re-imports every
+      Images node — so if that migration is in the `mandala_images` group **before** the
+      run, the aliases are produced by the normal import and the run validates them too.
+      If it lands **after**, Images needs another full import to pick them up.
+
+      Not a backfill decision: `migrate:rollback` does not reset `AUTO_INCREMENT`, so
+      re-imports assign different nids and any aliases written against today's nids would
+      be invalidated by the next import anyway.
+
+      If you take the "before" branch, add a `path_alias` count to `EXPECT_LIST` in
+      `scripts/migration-cycle.sh` in the same change, or the cycle will reconcile
+      everything except the aliases.
+
 - [x] **Migrate source DB — ✅ RESOLVED.** Both halves are done, and the note above is
       stale on this point. *App side:* `settings.php` has defined env-driven `migrate` and
       `migrate_users` connections **outside** the DDEV conditional since 2026-07-16, taking
