@@ -64,6 +64,17 @@ field:field_subjects 79174
 field:field_places 68790
 field:field_kmap_terms 55553
 field:field_kmap_collections 83493
+# entity:path_alias <COUNT>   <-- UNCOMMENT AND FILL BEFORE THE ACCEPTANCE RUN.
+#   Added with the d7_images_url_alias migration (ADR 016 decision 7). The
+#   expected value is dump-specific and is NOT yet known — it was not measurable
+#   from this machine. Get it from the D7 source:
+#     SELECT COUNT(*) FROM url_alias ua
+#     JOIN node n ON n.nid = CAST(SUBSTRING(ua.source, 6) AS UNSIGNED)
+#     WHERE ua.source LIKE 'node/%' AND n.type = 'shanti_image';
+#   or run `./scripts/migration-cycle.sh baseline` after a known-good import.
+#   NOTE this is >= the node count: D7 pathauto leaves older alias rows in place
+#   when a title changes, and the migration deliberately keeps every one so old
+#   URLs keep resolving. Do not assume it equals 111343.
 "
 
 # A single php:eval that emits "key<TAB>count" lines for every actual count.
@@ -78,6 +89,7 @@ foreach (["image_agent", "image_descriptions", "external_classification"] as $t)
   printf("paragraph:%s\t%d\n", $t, $q("SELECT COUNT(*) FROM paragraphs_item_field_data WHERE type = :t", [":t" => $t]));
 }
 printf("term:external_classification_scheme\t%d\n", $q("SELECT COUNT(*) FROM taxonomy_term_field_data WHERE vid = :v", [":v" => "external_classification_scheme"]));
+printf("entity:path_alias\t%d\n", $q("SELECT COUNT(*) FROM path_alias"));
 foreach (["field_subjects", "field_places", "field_kmap_terms", "field_kmap_collections"] as $f) {
   $tbl = "node__" . $f;
   $n = $db->schema()->tableExists($tbl) ? $q("SELECT COUNT(*) FROM {" . $tbl . "}") : 0;
@@ -129,6 +141,9 @@ phase_validate() {
   # shell and `fail` survives — bash 3.2 has no lastpipe.
   while read -r key want; do
     [ -z "$key" ] && continue
+    # Allow '#' comments in EXPECT_LIST — without this a comment line parses as
+    # key='#', want=<word> and reports a spurious FAIL.
+    case "$key" in \#*) continue ;; esac
     got=$(printf '%s\n' "$actual" | awk -F'\t' -v k="$key" '$1==k {print $2}')
     [ -z "$got" ] && got=MISSING
     if [ "$got" = "$want" ]; then
