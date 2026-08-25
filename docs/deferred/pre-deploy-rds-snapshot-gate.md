@@ -90,6 +90,43 @@ reproducible from migration, not irreplaceable production content. The urgency
 changes materially once this deploy path (or its production equivalent) runs
 against real production data.
 
+## Partial mitigation DECIDED and built (2026-08-25, Yuji): our own logical dumps
+
+**The instance-wide snapshots are not a usable routine safety net.** RDS automated
+backups are per-INSTANCE, not per-database, and up to ~24h stale. Recovering one
+database from one means standing up a whole replacement instance — which nobody will
+realistically do mid-development, so in practice the net does not exist for the
+"undo the last hour" case, which is the case that actually keeps arising.
+
+**Decision: take our own logical dumps at defined checkpoints** rather than relying
+on the snapshot for routine work. Built as `scripts/db-checkpoint.sh`
+(`save` / `list` / `restore`). It goes through drush, reusing the same `$DRUSH`
+override `scripts/migration-cycle.sh` already takes, so it inherits the site's own
+credentials and needs no `MYSQL_*` plumbing, no mysqldump client and no separate
+secret. Restore is a targeted reload of one database, in minutes.
+
+Suggested checkpoints around an acceptance run: `pre-import`, `post-import`,
+`post-validate`.
+
+**This does not close this note.** Scope of what is and is not covered:
+
+- ✅ Covers the operator-initiated case — an acceptance cycle, a risky manual `cim`,
+  any "let me be able to undo this" moment.
+- ❌ Does **not** cover the case this note was raised for: the *unattended,
+  code-triggered* `updb`/`cim` on deploy. Nothing invokes the checkpoint script from
+  `deploy_backend.yml`, so a bad update hook still runs with no rollback point. Wiring
+  a pre-deploy checkpoint into the playbook is the remaining work, and it needs a
+  retention policy so deploys do not fill the volume.
+- ⚠ The checkpoint directory must sit on a **persistent bind mount**. If it does not,
+  the checkpoints die with the container — the same failure mode the OAuth2 signing
+  keys hit in August.
+- ⚠ **`scripts/db-checkpoint.sh` is UNTESTED against a real database.** Syntax and its
+  label/confirmation guards are verified; the dump and restore paths are not. Exercise
+  it on something disposable before trusting it. (Same caveat as
+  `scripts/refresh-d7-staging-source.sh`.)
+
+RDS snapshots remain the disaster-recovery story; this covers what they are bad at.
+
 ## Cross-references
 
 - [deploy-never-imports-config-sync.md](deploy-never-imports-config-sync.md) — the fix that created this exposure

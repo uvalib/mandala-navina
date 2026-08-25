@@ -37,6 +37,27 @@ GROUP="mandala_images"
 #   DRUSH="docker exec ddev-mandala-web bash -lc 'cd /var/www/html/drupal && ./vendor/bin/drush'"
 DRUSH="${DRUSH:-ddev drush}"
 
+# Drush invocation for the two MEMORY-HEAVY phases (import, audit). Defaults to
+# $DRUSH so nothing changes locally, but exists because the stock 128M CLI
+# memory_limit has now killed a long run TWICE, in the same way both times:
+#
+#   2026-07-17/18  migrate:import        OOM ~48,900 of 111,340 in
+#   2026-08-13     kmassets:index-all    OOM at the same point, same crash
+#
+# Both die inside CacheTagsChecksumTrait, and both need migrate:reset-status
+# before they can resume — and a resume re-iterates the FULL source count, so
+# it is no faster than starting over. Budget an hour to lose, or set this.
+#
+# The limit CANNOT be raised by prefixing `php -d` to the `drush` wrapper — it
+# is a shell script, so the flag never reaches the PHP that matters. It must
+# target drush.php directly. On dev-0:
+#
+#   DRUSH_HEAVY="docker exec mandala-drupal-0 php -d memory_limit=1024M \
+#     /opt/drupal/app/drupal/vendor/bin/drush.php"
+#
+# See docs/deferred/migrate-large-migration-oom-and-resume-behavior.md.
+DRUSH_HEAVY="${DRUSH_HEAVY:-$DRUSH}"
+
 # ---------------------------------------------------------------------------
 # Baseline reconciliation targets — staging Images dump 2026-07-07.
 # Verified 1:1 against the D7 source (d7_images) this session: every count below
@@ -116,7 +137,8 @@ phase_rollback() {
 
 phase_import() {
   log "IMPORT — $GROUP"
-  $DRUSH migrate:import --group="$GROUP"
+  [ "$DRUSH_HEAVY" = "$DRUSH" ] && info "NOTE: DRUSH_HEAVY unset — running at the default PHP memory_limit. See the header if this OOMs."
+  $DRUSH_HEAVY migrate:import --group="$GROUP"
 }
 
 phase_validate() {
@@ -151,7 +173,8 @@ EOF
 phase_audit() {
   log "AUDIT — index shanti_image to kmassets, then detect drift"
   info "Requires VPN/VPC (solr_master_url → staging master). Bulk-indexing 111k docs."
-  $DRUSH kmassets:index-all shanti_image
+  [ "$DRUSH_HEAVY" = "$DRUSH" ] && info "NOTE: DRUSH_HEAVY unset — running at the default PHP memory_limit. See the header if this OOMs."
+  $DRUSH_HEAVY kmassets:index-all shanti_image
   $DRUSH kmassets:audit --check-stale
 }
 
