@@ -203,6 +203,22 @@ visible before the hour is lost rather than after.
 
 ---
 
+### ⚠ After the cycle: kmassets must be re-indexed
+
+`migrate:rollback` does not reset `AUTO_INCREMENT`, so the re-import assigns **new nids** —
+and the kmassets uid is `images-11-{nid}`. Every one of the 111,340 docs indexed on
+2026-08-13 therefore becomes an **orphan** in the shared staging Solr index, and the fresh
+content is unindexed. Not doing this leaves two generations of docs in an index other people
+read.
+
+- [ ] `kmassets:delete "uid:images-11-*"` — removes only D11-namespaced docs; D7-era
+      `images-{d7nid}` entries are untouched.
+- [ ] `kmassets:index-all shanti_image` — budget ~5.8–7/sec, decelerating (measured
+      2026-08-13); use the `DRUSH_HEAVY` invocation, this OOM'd at 128M once already.
+- [ ] `kmassets:audit --check-stale` — expect 0 missing / 0 stale / 0 orphaned.
+
+---
+
 ## D. Per-criterion evidence
 
 Each maps to an acceptance checkbox in the sprint doc. Capture concrete evidence (query
