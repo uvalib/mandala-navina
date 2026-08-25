@@ -37,6 +37,27 @@ GROUP="mandala_images"
 #   DRUSH="docker exec ddev-mandala-web bash -lc 'cd /var/www/html/drupal && ./vendor/bin/drush'"
 DRUSH="${DRUSH:-ddev drush}"
 
+# Drush invocation for the two MEMORY-HEAVY phases (import, audit). Defaults to
+# $DRUSH so nothing changes locally, but exists because the stock 128M CLI
+# memory_limit has now killed a long run TWICE, in the same way both times:
+#
+#   2026-07-17/18  migrate:import        OOM ~48,900 of 111,340 in
+#   2026-08-13     kmassets:index-all    OOM at the same point, same crash
+#
+# Both die inside CacheTagsChecksumTrait, and both need migrate:reset-status
+# before they can resume — and a resume re-iterates the FULL source count, so
+# it is no faster than starting over. Budget an hour to lose, or set this.
+#
+# The limit CANNOT be raised by prefixing `php -d` to the `drush` wrapper — it
+# is a shell script, so the flag never reaches the PHP that matters. It must
+# target drush.php directly. On dev-0:
+#
+#   DRUSH_HEAVY="docker exec mandala-drupal-0 php -d memory_limit=1024M \
+#     /opt/drupal/app/drupal/vendor/bin/drush.php"
+#
+# See docs/deferred/migrate-large-migration-oom-and-resume-behavior.md.
+DRUSH_HEAVY="${DRUSH_HEAVY:-$DRUSH}"
+
 # ---------------------------------------------------------------------------
 # Baseline reconciliation targets — staging Images dump 2026-07-07.
 # Verified 1:1 against the D7 source (d7_images) this session: every count below
@@ -64,6 +85,17 @@ field:field_subjects 79174
 field:field_places 68790
 field:field_kmap_terms 55553
 field:field_kmap_collections 83493
+# entity:path_alias <COUNT>   <-- UNCOMMENT AND FILL BEFORE THE ACCEPTANCE RUN.
+#   Added with the d7_images_url_alias migration (ADR 016 decision 7). The
+#   expected value is dump-specific and is NOT yet known — it was not measurable
+#   from this machine. Get it from the D7 source:
+#     SELECT COUNT(*) FROM url_alias ua
+#     JOIN node n ON n.nid = CAST(SUBSTRING(ua.source, 6) AS UNSIGNED)
+#     WHERE ua.source LIKE 'node/%' AND n.type = 'shanti_image';
+#   or run `./scripts/migration-cycle.sh baseline` after a known-good import.
+#   NOTE this is >= the node count: D7 pathauto leaves older alias rows in place
+#   when a title changes, and the migration deliberately keeps every one so old
+#   URLs keep resolving. Do not assume it equals 111343.
 "
 
 # A single php:eval that emits "key<TAB>count" lines for every actual count.
@@ -78,6 +110,7 @@ foreach (["image_agent", "image_descriptions", "external_classification"] as $t)
   printf("paragraph:%s\t%d\n", $t, $q("SELECT COUNT(*) FROM paragraphs_item_field_data WHERE type = :t", [":t" => $t]));
 }
 printf("term:external_classification_scheme\t%d\n", $q("SELECT COUNT(*) FROM taxonomy_term_field_data WHERE vid = :v", [":v" => "external_classification_scheme"]));
+printf("entity:path_alias\t%d\n", $q("SELECT COUNT(*) FROM path_alias"));
 foreach (["field_subjects", "field_places", "field_kmap_terms", "field_kmap_collections"] as $f) {
   $tbl = "node__" . $f;
   $n = $db->schema()->tableExists($tbl) ? $q("SELECT COUNT(*) FROM {" . $tbl . "}") : 0;
@@ -116,7 +149,8 @@ phase_rollback() {
 
 phase_import() {
   log "IMPORT — $GROUP"
-  $DRUSH migrate:import --group="$GROUP"
+  [ "$DRUSH_HEAVY" = "$DRUSH" ] && info "NOTE: DRUSH_HEAVY unset — running at the default PHP memory_limit. See the header if this OOMs."
+  $DRUSH_HEAVY migrate:import --group="$GROUP"
 }
 
 phase_validate() {
@@ -129,6 +163,9 @@ phase_validate() {
   # shell and `fail` survives — bash 3.2 has no lastpipe.
   while read -r key want; do
     [ -z "$key" ] && continue
+    # Allow '#' comments in EXPECT_LIST — without this a comment line parses as
+    # key='#', want=<word> and reports a spurious FAIL.
+    case "$key" in \#*) continue ;; esac
     got=$(printf '%s\n' "$actual" | awk -F'\t' -v k="$key" '$1==k {print $2}')
     [ -z "$got" ] && got=MISSING
     if [ "$got" = "$want" ]; then
@@ -151,7 +188,8 @@ EOF
 phase_audit() {
   log "AUDIT — index shanti_image to kmassets, then detect drift"
   info "Requires VPN/VPC (solr_master_url → staging master). Bulk-indexing 111k docs."
-  $DRUSH kmassets:index-all shanti_image
+  [ "$DRUSH_HEAVY" = "$DRUSH" ] && info "NOTE: DRUSH_HEAVY unset — running at the default PHP memory_limit. See the header if this OOMs."
+  $DRUSH_HEAVY kmassets:index-all shanti_image
   $DRUSH kmassets:audit --check-stale
 }
 
