@@ -1,0 +1,39 @@
+uuid: aec15fb7-6210-4073-bcf2-78a8ee71cefc
+langcode: en
+status: true
+dependencies:
+  module:
+    - group
+    - options
+id: group.field_legacy_site
+field_name: field_legacy_site
+entity_type: group
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: images
+      label: Images
+    -
+      value: texts
+      label: Texts
+    -
+      value: sources
+      label: Sources
+    -
+      value: audio-video
+      label: Audio-Video
+    -
+      value: visuals
+      label: Visuals
+    -
+      value: mandala
+      label: 'Mandala Home'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

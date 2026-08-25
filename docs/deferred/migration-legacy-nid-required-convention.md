@@ -92,6 +92,12 @@ development going forward, not just migrations.
       in the same commit — verify with `drush config:status` before and after
 - [ ] Post-import verification: row count + 0 mismatches against
       `migrate_map_*`
+- [ ] **Set `field_legacy_site`** alongside `field_legacy_nid`, per
+      [ADR 017](../adr/017-legacy-identity-composite-key.md). D7 nids are unique per SITE,
+      so the nid alone is ambiguous across sites; the pair is the key. Value is the kmassets
+      service token for the source site (`images`, `texts`, `sources`, `audio-video`,
+      `visuals`, `mandala`) — note **AV's audio and video share one token**, because they
+      share one D7 nid sequence. Set it with `default_value` (constant per migration).
 - [ ] **Migrate the site's D7 `url_alias` rows.** D7 used pathauto to present
       user-friendly paths, and preserving those legacy paths in D11 is a **requirement**
       ([ADR 016](../adr/016-public-url-structure-single-host.md) decision 7) — they are
@@ -170,7 +176,9 @@ Two consumers already depend on this mapping being unique:
    vs `av-1631632` carry a **service prefix**, making service+nid the real composite key.
    That is precedent for the options below, not a coincidence.
 
-**Two ways to close it — pick one before the next migration:**
+**DECIDED 2026-08-25 — [ADR 017](../adr/017-legacy-identity-composite-key.md) (Proposed):** the
+explicit `field_legacy_site` companion, using the kmassets service vocabulary. The two options
+that were weighed:
 
 - **Scope lookups by bundle**, mapping legacy site → candidate D11 bundles
   (`images…` → `shanti_image`; `av…` → the audio *and* video bundles). Sound, because one
