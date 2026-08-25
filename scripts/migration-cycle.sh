@@ -75,6 +75,12 @@ DRUSH_HEAVY="${DRUSH_HEAVY:-$DRUSH}"
 # Plain "key<space>count" lines (not an associative array) so the script runs
 # on the stock macOS /bin/bash 3.2 that teammates invoke it with.
 # ---------------------------------------------------------------------------
+# Baseline source. EXPECT_LIST below is the DDEV-local default; point EXPECT_FILE
+# at scripts/baselines/<env>.txt for a deployed host. Baselines are DUMP-SPECIFIC
+# and environments do NOT share a dump — dev-0 and local DDEV differ on 7 of 8
+# keys, and the data is not wrong. See docs/deferred/canonical-d7-dev-source-dump.md.
+EXPECT_FILE="${EXPECT_FILE:-}"
+
 EXPECT_LIST="
 node:shanti_image 111343
 paragraph:image_agent 111350
@@ -87,6 +93,7 @@ field:field_kmap_terms 55553
 field:field_kmap_collections 83493
 entity:path_alias 111304
 entity:group_path_alias 174
+integrity:legacy_nid_dupes 0
 "
 
 # A single php:eval that emits "key<TAB>count" lines for every actual count.
@@ -103,6 +110,10 @@ foreach (["image_agent", "image_descriptions", "external_classification"] as $t)
 printf("term:external_classification_scheme\t%d\n", $q("SELECT COUNT(*) FROM taxonomy_term_field_data WHERE vid = :v", [":v" => "external_classification_scheme"]));
 printf("entity:path_alias\t%d\n", $q("SELECT COUNT(*) FROM path_alias WHERE path LIKE :p", [":p" => "/node/%"]));
 printf("entity:group_path_alias\t%d\n", $q("SELECT COUNT(*) FROM path_alias WHERE path LIKE :p", [":p" => "/group/%"]));
+// Legacy identity must be unique (ADR 017): one D7 nid must not map to two D11
+// nodes. Caught a real duplicate on dev-0 2026-08-25 (D7 nid 981206 -> nids
+// 76584, 76585), which a state-derived baseline would have blessed as correct.
+printf("integrity:legacy_nid_dupes\t%d\n", $q("SELECT COUNT(*) - COUNT(DISTINCT field_legacy_nid_value) FROM node__field_legacy_nid"));
 foreach (["field_subjects", "field_places", "field_kmap_terms", "field_kmap_collections"] as $f) {
   $tbl = "node__" . $f;
   $n = $db->schema()->tableExists($tbl) ? $q("SELECT COUNT(*) FROM {" . $tbl . "}") : 0;
@@ -146,7 +157,13 @@ phase_import() {
 }
 
 phase_validate() {
-  log "VALIDATE — reconcile counts vs configured EXPECT_LIST baseline"
+  if [ -n "$EXPECT_FILE" ]; then
+    [ -f "$EXPECT_FILE" ] || { echo "EXPECT_FILE not found: $EXPECT_FILE" >&2; return 2; }
+    EXPECT_LIST="$(cat "$EXPECT_FILE")"
+    log "VALIDATE — reconcile counts vs $EXPECT_FILE"
+  else
+    log "VALIDATE — reconcile counts vs the built-in DDEV-local baseline"
+  fi
   # Actual counts as "key<TAB>count" lines, captured once.
   local actual fail=0 key want got
   actual=$($DRUSH php:eval "$COUNT_EVAL")

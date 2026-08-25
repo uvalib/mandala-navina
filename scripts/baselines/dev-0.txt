@@ -1,0 +1,44 @@
+# Baseline: dev-0 (mandala-drupal-dev-0)
+#
+# D7 source: mandala_d7_images on rds-mysql8-staging, loaded 2026-07-17 from
+#            production (287,939 node rows). NOT the same dump as local DDEV,
+#            which runs the 2026-07-07 staging dump (288,023 node rows) — the
+#            two environments differ on 7 of 8 keys and neither is wrong.
+#            See docs/deferred/canonical-d7-dev-source-dump.md.
+#
+# Usage:  EXPECT_FILE=scripts/baselines/dev-0.txt ./scripts/migration-cycle.sh validate
+#
+# ⚠ Values below marked SOURCE-DERIVED were computed from the D7 source tables
+#   on 2026-08-25, NOT copied from dev-0's D11 state. That distinction is the
+#   point: a state-derived baseline is circular — it would bless whatever is
+#   there. It would, for instance, have recorded node:shanti_image as 111341 and
+#   permanently blessed a duplicate (D7 nid 981206 migrated twice, into D11 nids
+#   76584 and 76585) as the expected state.
+
+# --- SOURCE-DERIVED (verified against mandala_d7_images, 2026-08-25) ---
+node:shanti_image 111340
+entity:path_alias 111301
+entity:group_path_alias 171
+
+# Legacy identity must be unique (ADR 017). dev-0 currently FAILS this with 1
+# duplicate; the rollback → import cycle is expected to clear it, since rollback
+# deletes everything the migration created. If it survives a clean cycle, that is
+# a migration defect, not a data property.
+integrity:legacy_nid_dupes 0
+
+# --- NOT YET DERIVED — fill after the first clean cycle on dev-0 ---
+# Deliberately omitted rather than guessed. The satellite paragraph counts depend
+# on the source plugins' per-reference join logic (D7ImageSatellite fans agents
+# out one paragraph per image reference and skips orphans), so they cannot be
+# read off a simple D7 table count the way the keys above can. Derive them by
+# running `baseline` after a cycle that has ALSO been reconciled against the D7
+# source — not from the current state alone.
+#
+# paragraph:image_agent               ?
+# paragraph:image_descriptions        ?
+# paragraph:external_classification   ?
+# term:external_classification_scheme ?
+# field:field_subjects                ?
+# field:field_places                  ?
+# field:field_kmap_terms              ?
+# field:field_kmap_collections        ?
