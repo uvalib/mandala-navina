@@ -27,6 +27,14 @@ process:
   # content-entity migration — see
   # docs/deferred/migration-legacy-nid-required-convention.md
   field_legacy_nid: nid
+  # Composite legacy key: D7 nids are unique PER SITE, not globally, so
+  # field_legacy_nid alone is ambiguous once a second site migrates. Constant
+  # here because each migration reads exactly one D7 database. Value is the
+  # kmassets service token, so legacy_site + '-' + legacy_nid reconstructs the
+  # D7-era kmasset uid directly.
+  field_legacy_site:
+    plugin: default_value
+    default_value: images
 
   # Parent collection: D7 nid → D11 Group id via migration_lookup.
   field_parent_collection/target_id:

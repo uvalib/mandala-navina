@@ -1,0 +1,21 @@
+uuid: 33659d07-e623-4f44-88b6-d69c900f6697
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.group.field_legacy_site
+    - group.type.subcollection
+  module:
+    - options
+id: group.subcollection.field_legacy_site
+field_name: field_legacy_site
+entity_type: group
+bundle: subcollection
+label: 'Legacy D7 site'
+description: 'Which D7 site (and therefore which nid sequence) this entity was migrated from. D7 nids are unique PER SITE, not globally, so field_legacy_nid alone is ambiguous once more than one collection has migrated: node/1631632 on images is a different asset than on av. Together the pair is the composite legacy key. Values are the kmassets service vocabulary, so joining site and nid with a hyphen reconstructs the D7-era kmasset uid directly. System/provenance value, not editor-facing.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

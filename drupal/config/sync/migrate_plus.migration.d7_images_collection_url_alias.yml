@@ -18,8 +18,8 @@ source:
     - collection
     - subcollection
   constants:
-    group_path_prefix: '/group/'
-    leading_slash: '/'
+    group_path_prefix: /group/
+    leading_slash: /
 process:
   _gid:
     plugin: migration_lookup
@@ -27,29 +27,24 @@ process:
       - d7_images_collections
       - d7_images_subcollections
     source: nid
-
   _skip_unmigrated:
     plugin: skip_on_empty
     method: row
     source: '@_gid'
-
   path:
     plugin: concat
     source:
       - constants/group_path_prefix
       - '@_gid'
-
   alias:
     plugin: concat
     source:
       - constants/leading_slash
       - alias
-
   langcode:
     plugin: default_value
     source: language
     default_value: und
-
   status:
     plugin: default_value
     default_value: 1
