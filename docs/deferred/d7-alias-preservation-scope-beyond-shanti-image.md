@@ -3,7 +3,7 @@
 **Area:** migration / Images / URLs / ADR 016
 **Raised during:** Session 2026-08-25, DDEV verification of the `d7_images_url_alias` migration
 **Jira:** (add when available)
-**Priority:** Medium — one part (collection aliases) is High and user-facing
+**Priority:** Medium — collection aliases are done; the live item is a one-query check on dev-0
 
 [ADR 016](../adr/016-public-url-structure-single-host.md) decision 7 makes preserving D7's
 pathauto paths a **requirement**. The `d7_images_url_alias` migration delivers that for
@@ -45,37 +45,62 @@ silently:
 So the likely answer is "drop them", but per the Spike 6 convention on the AJAX endpoints,
 **the default answer should be a recorded decision, not an omission.**
 
-## ⚠ Collection aliases now migrate — but their destination is 403 for everyone
+## Collection aliases migrate, and the pages work
 
 `d7_images_collection_url_alias` was built and verified 2026-08-25: 174 created, 0 failed,
 **0 mismatches** against the D7 source, 55 collection + 119 subcollection matching the group
 counts exactly. `/group/1` → `/collection/poor-peoples-campaign`.
 
-**The aliases are correct and the pages are still unreachable.** Serving test, anonymous:
+### ⚠ Correction — an earlier version of this note was wrong
 
-| Request | Result |
+That version claimed the preserved URLs were 403 for everyone because **"no group role grants
+`view group`"**, and framed it as an access-model gap needing to be designed and wired.
+
+**Both claims were wrong.** The permission *is* granted — all ten `group.role.*` configs carry
+`'view group'` — and the enforcement *is* built: `_mandala_group_inheritance_group_access()`
+has always handled group entities, denying only `field_group_access = 1` for non-members, with
+the bypass permissions honoured. Nothing needed wiring.
+
+The false finding came from a bad grep: the pattern `view group$` never matches the config
+line `  - 'view group'`, which ends in a quote. A zero count was read as "not granted" rather
+than "pattern didn't match". **Absence of a grep hit is not evidence of absence.**
+
+### The real cause: 174 stale anonymous memberships
+
+Anonymous was denied because **anonymous was recorded as a *member* of every group** — 174
+`group_membership` rows with `entity_id = 0`, one per group. Group's
+`GroupPermissionChecker::hasPermissionInGroup()` branches on membership: a member gets the
+**insider** item, a non-member the **outsider** one. Anonymous holds only the `anonymous`
+global role, and the insider roles are scoped to `authenticated`, so the insider lookup
+returned nothing and access fell through to neutral — which Drupal denies. Public and private
+collections alike, which is exactly why the symptom looked like a blanket permission gap.
+
+Diagnosis chain, each step measured: role config grants it → permission is registered and
+`allowed for: anonymous,outsider,member` → the calculator **does** emit `view group` for
+anonymous in the outsider scope → but the *checker* returns false → because the membership
+loader reports anonymous as a member.
+
+**This is stale data, not a code defect.** The rows are dated `2026-07-10 10:45:16` — the
+original 1b.2 migration run, before the `uid: default_value: 1` fix landed. Both committed
+migrations now set it correctly, so a fresh import does not reproduce it.
+
+Removing the 174 rows locally gives the correct behaviour, verified with all three cases:
+
+| Request (anonymous) | Result |
 |---|---|
-| `/collection/{slug}`, **public** collection | **403** |
-| `/collection/{slug}`, private collection | **403** |
-| `/collection/{bogus}` | 404 |
+| `/collection/{slug}`, **public** | **200** |
+| `/collection/{slug}`, **private** | **403** |
+| `/collection/{bogus}` | **404** |
 
-403 rather than 404 proves the alias resolves — it is an *access* decision, not a routing
-failure. The cause is that **no group role grants the `view group` permission**. Every role
-in `config/sync` (`collection-anonymous`, `-outsider`, `-member`, both content_editor roles,
-and the subcollection equivalents) grants `view group_node:shanti_image entity` — permission
-to see the *content in* the group — but never `view group`, permission to see the group
-entity's own canonical page.
+### What still needs doing
 
-So a D7 collection page that was public becomes forbidden in D11, for anonymous and members
-alike. **This is not an alias defect and must not be "fixed" in the alias migration.** It is
-an access-model gap, and granting `view group` is a real decision: it has to respect
-`field_group_access` (0=public / 1=private / 2=subscribable) rather than opening every
-collection, and it interacts with [ADR 011](../adr/011-group-collections-inheritance.md)'s
-inheritance hooks and [ADR 015](../adr/015-editorial-access-model-global-content-editor.md).
-
-Closely related to
-[images-missing-interactive-viewing-surfaces.md](images-missing-interactive-viewing-surfaces.md),
-already flagged as a team topic — a collection landing page is one of the missing surfaces.
+- **Check dev-0 for the same 174 rows.** Not verifiable from this session. dev-0's migration
+  ran 2026-07-17, *after* the fix, so it is probably clean — but "probably" is what produced
+  the error above. The query is
+  `SELECT COUNT(*) FROM group_relationship_field_data WHERE plugin_id='group_membership' AND entity_id=0;`
+  and it should return 0.
+- Note the 1a.9 acceptance cycle self-heals this anyway: `rollback` deletes the groups and
+  `import` recreates them with `uid: 1`.
 
 ## Why collection aliases were worth doing
 
@@ -88,10 +113,9 @@ takes a `node_types` list; only the destination path construction differs.
 
 ## Open questions
 
-1. **Should any group role grant `view group`, and to whom?** ~~Collection aliases: preserve
-   or drop~~ — done, they migrate. The live question is the 403 above: the preserved URLs
-   resolve to a page nobody can see. Must respect `field_group_access` rather than opening
-   every collection wholesale.
+1. **Confirm dev-0 has no stale `uid=0` group memberships** (see the correction above). One
+   query; it should return 0. ~~Should any group role grant `view group`~~ — moot, it already
+   does, and `field_group_access` is already respected.
 2. **Satellite aliases: confirm the drop.** No D11 destination exists; the recommendation is
    to drop, recorded rather than assumed.
 3. **`file/*` aliases (64,933): unassessed.** Note they share the `image/{slug}` namespace
