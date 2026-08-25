@@ -86,6 +86,7 @@ field:field_places 68790
 field:field_kmap_terms 55553
 field:field_kmap_collections 83493
 entity:path_alias 111304
+entity:group_path_alias 174
 "
 
 # A single php:eval that emits "key<TAB>count" lines for every actual count.
@@ -101,6 +102,7 @@ foreach (["image_agent", "image_descriptions", "external_classification"] as $t)
 }
 printf("term:external_classification_scheme\t%d\n", $q("SELECT COUNT(*) FROM taxonomy_term_field_data WHERE vid = :v", [":v" => "external_classification_scheme"]));
 printf("entity:path_alias\t%d\n", $q("SELECT COUNT(*) FROM path_alias WHERE path LIKE :p", [":p" => "/node/%"]));
+printf("entity:group_path_alias\t%d\n", $q("SELECT COUNT(*) FROM path_alias WHERE path LIKE :p", [":p" => "/group/%"]));
 foreach (["field_subjects", "field_places", "field_kmap_terms", "field_kmap_collections"] as $f) {
   $tbl = "node__" . $f;
   $n = $db->schema()->tableExists($tbl) ? $q("SELECT COUNT(*) FROM {" . $tbl . "}") : 0;
