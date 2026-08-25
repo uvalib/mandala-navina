@@ -136,6 +136,26 @@ The harder half of decision 6 therefore applies only to the bare-nid form. That 
 better outcome by a distance: the form most likely to be in someone's bookmarks is also
 the one needing the least machinery.
 
+**Verified end-to-end in DDEV, 2026-08-25.** The `d7_images_url_alias` migration ran
+against the full production Images dump: **111,304 created, 0 failed, 0 ignored**, and a
+full-population cross-check against the D7 source found **0 mismatches** — every alias
+byte-identical, with the D7→D11 nid translation correct in all 111,304 rows. Serving was
+confirmed with a three-way discriminator rather than a single happy path:
+
+| Request | Result |
+|---|---|
+| `/image/{slug}`, public collection | **200** — serves |
+| `/image/{slug}`, private collection | **403** — resolves, access correctly denied |
+| `/image/{bogus-slug}` | **404** — does not resolve |
+
+The 403-vs-404 split is the load-bearing part: it proves the alias resolves to a node and
+then meets an *access* decision, rather than failing at routing. Decision 7 is proven for
+`shanti_image`.
+
+Two measurements corrected assumptions made earlier in this ADR's drafting: the dump carries
+**exactly one alias per node** (zero duplicates), and **39 of 111,343 nodes have no alias at
+all** — so the alias count sits *below* the node count, not above it.
+
 **Two things this requires that do not exist yet.** `mandala_migrations` has **no
 `url_alias` migration**, and `pathauto` is not installed (`core.extension` carries only
 core `path`/`path_alias`). Migrating D7's actual alias strings is required — regenerating
