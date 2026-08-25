@@ -31,7 +31,7 @@ Bootstrap"). This was not an accident of naming — it is declared in each `.inf
 `base theme = shanti_sarvaka` line, and confirmed by file size: the base theme's
 `template.php` is 1,677 lines; every sub-theme's is a fraction of that (193–860 lines).
 
-| Site (per current 6-way scope) | D7 theme | `template.php` size | Sub-theme's only real additions |
+| Site (D7 site as built; Visuals excluded from D11 scope — see note below) | D7 theme | `template.php` size | Sub-theme's only real additions |
 |---|---|---|---|
 | Images | `sarvaka_images` | 860 lines | Gallery CSS, broken-image fallback setting, `shanti-main-images.js` (drives the OpenSeadragon deep-zoom viewer — see the [interactive surfaces note](../deferred/images-missing-interactive-viewing-surfaces.md)) |
 | AV | `sarvaka_mediabase` | 653 lines | AV-transcript CSS, media-edit-form CSS, `body_tag`/`icon_class` = `audio-video`. Kaltura itself is **not** theme code — it's the contrib `kaltura` module + `KalturaClient` library (`sites/all/modules/contrib/kaltura`, `sites/all/libraries/KalturaClient`) |
@@ -41,15 +41,17 @@ Bootstrap"). This was not an accident of naming — it is declared in each `.inf
 | Home / KMaps browse | `sarvaka_kmaps` | (not separately measured) | KMaps subject/places explorer CSS/JS (`kmaps-explorer.css`, `shanti-mandala-homepage-kmaps.css`) — this is the taxonomy-browse chrome, not a distinct site skin |
 
 **Note on scope:** the current top-level docs describe "five sites (AV, Images, Sources,
-Texts, Mandala Home)," but the D7 codebase's actual `sites.php` multisite map and theme
-set show **six**: the five plus a distinct **Visuals** site (`sarvaka_shiva`, host
-`visuals.mandala.library.virginia.edu`). This matches what session logs from 2026-06-12,
+Texts, Mandala Home)," and the D7 codebase's actual `sites.php` multisite map and theme
+set show a sixth, distinct **Visuals** site (`sarvaka_shiva`, host
+`visuals.mandala.library.virginia.edu`) — matching what session logs from 2026-06-12,
 2026-06-15, and 2026-07-30 already independently found (Visuals appears in the reindeer_x
-site list and the Spike 6 host map) — it is not a new discovery, but it's easy to
-under-count from the top-level docs alone, so it's restated here for anyone scoping Phase
-2 site-by-site. A ninth theme, `sarvaka_projects`, exists in the codebase but doesn't map
-to any of the six live hosts in `sites.php` — likely legacy/unused; worth a quick
-confirmation before Phase 2, not a blocker to this audit's conclusion.
+site list and the Spike 6 host map). **Decided 2026-08-25 (team): Visuals is being
+retired, not migrated to D11** — no content migration, no theme work. So the top-level
+docs' "five sites" count is correct for D11 scope; Visuals is included in this audit only
+as a data point about what D7 actually built, not as Phase 2 scope. A ninth theme,
+`sarvaka_projects`, also exists in the codebase but doesn't map to any live D11-bound host
+in `sites.php` — likely legacy/unused; worth a quick confirmation, not a blocker to this
+audit's conclusion.
 
 ## What's actually shared (the baseline)
 
@@ -101,8 +103,9 @@ to be viewable**, not to look-and-feel:
   work](../spikes/spike-05-bibcite-sources.md). Notably, D7 itself had **already disabled
   most of this** (stylesheets commented out in the live `.info` file), so "faithful port"
   here may mean porting less than expected.
-- **Visuals** — depends on the `shivanode` module; not yet audited in any D11 planning
-  doc. Flagging as a gap: Visuals has no ADR/spike/deferred-note presence at all today.
+- **Visuals** — depends on the `shivanode` module. **Decided 2026-08-25 (team): Visuals is
+  being retired, not migrated.** No D11 content migration and no theme work needed for it.
+  Retained here only as a record of what D7 actually shipped.
 
 ## Recommendation
 
@@ -122,10 +125,7 @@ Concretely:
    already proven), bibcite display (Sources, already its own spike). None of these compete
    with or complicate a shared base theme; they layer on top of it exactly as they did in
    D7.
-3. **Resolve the Visuals gap before Phase 2 site assignments are finalized** — it has no
-   owner, no spike, no deferred note, and (per `sites.php`) is a real live production site
-   distinct from Images.
-4. **Confirm whether `sarvaka_projects` is truly dead** — a five-minute check (grep
+3. **Confirm whether `sarvaka_projects` is truly dead** — a five-minute check (grep
    `sites.php` history / ask if any redirect still points at it) before anyone spends time
    auditing it further.
 
