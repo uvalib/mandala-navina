@@ -219,13 +219,23 @@ populating it during the migration that creates the rows.
   [`kmassets-uid-identity-across-migration.md`](../deferred/kmassets-uid-identity-across-migration.md)
   ("wire redirect module to `field_legacy_nid`") and the High-priority
   [`kmassets-uid-consumer-analysis.md`](../deferred/kmassets-uid-consumer-analysis.md).
-- **Images needs an alias backfill, not just a checklist entry.** Images has already
-  migrated — 111,340 nodes, none of which carry a D7 alias, because no `url_alias`
-  migration existed when it ran. Decision 7 is therefore retroactive work for the pilot
-  collection as well as forward work for Texts/Sources/AV/Home. It is a safe backfill (a
-  new migration reading D7 `url_alias` and writing `path_alias` entities, keyed on
-  `field_legacy_nid`) rather than a re-run of the content migration, so it does not
-  disturb existing nids or the 1a.9 acceptance run.
+- **Images needs no backfill — but the alias migration has to land before the next full
+  import.** An earlier draft of this ADR called this retroactive work for the pilot, on
+  the grounds that Images' 111,340 migrated nodes carry no aliases. That was wrong.
+  The 1a.9 acceptance cycle is `rollback → import → validate`: it deletes every migrated
+  node and re-imports from source, so a `url_alias` migration present in the
+  `mandala_images` group at that point produces the aliases as part of the normal run.
+
+  Backfilling separately would in fact be **actively wasted work**, because
+  `migrate:rollback` does not reset `AUTO_INCREMENT` — a re-import assigns different,
+  higher nids ("reversible to *clean*, not to *identical*"). Aliases written against
+  today's nids would be invalidated by the very next import.
+
+  So this is a **sequencing** requirement, not a backfill: write the `url_alias`
+  migration **before** the acceptance run and it comes for free, and the run validates it.
+  Write it after, and Images needs another full import to pick the aliases up. Worth
+  adding a `path_alias` count to `migration-cycle.sh`'s `EXPECT_LIST` in the same change,
+  so the cycle actually reconciles aliases rather than silently ignoring them.
 - **New dependency and new migration output.** `drupal/redirect` must be added, enabled and
   exported to `config/sync`, and the migration gains a redirect-generation step — one entry
   per migrated node, so on the order of 111k rows for Images alone and more per site as the
