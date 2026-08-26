@@ -124,9 +124,15 @@ Suggested checkpoints around an acceptance run: `pre-import`, `post-import`,
   exist (`pre-import-20260825T183428Z.sql.gz`, `post-deploy-20260825T193637Z.sql.gz`,
   75M each). Running it caught three real defects the earlier static checks had missed —
   see the script header.
-- ⚠ **`restore` is still UNPROVEN.** It is the destructive path and has never been
-  executed. Prove it against a scratch database before relying on it, not against the
-  live one.
+- ✅ **`restore` PROVEN on dev-0, 2026-08-26**, against a scratch schema
+  (`mandala_restore_test`) on the real RDS with the real app user — same privileges, same
+  network, only the target name differing. Restored 75M and matched the live database
+  exactly: 286/286 tables, 111,341/111,341 `shanti_image`, 166,395/166,395 paragraphs,
+  171/171 groups. Scratch schema dropped afterwards.
+  A DDEV rehearsal was considered and rejected as insufficient: DDEV runs as root on a
+  local MySQL, so it would have proven the drop/load logic while skipping the thing most
+  likely to fail — whether the app user can actually DROP and reload on RDS. The `TARGET_DB`
+  override added for this makes the safety net testable without risking the live database.
 
 RDS snapshots remain the disaster-recovery story; this covers what they are bad at.
 
