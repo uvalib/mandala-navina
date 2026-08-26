@@ -169,6 +169,17 @@ phase_restore() {
   [ -n "$want" ] || die "a label or filename is required"
   read_db_env
 
+  # TARGET_DB exists so restore can be PROVEN without risking the live database:
+  # point it at a scratch schema (the app user holds ALL PRIVILEGES on `mandala%`,
+  # so `mandala_restore_test` works) and the whole path runs for real — same user,
+  # same RDS, same privileges, same network — with only the target name differing.
+  # A DDEV rehearsal cannot substitute: DDEV runs as root on a local MySQL, so it
+  # proves the drop/load logic while skipping the thing most likely to fail.
+  if [ -n "${TARGET_DB:-}" ] && [ "$TARGET_DB" != "$DB_NAME" ]; then
+    info "*** TARGET_DB override: restoring into '$TARGET_DB', NOT '$DB_NAME' ***"
+    DB_NAME="$TARGET_DB"
+  fi
+
   source=$(resolve_checkpoint "$want") || die "no checkpoint matching '$want' in $CHECKPOINT_DIR"
 
   log "CHECKPOINT RESTORE"
@@ -196,7 +207,7 @@ phase_restore() {
 SET FOREIGN_KEY_CHECKS = 0;
 SET @t := (SELECT IFNULL(GROUP_CONCAT(CONCAT('\`', table_name, '\`')), '')
            FROM information_schema.tables WHERE table_schema = DATABASE());
-SET @s := IF(@t = '', 'SELECT 1', CONCAT('DROP TABLE IF EXISTS ', @t));
+SET @s := IF(@t = '', 'SET @noop := 1', CONCAT('DROP TABLE IF EXISTS ', @t));
 PREPARE stmt FROM @s; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET FOREIGN_KEY_CHECKS = 1;
 SQL
