@@ -204,6 +204,12 @@ phase_restore() {
   info "dropping existing tables…"
   $DOCKER run --rm -i -e MYSQL_PWD "$MYSQL_IMAGE" \
       mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" <<SQL
+-- group_concat_max_len defaults to 1024 BYTES. This schema has ~286 tables, so
+-- the concatenated list is ~8KB and would be SILENTLY TRUNCATED, producing a
+-- DROP that removes only some tables and then loads a dump over a partial
+-- schema. Not caught by the 2026-08-26 restore test because the scratch
+-- database was empty, so the drop ran with zero tables to concatenate.
+SET SESSION group_concat_max_len = 100000000;
 SET FOREIGN_KEY_CHECKS = 0;
 SET @t := (SELECT IFNULL(GROUP_CONCAT(CONCAT('\`', table_name, '\`')), '')
            FROM information_schema.tables WHERE table_schema = DATABASE());
@@ -212,6 +218,14 @@ PREPARE stmt FROM @s; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET FOREIGN_KEY_CHECKS = 1;
 SQL
   [ $? -eq 0 ] || die "table drop failed — database may be in a partial state. Do NOT deploy; investigate."
+
+  # Verify the drop EMPTIED the schema. A truncated GROUP_CONCAT (or a silently
+  # unsent heredoc — docker run needs -i) leaves tables behind while reporting
+  # success, and loading over a partial schema is worse than not starting.
+  local left
+  left=$($DOCKER run --rm -e MYSQL_PWD "$MYSQL_IMAGE" mysql -h "$DB_HOST" -u "$DB_USER" -N -B \
+    -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DB_NAME'" 2>/dev/null)
+  [ "$left" = "0" ] || die "drop left $left table(s) behind — refusing to load over a partial schema."
 
   info "loading…"
   $SUDO zcat "$source" | $DOCKER run --rm -i -e MYSQL_PWD "$MYSQL_IMAGE" \
