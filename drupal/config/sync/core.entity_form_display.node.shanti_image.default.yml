@@ -538,5 +538,6 @@ content:
     third_party_settings: {  }
 hidden:
   field_legacy_nid: true
+  field_legacy_site: true
   promote: true
   sticky: true

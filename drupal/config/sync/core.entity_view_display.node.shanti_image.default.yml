@@ -473,5 +473,6 @@ hidden:
   field_iiif_mms_id: true
   field_iiif_width: true
   field_legacy_nid: true
+  field_legacy_site: true
   langcode: true
   search_api_excerpt: true
