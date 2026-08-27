@@ -91,7 +91,44 @@ re-saved rather than skipped).
    pain point, investigate whether the D7 source plugin can filter its own
    SQL query by already-imported IDs rather than relying on iterate the whole set.
 
-## Related
+## Update 2026-08-27: a clean fresh run's real rate, and a resolved question
+
+The group decided (2026-08-26) to rebuild dev-0 **from scratch** rather than
+`migrate:rollback` → `import`, partly *because* of this note's finding that a
+resume costs close to a full run. That from-scratch run gives the first
+**uninterrupted, unresumed** measurement of `d7_images_shanti_image` on dev-0:
+
+**111,340 rows in 7h38m17s — ~243 rows/min**, computed from `migrate:status`'s
+real `last_imported` completion timestamps (start = predecessor migration's
+completion, end = this migration's own), not estimated.
+
+This is **faster than the previously-recorded ~200/min**, and that comparison
+now has an explanation rather than being a puzzle: the ~200/min figure came
+from a *resumed* run, and per this note's own finding, `prepareRow()` runs on
+every source row regardless of the migrate map — so a resumed run's apparent
+pace is not a clean measurement of the migration's true throughput. **~243/min
+is the more honest baseline figure for this migration on dev-0**, and should
+be preferred over ~200/min when estimating future runs, e.g. for Texts.
+
+**One open question from the recommendation above is answered**, at least
+"not by leaving the paragraph rates unaffected": `image_agent` and
+`image_descriptions` from this same clean run reproduced their historical
+rates almost exactly (~1,113/min and ~1,204/min vs. previously-recorded
+~1,120/min and ~1,250/min) — the 128M limit fix and the raised-limit
+invocation are doing their job consistently, and the slowdown really is
+specific to `shanti_image`'s heavy per-entity field-table writes (per the
+`dev-migration-slower-than-ddev-cross-az-latency.md` gradient finding), not a
+general environment problem.
+
+**Limitation worth recording:** this is a start-to-finish average, not a
+rate-over-time profile. Drupal's migrate map stores no per-row timestamps, and
+`general_log`/`slow_query_log` were both OFF on the RDS instance, so there is
+no way to retroactively check whether the run decelerated partway through.
+If that matters for planning a future large migration, add a cheap periodic
+sampler (cron logging row-count + timestamp every few minutes) *before*
+starting it — reconstructing this after the fact is not possible.
+
+## Related## Related
 
 - [migrate:import --group aborts on partial failure](migrate-group-import-aborts-on-partial-failure.md)
 - [Dev database: bootstrap + migration source](d11-dev-database-bootstrap-and-migration-source.md)

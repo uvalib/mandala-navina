@@ -126,3 +126,13 @@ takes a `node_types` list; only the destination path construction differs.
 
 Each of these repeats per site as Texts, Sources and AV migrate — see the per-site checklist
 in [migration-legacy-nid-required-convention.md](migration-legacy-nid-required-convention.md).
+
+## Update 2026-08-27: dev-0 check resolved — clean on the from-scratch rebuild
+
+The "confirm dev-0 has no stale `uid=0` group memberships" follow-up (added when
+`d7-alias-preservation-scope-beyond-shanti-image.md`'s sibling correction retracted the
+"no group role grants `view group`" misdiagnosis) is now moot rather than merely re-checked:
+dev-0 was rebuilt from scratch on 2026-08-26/27, so there is no rollback-era membership data
+left to be stale. Collection aliases (171) and node aliases (111,301) both reproduced exactly
+on the clean run. Group access is confirmed correct on the fresh build: public group ALLOWED,
+private group denied, for a real anonymous session.
