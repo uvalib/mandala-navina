@@ -6,41 +6,42 @@ ADR 014 / migration consistency
 endpoint audit
 **Priority:** **High** — a required property of every asset endpoint D11 builds; the per-site
 migration checklist depends on it
-**Status:** **AGENDA ITEM — bring to the next group meeting.** Requirement stated, design not
-started. An ADR is the likely destination (the API-endpoint analogue of
-[ADR 014](../adr/014-hybrid-solr-proxy-design.md)), but Than has explicitly declined to draft it
-solo — see "Needs a team decision" below.
+**Status:** **DECIDED 2026-08-26.** Than confirmed with Yuji directly (Xiaoming not required for
+the decision itself — see below); the convergence is accepted, scoped under ADR 010, and does not
+need its own ADR. Owned by Than for Sprint 2. Design of the authenticated-fetch half (§2) is not
+started and is the remaining work — see "Decision and plan" below.
 
-## Needs a team decision — raise this at the next group meeting
+## Decision and plan — 2026-08-26 (Than, confirmed with Yuji)
 
-**Whoever is driving: this item is waiting on a group conversation, not on implementation work.**
+1. **The convergence is accepted.** Uniform node-access enforcement across every D11 asset
+   endpoint, public-only by default, no per-site exemptions — `mandala_node_api`'s existing
+   `node->access('view')` gate is the pattern every subsequent site's endpoint copies.
+2. **In scope under ADR 010, no exception to ADR 008 needed.** This is a **correctness /
+   maintainability improvement with no user-visible behavior change** — anonymous access to public
+   nodes is unchanged; the divergence being closed is internal (which module gates which route,
+   not what an end user can see). That is squarely [ADR 010](../adr/010-adr-008-scope-clarification.md)'s
+   "internal architecture, not user-facing features" carve-out from ADR 008's "migrate, not
+   improve." Resolves question 2 from the prior version of this note.
+3. **No ADR.** The requirement is a straightforward application of ADR 010, not a new
+   architectural decision — resolves question 3.
+4. **Half 2 (authenticated fetch) precedent already exists.** AV's D7 endpoint already handles the
+   authenticated case correctly, so this is not a from-scratch design — it is bringing the other
+   three sites' endpoints up to a pattern D7 itself already proved once. (Separately: AV did this
+   via Services module, which the team does not expect to carry into D11 — the *behavior* is the
+   precedent, not the module.)
+5. **Ownership (resolves question 4):** **Than owns this**, planning the authenticated-fetch half
+   with Claude — likely via a small spike, given it still depends on the identity-forwarding gap
+   below. Not blocked on Xiaoming; loop him in only if D11 module/deployment specifics come up
+   during implementation.
+6. **Scheduling:** lands in **Sprint 2**, alongside the D11 base theme/UI work
+   ([theme-ui-commonalities-audit.md](../planning/theme-ui-commonalities-audit.md)) and the Images
+   IIIF viewer ([images-missing-interactive-viewing-surfaces.md](images-missing-interactive-viewing-surfaces.md)).
+   Sprint 2 itself is not yet written up in `docs/sprints/`.
 
-Than raised the requirement (2026-08-21) and still stands behind it, but on 2026-08-24 decided
-**not to write the ADR alone**. The decision spans services owned by different people — Yuji's
-SAML/OAuth2/Redis stack and the deployment topology, Xiaoming's D11 module and deployment work —
-and it is a deliberate departure from a team-agreed rule, so it needs the people who agreed to that
-rule in the room. **Yuji Shinozaki and Xiaoming Wang are the required participants.**
-
-Questions to put to the group:
-
-1. **Do we accept the convergence at all?** Uniform node-access enforcement across every D11 asset
-   endpoint, public-only by default, no per-site exemptions.
-2. **Is it in scope for the MVP, or deferred?** It is an improvement, not a faithful port. Whether
-   [ADR 010](../adr/010-adr-008-scope-clarification.md)'s "internal architecture" clause already
-   covers it, or whether it is user-facing enough to need [ADR 008](../adr/008-mvp-migrate-not-improve.md)
-   to be explicitly excepted, is the crux — and is genuinely arguable both ways.
-3. **Does it get an ADR?** If yes, who drafts it and does it supersede or merely refine ADR 008.
-4. **Who owns half 2** (authenticated fetch), which is blocked on the identity-forwarding gap in
-   Yuji's stack rather than on anything in the endpoint layer.
-
-Related context the group will want: a legacy D7 access-control defect motivated this and is
-tracked privately — **ask Than**. **Access resolved 2026-08-24:** Than now has access to both
-private docs repos, clearing the blocker recorded in the 2026-08-21 session log. Per
-[CONVENTION.md](https://github.com/uvalib/mandala-legacy-docs/blob/main/CONVENTION.md) the
-write-up files in `uvalib/mandala-legacy-docs` — routing is by which stack the *fix* serves, and
-this fix serves D7. **Filed there 2026-08-24**, rewritten (the 08-21 draft did not survive as a
-document) and re-verified against production before filing. Status OPEN. The group can read it in
-that repo; it is not described here.
+Related context: a legacy D7 access-control defect motivated this and is tracked privately — **ask
+Than**. Filed 2026-08-24 in `uvalib/mandala-legacy-docs` per
+[CONVENTION.md](https://github.com/uvalib/mandala-legacy-docs/blob/main/CONVENTION.md) (routing is
+by which stack the *fix* serves, and this fix serves D7). Status OPEN. Not described here.
 
 ## Why this exists
 
@@ -93,10 +94,6 @@ a new bespoke trust channel.
 - **How identity crosses the proxy hop.** The proxy is a WordPress plugin on third-party hosting
   (Option A); it currently forwards nothing. Whether it forwards a token, or the client acquires
   one directly, or the architecture changes, is undecided.
-- **Whether this needs an ADR.** It is an access-control architecture decision spanning several
-  services, which is ADR-shaped — and it is a deliberate departure from "migrate, don't improve",
-  which is exactly the kind of thing ADRs exist to record. **Escalated 2026-08-24 to a group-meeting
-  agenda item** — see "Needs a team decision" above.
 - **Interaction with the standalone deployments**, which have no proxy at all — see
   [option-a-proxy-unavailable-on-standalone-deployments.md](option-a-proxy-unavailable-on-standalone-deployments.md).
 - **Whether any AJAX/embed equivalents get built at all.** Per Than, the D7 AJAX endpoints are
