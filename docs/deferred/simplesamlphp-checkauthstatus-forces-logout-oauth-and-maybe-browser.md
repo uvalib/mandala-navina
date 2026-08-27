@@ -73,9 +73,26 @@ ships for exactly this is simpler: `allow.default_login_roles` — currently onl
 authenticate either way without `checkAuthStatus()` ever forcing a logout. Adding the
 `authenticated` role (held by every logged-in user) to that list, in
 [`simplesamlphp_auth.settings.yml`](../../drupal/config/sync/simplesamlphp_auth.settings.yml),
-is a **config change, not a code patch** — see PR (link once opened). This is a deliberate,
-site-wide relaxation of the SAML-liveness enforcement for every account, not a narrow carve-out;
-recorded here so the tradeoff is visible, not just the mechanism.
+is a **config change, not a code patch** — [PR #165](https://github.com/uvalib/mandala-navina/pull/165),
+merged 2026-08-27. This is a deliberate, site-wide relaxation of the SAML-liveness enforcement
+for every account, not a narrow carve-out; recorded here so the tradeoff is visible, not just
+the mechanism.
+
+**🟢 VERIFIED LIVE on dev-0, 2026-08-27**, same session. Manually applied ahead of the AWS
+pipeline (which hadn't run for this commit yet — GitHub Actions' "deploy" check on the merge is
+the docs-site publish, unrelated to the Drupal backend) by copying the merged
+`simplesamlphp_auth.settings.yml` into the container's `config/sync` and running `drush
+config:import`; will be superseded cleanly by the next real pipeline deploy building from the
+same commit. Re-ran the Sprint 1 step 10 URL smoke tests as uid 600 before/after:
+
+| Path | Before (pre-fix) | After (post-fix) |
+|---|---|---|
+| Private image (`/image/food-truck-beidou`) | 403 (session died) | **200** |
+| Private collection (`/collection/cis-cultural-documentation-projects`) | 403 (session died) | **200** |
+| `/user` | bounced to `/user/login` | shows "Nicholas Osborne", "Log out" |
+
+Public paths and the bogus 404 were unaffected throughout, both before and after — confirming
+the fix only touches the SAML-liveness enforcement, not the underlying node-access model.
 
 > **Scope correction (2026-08-20, later in the same session).** This note originally also
 > carried Xiaoming's "logout doesn't work" report as a "Case 2", on the strength of watchdog
