@@ -3,13 +3,79 @@
 **Area:** simplesamlphp_auth (contrib) / session handling / ADR 014 authenticated path
 **Raised during:** Session 2026-08-20
 **Jira:** (add when available)
-**Priority:** High — root cause of the tracked 4th OAuth2 defect
-**Status:** 🟢 **FIXED 2026-08-20 and VERIFIED LIVE on dev-0.** Service override in the new
-`mandala_saml_oauth` module. The full SAML→OAuth2→`/oauth/userinfo` chain was replayed against
-the deployed image (`build-20260820151220`): `/oauth/userinfo` now returns `HTTP 200
-application/json` with the correct `sub`, via the ALB and direct to the container. The same
-replay against the previous image (`build-20260819195654`) returns `302 → /`, so the
-before/after is measured, not asserted.
+**Priority:** High — root cause of the tracked 4th OAuth2 defect; **raised to Critical
+2026-08-27, see "Browser case confirmed" below — affects every real migrated user, not just OAuth2**
+**Status:** 🟢 **FIXED for the OAuth2 path, 2026-08-20, VERIFIED LIVE on dev-0.** Service
+override in the new `mandala_saml_oauth` module. The full SAML→OAuth2→`/oauth/userinfo` chain
+was replayed against the deployed image (`build-20260820151220`): `/oauth/userinfo` now returns
+`HTTP 200 application/json` with the correct `sub`, via the ALB and direct to the container. The
+same replay against the previous image (`build-20260819195654`) returns `302 → /`, so the
+before/after is measured, not asserted. **🔴 The browser case this note's title flagged as
+"maybe" is now confirmed OPEN — see below — and is not fixed by the OAuth2-only exemption.**
+
+## Browser case confirmed, 2026-08-27 (Sprint 1 step 10 smoke test)
+
+While running the Sprint 1 close-out URL smoke tests (public/private/bogus access checks),
+uid 600's SAML test identity was re-linked (rebuild runbook step 7) and a `drush user:login
+--uid=600` one-time link was used to establish a direct browser session — the same kind of
+link `drush uli`, the admin "log in as" action, or a password-reset email produces for a real
+user. Watchdog shows the session dying within the same minute it opened:
+
+```
+Session opened for Nicholas Osborne.
+User Nicholas Osborne used one-time login link at time 1787845844.
+Session closed for Nicholas Osborne.
+```
+
+The very next request (`GET /user`) bounced anonymous, straight back to `/user/login`. This is
+`checkAuthStatus()` exactly as documented above — `isAuthenticated()` reads SimpleSAMLphp's own
+Redis-backed session store, a one-time-login link never creates one, and the account isn't on
+the admin exemption list — but it confirms the mechanism fires on an ordinary Drupal-native
+browser session, not just the OAuth2 Bearer loop this note was originally opened for.
+
+**Scope is not "one test account."** `allow.default_login_roles` on dev-0 currently exempts
+only `administrator`; `allow.default_login_users` is empty. A live count of `authmap`:
+
+```
+provider              count
+simplesamlphp_auth    1385
+```
+
+Every one of the 1,384 rows created by the July D7 user migration (plus uid 600's manual link)
+is `simplesamlphp_auth` — i.e. **every real migrated non-admin user is SAML-linked**, which
+means every non-SAML path into their account is currently broken in production, not just on
+dev-0's test rig: `drush uli` for support/debugging, the admin toolbar's "log in as" action,
+and Drupal's native forgot-password email flow all hand out a session `checkAuthStatus()`
+immediately destroys. This was not visible in the 2026-08-20 investigation because that testing
+went through uid 600 via the SAML→OAuth2 path specifically, which has a live SimpleSAML session
+by construction.
+
+**Needs a team decision, not a unilateral fix** — same tension the "Why config alone cannot fix
+it" section below already identifies for the OAuth2 case: any uid/role-keyed exemption
+(`allow.default_login_users`/`_roles`) also exempts that same user's *real* SAML-should-be-required
+browser sessions, defeating the enforcement rather than narrowly permitting the operational
+path (impersonation, password reset, `drush uli`) that needs it. Options raised, undecided:
+1. A request-context-keyed exemption analogous to the OAuth2 fix — e.g. only allow a session
+   that was *just* established via `user.reset`/`user.reset.login` (one-time login) or `drush
+   uli`, for one request, then re-arm the check — narrower than a standing uid/role allowlist.
+2. Scope the admin-impersonation ("log in as") path specifically, since it already runs as a
+   privileged action.
+3. Accept the current behavior as intended (SAML-linked accounts must always come in through
+   SAML) and instead fix the *operational* paths that assume otherwise — i.e. treat `drush uli`
+   / forgot-password as not applicable to migrated users, with a different support mechanism.
+
+**Decided 2026-08-27 (Than, in the Sprint 1 close-out meeting): every user must be able to log
+in both ways** — local password and SAML, not one or the other. That rules out options 2 and 3
+above (both leave most users SAML-only) and makes a request-scoped exemption (option 1)
+unnecessarily narrow for what's actually a blanket requirement. The mechanism the module already
+ships for exactly this is simpler: `allow.default_login_roles` — currently only
+`administrator` — controls who is exempt from the SAML-liveness check entirely, so they can
+authenticate either way without `checkAuthStatus()` ever forcing a logout. Adding the
+`authenticated` role (held by every logged-in user) to that list, in
+[`simplesamlphp_auth.settings.yml`](../../drupal/config/sync/simplesamlphp_auth.settings.yml),
+is a **config change, not a code patch** — see PR (link once opened). This is a deliberate,
+site-wide relaxation of the SAML-liveness enforcement for every account, not a narrow carve-out;
+recorded here so the tradeoff is visible, not just the mechanism.
 
 > **Scope correction (2026-08-20, later in the same session).** This note originally also
 > carried Xiaoming's "logout doesn't work" report as a "Case 2", on the strength of watchdog

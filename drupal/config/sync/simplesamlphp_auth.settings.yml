@@ -18,6 +18,7 @@ allow:
   default_login: true
   default_login_roles:
     administrator: administrator
+    authenticated: authenticated
   default_login_users: '1'
 logout_goto_url: null
 user_register_original: admin_only
