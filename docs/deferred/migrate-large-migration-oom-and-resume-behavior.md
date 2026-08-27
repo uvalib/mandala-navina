@@ -4,6 +4,13 @@
 **Raised during:** Session 2026-07-17/18 (dev-0's first live `migrate:import` — `d7_images_shanti_image`, 111,340 rows)
 **Jira:** (add when available)
 **Priority:** High — will recur on every large (100k+ row) migration run outside DDEV until the CLI memory limit is raised persistently
+**Status:** SCHEDULED — Yuji, 2026-08-27: land recommendation 1 (persist the CLI `memory_limit`
+in the image) at the next meeting with Than + Xiaoming, alongside
+[terraform-infrastructure-full-clone-on-every-deploy.md](terraform-infrastructure-full-clone-on-every-deploy.md)
+and [#162](https://github.com/uvalib/mandala-navina/pull/162). The 128M limit has now
+interrupted three separate commands this week (`migrate:import`, `kmassets:index-all`, `cim`
+during the 2026-08-26/27 rebuild) — every one worked around per-invocation, none fixed at the
+image level.
 
 ## Observation
 
