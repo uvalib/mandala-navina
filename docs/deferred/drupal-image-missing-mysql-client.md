@@ -5,7 +5,8 @@
 **Jira:** (add when available)
 **Priority:** Medium — not currently blocking, but has already caused a real incident (a silently empty backup) and cost "three detours" in one session
 
-**Status (2026-08-28): both fixes below implemented and verified locally** on branch
+**Status (2026-08-28): both fixes below implemented, verified locally, and open for review** —
+[PR #167](https://github.com/uvalib/mandala-navina/pull/167) on branch
 `fix/drupal-image-drush-path-and-mysql-client` — deliberately **not merged to `main`**
 (a push there triggers `uva-mandala-drupal-codepipeline`, which would deploy). `docker build`
 of the branch confirms: bare `drush --version` resolves, `which mysql mysqldump` both resolve
