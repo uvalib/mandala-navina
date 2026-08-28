@@ -5,12 +5,16 @@
 **Phase:** [Roadmap](../roadmap.md) Phase 2 setup — the shared theme foundation and
 Images' remaining UI, plus the research groundwork Phase 2's per-site tracks (Texts,
 Sources) and Phase 3 (AV) will need before they fork off.
-**Lead:** Than (workstreams A, B, D — D already his per the prior decision).
-Workstream C splits across owners in parallel, matching ADR 009's Texts/Sources fork:
-Than (Texts audit), Xiaoming (Sources audit), AV audit owner **not yet assigned** — team
-to decide, since pulling AV's audit forward wasn't part of ADR 009's original plan.
-**Mode:** Base theme (A) built first since B depends on it; B, C, and D can then proceed
-in parallel across owners.
+**Lead:** Workstream A (base theme) is a **group/mob-build for now**, matching Sprint 1's
+own "mob-build first, then individuals replicate the pattern" mode. Than leads B and D
+(D already his per the prior decision). Workstream C splits across owners, matching
+ADR 009's Texts/Sources fork: Than (Texts audit), Xiaoming (Sources audit), and the
+**AV audit is also a group effort for now** (2026-08-28) — reflecting that AV's audit
+was pulled forward outside ADR 009's original per-owner sequencing and has no single
+source module to assign to one person (see workstream C1).
+**Mode:** Workstream A built first, as a group, since B depends on it. B (Than) and D
+(Than) proceed once A's skeleton exists. C2/C3 (Xiaoming/Than) can start immediately in
+parallel; C1 (AV, group) likewise.
 **Relates to:** [Sprint 2 planning doc](../planning/sprint-02-planning.md) (full design
 rationale — read this first for the "why," this doc is the "what/when"),
 [D7 Theme/UI Commonalities Audit](../planning/theme-ui-commonalities-audit.md),
@@ -51,7 +55,7 @@ here.
 
 ## Backlog
 
-### Workstream A — D11 base theme
+### Workstream A — D11 base theme (group/mob-build)
 
 | | Task | Depends on | Status |
 |---|---|---|---|
@@ -78,7 +82,7 @@ as out of scope for now per the planning doc, confirm with the team before B1 cl
 
 | | Task | Owner | Status |
 |---|---|---|---|
-| C1 | `docs/planning/av-content-model-audit.md` — start from contrib `kaltura`/`KalturaClient`, custom `mediabase` (`mb_metadata`/`mb_structure` most likely), `transcripts`. No single owner module — expect this to take longer to scope than C2/C3. | **Unassigned** | ☐ |
+| C1 | `docs/planning/av-content-model-audit.md` — start from contrib `kaltura`/`KalturaClient`, custom `mediabase` (`mb_metadata`/`mb_structure` most likely), `transcripts`. No single owner module — expect this to take longer to scope than C2/C3. | **Group** | ☐ |
 | C2 | `docs/planning/sources-content-model-audit.md` — start from `shanti_biblio_modules` and its submodules (bibcite-based, matches Spike 5) | Xiaoming | ☐ |
 | C3 | `docs/planning/texts-content-model-audit.md` — start from `shanti_texts`/`shanti_texts_features`/`shanti_footnotes` | Than | ☐ |
 
