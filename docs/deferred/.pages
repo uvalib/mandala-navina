@@ -87,3 +87,4 @@ nav:
   - "D7 alias preservation covers only shanti_image — the rest needs a decision": d7-alias-preservation-scope-beyond-shanti-image.md
   - "Establish a canonical D7 dev source dump on dev-0": canonical-d7-dev-source-dump.md
   - "terraform-infrastructure clones in full on every deploy": terraform-infrastructure-full-clone-on-every-deploy.md
+  - "kmassets:audit checks master, not the search reader (70-doc gap)": kmassets-audit-checks-master-not-search-reader.md
