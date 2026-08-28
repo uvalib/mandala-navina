@@ -23,11 +23,14 @@ auth) — all 8 acceptance criteria closed. Two things Sprint 1 deliberately lef
    legacy D7 sites (Images, AV, Sources, Texts, Mandala Home) were never six separate
    designs — they were thin Bootstrap sub-themes of one base theme, `shanti_sarvaka`,
    sharing identical regions, page templates, JS/CSS, and preprocessing. **D11's
-   architecture goes further than D7's ever did: one Drupal instance, one theme,
-   period** — not one shared base with room for per-asset-type sub-themes or
-   sub-identities. Where the language below or in the source audit says "site," read it
-   as "legacy D7 precedent for this content type," not as a claim that D11 will have
-   separate site identities to theme individually.
+   architecture goes further than D7's ever did: one Drupal instance, one theme is the
+   default and starting point** — not one shared base designed around per-asset-type
+   sub-themes or sub-identities. Where the language below or in the source audit says
+   "site," read it as "legacy D7 precedent for this content type," not as a claim that
+   D11 has separate site identities to theme individually. (The team has reserved,
+   without committing to, the option of a subtheme for AV specifically if its
+   complexity genuinely warrants one once real requirements are known — see workstream
+   A's note below. That is not a plan to build one now.)
 2. **Images' own UI is incomplete.** A 2026-08-19 review
    ([deferred note](../deferred/images-missing-interactive-viewing-surfaces.md)) found
    three interactive surfaces live on D7 that D11 never got: an OpenSeadragon deep-zoom
@@ -173,8 +176,15 @@ later:
 - The README documents this as the intended pattern (pointing at workstream B's Images
   formatters as the concrete precedent) so the next implementer doesn't reach for a new
   region or a sub-theme by default.
-- Do **not** create any subtheme, ever, for AV/Texts/Sources/Home — one theme serves the
-  whole site.
+- **Do not create any subtheme now** for AV/Texts/Sources/Home — one theme serves the
+  whole site, and component-level extension (above) is the default approach.
+  **Reserved, not ruled out (2026-08-28):** if AV — the most complex content type,
+  per ADR 009's own "hardest, last" framing, with a Kaltura player that has real
+  layout/behavior needs beyond a simple field formatter — turns out to need a subtheme
+  once its content-model audit (workstream C) and actual migration are underway, that
+  option stays open. Nothing in this sprint forecloses it; it would be a deliberate,
+  revisited decision made against real requirements at that point, not a default to
+  reach for now or to design around preemptively.
 
 ---
 
