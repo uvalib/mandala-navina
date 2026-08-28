@@ -19,12 +19,15 @@ Sprint 1 fully migrated Images (content, KMaps, Solr sync, Group collections, II
 auth) — all 8 acceptance criteria closed. Two things Sprint 1 deliberately left out:
 
 1. **No theme exists yet.** D11 still runs stock Olivero. But the 2026-08-25
-   [theme/UI commonalities audit](theme-ui-commonalities-audit.md) found that all five
-   D7 sites in scope (Images, AV, Sources, Texts, Mandala Home) were never six separate
-   designs — they're thin Bootstrap sub-themes of one base theme, `shanti_sarvaka`,
-   sharing identical regions, page templates, JS/CSS, and preprocessing. The audit's
-   conclusion: port the shared base now, before Phase 2 forks into per-site tracks, so
-   each site owner extends a foundation instead of reinventing it.
+   [theme/UI commonalities audit](theme-ui-commonalities-audit.md) found that the five
+   legacy D7 sites (Images, AV, Sources, Texts, Mandala Home) were never six separate
+   designs — they were thin Bootstrap sub-themes of one base theme, `shanti_sarvaka`,
+   sharing identical regions, page templates, JS/CSS, and preprocessing. **D11's
+   architecture goes further than D7's ever did: one Drupal instance, one theme,
+   period** — not one shared base with room for per-asset-type sub-themes or
+   sub-identities. Where the language below or in the source audit says "site," read it
+   as "legacy D7 precedent for this content type," not as a claim that D11 will have
+   separate site identities to theme individually.
 2. **Images' own UI is incomplete.** A 2026-08-19 review
    ([deferred note](../deferred/images-missing-interactive-viewing-surfaces.md)) found
    three interactive surfaces live on D7 that D11 never got: an OpenSeadragon deep-zoom
@@ -45,9 +48,19 @@ authenticated-fetch half.
 - AV's audit is **included** even though ADR 009 calls AV "hardest, last" for full
   migration — only the audit is pulled forward; Kaltura integration, the AV player, and
   transcripts stay deferred.
-- The base theme must carry **placeholders** for AV/Texts/Sources' future site-specific
-  chrome (so later sprints don't have to restructure it) but **no site-specific theming**
-  is built now — each site gets themed only after its own migration lands.
+- **Corrected 2026-08-28, later the same session:** the theme carries **no dedicated
+  regions or page-level slots per asset type.** An earlier draft of this plan proposed
+  three reserved regions (`av_player`, `texts_reader_chrome`, `sources_citation_display`)
+  — that modeled AV/Texts/Sources as future mini-sites-within-the-site, each eventually
+  getting its own visual identity, which contradicts the one-site/one-theme decision.
+  Corrected direction: AV/Texts/Sources' eventual asset-specific UI (a Kaltura player, a
+  citation display, reader chrome) will be **components** — field formatters / view-mode
+  variations rendered inside the **same shared regions and `page.html.twig`** every
+  other content type uses, exactly the way Images' own IIIF viewer (workstream B) is
+  built. No placeholder regions are needed for this — Drupal's per-bundle field-display
+  configuration already provides the extension point, for free, once the shared theme
+  exists. Nothing is built for AV/Texts/Sources now; this just corrects what "leaving
+  room for later" concretely means.
 - **Model the base theme directly off the real D7 theme files**, not just this audit
   doc's summary of them. Confirmed present at
   `~/Sandbox/Mandala/Site/mandala-drupal/docroot/sites/all/themes/`: `shanti_sarvaka`
@@ -113,11 +126,10 @@ lift-and-shift:
    (`header`, `banner`, `content`, `search_flyout`, `search_results`, `sidebar_first`,
    `sidebar_second`, `highlighted`, `help`, `page_top`, `page_bottom`, `footer`,
    `admin_footer`), sourced from the real D7 `.info` files at the path above (confirmed
-   identical across all sub-themes). Add three **new, empty** regions as the placeholder
-   mechanism: `av_player`, `texts_reader_chrome`, `sources_citation_display`.
-2. `templates/html.html.twig`, `page.html.twig` (renders all 12+3 regions, including
-   `{{ page.av_player }}` etc. as inert no-ops), `node.html.twig`, `page--403.html.twig`,
-   `page--404.html.twig`, `breadcrumb.html.twig` — twig ports of the real
+   identical across all sub-themes). **No additional regions are added** — one theme,
+   one region set, for every content type and future asset type alike.
+2. `templates/html.html.twig`, `page.html.twig` (renders all 12 regions), `node.html.twig`,
+   `page--403.html.twig`, `page--404.html.twig`, `breadcrumb.html.twig` — twig ports of the real
    `page.tpl.php`/`html.tpl.php`/`node.tpl.php`/etc. at the D7 theme path, updated to
    Bootstrap 5 grid/utility classes where the base theme's markup uses them (structure
    and skeleton ported faithfully; twig syntax + BS5 classes are the D11-idiomatic
@@ -139,19 +151,30 @@ lift-and-shift:
    `default` from `olivero` to `shanti_sarvaka`. This is the one system-wide change — do
    it deliberately last, not first.
 
-### Concrete placeholder mechanism for future AV/Texts/Sources theming
+### The real extension mechanism for future AV/Texts/Sources UI — components, not regions
 
-- The 3 empty regions above exist in the info file and render in `page.html.twig` but
-  have no blocks placed and no CSS written — literally "declared but inert."
-- Per-bundle node template suggestions: Drupal's default suggestion hierarchy already
-  gives `node--shanti_image.html.twig` for free once a base `node.html.twig` exists. Add
-  a short comment at the top of `templates/node.html.twig` naming the expected future
-  overrides (`node--shanti_av.html.twig`, `node--shanti_texts.html.twig`,
-  `node--shanti_sources.html.twig`) as documented-but-not-yet-created filenames.
-- The README enumerates both mechanisms plus a pointer to workstream C's audits as the
-  trigger for filling each one in later.
-- Do **not** create any subtheme now — the placeholder lives entirely inside this one
-  shared base theme.
+One site, one theme: AV/Texts/Sources get no dedicated regions, no sub-themes, and no
+distinct page skin, now or later. Their eventual asset-specific UI is exactly the same
+kind of thing Images' own interactive UI (workstream B) is: a **component** — a field
+formatter or view-mode variation — that renders inside the shared `content` region like
+everything else. The extension point that actually matters is Drupal's ordinary
+per-bundle field-display configuration, which needs no theme-level scaffolding to exist
+later:
+- A future AV video field gets its own field formatter (parallel to how
+  `IiifDeepZoomFormatter` will work for Images), rendering in the same `content` region.
+- A future Sources citation display is a formatter/view-mode on the Sources bundle, same
+  region.
+- A future Texts reader chrome (tabs, footnotes) is likewise scoped to the Texts
+  bundle's own field display, same region.
+- Per-bundle node template suggestions remain available if a future bundle needs
+  different *internal* field ordering (`node--shanti_av.html.twig` etc., available for
+  free from Drupal's suggestion hierarchy once `node.html.twig` exists) — but this is an
+  ordinary Drupal mechanism, not a placeholder anyone needs to build now.
+- The README documents this as the intended pattern (pointing at workstream B's Images
+  formatters as the concrete precedent) so the next implementer doesn't reach for a new
+  region or a sub-theme by default.
+- Do **not** create any subtheme, ever, for AV/Texts/Sources/Home — one theme serves the
+  whole site.
 
 ---
 
@@ -307,7 +330,7 @@ existing as cross-reference examples for D1.
 | Item | In / Out |
 |---|---|
 | D11 base theme (`shanti_sarvaka`, Bootstrap 5) | **In** |
-| AV/Texts/Sources theme placeholders (regions + template-suggestion convention) | **In** |
+| AV/Texts/Sources future-UI convention documented (component-level, no new regions) | **In** |
 | AV/Texts/Sources site-specific theming | **Out** — after each site's own migration |
 | Images: OpenSeadragon deep-zoom viewer | **In** |
 | Images: AJAX sibling carousel | **In** |
@@ -328,8 +351,8 @@ confirms this scope, and implementation of workstreams A–D begins from there.
 ## Verification (once implementation starts)
 
 - **Theme (A):** load the site in a browser, confirm `shanti_sarvaka` is active
-  (`drush config:get system.theme default`), all 12 D7 regions + 3 placeholder regions
-  render without PHP/twig errors, no visual regression against a side-by-side of the
+  (`drush config:get system.theme default`), all 12 D7 regions render without PHP/twig
+  errors — no regions beyond the original 12 — no visual regression against a side-by-side of the
   live D7 site's page skeleton. Confirm Bootstrap 5 is genuinely in use (BS5 JS/CSS
   loaded, `data-bs-*` attributes on interactive components, not `data-*`) and that the
   `bootstrap-select` replacement works without jQuery.
