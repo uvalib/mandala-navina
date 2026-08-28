@@ -132,18 +132,71 @@ Sprint 1 closes when, against a copy of the production Images DB on **dev-0**:
 > [`spike-solr-demo-enabled-with-anonymous-route.md`](../deferred/spike-solr-demo-enabled-with-anonymous-route.md)).
 > Revisit before production rollout, not before Sprint 1 closes.
 
-- [ ] `shanti_image` + the three paragraph types + the scheme vocabulary install via CMI config.
-- [ ] A full migration run completes; per-type counts reconcile against the
+- [x] `shanti_image` + the three paragraph types + the scheme vocabulary install via CMI config.
+      **Verified 2026-08-27** on the from-scratch dev-0 rebuild: `drush config:status` reports
+      "No differences between DB and sync directory"; `node.type.shanti_image`,
+      `taxonomy.vocabulary.external_classification_scheme`, and all 3 paragraph types
+      (`image_agent`, `image_descriptions`, `external_classification`) confirmed present. See
+      [2026-08-27 session log](../session-logs/2026-08-27-migration-complete-and-verified.md).
+- [x] A full migration run completes; per-type counts reconcile against the
       [data profile](../planning/images-content-model-audit.md#data-profile-production-dump-2026-06-11)
       (111,340 images; orphan satellites excluded; shared-agent fan-out as expected).
+      **Verified 2026-08-27** — `EXPECT_FILE=scripts/baselines/dev-0.txt
+      ./scripts/migration-cycle.sh validate` run as a real gate against dev-0's from-scratch
+      rebuild: all 12 counts PASS, `integrity:legacy_nid_dupes = 0`. See
+      [2026-08-27 session log](../session-logs/2026-08-27-migration-complete-and-verified.md).
 - [ ] **Transliteration diacritic normalization is preserved** (NFC/NFD fidelity) through
       Migrate API → MySQL collation → Solr — verified, not assumed.
-- [ ] The 4 KMaps fields round-trip (save → reload → correct display) and term IDs match the live KMaps API.
+      **Partially verified 2026-08-27:** the Migrate API → MySQL leg is confirmed —100/100
+      randomly-sampled diacritic-bearing `shanti_image` titles (Tibetan/Sanskrit diacritics,
+      Wylie, French) byte-exact (`===`) match their D7 source via the `migrate` DB connection.
+      **The Solr leg is not yet checked** — `kmassets:index-all` was still running at the time
+      of this check (step 9 of the
+      [rebuild runbook](../planning/dev0-from-scratch-rebuild-runbook.md)); revisit once the
+      reindex + `kmassets:audit --check-stale` complete.
+- [x] The 4 KMaps fields round-trip (save → reload → correct display) and term IDs match the live KMaps API.
+      **Verified 2026-08-27** against the `kmterms` Solr shadow index (ADR 006) rather than the
+      raw external KMaps API directly (which rate-limited after a few probe requests — treated
+      as a live production service not to be hammered). 6/6 sampled `field_kmap_terms` term IDs
+      resolved to real, current `kmterms` docs; 5/6 headers matched the shadow index's `header`
+      field exactly (Wylie), and the 1 stored as Tibetan Uchen script matched the shadow index's
+      `name_tibt` field exactly — same term, different field, not a mismatch.
 - [ ] Content indexes and is **retrievable via existing query patterns** (not search quality).
-- [ ] Images render through the existing IIIF server with `i3fid` linkage intact.
-- [ ] **Security:** a restricted Images item is non-retrievable by an unauthorized user
+      **In progress 2026-08-27** — `kmassets:index-all shanti_image` running on dev-0 (step 9 of
+      the [rebuild runbook](../planning/dev0-from-scratch-rebuild-runbook.md)), after
+      `kmassets:delete "uid:images-11-*"` cleared the pre-rebuild index (stale nids from the old
+      environment). Tick once the reindex + `kmassets:audit --check-stale` (expect 0 missing/0
+      stale/0 orphaned) complete.
+- [x] Images render through the existing IIIF server with `i3fid` linkage intact.
+      **Verified 2026-08-27** — 3 randomly-sampled `shanti_image` nodes' `field_iiif_id` values
+      all returned valid IIIF Image API 2.0 `info.json` (level2 profile, tiles present) from
+      `https://iiif.lib.virginia.edu/mandala/{id}/info.json`. Side note, not blocking: stored
+      `field_iiif_width`/`field_iiif_height` don't always match the server's reported
+      dimensions (one sample had them swapped) — not chased further, flag for whoever next
+      touches IIIF display sizing.
+- [x] **Security:** a restricted Images item is non-retrievable by an unauthorized user
       via the D11 search path, and retrievable by an authorized one.
-- [ ] The test-run → validate → rollback cycle is documented and repeatable.
+      **Proven twice, independently.** (1) Via the actual D11 search path: 1b.3
+      (2026-08-13/18/20) proved this at the Solr-proxy/token level with a positive *and*
+      negative discriminator (uid 600 sees their own private doc, not someone else's; anonymous
+      sees neither). (2) Via direct node/collection access, **2026-08-27**: full URL smoke-test
+      matrix (public/private/bogus × anonymous/authenticated) on the from-scratch dev-0 rebuild
+      — see [2026-08-27 session log](../session-logs/2026-08-27-migration-complete-and-verified.md)
+      and [the local-login fix, PR #165](https://github.com/uvalib/mandala-navina/pull/165)
+      (the authenticated leg initially failed for an unrelated reason — a `checkAuthStatus()`
+      session bug affecting local logins for every migrated user, now fixed).
+- [x] The test-run → validate → rollback cycle is documented and repeatable.
+      **Documented in `scripts/migration-cycle.sh`** (`rollback`/`import`/`validate`/`cycle`
+      phases). **Repeatability proven in the local DDEV rehearsal** (1a.9: 111,343/111,343,
+      0 failures). dev-0 deliberately substitutes a from-scratch rebuild for
+      rollback→reimport — not an unaddressed gap, a considered exception: `migrate:rollback`
+      doesn't reset `AUTO_INCREMENT`, so a real rollback→reimport on dev-0 would silently
+      re-key every nid, breaking the ADR 016/017 nid-determinism the from-scratch approach
+      exists to guarantee (see the
+      [rebuild runbook](../planning/dev0-from-scratch-rebuild-runbook.md#why-from-scratch-rather-than-rollback--import)).
+      The `validate` phase of the cycle **was** re-proven directly against dev-0 today (see
+      above), so this criterion rests on the DDEV proof for rollback specifically plus a live
+      dev-0 proof for validate — not a full untouched rollback rehearsal on dev-0's real data.
 
 **On close:** kick off the [Jira issue-tracking integration](../deferred/jira-issue-tracking-integration.md)
 (sequenced to start after this sprint; backfill open deferred notes as tickets).
