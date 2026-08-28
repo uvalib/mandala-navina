@@ -161,16 +161,16 @@ Sprint 1 closes when, against a copy of the production Images DB on **dev-0**:
       resolved to real, current `kmterms` docs; 5/6 headers matched the shadow index's `header`
       field exactly (Wylie), and the 1 stored as Tibetan Uchen script matched the shadow index's
       `name_tibt` field exactly — same term, different field, not a mismatch.
-- [ ] Content indexes and is **retrievable via existing query patterns** (not search quality).
+- [x] Content indexes and is **retrievable via existing query patterns** (not search quality).
       **Reindex completed 2026-08-27** (`kmassets:index-all shanti_image`: 111,339 indexed, 0
       errors) and **`kmassets:audit --check-stale` reports clean (0 missing/0 stale/0 orphaned)
-      2026-08-28** — but that audit only validates the **write master**
-      (`mandala-solr-master-staging-private`), not the **search reader**
-      (`mandala-index-dev`) real queries actually use. Checking the reader directly found a
-      **real 70-document gap** (111,339 on master vs 111,269 on the reader) — confirmed with 4
-      hand-verified nids present on the master, absent on the reader. **Not yet closeable** —
-      see [kmassets-audit-checks-master-not-search-reader.md](../deferred/kmassets-audit-checks-master-not-search-reader.md)
-      (flagged for Yuji) for root-cause status before this criterion can tick.
+      2026-08-28**. **Team decision 2026-08-28 (meeting: Than, Yuji, Xiaoming):** a separate
+      70-document master/reader sync gap was found the same day — that audit only validates the
+      **write master**, not the **search reader** real queries use, and checking the reader
+      directly found docs present on the master missing from it. Ruled a distinct
+      infrastructure-replication issue, not a migration/content defect, and explicitly **does
+      not block this criterion or Sprint 1** — tracked separately for Yuji in
+      [kmassets-audit-checks-master-not-search-reader.md](../deferred/kmassets-audit-checks-master-not-search-reader.md).
 - [x] Images render through the existing IIIF server with `i3fid` linkage intact.
       **Verified 2026-08-27** — 3 randomly-sampled `shanti_image` nodes' `field_iiif_id` values
       all returned valid IIIF Image API 2.0 `info.json` (level2 profile, tiles present) from
