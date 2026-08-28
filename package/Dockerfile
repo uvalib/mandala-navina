@@ -4,10 +4,19 @@
 FROM public.ecr.aws/docker/library/drupal:11-php8.3-apache
 
 # Install additional PHP extensions and utilities
+#
+# default-mysql-client: drush's sql:* commands (sql:dump, sql:cli, ...) wrap
+# the system mysqldump/mysql binaries. Without a client present, drush's
+# validate hook logs a warning and returns false but drush still EXITS 0 — a
+# redirected `drush sql:dump` silently produces an empty file, discoverable
+# only at restore time (hit live 2026-08-25, see
+# docs/deferred/drupal-image-missing-mysql-client.md). Client tooling only;
+# does not touch ADR 012's DB-engine collation concern.
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libfreetype6-dev \
+    default-mysql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # bcmath is required by simplesamlphp/xml-common (pulled in by simplesamlphp_auth);
@@ -36,6 +45,15 @@ WORKDIR /opt/drupal/app/drupal
 
 # Install dependencies (composer.json is in the drupal/ subdir)
 RUN composer install --no-dev --prefer-dist --optimize-autoloader
+
+# Put composer-installed binaries on PATH — drush above all, but also whatever
+# else composer.json's "require" pulls in a bin/ for (today just drush/drush's
+# `drush` and `drush.php`; keeps working automatically as dependencies change,
+# rather than hand-symlinking one name at a time). Without this, `drush` only
+# works via the full vendor/bin/drush path (as deploy_backend.yml and the
+# migration runbooks already do) — a bare `drush` in an interactive shell
+# reports "command not found" even though it's installed and working.
+ENV PATH="/opt/drupal/app/drupal/vendor/bin:${PATH}"
 
 # Mount SimpleSAMLphp under the same host as Drupal (ProxyPass /simplesaml/ → sp:80).
 # Installed to sites-available, NOT sites-enabled: the stock image ships
