@@ -2,3 +2,4 @@ title: Sprints
 nav:
   - Overview: README.md
   - "◐ Sprint 1: Mandala Images implementation": sprint-01-images-implementation.md
+  - "◐ Sprint 2: Theme, Images UI, endpoint access": sprint-02-theme-images-ui-and-endpoint-access.md

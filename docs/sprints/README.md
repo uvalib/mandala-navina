@@ -12,6 +12,7 @@ executes against rather than restating them.
 | # | Title | Phase | Status |
 |---|-------|-------|--------|
 | [Sprint 1](sprint-01-images-implementation.md) | Mandala Images implementation (pilot) | Roadmap Phase 1 | ◐ In progress |
+| [Sprint 2](sprint-02-theme-images-ui-and-endpoint-access.md) | D11 base theme, Images interactive UI, other-asset-type groundwork | Roadmap Phase 2 setup | ◐ Not started |
 
 **Status key:** ● Done · ◐ In progress · ○ Planned
 
