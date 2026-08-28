@@ -145,15 +145,15 @@ Sprint 1 closes when, against a copy of the production Images DB on **dev-0**:
       ./scripts/migration-cycle.sh validate` run as a real gate against dev-0's from-scratch
       rebuild: all 12 counts PASS, `integrity:legacy_nid_dupes = 0`. See
       [2026-08-27 session log](../session-logs/2026-08-27-migration-complete-and-verified.md).
-- [ ] **Transliteration diacritic normalization is preserved** (NFC/NFD fidelity) through
+- [x] **Transliteration diacritic normalization is preserved** (NFC/NFD fidelity) through
       Migrate API → MySQL collation → Solr — verified, not assumed.
-      **Partially verified 2026-08-27:** the Migrate API → MySQL leg is confirmed —100/100
-      randomly-sampled diacritic-bearing `shanti_image` titles (Tibetan/Sanskrit diacritics,
-      Wylie, French) byte-exact (`===`) match their D7 source via the `migrate` DB connection.
-      **The Solr leg is not yet checked** — `kmassets:index-all` was still running at the time
-      of this check (step 9 of the
-      [rebuild runbook](../planning/dev0-from-scratch-rebuild-runbook.md)); revisit once the
-      reindex + `kmassets:audit --check-stale` complete.
+      **Fully verified 2026-08-28.** DB leg (2026-08-27): 100/100 randomly-sampled
+      diacritic-bearing `shanti_image` titles byte-exact (`===`) vs D7 source via the `migrate`
+      DB connection. Solr leg (2026-08-28, once the reindex below actually completed): of 2,044
+      diacritic/Tibetan-script-bearing published titles, 2,040 matched byte-exact against the
+      Solr **search reader** (`mandala-index-dev`); the remaining 4 (all pure Tibetan-script
+      titles, nids 95394–95397) simply don't exist in that index yet — see the retrievability
+      gap below, same root cause, not a separate defect.
 - [x] The 4 KMaps fields round-trip (save → reload → correct display) and term IDs match the live KMaps API.
       **Verified 2026-08-27** against the `kmterms` Solr shadow index (ADR 006) rather than the
       raw external KMaps API directly (which rate-limited after a few probe requests — treated
@@ -162,11 +162,15 @@ Sprint 1 closes when, against a copy of the production Images DB on **dev-0**:
       field exactly (Wylie), and the 1 stored as Tibetan Uchen script matched the shadow index's
       `name_tibt` field exactly — same term, different field, not a mismatch.
 - [ ] Content indexes and is **retrievable via existing query patterns** (not search quality).
-      **In progress 2026-08-27** — `kmassets:index-all shanti_image` running on dev-0 (step 9 of
-      the [rebuild runbook](../planning/dev0-from-scratch-rebuild-runbook.md)), after
-      `kmassets:delete "uid:images-11-*"` cleared the pre-rebuild index (stale nids from the old
-      environment). Tick once the reindex + `kmassets:audit --check-stale` (expect 0 missing/0
-      stale/0 orphaned) complete.
+      **Reindex completed 2026-08-27** (`kmassets:index-all shanti_image`: 111,339 indexed, 0
+      errors) and **`kmassets:audit --check-stale` reports clean (0 missing/0 stale/0 orphaned)
+      2026-08-28** — but that audit only validates the **write master**
+      (`mandala-solr-master-staging-private`), not the **search reader**
+      (`mandala-index-dev`) real queries actually use. Checking the reader directly found a
+      **real 70-document gap** (111,339 on master vs 111,269 on the reader) — confirmed with 4
+      hand-verified nids present on the master, absent on the reader. **Not yet closeable** —
+      see [kmassets-audit-checks-master-not-search-reader.md](../deferred/kmassets-audit-checks-master-not-search-reader.md)
+      (flagged for Yuji) for root-cause status before this criterion can tick.
 - [x] Images render through the existing IIIF server with `i3fid` linkage intact.
       **Verified 2026-08-27** — 3 randomly-sampled `shanti_image` nodes' `field_iiif_id` values
       all returned valid IIIF Image API 2.0 `info.json` (level2 profile, tiles present) from
