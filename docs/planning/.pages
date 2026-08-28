@@ -16,3 +16,4 @@ nav:
   - "Collections: Inheritance Decision Brief (RESOLVED → ADR 011)": collections-inheritance-decision-brief.md
   - "Solr Index Inventory (dev/staging/production)": solr-index-inventory.md
   - "dev-0 from-scratch rebuild runbook": dev0-from-scratch-rebuild-runbook.md
+  - "Sprint 2 Planning: Theme, Images UI, Endpoint Access": sprint-02-planning.md
