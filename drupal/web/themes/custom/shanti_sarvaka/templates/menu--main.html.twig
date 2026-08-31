@@ -1,0 +1,15 @@
+{#
+/**
+ * @file
+ * Theme override for the main menu specifically.
+ *
+ * bootstrap5 provides its own menu--main.html.twig (a Bootstrap dropdown
+ * treatment), which is more specific than -- and so wins over -- our own
+ * generic menu.html.twig override for this one menu. Reuse the same
+ * drilldown macro rather than duplicate it.
+ *
+ * @see menu.html.twig
+ */
+#}
+{% import 'themes/custom/shanti_sarvaka/templates/menu.html.twig' as menus %}
+{{ menus.menu_links(items, attributes, 0) }}

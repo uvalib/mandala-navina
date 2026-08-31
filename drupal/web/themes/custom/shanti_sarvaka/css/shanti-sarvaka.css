@@ -99,18 +99,31 @@
   display: inline-block !important;
 }
 
-/* Drilldown submenu (menu.html.twig): each parent item's submenu is an
-   absolutely-positioned panel the same size as its parent list, slid
-   into view from the right on click -- approximates the D7
-   multilevelpushmenu plugin's push/slide interaction without porting the
-   plugin itself. */
-#sarvaka-header .shanti-drilldown {
+/* .menu-main is reused here for D7's real li/a/h2/h3 typography (ported
+   verbatim in shanti-main.css) but NOT its own absolute-positioning role
+   -- the Offcanvas wrapper already handles position/size/right/top, so
+   neutralize shanti-main.css's `.menu-main{position:absolute;width:250px;
+   right:0;top:42px}` for this context. */
+#sarvaka-header .menu-main {
   position: relative;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  width: auto;
+  border-top: none;
+  overflow: hidden;
 }
-#sarvaka-header .shanti-drilldown-item--parent > a.shanti-drilldown-toggle {
+#sarvaka-header .menu-main h2,
+#sarvaka-header .menu-main h3 {
+  text-indent: 0;
+  padding: 0 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Drilldown submenu: each parent item's submenu is an absolutely-
+   positioned panel the same size as its parent list, slid into view
+   from the right on click -- approximates the D7 multilevelpushmenu
+   plugin's push/slide interaction without porting the plugin itself. */
+#sarvaka-header .shanti-drilldown-toggle {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -125,25 +138,13 @@
   transform: translateX(100%);
   transition: transform 200ms ease;
   visibility: hidden;
+  z-index: 10;
 }
 #sarvaka-header .shanti-drilldown-submenu.shanti-drilldown-active {
   transform: translateX(0);
   visibility: visible;
 }
-#sarvaka-header .shanti-drilldown-submenu-title {
-  font-weight: 600;
-  text-transform: uppercase;
-  padding: 0.75em 1.75em;
-  border-bottom: 1px solid #ddd;
-}
-#sarvaka-header .shanti-drilldown-back {
-  display: block;
-  padding: 0.75em 1.75em;
-  border-bottom: 1px solid #ddd;
-  color: #555;
-}
 #sarvaka-header .shanti-drilldown-back .icon {
   display: inline-block;
   transform: rotate(180deg);
-  margin-right: 0.5em;
 }

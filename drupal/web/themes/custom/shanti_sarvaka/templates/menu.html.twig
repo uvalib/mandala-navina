@@ -2,10 +2,17 @@
 /**
  * @file
  * Theme override for a menu, used for the hamburger drilldown panel's
- * main/account menu blocks. Ported behavior (not markup) from D7's
- * multilevelpushmenu plugin: leaf items just link to their page; parent
- * items show a right-angle-bracket caret and slide out their submenu on
- * click instead of navigating, via shanti-sarvaka.js.
+ * main/account menu blocks. Behavior matches D7's real multilevelpushmenu
+ * source markup (confirmed against production): leaf items are plain
+ * links; parent items carry both a `<a href="#">` trigger and an `<h2>`
+ * heading for their nested `<ul>` -- D7 let the plugin's own JS toggle
+ * which one shows; here shanti-sarvaka.js does the same toggle directly
+ * via the .shanti-drilldown-submenu wrapper.
+ *
+ * The `.menu-main` class/positioning and the "Main Menu" title item live
+ * on the shared wrapper in page.html.twig, not here -- this template can
+ * render more than once per page (separate main-menu and account-menu
+ * blocks), and D7's single combined list only had one of each.
  *
  * Available variables: see core's menu.html.twig.
  */
@@ -17,23 +24,24 @@
   {% import _self as menus %}
   {% if items %}
     {% if menu_level == 0 %}
-      <ul{{ attributes.addClass('shanti-drilldown', 'shanti-drilldown--level-0') }}>
+      <ul{{ attributes }}>
     {% else %}
-      <ul class="shanti-drilldown shanti-drilldown--level-{{ menu_level }}">
+      <ul>
     {% endif %}
     {% for item in items %}
-      <li{{ item.attributes.addClass(item.below ? 'shanti-drilldown-item--parent' : '') }}>
+      <li{{ item.attributes }}>
         {% if item.below %}
           <a href="#" class="shanti-drilldown-toggle">
-            <span>{{ item.title }}</span>
+            {{ item.title }}
             <span class="icon shanticon-arrow3-right" aria-hidden="true"></span>
           </a>
           <div class="shanti-drilldown-submenu">
-            <a href="#" class="shanti-drilldown-back">
-              <span class="icon shanticon-arrow3-right" aria-hidden="true"></span>
-              <span>{{ 'Back'|t }}</span>
-            </a>
-            <div class="shanti-drilldown-submenu-title">{{ item.title }}</div>
+            <h2>
+              <a href="#" class="shanti-drilldown-back" aria-label="{{ 'Back'|t }}">
+                <span class="icon shanticon-arrow3-right" aria-hidden="true"></span>
+              </a>
+              <em>{{ item.title }}</em>
+            </h2>
             {{ menus.menu_links(item.below, attributes, menu_level + 1) }}
           </div>
         {% else %}

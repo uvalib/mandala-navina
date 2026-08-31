@@ -108,14 +108,30 @@
         </a>
       </h1>
 
+      {#
+        No visible header bar/close button here: production's own
+        drilldown menu doesn't have one either (only the Explore panel
+        does) -- it closes via Bootstrap's own backdrop-click/Escape,
+        both free with Offcanvas. The "Main Menu" title lives inside the
+        list itself (h3/em), matching D7's real
+        `<li><h3><em>Main Menu</em></h3></li>` structure, not a separate
+        wrapper heading.
+
+        `.menu-main` (width/position/border, all from the verbatim
+        ported shanti-main.css) is applied ONCE here at the shared
+        wrapper, not per menu block -- see menu.html.twig's comment for
+        why: two independently-rendered blocks (main menu, account menu)
+        would otherwise both try to absolutely-position themselves.
+      #}
       <div id="sarvaka-header" class="offcanvas offcanvas-end" tabindex="-1" aria-labelledby="sarvaka-header-label">
-        <div class="offcanvas-header">
-          <h2 class="offcanvas-title" id="sarvaka-header-label">{{ 'Main Menu'|t }}</h2>
-          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ 'Close'|t }}"></button>
-        </div>
+        <h2 class="visually-hidden" id="sarvaka-header-label">{{ 'Main Menu'|t }}</h2>
         <div class="offcanvas-body p-0">
-          {# Main + account menu blocks only -- see the comment above. #}
-          {{ page.header }}
+          <div class="menu-main">
+            <ul>
+              <li><h3><em>{{ 'Main Menu'|t }}</em></h3></li>
+            </ul>
+            {{ page.header }}
+          </div>
         </div>
       </div>
     </nav>
