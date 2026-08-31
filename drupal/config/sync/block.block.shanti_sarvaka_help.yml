@@ -1,0 +1,22 @@
+uuid: d70f00ce-a0d6-42ca-a6b5-8b2da48e790d
+langcode: en
+status: true
+dependencies:
+  module:
+    - help
+  theme:
+    - shanti_sarvaka
+_core:
+  default_config_hash: VfPFqqxfkomud5CO8DUijw85QIl9GIxh_nIxLOYESxg
+id: shanti_sarvaka_help
+theme: shanti_sarvaka
+region: help
+weight: 0
+provider: null
+plugin: help_block
+settings:
+  id: help_block
+  label: Help
+  label_display: '0'
+  provider: help
+visibility: {  }

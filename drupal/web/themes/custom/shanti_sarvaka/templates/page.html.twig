@@ -12,15 +12,26 @@
  *   page.highlighted, page.help, page.page_top, page.page_bottom,
  *   page.footer, page.admin_footer.
  *
+ * D11's ThemePreprocess::preprocessPage() does NOT set title, site_name,
+ * logo, breadcrumb, tabs, or action_links as bare variables the way D7's
+ * template_preprocess_page() did -- those only exist in
+ * preprocessMaintenancePage(), used solely for maintenance/install pages
+ * with no blocks available. In normal rendering all of that content comes
+ * from *blocks* placed into regions (Site Branding -> header, Page Title
+ * + Breadcrumb + Local Tasks + Local Actions -> banner, per A7's block
+ * placement), not from template variables. This template relies on
+ * page.header / page.banner for that content rather than reading it
+ * directly, matching D11's idiom instead of D7's.
+ *
  * Site-identity and D7-preprocess-derived variables (default to a safe
- * fallback until Workstream A4 ports the real hook_preprocess_page() logic):
+ * fallback until a later pass ports the real Mandala-brand
+ * hook_preprocess_page() logic):
  * - shanti_site: whether this is the umbrella Mandala brand vs. a
  *   standalone site identity.
  * - mandala_home: URL of the Mandala umbrella home.
  * - banner_class, icon_class: banner styling hooks.
  * - offcanvas_trigger_sb, bsclass_sb1, bsclass_sb2: offcanvas sidebar
  *   toggling classes (wired up with A3's JS behaviors).
- * - default_title, mod_title, prefix_default_title: page-title overrides.
  * - user_menu_links: rendered drilldown user/account menu markup.
  *
  * @see template_preprocess_page()
@@ -41,23 +52,16 @@
           <span class="navbar-toggler-icon"></span>
         </button>
 
-        <a href="{{ shanti_site|default(false) ? mandala_home|default(front_page) : front_page }}"
-           class="navbar-brand{{ shanti_site|default(false) ? ' logo-brand' : '' }}"
-           title="{{ site_name }} {{ 'Homepage'|t }}">
-          {% if shanti_site|default(false) %}
-            <span class="icon shanticon-logo"></span>
-            <span class="mandala">{{ 'Mandala'|t }} <em>{{ 'Collections'|t }}</em></span>
-          {% else %}
-            {% if logo %}<img src="{{ logo }}" class="site-logo" alt="">{% endif %}
-          {% endif %}
-          <span class="site-title">{{ site_name }}</span>
-          {% if site_slogan %}<span class="site-slogan">{{ site_slogan }}</span>{% endif %}
-        </a>
-
+        {#
+          The header region holds Site Branding (logo/name), primary/
+          account menu, and search form blocks -- see A7's block
+          placement. D7 hardcoded a separate Mandala-vs-local-site brand
+          distinction here from bare template variables; that identity
+          logic doesn't carry over to D11 as-is and is deferred to a
+          later brand-specific pass.
+        #}
         <div id="sarvaka-header" class="collapse navbar-collapse">
-          <ul class="nav navbar-nav ms-auto">
-            {{ page.header }}
-          </ul>
+          {{ page.header }}
         </div>
       </div>
     </nav>
@@ -66,34 +70,16 @@
   <main class="main-wrapper container-fluid">
     <article class="main-content" role="main">
 
-      {# Banner region: page title + tabs + banner content (D7's .titlearea) #}
+      {#
+        Banner region: page title, breadcrumb, local tasks/actions, and any
+        admin-placed banner content, all delivered as blocks placed into
+        `banner` (Page Title, Breadcrumb, Local Tasks, Local Actions -- see
+        A7's block placement) rather than as bare template variables.
+        page-title.html.twig carries the D7 icon+h1 markup.
+      #}
       <section class="row" role="banner">
         <div class="titlearea banner {{ banner_class|default('') }}">
-          <header>
-            <h1 class="page-title">
-              {% if icon_class|default(false) %}<span class="icon shanti-icon-{{ icon_class }}"></span>{% endif %}
-              <span class="page-title-text">
-                {% if mod_title|default(false) %}
-                  {{ mod_title }}
-                {% else %}
-                  {{ title }}
-                {% endif %}
-              </span>
-            </h1>
-          </header>
-          {% if breadcrumb %}
-            <nav class="breadwrap">
-              {{ breadcrumb }}
-            </nav>
-          {% endif %}
-          <div class="banner-content">
-            {{ page.banner }}
-          </div>
-          {% if tabs %}
-            <div class="banner-tabs">
-              {{ tabs }}
-            </div>
-          {% endif %}
+          {{ page.banner }}
         </div>
       </section>
 
@@ -109,9 +95,6 @@
           <div id="main-content" class="tab-content container-fluid">
             <article class="tab-pane main-col active">
               {% block page_content %}
-                {% if action_links %}
-                  <ul class="action-links">{{ action_links }}</ul>
-                {% endif %}
                 {{ page.content }}
               {% endblock %}
             </article>
