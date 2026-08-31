@@ -109,6 +109,14 @@
    (title+back row height, item row height, caret size). */
 #sarvaka-header .menu-main {
   position: relative;
+  /* shanti-main.css's ported rule also sets top:42px/right:0 (meant for
+     its own position:absolute) -- switching to position:relative above
+     made that `top` actually take effect as a real offset, producing a
+     42px gap above the whole panel. Neutralize explicitly. */
+  top: 0;
+  right: auto;
+  left: auto;
+  bottom: auto;
   width: auto;
   overflow: hidden;
   border-top: none;
@@ -190,13 +198,17 @@
   visibility: visible;
 }
 #sarvaka-header .shanti-drilldown-back {
-  font-size: 0.85em;
+  /* rem, not em -- em compounded against the parent h2's own large
+     italic font-size (ported from shanti-main.css), making this render
+     much bigger than intended. */
+  font-size: 0.7rem;
   text-transform: uppercase;
   color: #4a5fc1;
   font-style: normal;
+  letter-spacing: 0.05em;
 }
 #sarvaka-header .shanti-drilldown-back .icon {
   display: inline-block;
   transform: rotate(180deg);
-  font-size: 0.9em;
+  font-size: 1em;
 }
