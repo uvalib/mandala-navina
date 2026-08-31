@@ -78,4 +78,4 @@ Commit `5c1e2ba`.
 
 ## Next-session starting point
 
-Get the group's visual sign-off on PR #169 against the live DDEV instance, then merge. After that, the open items above (per-asset-type accent color, faceted search wiring, multi-level menu verification) are natural next tickets — none of them block the merge itself.
+Get the group's visual sign-off on PR #169 against the live DDEV instance, then merge. **Once merged, install the theme on the dev site** (dev-0) so the group can review it against real migrated content rather than DDEV's local data — that's the immediate next step, ahead of the open items below. After that, the open items above (per-asset-type accent color, faceted search wiring, multi-level menu verification) are natural next tickets — none of them block the merge itself.
