@@ -1,0 +1,46 @@
+{#
+/**
+ * @file
+ * Theme override for a menu, used for the hamburger drilldown panel's
+ * main/account menu blocks. Ported behavior (not markup) from D7's
+ * multilevelpushmenu plugin: leaf items just link to their page; parent
+ * items show a right-angle-bracket caret and slide out their submenu on
+ * click instead of navigating, via shanti-sarvaka.js.
+ *
+ * Available variables: see core's menu.html.twig.
+ */
+#}
+{% import _self as menus %}
+{{ menus.menu_links(items, attributes, 0) }}
+
+{% macro menu_links(items, attributes, menu_level) %}
+  {% import _self as menus %}
+  {% if items %}
+    {% if menu_level == 0 %}
+      <ul{{ attributes.addClass('shanti-drilldown', 'shanti-drilldown--level-0') }}>
+    {% else %}
+      <ul class="shanti-drilldown shanti-drilldown--level-{{ menu_level }}">
+    {% endif %}
+    {% for item in items %}
+      <li{{ item.attributes.addClass(item.below ? 'shanti-drilldown-item--parent' : '') }}>
+        {% if item.below %}
+          <a href="#" class="shanti-drilldown-toggle">
+            <span>{{ item.title }}</span>
+            <span class="icon shanticon-arrow3-right" aria-hidden="true"></span>
+          </a>
+          <div class="shanti-drilldown-submenu">
+            <a href="#" class="shanti-drilldown-back">
+              <span class="icon shanticon-arrow3-right" aria-hidden="true"></span>
+              <span>{{ 'Back'|t }}</span>
+            </a>
+            <div class="shanti-drilldown-submenu-title">{{ item.title }}</div>
+            {{ menus.menu_links(item.below, attributes, menu_level + 1) }}
+          </div>
+        {% else %}
+          {{ link(item.title, item.url) }}
+        {% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endmacro %}

@@ -73,21 +73,29 @@
   <div class="site-banner">
     <nav class="navbar navbar-default">
       {#
-        D7 hides the standalone Explore icon on desktop (>= 768px --
-        `.menu-explore{display:none}` in shanti-main.css) and instead
-        puts an "EXPLORE" trigger *inside* the hamburger's drilldown
-        panel, which was powered by the multilevelpushmenu jQuery plugin:
-        a compact (~266x461px per the group, sized to content, not full
-        viewport height) panel docked to the right edge, not a full-width
-        strip. That plugin was never ported (see A3), so this uses
-        Bootstrap 5's native Offcanvas instead -- same right-docked/
-        compact intent, no jQuery dependency, consistent with the rest of
-        the BS5 modernization. Multi-level drill-down within the panel
-        (nested submenus) isn't reproduced yet; this is a first pass at
-        the right container/sizing/triggers, not full parity with the D7
-        plugin's interaction model.
+        Corrected per the group: the Explore trigger is NOT hidden on
+        desktop and is NOT part of the hamburger's drilldown -- it's its
+        own persistent block ("Shanti Explore Menu Block", placed in the
+        Top Bar Header region in D7) sitting next to the hamburger,
+        icon+"Explore" text, always visible. D11 has no literal
+        equivalent block yet, so it's static markup here, same as the
+        hamburger icon itself.
+
+        The hamburger's own panel is the real drilldown menu (D7's
+        multilevelpushmenu plugin, never ported -- see A3 -- rebuilt here
+        with Bootstrap 5's native Offcanvas: same right-docked/compact
+        intent, no jQuery). It shows "Main Menu" plus the main/account
+        menu blocks only -- Site Branding and Search Form were also in
+        the "header" region but are deliberately disabled for now rather
+        than shown here (branding's already in the navbar-header above;
+        search has no decided home yet, possibly search_flyout later,
+        not built). menu--main.html.twig carries the caret/slide-out
+        drilldown for any parent items.
       #}
       <nav class="navbar-buttons">
+        <span class="menu-explore" role="button">
+          <a href="#" data-explore-toggle="explore-panel"><span class="icon shanticon-directions"></span> {{ 'Explore'|t }}</a>
+        </span>
         <span class="menu-icon menu-toggle" role="button" aria-label="{{ 'Main Menu'|t }}">
           <a href="#" data-bs-toggle="offcanvas" data-bs-target="#sarvaka-header" aria-controls="sarvaka-header"><span class="visually-hidden">{{ 'Main Menu'|t }}</span><span class="icon shanticon-menu"></span></a>
         </span>
@@ -102,16 +110,11 @@
 
       <div id="sarvaka-header" class="offcanvas offcanvas-end" tabindex="-1" aria-labelledby="sarvaka-header-label">
         <div class="offcanvas-header">
-          <h2 class="offcanvas-title visually-hidden" id="sarvaka-header-label">{{ 'Main Menu'|t }}</h2>
+          <h2 class="offcanvas-title" id="sarvaka-header-label">{{ 'Main Menu'|t }}</h2>
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ 'Close'|t }}"></button>
         </div>
         <div class="offcanvas-body p-0">
-          <ul class="nav flex-column">
-            <li class="nav-item explore">
-              <a class="nav-link" href="#" data-explore-toggle="explore-panel"><span class="icon shanticon-directions"></span> {{ 'Explore'|t }}</a>
-            </li>
-          </ul>
-          {# Site Branding, primary/account menu, and search form blocks -- see A7's block placement. #}
+          {# Main + account menu blocks only -- see the comment above. #}
           {{ page.header }}
         </div>
       </div>
