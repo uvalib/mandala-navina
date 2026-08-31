@@ -1,0 +1,52 @@
+{#
+/**
+ * @file
+ * Theme override to display a node, ported from the D7 shanti_sarvaka
+ * node.tpl.php on top of bootstrap5's default node.html.twig structure.
+ *
+ * D7's override added only two things over Drupal core's own node
+ * template: an "id=node-{nid}" anchor and a "clearfix" class -- everything
+ * else (title/submitted/content markup) matches the base theme's default,
+ * so this override is intentionally thin.
+ *
+ * @see template_preprocess_node()
+ * @see bootstrap5/templates/content/node.html.twig
+ */
+#}
+{%
+  set classes = [
+    'node',
+    'node--type-' ~ node.bundle|clean_class,
+    node.isPromoted() ? 'node--promoted',
+    node.isSticky() ? 'node--sticky',
+    not node.isPublished() ? 'node--unpublished',
+    view_mode ? 'node--view-mode-' ~ view_mode|clean_class,
+    'clearfix',
+  ]
+%}
+{{ attach_library('bootstrap5/node') }}
+<article id="node-{{ node.id }}"{{ attributes.addClass(classes) }}>
+
+  {{ title_prefix }}
+  {% if label and not page %}
+    <h2{{ title_attributes }}>
+      <a href="{{ url }}" rel="bookmark">{{ label }}</a>
+    </h2>
+  {% endif %}
+  {{ title_suffix }}
+
+  {% if display_submitted %}
+    <footer class="node__meta">
+      {{ author_picture }}
+      <div{{ author_attributes.addClass('node__submitted') }}>
+        {% trans %}Submitted by {{ author_name }} on {{ date }}{% endtrans %}
+        {{ metadata }}
+      </div>
+    </footer>
+  {% endif %}
+
+  <div{{ content_attributes.addClass('node__content') }}>
+    {{ content }}
+  </div>
+
+</article>

@@ -1,0 +1,169 @@
+{#
+/**
+ * @file
+ * Theme override to display a single page, ported from the D7
+ * shanti_sarvaka page.tpl.php.
+ *
+ * The doctype, html, head and body tags live in html.html.twig.
+ *
+ * Regions (verbatim from D7, no additions):
+ * - page.header, page.banner, page.content, page.search_flyout,
+ *   page.search_results, page.sidebar_first, page.sidebar_second,
+ *   page.highlighted, page.help, page.page_top, page.page_bottom,
+ *   page.footer, page.admin_footer.
+ *
+ * Site-identity and D7-preprocess-derived variables (default to a safe
+ * fallback until Workstream A4 ports the real hook_preprocess_page() logic):
+ * - shanti_site: whether this is the umbrella Mandala brand vs. a
+ *   standalone site identity.
+ * - mandala_home: URL of the Mandala umbrella home.
+ * - banner_class, icon_class: banner styling hooks.
+ * - offcanvas_trigger_sb, bsclass_sb1, bsclass_sb2: offcanvas sidebar
+ *   toggling classes (wired up with A3's JS behaviors).
+ * - default_title, mod_title, prefix_default_title: page-title overrides.
+ * - user_menu_links: rendered drilldown user/account menu markup.
+ *
+ * @see template_preprocess_page()
+ * @see html.html.twig
+ */
+#}
+<div class="wrap-all">
+  <span class="visually-hidden">
+    <a href="#main-content">{{ 'Skip to main content'|t }}</a>
+    <a href="#search-flyout">{{ 'Skip to search'|t }}</a>
+  </span>
+
+  {# Header region: top bar + brand + primary nav (D7's .site-banner) #}
+  <div class="site-banner">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <button class="navbar-toggler menu-toggle" type="button" aria-label="{{ 'Main Menu'|t }}">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <a href="{{ shanti_site|default(false) ? mandala_home|default(front_page) : front_page }}"
+           class="navbar-brand{{ shanti_site|default(false) ? ' logo-brand' : '' }}"
+           title="{{ site_name }} {{ 'Homepage'|t }}">
+          {% if shanti_site|default(false) %}
+            <span class="icon shanticon-logo"></span>
+            <span class="mandala">{{ 'Mandala'|t }} <em>{{ 'Collections'|t }}</em></span>
+          {% else %}
+            {% if logo %}<img src="{{ logo }}" class="site-logo" alt="">{% endif %}
+          {% endif %}
+          <span class="site-title">{{ site_name }}</span>
+          {% if site_slogan %}<span class="site-slogan">{{ site_slogan }}</span>{% endif %}
+        </a>
+
+        <div id="sarvaka-header" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav ms-auto">
+            {{ page.header }}
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <main class="main-wrapper container-fluid">
+    <article class="main-content" role="main">
+
+      {# Banner region: page title + tabs + banner content (D7's .titlearea) #}
+      <section class="row" role="banner">
+        <div class="titlearea banner {{ banner_class|default('') }}">
+          <header>
+            <h1 class="page-title">
+              {% if icon_class|default(false) %}<span class="icon shanti-icon-{{ icon_class }}"></span>{% endif %}
+              <span class="page-title-text">
+                {% if mod_title|default(false) %}
+                  {{ mod_title }}
+                {% else %}
+                  {{ title }}
+                {% endif %}
+              </span>
+            </h1>
+          </header>
+          {% if breadcrumb %}
+            <nav class="breadwrap">
+              {{ breadcrumb }}
+            </nav>
+          {% endif %}
+          <div class="banner-content">
+            {{ page.banner }}
+          </div>
+          {% if tabs %}
+            <div class="banner-tabs">
+              {{ tabs }}
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+      {# Content row: sidebar-first / content / sidebar-second #}
+      <section class="row{{ offcanvas_trigger_sb|default('') }}" role="main">
+        {% if page.sidebar_first %}
+          <div id="sidebar-first" class="col-12 col-lg-3 region sidebar sidebar-first {{ bsclass_sb1|default('') }}">
+            {{ page.sidebar_first }}
+          </div>
+        {% endif %}
+
+        <div class="content-section {{ (page.sidebar_first or page.sidebar_second) ? 'col-12 col-lg-9' : 'col-12' }}">
+          <div id="main-content" class="tab-content container-fluid">
+            <article class="tab-pane main-col active">
+              {% block page_content %}
+                {% if action_links %}
+                  <ul class="action-links">{{ action_links }}</ul>
+                {% endif %}
+                {{ page.content }}
+              {% endblock %}
+            </article>
+          </div>
+        </div>
+
+        {% if page.sidebar_second %}
+          <div id="sidebar-second" class="col-12 col-lg-3 region sidebar sidebar-second {{ bsclass_sb2|default('') }}">
+            {{ page.sidebar_second }}
+          </div>
+        {% endif %}
+      </section>
+
+      <a href="#" class="back-to-top" role="button" aria-label="{{ 'Back to Top of Page'|t }}"><span class="icon fa"></span></a>
+    </article>
+
+    {% if page.search_flyout %}
+      <div id="search-flyout" class="region extruder offcanvas offcanvas-end" role="search" tabindex="-1">
+        {{ page.search_flyout }}
+      </div>
+      {% if page.search_results %}
+        <section id="faceted-search-results" class="faceted-search-results" aria-label="{{ 'Search Results'|t }}">
+          {{ page.search_results }}
+        </section>
+      {% endif %}
+    {% endif %}
+  </main>
+
+  {% if page.highlighted %}
+    <div class="region region-highlighted">{{ page.highlighted }}</div>
+  {% endif %}
+
+  {% if page.help %}
+    <div class="region region-help">{{ page.help }}</div>
+  {% endif %}
+
+  {% if user_menu_links|default(false) %}
+    <section id="menu" class="menu-main" style="display:none;">
+      <nav id="menu-drill">{{ user_menu_links }}</nav>
+    </section>
+  {% endif %}
+</div>
+
+<footer class="footer mt-auto">
+  <div class="container-fluid">
+    {{ page.footer }}
+    <p class="rights">&copy; {{ "now"|date("Y") }} {{ 'All Rights Reserved'|t }}</p>
+  </div>
+</footer>
+
+{% if page.admin_footer %}
+  <div id="admin-footer">
+    {{ page.admin_footer }}
+  </div>
+{% endif %}

@@ -1,0 +1,47 @@
+{#
+/**
+ * @file
+ * Theme override for the basic html structure of a single Drupal page,
+ * ported from the D7 shanti_sarvaka html.tpl.php.
+ *
+ * Variables:
+ * - logged_in: A flag indicating if user is logged in.
+ * - root_path: The root path of the current page (e.g., node, admin, user).
+ * - node_type: The content type for the current node, if the page is a node.
+ * - head_title: List of text elements that make up the head_title variable.
+ * - page_top: Initial rendered markup. Printed before 'page'.
+ * - page: The rendered page markup.
+ * - page_bottom: Closing rendered markup. Printed after 'page'.
+ * - placeholder_token: The token for generating head, css, js placeholders.
+ *
+ * @see template_preprocess_html()
+ */
+#}
+{%
+  set body_classes = [
+    logged_in ? 'user-logged-in',
+    not root_path ? 'path-frontpage' : 'path-' ~ root_path|clean_class,
+    node_type ? 'page-node-type-' ~ node_type|clean_class,
+    db_offline ? 'db-offline',
+  ]
+%}
+<!DOCTYPE html>
+<html{{ html_attributes }}>
+  <head>
+    <head-placeholder token="{{ placeholder_token }}">
+    <title>{{ head_title|safe_join(' | ') }}</title>
+    <link href="https://fonts.googleapis.com/css?family=EB+Garamond:400,400i,500|Open+Sans:400,400i,600&amp;subset=cyrillic,cyrillic-ext,greek,greek-ext,latin-ext" rel="stylesheet">
+    <css-placeholder token="{{ placeholder_token }}">
+    <js-placeholder token="{{ placeholder_token }}">
+  </head>
+  <body{{ attributes.addClass(body_classes) }}>
+    <div class="visually-hidden-focusable skip-link p-3 container">
+      <a href="#main-content" class="p-2">{{ 'Skip to main content'|t }}</a>
+      <a href="#search-flyout" class="p-2">{{ 'Skip to search'|t }}</a>
+    </div>
+    {{ page_top }}
+    {{ page }}
+    <js-bottom-placeholder token="{{ placeholder_token }}">
+    {{ page_bottom }}
+  </body>
+</html>

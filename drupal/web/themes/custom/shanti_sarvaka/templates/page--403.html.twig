@@ -1,0 +1,27 @@
+{#
+/**
+ * @file
+ * 403 Access Denied page, ported from the D7 shanti_sarvaka
+ * page--403.tpl.php. Reuses page.html.twig's chrome (header/banner/
+ * footer) and overrides only the main content block.
+ */
+#}
+{% extends "page.html.twig" %}
+{% block page_content %}
+  <div class="panel-icon-brand text-center">
+    <span class="icon shanticon-logo-shanti"></span>
+    <div>
+      <h2>{{ "Uh oh, What's this..."|t }}</h2>
+      <h3>{{ '403 Access Denied'|t }}</h3>
+      <h4>{{ "Sorry, you aren't authenticated to view this page."|t }}</h4>
+      <h5>{{ 'Return to the Previous page, or Try logging in.'|t }}</h5>
+      <div>
+        <a class="btn btn-primary" href="javascript:window.history.go(-2);" title="{{ 'Mandala Homepage link'|t }}">{{ 'Previous Page'|t }}</a>
+        <a class="btn btn-primary" href="/saml_login" title="{{ 'Mandala Login'|t }}">{{ 'Login Now'|t }}</a>
+      </div>
+      <p>
+        {{ 'Sometimes, a UVA Netbadge login offers automatic viewing permissions, or if you are a group member of this collection with access.'|t }}
+      </p>
+    </div>
+  </div>
+{% endblock %}
