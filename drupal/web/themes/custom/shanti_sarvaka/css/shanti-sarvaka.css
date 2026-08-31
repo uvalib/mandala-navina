@@ -71,6 +71,32 @@
    D7's exact original class split further. */
 .navbar-default .menu-explore {
   display: inline-block !important;
+  position: absolute;
+  top: 0;
+  right: 42px;
+  height: 42px;
+}
+
+/* Explore panel: shanti-main.css declares it `.container` (Bootstrap-
+   width-capped, centered) plus `.collections` (background:#222;
+   width:100%) -- the two fight, and BS5's own button reset also beats
+   the ported `.collections .close{position:absolute}` rule (computed
+   styles showed position:relative, display:block, full-width -- cascade
+   order issue, not investigated further). Force both explicitly instead
+   of chasing the exact conflict. */
+#explore-panel.collections {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  position: relative;
+}
+#explore-panel .close {
+  position: absolute !important;
+  top: 1rem;
+  right: 1.5rem;
+  width: auto !important;
+  display: inline-block !important;
 }
 
 /* Drilldown submenu (menu.html.twig): each parent item's submenu is an
