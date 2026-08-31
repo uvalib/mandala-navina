@@ -85,7 +85,11 @@ global-styling:
   css:
     theme:
       css/shanti-sarvaka.css: {}
+  js:
+    js/shanti-sarvaka.js: {}
   dependencies:
+    - core/drupal
+    - core/once
     - shanti_sarvaka/wookmark
     - shanti_sarvaka/jssor-slider
     - shanti_sarvaka/hammer

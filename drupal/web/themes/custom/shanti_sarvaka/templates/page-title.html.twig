@@ -9,15 +9,19 @@
  * - title_prefix / title_suffix: additional module-supplied output.
  * - title: The page title.
  *
- * icon_class (banner icon hook) is not wired yet -- deferred to the
- * Mandala-brand preprocess pass along with banner_class/shanti_site.
+ * Confirmed against real production (including 404 pages, not just the
+ * front page): every page title is prefixed "Explore" and uses a
+ * shanticon-photos icon. Both are hardcoded as the current site-wide
+ * default since Images is the only real asset type live yet -- the icon
+ * (and possibly the prefix text) should become per-asset-type once a
+ * second one lands, same tension flagged in page.html.twig/A8.
  */
 #}
 {{ title_prefix }}
 {% if title|render|striptags|trim %}
   <h1 class="page-title"{{ title_attributes }}>
-    {% if icon_class|default(false) %}<span class="icon shanti-icon-{{ icon_class }}"></span>{% endif %}
-    <span class="page-title-text">{{ title }}</span>
+    <span class="icon shanticon-photos"></span>
+    <span class="page-title-text"><span class="pt-prefix">{{ 'Explore'|t }}</span> {{ title }}</span>
   </h1>
 {% endif %}
 {{ title_suffix }}

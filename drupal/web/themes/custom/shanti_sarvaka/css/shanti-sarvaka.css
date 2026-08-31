@@ -1,8 +1,46 @@
 /**
  * shanti_sarvaka base theme styles.
  *
- * D7's shanti-main.css / shanti-search.css / shanti-search-faceted.css /
- * utils.css port is tracked separately -- this file is a placeholder hook
- * for the vendor libraries declared in shanti_sarvaka.libraries.yml until
- * that styling pass lands.
+ * D7's shanti-main.css and siblings are ported verbatim (see A8) -- this
+ * file holds BS5-specific fixes and D11-side overrides that don't belong
+ * in a verbatim port of D7 source.
  */
+
+/* BS5 dropped the `.navbar-header{float:left}` rule D7's markup relied
+   on for left/right split layout. Recreate the same effect with flex
+   instead of reintroducing a removed Bootstrap class. */
+.site-banner .navbar.navbar-default {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.site-banner .navbar.navbar-default .navbar-header {
+  margin-right: auto;
+}
+
+/* Images-site gold accent, confirmed from live production CSS
+   (#ad8a28), not shanti-main.css's own default (violet, #4d59ca).
+   Images is the only real asset type live yet -- revisit once a second
+   one needs its own accent color; see page.html.twig/page-title.html.twig
+   comments for the same open question. */
+.titlearea {
+  background-color: #ad8a28 !important;
+}
+
+/* shanti-main.css's .pt-prefix visibility rule keys off D7's `.front`
+   body class; D11 uses `.path-frontpage` instead (no `.front` class
+   exists at all). Bridge the gap here rather than edit the verbatim
+   ported file. */
+.path-frontpage .pt-prefix {
+  display: inline;
+}
+
+/* Explore panel + mobile drilldown nav: hidden by default, shown by
+   toggling .show-topmenu directly on the panel (shanti-sarvaka.js),
+   matching the class D7's shanti-main.js used for the same toggle. */
+#explore-panel {
+  display: none;
+}
+#explore-panel.show-topmenu {
+  display: block;
+}
