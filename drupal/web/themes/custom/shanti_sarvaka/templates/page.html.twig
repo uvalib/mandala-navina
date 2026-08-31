@@ -72,18 +72,24 @@
   #}
   <div class="site-banner">
     <nav class="navbar navbar-default">
+      {#
+        D7 hides the standalone Explore icon on desktop (>= 768px --
+        `.menu-explore{display:none}` in shanti-main.css) and instead
+        puts an "EXPLORE" trigger *inside* the hamburger's drilldown
+        panel, which was powered by the multilevelpushmenu jQuery plugin:
+        a compact (~266x461px per the group, sized to content, not full
+        viewport height) panel docked to the right edge, not a full-width
+        strip. That plugin was never ported (see A3), so this uses
+        Bootstrap 5's native Offcanvas instead -- same right-docked/
+        compact intent, no jQuery dependency, consistent with the rest of
+        the BS5 modernization. Multi-level drill-down within the panel
+        (nested submenus) isn't reproduced yet; this is a first pass at
+        the right container/sizing/triggers, not full parity with the D7
+        plugin's interaction model.
+      #}
       <nav class="navbar-buttons">
-        {#
-          Hamburger toggles #sarvaka-header via Bootstrap 5's own native
-          collapse JS (already loaded, no custom JS needed). The Explore
-          toggle opens #explore-panel, a custom full-width panel with no
-          BS5 equivalent -- handled by shanti-sarvaka.js instead.
-        #}
         <span class="menu-icon menu-toggle" role="button" aria-label="{{ 'Main Menu'|t }}">
-          <a href="#" data-bs-toggle="collapse" data-bs-target="#sarvaka-header" aria-expanded="false" aria-controls="sarvaka-header"><span class="visually-hidden">{{ 'Main Menu'|t }}</span><span class="icon shanticon-menu"></span></a>
-        </span>
-        <span class="menu-explore menu-exploretoggle" role="button" aria-label="{{ 'Explore Collections'|t }}">
-          <a href="#" data-explore-toggle="explore-panel"><span>{{ 'Explore'|t }}</span><span class="icon shanticon-directions"></span></a>
+          <a href="#" data-bs-toggle="offcanvas" data-bs-target="#sarvaka-header" aria-controls="sarvaka-header"><span class="visually-hidden">{{ 'Main Menu'|t }}</span><span class="icon shanticon-menu"></span></a>
         </span>
       </nav>
 
@@ -94,9 +100,20 @@
         </a>
       </h1>
 
-      {# Site Branding, primary/account menu, and search form blocks -- see A7's block placement. #}
-      <div id="sarvaka-header" class="collapse navbar-collapse navtop">
-        {{ page.header }}
+      <div id="sarvaka-header" class="offcanvas offcanvas-end" tabindex="-1" aria-labelledby="sarvaka-header-label">
+        <div class="offcanvas-header">
+          <h2 class="offcanvas-title visually-hidden" id="sarvaka-header-label">{{ 'Main Menu'|t }}</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ 'Close'|t }}"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+          <ul class="nav flex-column">
+            <li class="nav-item explore">
+              <a class="nav-link" href="#" data-explore-toggle="explore-panel"><span class="icon shanticon-directions"></span> {{ 'Explore'|t }}</a>
+            </li>
+          </ul>
+          {# Site Branding, primary/account menu, and search form blocks -- see A7's block placement. #}
+          {{ page.header }}
+        </div>
       </div>
     </nav>
 

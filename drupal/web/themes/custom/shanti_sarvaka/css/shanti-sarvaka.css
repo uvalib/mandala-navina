@@ -44,3 +44,30 @@
 #explore-panel.show-topmenu {
   display: block;
 }
+
+/* Hamburger drilldown panel: compact and docked to the top-right, not
+   BS5 Offcanvas's own full-viewport-height default -- matches the
+   group's spec (~266x461px, sized to content) for what was D7's
+   multilevelpushmenu widget. */
+#sarvaka-header.offcanvas-end {
+  top: 60px; /* below .titlearea's 60px header bar */
+  bottom: auto;
+  width: 266px;
+  max-height: 461px;
+  height: auto;
+  border-left: 1px solid #ddd;
+  box-shadow: 0 1px 4px hsla(0, 0%, 60%, 0.4);
+}
+#sarvaka-header .offcanvas-body {
+  overflow-y: auto;
+}
+#sarvaka-header .nav-item.explore .nav-link {
+  border-top: 1px solid #ddd;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #300;
+}
+#sarvaka-header .nav-item.explore .nav-link:hover {
+  background-color: #444;
+  color: #f0f0f0;
+}
