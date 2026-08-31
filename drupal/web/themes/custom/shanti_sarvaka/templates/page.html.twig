@@ -44,23 +44,42 @@
     <a href="#search-flyout">{{ 'Skip to search'|t }}</a>
   </span>
 
-  {# Header region: top bar + brand + primary nav (D7's .site-banner) #}
-  <div class="site-banner">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <div class="container-fluid">
-        <button class="navbar-toggler menu-toggle" type="button" aria-label="{{ 'Main Menu'|t }}">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+  {#
+    Header region: top bar + brand + primary nav (D7's .site-banner).
 
-        {#
-          The header region holds Site Branding (logo/name), primary/
-          account menu, and search form blocks -- see A7's block
-          placement. D7 hardcoded a separate Mandala-vs-local-site brand
-          distinction here from bare template variables; that identity
-          logic doesn't carry over to D11 as-is and is deferred to a
-          later brand-specific pass.
-        #}
-        <div id="sarvaka-header" class="collapse navbar-collapse">
+    The "MANDALA" wordmark is a real site-wide constant now (D11 is one
+    site per ADR 005, not D7's five separate site installs), so it's
+    fixed markup rather than a conditional. What's NOT decided: D7 showed
+    a second segment after it (Images/AV/Sources/...) selected per D7
+    *site*; in D11 that would have to be selected per *asset type/route*
+    instead (ties into ADR 016's asset-type-namespaced URLs), which is a
+    real routing decision, not a theme-markup one -- left out here rather
+    than guessed. The "EXPLORE" toggle + hamburger menu are structural
+    only; D7's own explore_menu module wasn't even active on production
+    when checked, and the drilldown menu behind the hamburger needs A3's
+    menu JS wired up, not done yet.
+  #}
+  <div class="site-banner">
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <nav class="navbar-buttons">
+          <span class="menu-icon menu-toggle" role="button" aria-label="{{ 'Main Menu'|t }}">
+            <a href="#"><span class="visually-hidden">{{ 'Main Menu'|t }}</span><span class="icon shanticon-menu"></span></a>
+          </span>
+          <span class="menu-explore menu-exploretoggle" role="button" aria-label="{{ 'Explore Collections'|t }}">
+            <a href="#"><span>{{ 'Explore'|t }}</span><span class="icon shanticon-directions"></span></a>
+          </span>
+        </nav>
+
+        <h1 class="navbar-header">
+          <a href="{{ front_page }}" class="logo-brand navbar-brand">
+            <span class="icon shanticon-logo"></span>
+            <span class="mandala">{{ 'Mandala'|t }}</span>
+          </a>
+        </h1>
+
+        {# Site Branding, primary/account menu, and search form blocks -- see A7's block placement. #}
+        <div id="sarvaka-header" class="collapse navbar-collapse navtop">
           {{ page.header }}
         </div>
       </div>

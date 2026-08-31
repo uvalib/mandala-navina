@@ -64,6 +64,23 @@ shanti-select:
     component:
       css/vendor/tom-select/tom-select.bootstrap5.min.css: {}
 
+# The real D7 visual identity: icon font + hand-authored site CSS, ported
+# verbatim (selectors are shanti_sarvaka's own custom classes, not
+# Bootstrap-version-dependent, so they carry over regardless of the BS3->
+# BS5 upgrade). Load order matters -- icon font first, then shanti-main's
+# base rules, then the more specific overrides.
+shanti-visual-identity:
+  css:
+    theme:
+      fonts/shanticon/css/style.css: {}
+      css/shanti-main.css: {}
+      css/shanti-search.css: {}
+      css/shanti-search-faceted.css: {}
+      css/utils.css: {}
+      css/shanti-collections-view.css: {}
+      css/shanti-iframe.css: {}
+      css/bootstrap.vertical-tabs.min.css: {}
+
 global-styling:
   css:
     theme:
@@ -74,3 +91,4 @@ global-styling:
     - shanti_sarvaka/hammer
     - shanti_sarvaka/mcustomscrollbar
     - shanti_sarvaka/shanti-select
+    - shanti_sarvaka/shanti-visual-identity
