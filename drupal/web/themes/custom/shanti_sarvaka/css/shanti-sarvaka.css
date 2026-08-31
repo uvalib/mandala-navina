@@ -53,13 +53,13 @@
   top: 60px; /* below .titlearea's 60px header bar */
   bottom: auto;
   width: 266px;
-  max-height: 461px;
-  height: auto;
+  height: auto; /* hug content -- no scrolling, per the group */
+  max-height: calc(100vh - 60px);
   border-left: 1px solid #ddd;
   box-shadow: 0 1px 4px hsla(0, 0%, 60%, 0.4);
 }
 #sarvaka-header .offcanvas-body {
-  overflow-y: auto;
+  overflow-y: visible;
 }
 
 /* shanti-main.css hides `.menu-explore` at >=768px (a rule for D7's
@@ -99,24 +99,63 @@
   display: inline-block !important;
 }
 
-/* .menu-main is reused here for D7's real li/a/h2/h3 typography (ported
-   verbatim in shanti-main.css) but NOT its own absolute-positioning role
-   -- the Offcanvas wrapper already handles position/size/right/top, so
-   neutralize shanti-main.css's `.menu-main{position:absolute;width:250px;
-   right:0;top:42px}` for this context. */
+/* .menu-main reuses D7's class name but NOT shanti-main.css's own rules
+   for it: those were sized for the old multilevelpushmenu plugin's very
+   different DOM (4em-tall rows, 2em icons, 250px absolute-positioned
+   panel) and read as oversized/misaligned/padded wrong once applied
+   here. Rather than patch around that ported sizing, this section
+   overrides it wholesale with compact dimensions matched directly
+   against a group-supplied screenshot of the real production drilldown
+   (title+back row height, item row height, caret size). */
 #sarvaka-header .menu-main {
   position: relative;
   width: auto;
-  border-top: none;
   overflow: hidden;
+  border-top: none;
+  border-left: 4px solid #ad8a28; /* thin brand accent, matches the screenshot */
 }
-#sarvaka-header .menu-main h2,
-#sarvaka-header .menu-main h3 {
+#sarvaka-header .menu-main h3,
+#sarvaka-header .menu-main h2 {
+  height: auto;
+  line-height: normal;
+  margin: 0;
+  padding: 0.9rem 1.25rem;
+  border-top: none;
+  border-bottom: 1px solid #ddd;
   text-indent: 0;
-  padding: 0 1rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+#sarvaka-header .menu-main h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#sarvaka-header .menu-main ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+#sarvaka-header .menu-main li {
+  height: auto;
+  background: none;
+  border-top: none;
+  border-bottom: 1px solid #eee;
+}
+#sarvaka-header .menu-main li a {
+  display: block;
+  height: auto;
+  line-height: normal;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9em;
+  background: none;
+}
+#sarvaka-header .menu-main li .icon {
+  font-size: 1em;
+  line-height: normal;
+  height: auto;
+  margin: 0 0 0 0.5rem;
 }
 
 /* Drilldown submenu: each parent item's submenu is an absolutely-
@@ -132,19 +171,32 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  min-height: 100%;
-  background: #fff;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  background-color: #fff !important;
+  opacity: 1;
+  isolation: isolate;
   transform: translateX(100%);
   transition: transform 200ms ease;
   visibility: hidden;
-  z-index: 10;
+  z-index: 999;
+}
+#sarvaka-header .shanti-drilldown-submenu * {
+  background-color: #fff;
 }
 #sarvaka-header .shanti-drilldown-submenu.shanti-drilldown-active {
   transform: translateX(0);
   visibility: visible;
 }
+#sarvaka-header .shanti-drilldown-back {
+  font-size: 0.85em;
+  text-transform: uppercase;
+  color: #4a5fc1;
+  font-style: normal;
+}
 #sarvaka-header .shanti-drilldown-back .icon {
   display: inline-block;
   transform: rotate(180deg);
+  font-size: 0.9em;
 }

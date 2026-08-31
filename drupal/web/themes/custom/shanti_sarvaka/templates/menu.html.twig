@@ -37,10 +37,11 @@
           </a>
           <div class="shanti-drilldown-submenu">
             <h2>
-              <a href="#" class="shanti-drilldown-back" aria-label="{{ 'Back'|t }}">
-                <span class="icon shanticon-arrow3-right" aria-hidden="true"></span>
-              </a>
               <em>{{ item.title }}</em>
+              <a href="#" class="shanti-drilldown-back">
+                <span class="icon shanticon-arrow3-right" aria-hidden="true"></span>
+                {{ 'Back'|t }}
+              </a>
             </h2>
             {{ menus.menu_links(item.below, attributes, menu_level + 1) }}
           </div>
