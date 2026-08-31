@@ -157,7 +157,20 @@
   line-height: normal;
   padding: 0.75rem 1.25rem;
   font-size: 0.9em;
+  color: #300;
   background: none;
+}
+/* We never set our own :hover rule before, so on hover the browser used
+   shanti-main.css's ported `.menu-main li a:hover{color:#f0f0f0}`
+   (near-white, meant to pair with that same ported rule's
+   background-color:#444) while our own higher-specificity `background:
+   none` above was cancelling just the background half of that pair --
+   white text on a white row, invisible. Restore the real production
+   pairing (grey background, white text) explicitly so both properties
+   are owned together and can't separate again. */
+#sarvaka-header .menu-main li a:hover {
+  color: #f0f0f0;
+  background-color: #444;
 }
 #sarvaka-header .menu-main li .icon {
   font-size: 1em;
@@ -201,7 +214,7 @@
   /* rem, not em -- em compounded against the parent h2's own large
      italic font-size (ported from shanti-main.css), making this render
      much bigger than intended. */
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   color: #4a5fc1;
   font-style: normal;
