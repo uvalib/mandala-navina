@@ -1,0 +1,89 @@
+<?php
+
+/**
+ * @file
+ * Preprocess hooks ported from the real D7 shanti_sarvaka/template.php,
+ * scoped to Sprint 2 Workstream A4: breadcrumb, search-result preprocessing,
+ * and the KMaps typeahead template registration.
+ *
+ * Page-level site-identity/banner variables (shanti_site, mandala_home,
+ * banner_class, icon_class, bsclass_sb1/2, offcanvas_trigger_sb,
+ * user_menu_links) that page.html.twig reads with |default() fallbacks are
+ * NOT in this file -- porting template_preprocess_page() is a separate,
+ * larger pass, not part of A4's stated scope.
+ *
+ * D7's facetapi_count() badge theme override is also not ported here: the
+ * contrib `facets` module isn't installed in D11 yet, so there is nothing
+ * to theme -- add it back when faceted search actually lands.
+ */
+
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_theme().
+ *
+ * Registers the KMaps typeahead search-flyout widget, ported from the D7
+ * shanti-kmaps-typeahead.tpl.php. Nothing in D11 populates it yet -- the
+ * search_flyout/search_results regions are still empty pending faceted
+ * search work -- but the theme hook itself is a faithful structural port.
+ */
+function shanti_sarvaka_theme(): array {
+  return [
+    'kmaps_typeahead' => [
+      'variables' => [
+        'namespace' => '',
+        'domain' => '',
+      ],
+      'template' => 'kmaps-typeahead',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_breadcrumb().
+ *
+ * Ports shanti_sarvaka_breadcrumb()'s two structural rules: drop a leading
+ * "Home" crumb, and prepend a site "Explore" intro link on any page other
+ * than the front page. The D7 function's third rule -- rewriting crumbs on
+ * `node/{nid}/group` and `group/node/{nid}` admin paths -- is NOT ported:
+ * D11's collection-admin UI (ADR 011) doesn't exist yet, so there is no
+ * real route to verify this against. Revisit once Workstream B/collection
+ * admin UI lands.
+ */
+function shanti_sarvaka_preprocess_breadcrumb(array &$variables): void {
+  if (empty($variables['breadcrumb'])) {
+    return;
+  }
+
+  $breadcrumb = $variables['breadcrumb'];
+
+  $first = reset($breadcrumb);
+  if ($first && (string) $first['text'] === (string) t('Home')) {
+    array_shift($breadcrumb);
+  }
+
+  $is_front = \Drupal::service('path.matcher')->isFrontPage();
+  if (!$is_front) {
+    array_unshift($breadcrumb, [
+      'text' => t('Explore'),
+      'url' => Url::fromRoute('<front>'),
+    ]);
+  }
+
+  $variables['breadcrumb'] = $breadcrumb;
+}
+
+/**
+ * Implements hook_preprocess_search_result().
+ *
+ * Ports shanti_sarvaka_preprocess_search_result()'s structural intent --
+ * attach the search result's parent collection so the template can link
+ * back to it. D7's version called a global `get_collection_ancestor_node()`
+ * helper from a since-retired module; D11 has no equivalent yet (Workstream
+ * B2's sibling-carousel work is building the first real
+ * group_relationship/loadByEntity() collection lookup, not yet landed), so
+ * `coll` is left FALSE until that lands.
+ */
+function shanti_sarvaka_preprocess_search_result(array &$variables): void {
+  $variables['coll'] = FALSE;
+}

@@ -1,0 +1,20 @@
+{#
+/**
+ * @file
+ * KMaps typeahead search-flyout widget, ported from the D7
+ * shanti-kmaps-typeahead.tpl.php.
+ *
+ * Available variables:
+ * - namespace: coordinates related filters and typeahead inputs via JS.
+ * - domain: the user-facing domain name, e.g. Subjects, Places,
+ *   Subcollections, Memorabilia, etc.
+ */
+#}
+<div id="{{ namespace }}-typeahead-wrapper" class="kmap-typeahead-picker">
+  <label class="flyout-search-label">
+    <span>{{ 'Search:'|t }}</span>{{ domain|trim('s', 'right') }} {{ 'Names'|t }}
+  </label>
+  <input id="{{ namespace }}-search-term" class="kmap-search-term form-control form-text" type="text" placeholder="{{ 'Enter Search...'|t }}">
+  <span class="icon shanticon-magnify"></span>
+  <button type="button" class="btn searchreset" aria-label="{{ 'Clear search text'|t }}" style="display: none;"><span class="icon"></span></button>
+</div>
