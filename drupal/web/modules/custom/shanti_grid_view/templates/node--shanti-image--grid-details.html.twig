@@ -18,7 +18,11 @@
 {% set width = node.field_iiif_width.value %}
 {% set height = node.field_iiif_height.value %}
 <article{{ attributes.addClass('shanti-grid-details') }}>
-  <div class="shanti-grid-details-image">
+  {# aspect-ratio lets the browser reserve this box's final size purely from
+     CSS, before the image itself has actually loaded -- so the panel's
+     total height (and the row-push it triggers) is known immediately on
+     insert rather than only after the image's bytes arrive. #}
+  <div class="shanti-grid-details-image"{% if width and height %} style="aspect-ratio: {{ width }} / {{ height }};"{% endif %}>
     {{ content.field_image }}
   </div>
   <div class="shanti-grid-details-meta">

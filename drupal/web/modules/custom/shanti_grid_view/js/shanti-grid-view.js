@@ -42,12 +42,45 @@
           containerId: container.id,
           urlForSize: (filename) => filename,
           thumbnailSize: settings.thumbnailHeight,
+          // Pig's own default (max 6, at >1920px) packs far fewer, much
+          // taller tiles per row than production -- ported verbatim from
+          // production's own Pig construction options (shanti_grid_view.js,
+          // the `new Pig(...)` call activatePopdown() is chained off of) so
+          // row height/tile size matches exactly.
+          getMinAspectRatio: (lastWindowWidth) => {
+            if (lastWindowWidth <= 400) return 2;
+            if (lastWindowWidth <= 640) return 3;
+            if (lastWindowWidth <= 800) return 4;
+            if (lastWindowWidth <= 1100) return 6;
+            if (lastWindowWidth <= 1400) return 8;
+            if (lastWindowWidth <= 1600) return 10;
+            if (lastWindowWidth <= 1800) return 12;
+            if (lastWindowWidth <= 2000) return 14;
+            return 13;
+          },
         });
         pig.enable();
 
         let panel = null;
         let panelRowY = null;
         let panelHeight = 0;
+        let selectedFigure = null;
+
+        // Pig's own row-layout transition is 10ms (settings.transitionSpeed)
+        // -- effectively an instant snap, not a visible animation. Production
+        // explicitly re-sets a real transition on each shifted figure at
+        // shift time (shiftImages() in pig-shanti-ext.js); do the same here
+        // rather than relying on whatever transition pig last computed.
+        const SHIFT_TRANSITION = 'transform 220ms cubic-bezier(0.25, 1, 0.5, 1)';
+
+        // Gap between the clicked row and the panel -- without it the panel
+        // starts flush against the row, and its own top edge (same color as
+        // the arrow) hides the arrow completely. Sized to exactly match the
+        // arrow's own height (`.shanti-grid-view-selected::after`, 10px)
+        // rather than production's 0.8rem, so the arrow's base sits flush
+        // against the panel's top edge instead of leaving a sliver of
+        // visible gap between the two.
+        const PANEL_GAP = 10;
 
         /**
          * Shifts every image below {rowY} by {delta}px (negative to shift
@@ -61,6 +94,7 @@
           pig.images.forEach((image) => {
             if (image.style.translateY > rowY) {
               image.style.translateY += delta;
+              image.style.transition = SHIFT_TRANSITION;
               if (image.existsOnPage) {
                 image._updateStyles();
               }
@@ -69,6 +103,29 @@
           pig.totalHeight += delta;
           // eslint-disable-next-line no-param-reassign
           container.style.height = `${pig.totalHeight}px`;
+        };
+
+        /**
+         * Measures the panel's current rendered height (content + gap above
+         * it) and shifts rows below by however much that grew or shrank
+         * since the last measurement. Called synchronously right after the
+         * panel's content changes -- not after its image has loaded -- so
+         * opening the panel isn't gated on image load time. This is only
+         * correct because the panel content's own image reserves its final
+         * box size via CSS `aspect-ratio` (node--shanti-image--grid-details
+         * .html.twig, computed server-side from the node's known width/
+         * height) rather than the image's actual decoded pixels, so the
+         * panel's total height is already final the instant its HTML is
+         * inserted -- the image bytes can arrive whenever without changing
+         * panel height or triggering another shift.
+         */
+        const measureAndShift = () => {
+          if (!panel) {
+            return;
+          }
+          const newHeight = PANEL_GAP + panel.getBoundingClientRect().height;
+          shiftBelow(panelRowY, newHeight - panelHeight);
+          panelHeight = newHeight;
         };
 
         const closePanel = () => {
@@ -80,6 +137,10 @@
           panel = null;
           panelRowY = null;
           panelHeight = 0;
+          if (selectedFigure) {
+            selectedFigure.classList.remove('shanti-grid-view-selected');
+            selectedFigure = null;
+          }
         };
 
         container.addEventListener('click', (event) => {
@@ -111,15 +172,23 @@
 
           const rowY = progressiveImage.style.translateY;
 
+          if (selectedFigure) {
+            selectedFigure.classList.remove('shanti-grid-view-selected');
+          }
+          figure.classList.add('shanti-grid-view-selected');
+          selectedFigure = figure;
+
           if (!panel) {
             panel = document.createElement('div');
             panel.className = 'shanti-grid-view-panel';
-            panel.style.top = `${rowY + progressiveImage.style.height}px`;
+            panel.style.top = `${rowY + progressiveImage.style.height + PANEL_GAP}px`;
             container.appendChild(panel);
             panelRowY = rowY;
           }
           panel.innerHTML = '<button type="button" class="shanti-grid-view-panel-close" aria-label="Close">×</button><div class="shanti-grid-view-panel-body">' + Drupal.t('Loading…') + '</div>';
           panel.querySelector('.shanti-grid-view-panel-close').addEventListener('click', closePanel);
+          measureAndShift();
+          panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
           fetch(image.infoUrl, { headers: { Accept: 'text/html' } })
             .then((response) => {
@@ -133,19 +202,14 @@
                 return;
               }
               panel.querySelector('.shanti-grid-view-panel-body').innerHTML = html;
-              const newHeight = panel.getBoundingClientRect().height;
-              shiftBelow(panelRowY, newHeight - panelHeight);
-              panelHeight = newHeight;
-              panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              measureAndShift();
             })
             .catch(() => {
               if (!panel) {
                 return;
               }
               panel.querySelector('.shanti-grid-view-panel-body').textContent = Drupal.t('Unable to load details for this image.');
-              const newHeight = panel.getBoundingClientRect().height;
-              shiftBelow(panelRowY, newHeight - panelHeight);
-              panelHeight = newHeight;
+              measureAndShift();
             });
         });
 

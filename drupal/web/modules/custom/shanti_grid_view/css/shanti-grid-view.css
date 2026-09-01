@@ -32,10 +32,19 @@
   cursor: pointer;
 }
 
+/* pig.js injects its own boilerplate `overflow: hidden` on every figure
+ * (pig.js:_injectStyle) -- override it so the selected tile's arrow
+ * (below, `.shanti-grid-view-selected::after`) isn't clipped at the
+ * figure's own bottom edge. Same override production applies for the same
+ * reason (`.pig-figure{overflow:inherit !important}`). */
+.shanti-grid-view-grid figure {
+  overflow: visible !important;
+}
+
 /* Positioned by JS (shanti-grid-view.js) via an inline `top`, directly
  * below the clicked image's row -- see that file for why this is done
  * against pig.js's own per-image translateY model rather than normal
- * document flow. */
+ * document flow. Border/shadow match production's `.ppd-expander`. */
 .shanti-grid-view-panel {
   position: absolute;
   left: 0;
@@ -43,6 +52,33 @@
   z-index: 2;
   background: #1a1a1a;
   color: #f0f0f0;
+  border-bottom: 0.8rem solid #f0f0f0;
+  box-shadow: inset 0 0 70px 20px rgb(0 0 0 / 50%);
+}
+
+/* Up-pointing arrow on the clicked tile, connecting it to the panel
+ * directly below -- matches production's `.ppd-expanded::after`. pig.js
+ * itself already positions figures with `position: absolute`, so this
+ * `::after` places relative to the figure's own box without extra CSS. */
+.shanti-grid-view-selected {
+  /* Painted above the panel (z-index: 2) -- the panel div is appended to
+   * the container after all figures, so without this it paints over the
+   * bottom 10px of every figure, hiding the arrow underneath its own top
+   * edge. */
+  z-index: 3;
+}
+
+.shanti-grid-view-selected::after {
+  content: '';
+  position: absolute;
+  left: 45%;
+  top: 100%;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #1a1a1a;
+  pointer-events: none;
 }
 
 .shanti-grid-view-panel-close {
@@ -70,15 +106,20 @@
   align-items: flex-start;
 }
 
+/* flex-basis (not `auto`) gives the wrapper's inline `aspect-ratio` a width
+ * to compute a height from immediately -- without a resolvable width,
+ * aspect-ratio has nothing to size against until the image itself loads,
+ * which is the same problem it exists to avoid. */
 .shanti-grid-details-image {
-  flex: 0 1 auto;
-  max-width: 100%;
+  flex: 1 1 320px;
+  max-width: 45%;
 }
 
 .shanti-grid-details-image img {
   display: block;
-  max-width: 100%;
-  height: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .shanti-grid-details-meta {
