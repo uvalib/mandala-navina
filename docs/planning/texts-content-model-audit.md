@@ -5,7 +5,8 @@
 **Source:** Legacy D7 custom modules `shanti_texts`, `shanti_texts_features`,
 `shanti_texts_splitter`, `shanti_texts_search_settings`, `shanti_footnotes`
 (`mandala-drupal/docroot/sites/all/modules/custom/{shanti_texts,shanti_texts_features,shanti_texts_splitter,shanti_texts_search_settings,shanti_footnotes}`)
-**Relates to:** [ADR 009](../adr/009-migration-sequencing-strategy.md) (Texts/Sources
+**Relates to:** [Migration Complexity Comparison](av-sources-texts-migration-complexity-comparison.md)
+(scores this site against AV/Sources), [ADR 009](../adr/009-migration-sequencing-strategy.md) (Texts/Sources
 fork after Images), [Sprint 2 backlog](../sprints/sprint-02-theme-images-ui-and-endpoint-access.md#workstream-c--content-model-audits-av-sources-texts--audit-only)
 (C3), [[project-spike-4b-ckeditor-footnotes]] (CLOSED — the footnotes cross-page
 transform is already fully spiked; this audit does not re-investigate it), [Images

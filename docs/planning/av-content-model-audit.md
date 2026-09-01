@@ -5,7 +5,8 @@
 **Source:** Legacy D7 custom modules `mediabase` and `transcripts`, contrib module
 `kaltura`, and the vendored `KalturaClient` PHP SDK
 (`mandala-drupal/docroot/sites/all/{modules/custom/mediabase,modules/custom/transcripts,modules/contrib/kaltura,libraries/KalturaClient}`)
-**Relates to:** [ADR 009](../adr/009-migration-sequencing-strategy.md) (AV is sequenced
+**Relates to:** [Migration Complexity Comparison](av-sources-texts-migration-complexity-comparison.md)
+(scores this site against Sources/Texts), [ADR 009](../adr/009-migration-sequencing-strategy.md) (AV is sequenced
 last, "hardest, last"), [Sprint 2 backlog](../sprints/sprint-02-theme-images-ui-and-endpoint-access.md#workstream-c--content-model-audits-av-sources-texts--audit-only)
 (C1), [Images Content-Model Audit](images-content-model-audit.md) (methodology template
 and point of comparison throughout this doc)

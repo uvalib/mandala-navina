@@ -5,7 +5,8 @@
 **Source:** Legacy D7 contrib module `biblio` (+ `biblio_search_api`, `biblio_zotero`),
 custom module family `shanti_biblio_modules`
 (`mandala-drupal/docroot/sites/all/{modules/contrib/biblio*,modules/custom/shanti_biblio_modules}`)
-**Relates to:** [ADR 009](../adr/009-migration-sequencing-strategy.md) (Sources/Texts
+**Relates to:** [Migration Complexity Comparison](av-sources-texts-migration-complexity-comparison.md)
+(scores this site against AV/Texts), [ADR 009](../adr/009-migration-sequencing-strategy.md) (Sources/Texts
 fork after Images), [Sprint 2 backlog](../sprints/sprint-02-theme-images-ui-and-endpoint-access.md#workstream-c--content-model-audits-av-sources-texts--audit-only)
 (C2), [[project-spike-5-bibcite]] (bibcite type-mapping spike this audit extends),
 [Images Content-Model Audit](images-content-model-audit.md) and
