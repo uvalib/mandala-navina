@@ -1,0 +1,24 @@
+{#
+/**
+ * @file
+ * 404 Not Found page, ported from the D7 shanti_sarvaka
+ * page--404.tpl.php. Reuses page.html.twig's chrome (header/banner/
+ * footer) and overrides only the main content block.
+ */
+#}
+{% extends "page.html.twig" %}
+{% block page_content %}
+  <div class="panel-icon-brand text-center">
+    <span class="icon shanticon-logo-shanti"></span>
+    <div>
+      <h2>{{ 'Ooops, What now...'|t }}</h2>
+      <h3>{{ '404 Not Found'|t }}</h3>
+      <h4>{{ 'Sorry, the requested page could not be found.'|t }}</h4>
+      <p>{{ 'Suggested options include a new Search, return to Previous page, or Homepage.'|t }}</p>
+      <div>
+        <a class="btn btn-primary" href="javascript:window.history.go(-2);" title="{{ 'Mandala Homepage link'|t }}">{{ 'Previous Page'|t }}</a>
+        <a class="btn btn-primary" href="{{ front_page }}" title="{{ 'Mandala Homepage link'|t }}">{{ 'Mandala Home'|t }}</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

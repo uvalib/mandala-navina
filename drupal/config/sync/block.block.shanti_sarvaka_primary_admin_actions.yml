@@ -1,0 +1,20 @@
+uuid: f9765147-0d03-4985-9260-1ad35218eb2b
+langcode: en
+status: true
+dependencies:
+  theme:
+    - shanti_sarvaka
+_core:
+  default_config_hash: Q9_2whdOj1YIomfvsIfopROW4FT_X5pY0DjdOiOaQ5U
+id: shanti_sarvaka_primary_admin_actions
+theme: shanti_sarvaka
+region: banner
+weight: -5
+provider: null
+plugin: local_actions_block
+settings:
+  id: local_actions_block
+  label: 'Primary admin actions'
+  label_display: '0'
+  provider: core
+visibility: {  }

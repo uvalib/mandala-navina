@@ -1,0 +1,430 @@
+/**
+*  temporary until the templates can be updated
+*  class = shanticon-stack (collections icon) overrides template use of shanticon-grid class
+*/
+
+/* .main-wrapper .shanticon-grid:before,*/
+.page-collections .content .shanticon-grid:before,
+.page-collections .shanti-thumbnail .shanticon-grid:before{
+  content: '\e633';
+}
+.page-collections .shanti-thumbnail .icon:before{
+  font-size: 1.18em;
+  position: relative;
+  top:.03rem;
+}
+
+.sidebar-second.collections-sidebar{
+  border:none;
+}
+
+/*.tab-content.container-fluid,*/
+.node-type-collection .tab-pane.main-col > div.region-content{
+  padding-left:0;
+  padding-right:0;
+}
+
+.node-type-team .tab-pane.main-col > div{
+  padding-top:0.5rem;
+}
+
+.collections-content h3{
+  margin-top:0;
+}
+
+/* image hack for IMG wrapper img-thumnail class */
+.field-type-image.img-thumbnail{ /* AV & TEXTS */
+  box-shadow:none;
+  display: inline-block;
+  max-width: auto;
+  height: auto;
+  padding: 0;
+  line-height: 1.42857143;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  margin:0 !important;
+}
+
+.node-type-collection .field-type-text-with-summary{
+  max-width:950px !important;
+  font-family: 'EB Garamond', serif;
+  font-size: 1.25em;
+}
+.node-type-collection .field-type-text-with-summary .show-more a{
+  font-size: .75em;
+  font-family: 'Open Sans','Segoe UI',Tahoma,sans-serif;
+  font-weight: 600;
+  font-style: italic;
+  margin-left: 1rem;
+  filter: alpha(opacity=70);
+  opacity: .7;
+}
+.node-type-collection .field-type-text-with-summary .show-more a:after{
+  font-weight:normal;
+  opacity: .7;
+}
+
+
+
+.page-collections-list #block-system-main.block.block-system {
+  width: 100%;
+  float: none;
+  margin: 0 auto;
+  max-width: 90rem;
+}
+
+.page-collections .views-exposed-widget .form-submit{
+  display:none;
+}
+
+/** Collections List page **/
+.page-collections-all-list .view-display-id-collection_all_list td {
+    padding-top: 2px;
+    padding-left: 8px;
+    padding-right: 2px;
+    padding-bottom: 2px;
+}
+
+.page-collections-all-list .view-display-id-collection_all_list td.views-field.views-field-created {
+    white-space: nowrap;
+}
+
+.page-collections-all .shanti-filters .control-box-cell-header span,
+.page-collections-all-list .shanti-filters .control-box-cell-header span {
+    /*margin: 0px;*/
+}
+
+.page-collections-all .other-view a,
+.page-all-collections-list .other-view a {
+    padding-left: 8px;
+}
+
+/* fix position of following Text: "This collection has no associated content at the moment." */
+.view-display-id-collection_pane > .view-empty > p{
+  float:left;
+}
+
+
+/**
+* BEGIN - Collections Sidebar admin buttons and associated link lists
+*/
+.collections-sidebar a{
+  /*font-weight:bold;*/
+  border:none;
+  display: block;
+}
+
+.collections-sidebar a.btn.btn-primary {
+  padding-left:3rem;
+  padding-right:3rem;
+  margin-left:0;
+  font-size: 105%;
+}
+
+.collections-sidebar .shanticon-stack{
+  display:none;
+}
+
+.collections-sidebar,
+.collections-sidebar a:not(.btn-primary) {
+  font-size:0.93em;
+  letter-spacing: 0.0275rem;
+  padding-left: .5rem;
+}
+
+.collections-sidebar ul li{
+    padding-left: .5rem;
+    list-style-type:none;
+    display: block;
+    margin: 0 0 0.5em 1.5em;
+}
+
+.collections-sidebar .view-id-collection_members ul li{
+  margin-left:1.5rem;
+}
+
+.collections-sidebar .field-type-shanti-kmaps-fields-default {
+  margin-left: 3.75rem;
+}
+
+.collections-sidebar h4 + a{
+  margin-left: 3.1rem;
+}
+
+.collections-sidebar a:not(.btn-primary)::before,
+.collections-sidebar .field-type-shanti-kmaps-fields-default .field-item::before {
+  content: '';
+  width: 1rem;
+  height: 1rem;
+  background: transparent;
+  border: 1px solid #454fa4;
+  display: inline-block;
+  border-radius: 50%;
+  background-clip: padding-box;
+  margin-right: 0.65rem;
+    margin-left: -2.2rem;
+    position: relative;
+    top: .1rem;
+}
+/*
+.collections-sidebar a:hover:not(.btn-primary)::before{
+  background: transparent;
+  border: 1px solid #454fa4;
+}
+*/
+.collections-sidebar .view-collection-members .view-content a::before{
+  margin-right: 0.7rem;
+}
+
+.collections-sidebar a:not(.btn-primary):hover::before{
+  background-color: #6472ed;
+  border-color: #6472ed;
+}
+
+.collections-sidebar a:not(.btn-primary):hover::before
+.collections-sidebar a:not(.btn-primary):active::before{
+  background-color: transparent;
+}
+
+.collections-sidebar a.contextual-links-trigger:not(.btn-primary)::before{
+  display:none;
+}
+
+.collections-sidebar h4{
+  color: #333;
+  letter-spacing: 0.15rem;
+  font-size: 1.06em;
+  text-transform: uppercase;
+  letter-spacing: 0.175rem;
+  margin-bottom: 0.6rem;
+  margin-top: 2rem;
+  background: #fff;
+  padding: 1rem .5rem .8rem 1.5rem;
+  margin-right: 0.8rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.collections-sidebar h4:first-of-type{
+  margin-top: 1.7rem;
+}
+
+.collections-sidebar .attachment .view-all-texts-control-box{
+  margin:0;
+}
+
+.collections-sidebar .view-collections .attachment-before{
+  display:none;
+}
+
+.collection-members li a.disabled,
+.collection-members li a.disabled:hover,
+.not-logged-in .collection-members li a:not(.btn-primary),
+.not-logged-in .collection-members li a:hover:not(.btn-primary){
+  cursor: default !important;
+  color: #555 !important;
+}
+
+.collection-members li a.disabled::before,
+.collection-members li a.disabled:hover::before,
+.not-logged-in .collection-members li a:not(.btn-primary)::before,
+.not-logged-in .collection-members li a:not(.btn-primary):hover::before{
+  background-color: transparent;
+  border-color:#444;
+}
+
+.collections-sidebar.sidebar-second .rssfeed {
+  padding-top: 12px;
+  margin-left: 88%;
+}
+
+.collections-sidebar.sidebar-second .rssfeed svg {
+  filter: opacity(0.6);
+}
+
+
+
+
+
+
+
+  /**
+  * Accessibility
+  */
+.collections-sidebar .field-name-group-access,
+.collections-sidebar .view-id-collections .view-empty{
+  font-size: 90%;
+  line-height: 1.12em;
+  margin-left: 1.7rem;
+  letter-spacing: normal;
+}
+
+/**
+* Parent Collection
+*/
+.collections-sidebar .field-name-field-og-parent-collection-ref{
+  margin-left:3.1rem;
+}
+
+
+
+.collections-sidebar-second .sidebar-offcanvas{
+  background:transparent;
+  padding-left:15px;
+  padding-right:15px;
+  margin-top: 1.5rem;
+  max-width: 32rem;
+  float:right;
+}
+
+.row-offcanvas.active .collections-sidebar-second .sidebar-offcanvas{
+  padding-left: 0;
+}
+
+.node-type-collection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar,
+.node-type-subcollection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar {
+  color: #000;
+  filter: alpha(opacity=80);
+  opacity: .8;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  -webkit-transition: all 300ms ease;
+  transition: all 300ms ease;
+}
+
+.node-type-collection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar:hover,
+.node-type-subcollection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar:hover {
+  filter: alpha(opacity=100);
+  opacity: 1;
+}
+
+.node-type-collection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar .icon,
+.node-type-subcollection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar .icon {
+  color: #777;
+  font-size: 1.5rem;
+  position: relative;
+  top: 0.4rem;
+  right: -0.3rem;
+}
+
+.node-type-collection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar .icon::before,
+.node-type-collection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar .icon::after,
+.node-type-subcollection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar .icon::before,
+.node-type-subcollection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar .icon::after {
+  background: #777;
+  position: absolute;
+  top: 0rem;
+  right: .2rem;
+  width: 1.5rem;
+  height: 0.2rem;
+  content: '';
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+.node-type-collection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar .icon::after,
+.node-type-subcollection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar .icon::after {
+  -webkit-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+}
+
+.node-type-collection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar:hover .icon::before,
+.node-type-collection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar:hover .icon::after,
+.node-type-subcollection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar:hover .icon::before,
+.node-type-subcollection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar:hover .icon::after {
+  background: #444;
+}
+
+.page-collections .shanti-filters .control-box-cell-filters .views-widget-sort-by,
+.page-collections .shanti-filters .control-box-cell-filters .views-widget-sort-order{
+  margin-top: -3rem !important;
+}
+
+
+@media screen and (max-width: 992px) {
+
+  .node-type-collection .row-offcanvas,
+  .node-type-subcollection .row-offcanvas { position: relative; right:0;  }
+  .node-type-collection .row-offcanvas.active,
+  .node-type-subcollection .row-offcanvas.active { position:relative; right:300px; }
+
+  .row-offcanvas .collections-sidebar-second .sidebar-second.sidebar-offcanvas { position:absolute; right:-300px; top:0; min-width:300px; width:25%; }
+
+  .node-type-collection .row-offcanvas .btn.btn-default.view-offcanvas-sidebar,
+  .node-type-subcollection .row-offcanvas .btn.btn-default.view-offcanvas-sidebar { display:inline-block !important; position:absolute; right:-1rem; top:30px; border-radius:0.4rem 0 0 0.4rem; }
+
+  .node-type-collection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar,
+  .node-type-subcollection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar { position:absolute; right: -1.5rem; top: 2.3rem;}
+
+  .node-type-collection .row-offcanvas .btn.btn-default.view-offcanvas-sidebar .icon,
+  .node-type-subcollection .row-offcanvas .btn.btn-default.view-offcanvas-sidebar .icon { position:relative; left: -0.3rem; top:0; float:left; /* reverse arrow icon */ -webkit-transform: rotate(180deg);-ms-transform: rotate(180deg);transform: rotate(180deg);  }
+
+  .node-type-collection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar .icon,
+  .node-type-subcollection .row-offcanvas.active .btn.btn-default.view-offcanvas-sidebar .icon { position:relative; top:0;}
+
+  .page-node-edit.node-type-collection .btn.btn-default.view-offcanvas-sidebar{ display:none !important;}
+
+}
+
+.node-type-collection.page-node-edit .btn.btn-default.view-offcanvas-sidebar,
+.node-type-subcollection.page-node-edit .btn.btn-default.view-offcanvas-sidebar{
+  display: none !important;
+}
+
+.page-collections-all .shanti-thumbnail,
+.page-mycontent-collections .shanti-thumbnail{
+  height: 19.2em;
+}
+
+.page-collections-all .shanti-thumbnail .body-wrap,
+.page-mycontent-collections .shanti-thumbnail .body-wrap{
+  height: 13.2em;
+}
+
+
+/**
+* END Collections Sidebar */
+
+/** Collections Admin Pages **/
+/* such as /group/node/37201/admin/permissions */
+
+table#permissions th {
+  display: table-cell;
+  font-size: 1em;
+  font-weight: bold;
+  vertical-align: bottom;
+  padding: 0 5px;
+}
+table#permissions tr {
+  padding: 3px 0;
+}
+
+table#permissions td {
+  padding: 5px 0;
+}
+
+table#permissions td.checkbox {
+  display: table-cell;
+  font-size: 0.8em;
+}
+
+table#permissions .sticky-table tr .form-item {
+  min-height: 0;
+}
+
+.page-group-node-admin-roles #og-ui-admin-new-role table {
+  min-width: 70%;
+}
+
+.page-group-node-admin-roles #og-ui-admin-new-role table th {
+  font-weight: bold;
+  padding: 4px;
+}
+
+.page-group-node-admin-roles #og-ui-admin-new-role table td {
+  padding: 4px;
+}
+

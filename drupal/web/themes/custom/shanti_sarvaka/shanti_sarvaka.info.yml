@@ -1,0 +1,23 @@
+name: 'Shanti Sarvaka'
+type: theme
+description: 'D11 base theme for all Mandala asset types, a Bootstrap 5 subtheme ported from the D7 shanti_sarvaka theme shared across Images, AV, Sources, Texts, and Home.'
+core_version_requirement: ^11
+base theme: bootstrap5
+
+regions:
+  header: 'Top Bar Header'
+  banner: 'Color Strip Banner'
+  content: Content
+  search_flyout: 'Search Fly Out'
+  search_results: 'Search Results'
+  sidebar_first: 'Primary Sidebar'
+  sidebar_second: 'Secondary Sidebar'
+  highlighted: Highlighted
+  help: Help
+  page_top: 'Page top'
+  page_bottom: 'Page bottom'
+  footer: Footer
+  admin_footer: 'Admin Footer'
+
+libraries:
+  - shanti_sarvaka/global-styling

@@ -1,0 +1,287 @@
+/**
+* -------------------------------------------
+* REFER TO IFRAME CSS BELOW TO EDIT IFRAME
+* shanti_sarvaka/css/shanti-iframe.css
+* -------------------------------------------
+*/
+.in-frame .main-wrapper.container-fluid{
+	padding:0;
+}
+.in-frame article.main-col{
+  max-width: 1150px !important;
+}
+.in-frame.has-transcript article.main-col{
+  max-width: 1600px !important;
+}
+.in-frame.audio-video:not(.front) article.main-col{
+  margin:0 !important;
+  padding-top:0;
+}
+.in-frame .site-banner,
+.in-frame .titlearea .breadwrap, 
+.in-frame .titlearea .banner-tabs,
+.in-frame #search-flyout,
+.in-frame footer,
+.in-frame #admin-footer,
+.in-frame #admin-menu,
+.in-frame .page-title .icon{
+	display: none !important;
+	height: 0px !important;
+	width: 0px !important;
+}
+body.in-frame.html {
+	margin-top: 0px !important;
+	background: #eee !important;
+}
+.in-frame .titlearea, 
+.in-frame .titlearea.has-tabs,
+.in-frame .titlearea > div,
+.in-frame .titlearea header{
+	background-color: transparent !important;
+	box-shadow: none !important;
+	border: none !important;
+	height: 1em;
+	margin-top: -1rem;
+}
+.in-frame  .titlearea .page-title-text {
+	display:none !important;
+}
+/** JIRA feedback **/
+.in-frame .atlwdg-trigger.atlwdg-SUBTLE {
+	display: none !important;
+}
+
+
+
+
+/**
+*  AUDIO-VIDEO - iframe custom styles 
+*/
+.in-frame.audio-video article.main-col{
+	padding-top:0;
+}
+.in-frame.audio-video .titlearea .page-title-text{
+	display:none !important;
+}
+
+.in-frame.audio-video .av-main-video-section{
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 70% !important;
+}
+
+.in-frame.audio-video .titlearea.has-tabs{
+	margin-bottom: 1rem !important;
+}
+	.in-frame.audio-video .nav-tabs.nav-justified>li.active{
+		border-top-color: #555 !important;
+	}
+	.in-frame.audio-video .nav-tabs.nav-justified>li.active>a{
+		background-color: #555 !important;
+  }
+
+
+
+
+
+/**
+*  TEXTS - iframe custom styles 
+*/
+.in-frame.texts article.main-col{
+	max-width:1400px !important;
+}
+.in-frame.texts .titlearea{
+  display:none;
+}
+.in-frame.texts #shanti-texts-sidebar .fullview{
+  display:none;
+}
+
+.in-frame.texts .nav-tabs.nav-justified>li{
+  position: relative;
+  top: -.4rem;
+}
+.in-frame.texts .nav-tabs.nav-justified>li a{
+  font-size: 0.75em;
+  text-transform: uppercase;
+  line-height: 1.32em;
+  padding-top: 1.5rem;
+}
+
+
+
+
+
+
+
+
+
+@media screen and (max-width: 991px) {
+
+	.in-frame.texts .nav-tabs.nav-justified>li.active>a{
+		background-color: #555 !important;
+	}
+	.in-frame.texts .nav-tabs.nav-justified>li.active>a:focus,
+	.in-frame.texts .nav-tabs.nav-justified>li.active>a:hover{
+		background: #555 !important;
+	}
+
+	.in-frame.texts .nav-tabs.nav-justified>li.active{
+		border-top: 5px double #555 !important;
+	}
+}
+
+@media screen and (max-width: 767px) {
+
+	.in-frame.texts .nav-tabs.nav-justified>li.active::before{
+		color: #555 !important;
+	}
+}
+
+
+
+/*
+@media screen and (min-width: 500px) {
+	
+	.navbar-header .site-slogan{ color:#8c48a1 !important; } 
+	.navbar-brand:hover .site-slogan{ color: #555 !important; } 
+	.navbar-header:active .site-slogan{ color:#8c48a1 !important; } 
+}
+*/
+
+@media screen and (min-width: 768px) {
+  
+	.in-frame.texts .nav-tabs.nav-justified>li.active::before{
+		color: #8c48a1 !important;
+	}
+  	.in-frame.audio-video  .av-main-wrapper{
+		padding-top:0 !important;
+	}
+	.in-frame.texts .nav-tabs.nav-justified>li.active::before,
+	.in-frame.audio-video .nav-tabs.nav-justified>li.active::before{
+		color:#555 !important;
+	}
+}
+
+
+@media screen and (min-width: 992px) {
+
+	.in-frame.texts .nav-tabs.nav-justified>li.active::before{
+		display:none;
+	}
+    /* testing these two rulesets is for positioning book reader height */
+    .in-frame.texts article.main-col{ position: relative; padding-top:1.7rem;}
+    .in-frame.texts article.main-col > div{ min-height:580px; }
+
+    .in-frame.texts #shanti-texts-container{
+      height:auto;
+      position: absolute;
+      top: 0.1rem;
+      bottom:0.1rem;
+      padding: 0;
+      margin-bottom: 0;
+      max-width: 1400px !important;
+    }
+    .in-frame.texts.has-tabs #shanti-texts-container{
+      position: absolute;
+      top: .5rem;
+    }  
+    .in-frame.texts #shanti-texts-sidebar {
+      height:100%;
+      padding: .4rem 0 0;
+      width: 32%;
+    }
+    .in-frame.texts #shanti-texts-body {
+      margin-right:1.25rem;
+      padding: 3.5rem 1.5rem 0 3.25rem;
+    }
+    .in-frame.texts #shanti-texts-sidebar .tab-content{
+      position: absolute;
+      top: 38px;
+      bottom: 0;
+      max-height: 100%;
+      border: 2px solid #ddd;
+      border-right:1px solid #d0d0d0;
+      border-bottom: 2px solid #aaa;
+    }
+    .in-frame.texts #shanti-texts-sidebar .tab-content::-webkit-scrollbar {
+      height: .7rem; /* horizontal scrolling scroll handle */
+      width: 1.5rem; /* vertical scrolling scroll handle */
+    }
+    .in-frame.texts .nav-tabs.nav-justified>li{
+      border-right: 1px solid #ddd;
+      border-top: 2px solid #aaa;
+      background-color: #fff !important;
+      font-size: 1em;
+    }
+    .in-frame.texts .nav-tabs.nav-justified>li:first-child{
+      border-left: 2px solid #ddd;
+    }
+    .in-frame.texts .nav-tabs.nav-justified>li:last-child{
+      border-right: 2px solid #ddd;
+    }
+    .in-frame.texts .nav-tabs.nav-justified>li>a{
+      border-radius: 0;
+      background: #f9f9f9 !important;
+      height: 3.4rem;
+      color: #555;
+      font-size: 0.88em;
+      line-height: 1.25em;
+      padding-top: 1.2rem;
+      -webkit-transition: all 50ms ease 0s;
+      transition: all 50ms ease 0s;
+      display:block;
+    }
+    .in-frame.texts .nav-tabs.nav-justified>li>a:hover{
+      background-color: #fff !important;
+      color: #777;
+      box-shadow: none;
+    }
+    .in-frame.texts .nav-tabs.nav-justified>li>a:active{
+      background: #f0f0f0 !important;
+      color: #555;
+    }
+    .in-frame.texts .nav-tabs.nav-justified>li.active{
+      border-top: none;
+      box-shadow: none;
+      border-right: 1px solid #ddd;
+      border-top: 2px solid #555;
+      background-color: #fff !important;
+    }
+    .in-frame.texts .nav-tabs.nav-justified>li:hover:not(.active){
+      box-shadow: none;
+      border-top: 2px solid #888;
+    }
+    .in-frame.texts .nav-tabs.nav-justified>li.active>a{
+      color: #555;
+      box-shadow: none;
+      display: block;
+      font-size: 0.93em;
+      position:relative;
+      top:.4rem;
+      background-color: #fff !important;
+      letter-spacing: -0.013rem;
+    }
+    .in-frame.texts .nav-tabs.nav-justified>li.active>a:focus,
+    .in-frame.texts .nav-tabs.nav-justified>li.active>a:hover{
+      background-color: #fff;
+      color: #444;
+      border-bottom-color: #fff !important;
+      box-shadow: none;
+    }
+}
+
+
+
+
+
+
+/**
+*  IMAGES - iframe custom styles
+*/
+
+.in-frame.images .image-display .backarrow,
+.in-frame.images .image-display .image-actions {
+  visibility: collapse;
+}
+

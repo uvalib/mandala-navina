@@ -1,0 +1,22 @@
+uuid: 9b8e4b4d-1cbd-4042-9dda-b14c3ee56315
+langcode: en
+status: true
+dependencies:
+  module:
+    - system
+  theme:
+    - shanti_sarvaka
+_core:
+  default_config_hash: erQSEZF2XUjNmgTl0uNRBzmg18ZGXwUcw2FhApoeuHk
+id: shanti_sarvaka_content
+theme: shanti_sarvaka
+region: content
+weight: 0
+provider: null
+plugin: system_main_block
+settings:
+  id: system_main_block
+  label: 'Main page content'
+  label_display: '0'
+  provider: system
+visibility: {  }

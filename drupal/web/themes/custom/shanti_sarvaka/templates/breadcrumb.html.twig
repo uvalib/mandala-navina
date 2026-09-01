@@ -1,0 +1,31 @@
+{#
+/**
+ * @file
+ * Theme override for a breadcrumb trail, ported from the D7
+ * shanti_sarvaka_breadcrumb() theme function in template.php.
+ *
+ * D7's version also stripped the leading "Home" crumb per a theme
+ * setting, prepended a site-intro link (unless on the front page), and
+ * adjusted crumbs for group/collection admin sub-paths. That logic lives
+ * in hook_preprocess_breadcrumb() (Workstream A4) -- this template only
+ * renders whatever crumb list preprocessing hands it.
+ *
+ * Available variables:
+ * - breadcrumb: Breadcrumb trail items.
+ */
+#}
+{% if breadcrumb %}
+  <nav class="breadwrap" aria-label="{{ 'Breadcrumb'|t }}">
+    <ol class="breadcrumb">
+      {% for item in breadcrumb %}
+        <li class="breadcrumb-item">
+          {% if item.url %}
+            <a href="{{ item.url }}">{{ item.text }}</a>
+          {% else %}
+            {{ item.text }}
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </nav>
+{% endif %}

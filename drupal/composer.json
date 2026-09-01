@@ -13,11 +13,13 @@
         "php": ">=8.3",
         "composer/installers": "^2.0",
         "drupal/admin_toolbar": "^3.5",
+        "drupal/bootstrap5": "^4.0",
         "drupal/core-composer-scaffold": "^11",
         "drupal/core-project-message": "^11",
         "drupal/core-recommended": "^11",
         "drupal/devel": "^5.0",
         "drupal/entity_reference_revisions": "^1.12",
+        "drupal/facets": "^3.0",
         "drupal/footnotes": "^4.0",
         "drupal/group": "^3.3",
         "drupal/migrate_plus": "^6.0",
@@ -53,7 +55,8 @@
             "phpstan/extension-installer": true,
             "simplesamlphp/composer-module-installer": true,
             "simplesamlphp/composer-xmlprovider-installer": true,
-            "tbachert/spi": true
+            "tbachert/spi": true,
+            "symfony/runtime": true
         }
     },
     "extra": {

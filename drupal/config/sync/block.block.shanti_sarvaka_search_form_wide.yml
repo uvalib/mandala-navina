@@ -1,0 +1,23 @@
+uuid: f33b3dc4-5b10-4e8a-8fc4-65f95b825891
+langcode: en
+status: false
+dependencies:
+  module:
+    - search
+  theme:
+    - shanti_sarvaka
+_core:
+  default_config_hash: imMyHD6LYci0gtXq56qr9ZKGHzbEG9uFydrN5EhKtSU
+id: shanti_sarvaka_search_form_wide
+theme: shanti_sarvaka
+region: header
+weight: -5
+provider: null
+plugin: search_form_block
+settings:
+  id: search_form_block
+  label: 'Search form (wide)'
+  label_display: '0'
+  provider: search
+  page_id: null
+visibility: {  }

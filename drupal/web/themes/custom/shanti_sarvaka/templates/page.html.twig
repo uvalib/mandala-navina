@@ -1,0 +1,262 @@
+{#
+/**
+ * @file
+ * Theme override to display a single page, ported from the D7
+ * shanti_sarvaka page.tpl.php.
+ *
+ * The doctype, html, head and body tags live in html.html.twig.
+ *
+ * Regions (verbatim from D7, no additions):
+ * - page.header, page.banner, page.content, page.search_flyout,
+ *   page.search_results, page.sidebar_first, page.sidebar_second,
+ *   page.highlighted, page.help, page.page_top, page.page_bottom,
+ *   page.footer, page.admin_footer.
+ *
+ * D11's ThemePreprocess::preprocessPage() does NOT set title, site_name,
+ * logo, breadcrumb, tabs, or action_links as bare variables the way D7's
+ * template_preprocess_page() did -- those only exist in
+ * preprocessMaintenancePage(), used solely for maintenance/install pages
+ * with no blocks available. In normal rendering all of that content comes
+ * from *blocks* placed into regions (Site Branding -> header, Page Title
+ * + Breadcrumb + Local Tasks + Local Actions -> banner, per A7's block
+ * placement), not from template variables. This template relies on
+ * page.header / page.banner for that content rather than reading it
+ * directly, matching D11's idiom instead of D7's.
+ *
+ * Site-identity and D7-preprocess-derived variables (default to a safe
+ * fallback until a later pass ports the real Mandala-brand
+ * hook_preprocess_page() logic):
+ * - shanti_site: whether this is the umbrella Mandala brand vs. a
+ *   standalone site identity.
+ * - mandala_home: URL of the Mandala umbrella home.
+ * - banner_class, icon_class: banner styling hooks.
+ * - offcanvas_trigger_sb, bsclass_sb1, bsclass_sb2: offcanvas sidebar
+ *   toggling classes (wired up with A3's JS behaviors).
+ * - user_menu_links: rendered drilldown user/account menu markup.
+ *
+ * @see template_preprocess_page()
+ * @see html.html.twig
+ */
+#}
+<div class="wrap-all">
+  <span class="visually-hidden">
+    <a href="#main-content">{{ 'Skip to main content'|t }}</a>
+    <a href="#search-flyout">{{ 'Skip to search'|t }}</a>
+  </span>
+
+  {#
+    Header region: top bar + brand + primary nav (D7's .site-banner),
+    structure matches D7's page.tpl.php exactly (no container-fluid
+    wrapper -- D7 didn't have one either; adding one triggers Bootstrap
+    5's own `.navbar > .container-fluid { justify-content: space-between }`
+    flex rule and pushes the brand right instead of left, since BS5
+    dropped the `.navbar-header{float:left}` rule this markup relied on).
+
+    The "MANDALA" wordmark is a real site-wide constant now (D11 is one
+    site per ADR 005, not D7's five separate site installs), so it's
+    fixed markup rather than a conditional. What's NOT decided: D7 showed
+    a second segment after it (Images/AV/Sources/...) selected per D7
+    *site*; in D11 that would have to be selected per *asset type/route*
+    instead (ties into ADR 016's asset-type-namespaced URLs), which is a
+    real routing decision, not a theme-markup one -- left out here rather
+    than guessed.
+
+    The Explore panel's content is ported from the real source of truth
+    (explore_menu module's shanti-collections.json, not scraped HTML).
+    Since D11 doesn't have per-site subdomains, Images links internally;
+    AV/Sources/Texts/Home/Places/Subjects/Terms still point at their real,
+    live D7 hosts since nothing else is migrated yet -- a judgment call,
+    not a decided routing convention. Visuals is dropped, not carried
+    over from D7's JSON: the team decided it's being retired, not
+    migrated (see docs memory: project-visuals-retired).
+  #}
+  <div class="site-banner">
+    <nav class="navbar navbar-default">
+      {#
+        Corrected per the group: the Explore trigger is NOT hidden on
+        desktop and is NOT part of the hamburger's drilldown -- it's its
+        own persistent block ("Shanti Explore Menu Block", placed in the
+        Top Bar Header region in D7) sitting next to the hamburger,
+        icon+"Explore" text, always visible. D11 has no literal
+        equivalent block yet, so it's static markup here, same as the
+        hamburger icon itself.
+
+        The hamburger's own panel is the real drilldown menu (D7's
+        multilevelpushmenu plugin, never ported -- see A3 -- rebuilt here
+        with Bootstrap 5's native Offcanvas: same right-docked/compact
+        intent, no jQuery). It shows "Main Menu" plus the main/account
+        menu blocks only -- Site Branding and Search Form were also in
+        the "header" region but are deliberately disabled for now rather
+        than shown here (branding's already in the navbar-header above;
+        search has no decided home yet, possibly search_flyout later,
+        not built). menu--main.html.twig carries the caret/slide-out
+        drilldown for any parent items.
+      #}
+      <nav class="navbar-buttons">
+        <span class="menu-explore" role="button">
+          <a href="#" data-explore-toggle="explore-panel"><span class="icon shanticon-directions"></span> {{ 'Explore'|t }}</a>
+        </span>
+        <span class="menu-icon menu-toggle" role="button" aria-label="{{ 'Main Menu'|t }}">
+          <a href="#" data-bs-toggle="offcanvas" data-bs-target="#sarvaka-header" aria-controls="sarvaka-header"><span class="visually-hidden">{{ 'Main Menu'|t }}</span><span class="icon shanticon-menu"></span></a>
+        </span>
+      </nav>
+
+      <h1 class="navbar-header">
+        <a href="{{ front_page }}" class="logo-brand navbar-brand">
+          <span class="icon shanticon-logo"></span>
+          <span class="mandala">{{ 'Mandala'|t }}</span>
+        </a>
+      </h1>
+
+      {#
+        No visible header bar/close button here: production's own
+        drilldown menu doesn't have one either (only the Explore panel
+        does) -- it closes via Bootstrap's own backdrop-click/Escape,
+        both free with Offcanvas. The "Main Menu" title lives inside the
+        list itself (h3/em), matching D7's real
+        `<li><h3><em>Main Menu</em></h3></li>` structure, not a separate
+        wrapper heading.
+
+        `.menu-main` (width/position/border, all from the verbatim
+        ported shanti-main.css) is applied ONCE here at the shared
+        wrapper, not per menu block -- see menu.html.twig's comment for
+        why: two independently-rendered blocks (main menu, account menu)
+        would otherwise both try to absolutely-position themselves.
+      #}
+      <div id="sarvaka-header" class="offcanvas offcanvas-end" tabindex="-1" aria-labelledby="sarvaka-header-label">
+        <h2 class="visually-hidden" id="sarvaka-header-label">{{ 'Main Menu'|t }}</h2>
+        <div class="offcanvas-body p-0">
+          <div class="menu-main">
+            <ul>
+              <li><h3><em>{{ 'Main Menu'|t }}</em></h3></li>
+            </ul>
+            {{ page.header }}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <section class="container opencollect collections" id="explore-panel">
+      <nav class="row" role="navigation">
+        <div class="col-sm-12 col-md-10 col-md-offset-1">
+          <h4 class="collections-title">{{ 'Explore'|t }}</h4>
+          <div class="shanti-collections">
+            <ul>
+              <li><a href="{{ front_page }}"><span class="icon shanticon-overview"></span>{{ 'Home'|t }}</a></li>
+              <li><a href="https://av.mandala.library.virginia.edu/"><span class="icon shanticon-audio-video"></span>{{ 'Audio-Video'|t }}</a></li>
+              <li><a href="{{ front_page }}"><span class="icon shanticon-images"></span>{{ 'Images'|t }}</a></li>
+              <li><a href="https://sources.mandala.library.virginia.edu/"><span class="icon shanticon-sources"></span>{{ 'Sources'|t }}</a></li>
+              <li><a href="https://texts.mandala.library.virginia.edu/"><span class="icon shanticon-texts"></span>{{ 'Texts'|t }}</a></li>
+              <li><a href="https://mandala.library.virginia.edu/places"><span class="icon shanticon-places"></span>{{ 'Places'|t }}</a></li>
+              <li><a href="https://mandala.library.virginia.edu/subjects"><span class="icon shanticon-subjects"></span>{{ 'Subjects'|t }}</a></li>
+              <li><a href="https://mandala.library.virginia.edu/terms"><span class="icon shanticon-terms"></span>{{ 'Terms'|t }}</a></li>
+              <li><a href="https://confluence.its.virginia.edu/display/KB/Mandala+Suite+of+Tools" target="_blank"><span class="icon"></span>{{ 'Help Guide'|t }}</a></li>
+            </ul>
+          </div>
+        </div>
+        <button type="button" class="close" data-explore-toggle="explore-panel" aria-label="{{ 'Close'|t }}"><span class="icon shanticon-cancel"></span></button>
+      </nav>
+    </section>
+  </div>
+
+  <main class="main-wrapper container-fluid">
+    <article class="main-content" role="main">
+
+      {#
+        Banner region: page title, breadcrumb, local tasks/actions, and any
+        admin-placed banner content, all delivered as blocks placed into
+        `banner` (Page Title, Breadcrumb, Local Tasks, Local Actions -- see
+        A7's block placement) rather than as bare template variables.
+        page-title.html.twig carries the D7 "Explore" prefix + icon markup
+        -- confirmed against real production (including 404 pages, not
+        just the front page): EVERY page banner is gold (#ad8a28) and
+        reads "Explore {title}" with a shanticon-photos icon, not just the
+        front page. Gold/icon are hardcoded here as the current site-wide
+        default since Images is the only real asset type live yet --
+        revisit once a second asset type needs its own accent (this is
+        the same per-site-vs-per-theme tension flagged in A8).
+
+        The front page has no real node/page title (Page Title block
+        renders nothing there), so D7 fell back to a per-subtheme
+        "default_title" setting ("Images" for this site) -- hardcoded
+        here the same way, for the same reason.
+      #}
+      <section class="row" role="banner">
+        <div class="titlearea banner {{ banner_class|default('') }}">
+          {% if is_front %}
+            <h1 class="page-title">
+              <span class="icon shanticon-photos"></span>
+              <span class="page-title-text"><span class="pt-prefix">{{ 'Explore'|t }}</span> {{ 'Images'|t }}</span>
+            </h1>
+          {% endif %}
+          {{ page.banner }}
+        </div>
+      </section>
+
+      {# Content row: sidebar-first / content / sidebar-second #}
+      <section class="row{{ offcanvas_trigger_sb|default('') }}" role="main">
+        {% if page.sidebar_first %}
+          <div id="sidebar-first" class="col-12 col-lg-3 region sidebar sidebar-first {{ bsclass_sb1|default('') }}">
+            {{ page.sidebar_first }}
+          </div>
+        {% endif %}
+
+        <div class="content-section {{ (page.sidebar_first or page.sidebar_second) ? 'col-12 col-lg-9' : 'col-12' }}">
+          <div id="main-content" class="tab-content container-fluid">
+            <article class="tab-pane main-col active">
+              {% block page_content %}
+                {{ page.content }}
+              {% endblock %}
+            </article>
+          </div>
+        </div>
+
+        {% if page.sidebar_second %}
+          <div id="sidebar-second" class="col-12 col-lg-3 region sidebar sidebar-second {{ bsclass_sb2|default('') }}">
+            {{ page.sidebar_second }}
+          </div>
+        {% endif %}
+      </section>
+
+      <a href="#" class="back-to-top" role="button" aria-label="{{ 'Back to Top of Page'|t }}"><span class="icon fa"></span></a>
+    </article>
+
+    {% if page.search_flyout %}
+      <div id="search-flyout" class="region extruder offcanvas offcanvas-end" role="search" tabindex="-1">
+        {{ page.search_flyout }}
+      </div>
+      {% if page.search_results %}
+        <section id="faceted-search-results" class="faceted-search-results" aria-label="{{ 'Search Results'|t }}">
+          {{ page.search_results }}
+        </section>
+      {% endif %}
+    {% endif %}
+  </main>
+
+  {% if page.highlighted %}
+    <div class="region region-highlighted">{{ page.highlighted }}</div>
+  {% endif %}
+
+  {% if page.help %}
+    <div class="region region-help">{{ page.help }}</div>
+  {% endif %}
+
+  {% if user_menu_links|default(false) %}
+    <section id="menu" class="menu-main" style="display:none;">
+      <nav id="menu-drill">{{ user_menu_links }}</nav>
+    </section>
+  {% endif %}
+</div>
+
+<footer class="footer mt-auto">
+  <div class="container-fluid">
+    {{ page.footer }}
+    <p class="rights">&copy; {{ "now"|date("Y") }} {{ 'All Rights Reserved'|t }}</p>
+  </div>
+</footer>
+
+{% if page.admin_footer %}
+  <div id="admin-footer">
+    {{ page.admin_footer }}
+  </div>
+{% endif %}

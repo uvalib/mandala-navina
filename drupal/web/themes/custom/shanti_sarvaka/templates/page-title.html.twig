@@ -1,0 +1,27 @@
+{#
+/**
+ * @file
+ * Theme override for the Page Title block, ported from the D7
+ * shanti_sarvaka page.tpl.php's h1.page-title markup.
+ *
+ * Available variables:
+ * - title_attributes: HTML attributes for the page title element.
+ * - title_prefix / title_suffix: additional module-supplied output.
+ * - title: The page title.
+ *
+ * Confirmed against real production (including 404 pages, not just the
+ * front page): every page title is prefixed "Explore" and uses a
+ * shanticon-photos icon. Both are hardcoded as the current site-wide
+ * default since Images is the only real asset type live yet -- the icon
+ * (and possibly the prefix text) should become per-asset-type once a
+ * second one lands, same tension flagged in page.html.twig/A8.
+ */
+#}
+{{ title_prefix }}
+{% if title|render|striptags|trim %}
+  <h1 class="page-title"{{ title_attributes }}>
+    <span class="icon shanticon-photos"></span>
+    <span class="page-title-text"><span class="pt-prefix">{{ 'Explore'|t }}</span> {{ title }}</span>
+  </h1>
+{% endif %}
+{{ title_suffix }}

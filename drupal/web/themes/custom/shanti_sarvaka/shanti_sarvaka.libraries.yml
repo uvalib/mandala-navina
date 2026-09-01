@@ -1,0 +1,98 @@
+# Vendor JS/CSS libraries shared across every asset type, ported from D7's
+# shanti_sarvaka.info scripts[]/stylesheets[] lists. Each is independent of
+# Bootstrap's own JS (no bootstrap-select carried forward -- see
+# shanti_select below) so they attach cleanly on top of bootstrap5's own
+# `bootstrap5/bootstrap5-js-latest` library.
+
+wookmark:
+  remote: https://github.com/GBKS/Wookmark-jQuery
+  license:
+    name: MIT
+    url: https://github.com/GBKS/Wookmark-jQuery/blob/master/LICENSE
+    gpl-compatible: true
+  js:
+    js/vendor/wookmark/jquery.wookmark.min.js: {}
+  dependencies:
+    - core/jquery
+
+jssor-slider:
+  remote: https://www.jssor.com/
+  license:
+    name: Apache-2.0
+    url: https://github.com/jssor/slider/blob/master/LICENSE
+    gpl-compatible: true
+  js:
+    js/vendor/jssor/jssor.slider.mini.js: {}
+
+hammer:
+  remote: https://github.com/hammerjs/hammer.js
+  license:
+    name: MIT
+    url: https://github.com/hammerjs/hammer.js/blob/master/LICENSE.md
+    gpl-compatible: true
+  js:
+    js/vendor/hammer/hammer.min.js: {}
+
+mcustomscrollbar:
+  remote: https://github.com/malihu/malihu-custom-scrollbar-plugin
+  license:
+    name: MIT
+    url: https://github.com/malihu/malihu-custom-scrollbar-plugin/blob/master/LICENSE
+    gpl-compatible: true
+  css:
+    theme:
+      css/vendor/mcustomscrollbar/jquery.mCustomScrollbar.css: {}
+  js:
+    js/vendor/mcustomscrollbar/jquery.mCustomScrollbar.concat.min.js: {}
+  dependencies:
+    - core/jquery
+
+# Bootstrap-5-compatible replacement for D7's bootstrap-select (jQuery
+# plugin, no official BS5 build exists). Tom Select is vanilla JS (matches
+# BS5's own move away from a hard jQuery dependency) and ships its own
+# bootstrap5 CSS theme.
+shanti-select:
+  remote: https://github.com/orchidjs/tom-select
+  version: 2.x
+  license:
+    name: Apache-2.0
+    url: https://github.com/orchidjs/tom-select/blob/master/LICENSE
+    gpl-compatible: true
+  js:
+    js/vendor/tom-select/tom-select.complete.min.js: {}
+  css:
+    component:
+      css/vendor/tom-select/tom-select.bootstrap5.min.css: {}
+
+# The real D7 visual identity: icon font + hand-authored site CSS, ported
+# verbatim (selectors are shanti_sarvaka's own custom classes, not
+# Bootstrap-version-dependent, so they carry over regardless of the BS3->
+# BS5 upgrade). Load order matters -- icon font first, then shanti-main's
+# base rules, then the more specific overrides.
+shanti-visual-identity:
+  css:
+    theme:
+      fonts/shanticon/css/style.css: {}
+      css/shanti-main.css: {}
+      css/shanti-search.css: {}
+      css/shanti-search-faceted.css: {}
+      css/utils.css: {}
+      css/shanti-collections-view.css: {}
+      css/shanti-iframe.css: {}
+      css/bootstrap.vertical-tabs.min.css: {}
+
+global-styling:
+  css:
+    theme:
+      css/shanti-sarvaka.css: {}
+  js:
+    js/shanti-sarvaka.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - shanti_sarvaka/wookmark
+    - shanti_sarvaka/jssor-slider
+    - shanti_sarvaka/hammer
+    - shanti_sarvaka/mcustomscrollbar
+    - shanti_sarvaka/shanti-select
+    - shanti_sarvaka/shanti-visual-identity

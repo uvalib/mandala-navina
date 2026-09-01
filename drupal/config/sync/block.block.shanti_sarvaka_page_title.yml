@@ -1,0 +1,20 @@
+uuid: fd1bf4fe-8334-4990-94d2-99901da7d404
+langcode: en
+status: true
+dependencies:
+  theme:
+    - shanti_sarvaka
+_core:
+  default_config_hash: 6aOgWsNTXjqrDm98TXSAjP6qd2nCijD1xw45MrnbK-Y
+id: shanti_sarvaka_page_title
+theme: shanti_sarvaka
+region: banner
+weight: -5
+provider: null
+plugin: page_title_block
+settings:
+  id: page_title_block
+  label: 'Page title'
+  label_display: '0'
+  provider: core
+visibility: {  }

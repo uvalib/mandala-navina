@@ -1,0 +1,22 @@
+uuid: d79730c9-fd39-4902-8924-2da5c4dba769
+langcode: en
+status: true
+dependencies:
+  theme:
+    - shanti_sarvaka
+_core:
+  default_config_hash: nGE3EoPQQaQCuqTUtZgw0-KIzmrqdKDzdNQf2JyPUt4
+id: shanti_sarvaka_primary_local_tasks
+theme: shanti_sarvaka
+region: banner
+weight: -4
+provider: null
+plugin: local_tasks_block
+settings:
+  id: local_tasks_block
+  label: 'Primary tabs'
+  label_display: '0'
+  provider: core
+  primary: true
+  secondary: false
+visibility: {  }

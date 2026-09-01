@@ -1,0 +1,55 @@
+{#
+/**
+ * @file
+ * Theme override for a menu, used for the hamburger drilldown panel's
+ * main/account menu blocks. Behavior matches D7's real multilevelpushmenu
+ * source markup (confirmed against production): leaf items are plain
+ * links; parent items carry both a `<a href="#">` trigger and an `<h2>`
+ * heading for their nested `<ul>` -- D7 let the plugin's own JS toggle
+ * which one shows; here shanti-sarvaka.js does the same toggle directly
+ * via the .shanti-drilldown-submenu wrapper.
+ *
+ * The `.menu-main` class/positioning and the "Main Menu" title item live
+ * on the shared wrapper in page.html.twig, not here -- this template can
+ * render more than once per page (separate main-menu and account-menu
+ * blocks), and D7's single combined list only had one of each.
+ *
+ * Available variables: see core's menu.html.twig.
+ */
+#}
+{% import _self as menus %}
+{{ menus.menu_links(items, attributes, 0) }}
+
+{% macro menu_links(items, attributes, menu_level) %}
+  {% import _self as menus %}
+  {% if items %}
+    {% if menu_level == 0 %}
+      <ul{{ attributes }}>
+    {% else %}
+      <ul>
+    {% endif %}
+    {% for item in items %}
+      <li{{ item.attributes }}>
+        {% if item.below %}
+          <a href="#" class="shanti-drilldown-toggle">
+            {{ item.title }}
+            <span class="icon shanticon-arrow3-right" aria-hidden="true"></span>
+          </a>
+          <div class="shanti-drilldown-submenu">
+            <h2>
+              <em>{{ item.title }}</em>
+              <a href="#" class="shanti-drilldown-back">
+                <span class="icon shanticon-arrow3-right" aria-hidden="true"></span>
+                {{ 'Back'|t }}
+              </a>
+            </h2>
+            {{ menus.menu_links(item.below, attributes, menu_level + 1) }}
+          </div>
+        {% else %}
+          {{ link(item.title, item.url) }}
+        {% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endmacro %}

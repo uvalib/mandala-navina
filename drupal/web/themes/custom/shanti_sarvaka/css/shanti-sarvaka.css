@@ -1,0 +1,227 @@
+/**
+ * shanti_sarvaka base theme styles.
+ *
+ * D7's shanti-main.css and siblings are ported verbatim (see A8) -- this
+ * file holds BS5-specific fixes and D11-side overrides that don't belong
+ * in a verbatim port of D7 source.
+ */
+
+/* BS5 dropped the `.navbar-header{float:left}` rule D7's markup relied
+   on for left/right split layout. Recreate the same effect with flex
+   instead of reintroducing a removed Bootstrap class. */
+.site-banner .navbar.navbar-default {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.site-banner .navbar.navbar-default .navbar-header {
+  margin-right: auto;
+}
+
+/* Images-site gold accent, confirmed from live production CSS
+   (#ad8a28), not shanti-main.css's own default (violet, #4d59ca).
+   Images is the only real asset type live yet -- revisit once a second
+   one needs its own accent color; see page.html.twig/page-title.html.twig
+   comments for the same open question. */
+.titlearea {
+  background-color: #ad8a28 !important;
+}
+
+/* shanti-main.css's .pt-prefix visibility rule keys off D7's `.front`
+   body class; D11 uses `.path-frontpage` instead (no `.front` class
+   exists at all). Bridge the gap here rather than edit the verbatim
+   ported file. */
+.path-frontpage .pt-prefix {
+  display: inline;
+}
+
+/* Explore panel + mobile drilldown nav: hidden by default, shown by
+   toggling .show-topmenu directly on the panel (shanti-sarvaka.js),
+   matching the class D7's shanti-main.js used for the same toggle. */
+#explore-panel {
+  display: none;
+}
+#explore-panel.show-topmenu {
+  display: block;
+}
+
+/* Hamburger drilldown panel: compact and docked to the top-right, not
+   BS5 Offcanvas's own full-viewport-height default -- matches the
+   group's spec (~266x461px, sized to content) for what was D7's
+   multilevelpushmenu widget. */
+#sarvaka-header.offcanvas-end {
+  top: 60px; /* below .titlearea's 60px header bar */
+  bottom: auto;
+  width: 266px;
+  height: auto; /* hug content -- no scrolling, per the group */
+  max-height: calc(100vh - 60px);
+  border-left: 1px solid #ddd;
+  box-shadow: 0 1px 4px hsla(0, 0%, 60%, 0.4);
+}
+#sarvaka-header .offcanvas-body {
+  overflow-y: visible;
+}
+
+/* shanti-main.css hides `.menu-explore` at >=768px (a rule for D7's
+   *mobile-only* toggle span, confirmed distinct from the real, always-
+   visible "Shanti Explore Menu Block" which used a different class,
+   `.explore`, and lived inside the always-shown desktop nav). Since the
+   Explore trigger here needs to be persistently visible next to the
+   hamburger at every width, override that hide rule rather than untangle
+   D7's exact original class split further. */
+.navbar-default .menu-explore {
+  display: inline-block !important;
+  position: absolute;
+  top: 0;
+  right: 42px;
+  height: 42px;
+}
+
+/* Explore panel: shanti-main.css declares it `.container` (Bootstrap-
+   width-capped, centered) plus `.collections` (background:#222;
+   width:100%) -- the two fight, and BS5's own button reset also beats
+   the ported `.collections .close{position:absolute}` rule (computed
+   styles showed position:relative, display:block, full-width -- cascade
+   order issue, not investigated further). Force both explicitly instead
+   of chasing the exact conflict. */
+#explore-panel.collections {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  position: relative;
+}
+#explore-panel .close {
+  position: absolute !important;
+  top: 1rem;
+  right: 1.5rem;
+  width: auto !important;
+  display: inline-block !important;
+}
+
+/* .menu-main reuses D7's class name but NOT shanti-main.css's own rules
+   for it: those were sized for the old multilevelpushmenu plugin's very
+   different DOM (4em-tall rows, 2em icons, 250px absolute-positioned
+   panel) and read as oversized/misaligned/padded wrong once applied
+   here. Rather than patch around that ported sizing, this section
+   overrides it wholesale with compact dimensions matched directly
+   against a group-supplied screenshot of the real production drilldown
+   (title+back row height, item row height, caret size). */
+#sarvaka-header .menu-main {
+  position: relative;
+  /* shanti-main.css's ported rule also sets top:42px/right:0 (meant for
+     its own position:absolute) -- switching to position:relative above
+     made that `top` actually take effect as a real offset, producing a
+     42px gap above the whole panel. Neutralize explicitly. */
+  top: 0;
+  right: auto;
+  left: auto;
+  bottom: auto;
+  width: auto;
+  overflow: hidden;
+  border-top: none;
+  border-left: 4px solid #ad8a28; /* thin brand accent, matches the screenshot */
+}
+#sarvaka-header .menu-main h3,
+#sarvaka-header .menu-main h2 {
+  height: auto;
+  line-height: normal;
+  margin: 0;
+  padding: 0.9rem 1.25rem;
+  border-top: none;
+  border-bottom: 1px solid #ddd;
+  text-indent: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#sarvaka-header .menu-main h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#sarvaka-header .menu-main ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+#sarvaka-header .menu-main li {
+  height: auto;
+  background: none;
+  border-top: none;
+  border-bottom: 1px solid #eee;
+}
+#sarvaka-header .menu-main li a {
+  display: block;
+  height: auto;
+  line-height: normal;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9em;
+  color: #300;
+  background: none;
+}
+/* We never set our own :hover rule before, so on hover the browser used
+   shanti-main.css's ported `.menu-main li a:hover{color:#f0f0f0}`
+   (near-white, meant to pair with that same ported rule's
+   background-color:#444) while our own higher-specificity `background:
+   none` above was cancelling just the background half of that pair --
+   white text on a white row, invisible. Restore the real production
+   pairing (grey background, white text) explicitly so both properties
+   are owned together and can't separate again. */
+#sarvaka-header .menu-main li a:hover {
+  color: #f0f0f0;
+  background-color: #444;
+}
+#sarvaka-header .menu-main li .icon {
+  font-size: 1em;
+  line-height: normal;
+  height: auto;
+  margin: 0 0 0 0.5rem;
+}
+
+/* Drilldown submenu: each parent item's submenu is an absolutely-
+   positioned panel the same size as its parent list, slid into view
+   from the right on click -- approximates the D7 multilevelpushmenu
+   plugin's push/slide interaction without porting the plugin itself. */
+#sarvaka-header .shanti-drilldown-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#sarvaka-header .shanti-drilldown-submenu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  background-color: #fff !important;
+  opacity: 1;
+  isolation: isolate;
+  transform: translateX(100%);
+  transition: transform 200ms ease;
+  visibility: hidden;
+  z-index: 999;
+}
+#sarvaka-header .shanti-drilldown-submenu * {
+  background-color: #fff;
+}
+#sarvaka-header .shanti-drilldown-submenu.shanti-drilldown-active {
+  transform: translateX(0);
+  visibility: visible;
+}
+#sarvaka-header .shanti-drilldown-back {
+  /* rem, not em -- em compounded against the parent h2's own large
+     italic font-size (ported from shanti-main.css), making this render
+     much bigger than intended. */
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: #4a5fc1;
+  font-style: normal;
+  letter-spacing: 0.05em;
+}
+#sarvaka-header .shanti-drilldown-back .icon {
+  display: inline-block;
+  transform: rotate(180deg);
+  font-size: 1em;
+}

@@ -1,0 +1,22 @@
+uuid: fb9b3d6a-cd4a-4f6e-b0b2-564ef1996ebb
+langcode: en
+status: true
+dependencies:
+  module:
+    - system
+  theme:
+    - shanti_sarvaka
+_core:
+  default_config_hash: eYL19CLDyinGTWYQfBD1DswWzglEotE_kHnHx3AxTXM
+id: shanti_sarvaka_powered
+theme: shanti_sarvaka
+region: footer
+weight: 0
+provider: null
+plugin: system_powered_by_block
+settings:
+  id: system_powered_by_block
+  label: 'Powered by Drupal'
+  label_display: '0'
+  provider: system
+visibility: {  }

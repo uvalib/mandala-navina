@@ -20,6 +20,7 @@ module:
   editor: 0
   entity: 0
   entity_reference_revisions: 0
+  facets: 0
   field: 0
   field_ui: 0
   file: 0
@@ -76,4 +77,7 @@ module:
 theme:
   olivero: 0
   claro: 0
+  stable9: 0
+  bootstrap5: 0
+  shanti_sarvaka: 0
 profile: standard
