@@ -1,7 +1,7 @@
 # Sprint 2: D11 base theme, Images interactive UI, and other-asset-type groundwork
 
-**Status:** ◐ Not started — planning reviewed and corrected 2026-08-28
-([planning doc](../planning/sprint-02-planning.md)); no workstream has landed code yet.
+**Status:** ◐ In progress — Workstream A (base theme) closed and merged 2026-09-01
+([PR #169](https://github.com/uvalib/mandala-navina/pull/169)); B, C, D not yet started.
 **Phase:** [Roadmap](../roadmap.md) Phase 2 setup — the shared theme foundation and
 Images' remaining UI, plus the research groundwork Phase 2's per-site tracks (Texts,
 Sources) and Phase 3 (AV) will need before they fork off.
@@ -59,12 +59,12 @@ here.
 
 | | Task | Depends on | Status |
 |---|---|---|---|
-| A1 | `shanti_sarvaka.info.yml`: subtheme of contrib `bootstrap5`, the 12 D7 regions verbatim, no additional regions | — | ☐ |
-| A2 | Twig templates (`html`, `page`, `node`, `page--403`, `page--404`, `breadcrumb`) ported from the real D7 `.tpl.php` files at `~/Sandbox/Mandala/Site/mandala-drupal/docroot/sites/all/themes/shanti_sarvaka/`, updated to Bootstrap 5 grid/utility classes | A1 | ☐ |
-| A3 | `shanti_sarvaka.libraries.yml`: Bootstrap-independent shared vendor JS/CSS (wookmark, jssor slider, mCustomScrollbar, hammer) + a resolved Bootstrap-5-compatible replacement for `bootstrap-select` (no official BS5 build — evaluate `tom-select` or similar) | A2 | ☐ |
-| A4 | `shanti_sarvaka.theme`: `hook_preprocess_*` porting breadcrumb, faceted search, search-result preprocessing, and the KMaps typeahead template from the real `template.php` | A2 | ☐ |
-| A5 | `README.md` documenting the Bootstrap-5 rationale/plugin swaps and the component-level (not region-level) extension pattern for future asset types, pointing at workstream B's formatters as the concrete precedent | A1–A4 | ☐ |
-| A6 | Flip `drupal/config/sync/system.theme.yml` default from `olivero` to `shanti_sarvaka` — the one system-wide change, done last once A1–A5 are visibly working | A1–A5 | ☐ |
+| A1 | `shanti_sarvaka.info.yml`: subtheme of contrib `bootstrap5`, the 12 D7 regions verbatim, no additional regions | — | ☑ |
+| A2 | Twig templates (`html`, `page`, `node`, `page--403`, `page--404`, `breadcrumb`) ported from the real D7 `.tpl.php` files at `~/Sandbox/Mandala/Site/mandala-drupal/docroot/sites/all/themes/shanti_sarvaka/`, updated to Bootstrap 5 grid/utility classes | A1 | ☑ |
+| A3 | `shanti_sarvaka.libraries.yml`: Bootstrap-independent shared vendor JS/CSS (wookmark, jssor slider, mCustomScrollbar, hammer) + a resolved Bootstrap-5-compatible replacement for `bootstrap-select` (no official BS5 build — evaluate `tom-select` or similar) | A2 | ☑ |
+| A4 | `shanti_sarvaka.theme`: `hook_preprocess_*` porting breadcrumb, faceted search, search-result preprocessing, and the KMaps typeahead template from the real `template.php` | A2 | ☑ |
+| A5 | `README.md` documenting the Bootstrap-5 rationale/plugin swaps and the component-level (not region-level) extension pattern for future asset types, pointing at workstream B's formatters as the concrete precedent | A1–A4 | ☑ |
+| A6 | Flip `drupal/config/sync/system.theme.yml` default from `olivero` to `shanti_sarvaka` — the one system-wide change, done last once A1–A5 are visibly working | A1–A5 | ☑ |
 
 ### Workstream B — Images interactive UI
 
