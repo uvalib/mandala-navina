@@ -89,3 +89,4 @@ nav:
   - "terraform-infrastructure clones in full on every deploy": terraform-infrastructure-full-clone-on-every-deploy.md
   - "kmassets:audit checks master, not the search reader (70-doc gap)": kmassets-audit-checks-master-not-search-reader.md
   - "Drupal image missing mysql client (drush sql:* silently no-ops)": drupal-image-missing-mysql-client.md
+  - "AV production dump corrupted — no data profile": av-dump-corrupted-no-data-profile.md
