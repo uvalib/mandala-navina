@@ -1,0 +1,77 @@
+{#
+/**
+ * @file
+ * Override for the `image_gallery` view only. Two departures from core's
+ * default views-view.html.twig, both to match production exactly:
+ *
+ * - `header`/`exposed` get production's own `.view-header`/`.view-filters`
+ *   class names (D11's default template uses a bare, unclassed <header>
+ *   tag and prints `exposed` with no wrapper at all) -- shanti-grid-view
+ *   .css's float:left layout targets these class names directly, porting
+ *   the equivalent rule from D7's sarvaka_images theme (not part of the
+ *   shared shanti_sarvaka base theme, so never carried over on its own).
+ * - `pager` is printed twice -- once directly after `.view-filters`, once
+ *   in its normal bottom position -- exactly matching D7's own
+ *   views-view--shanti-image-list-view.tpl.php technique. `pager` arrives
+ *   as a lazy render array, and Drupal's renderer marks a render array
+ *   `#printed` after its first render -- printing the *same* array twice
+ *   with plain `{{ pager }}` would render nothing the second time. Forcing
+ *   it through `|render` once into `pager_markup` (an already-rendered
+ *   Markup string) sidesteps that, since a plain string has no #printed
+ *   state to trip.
+ *
+ * @see \template_preprocess_views_view()
+ */
+#}
+{%
+  set classes = [
+    dom_id ? 'js-view-dom-id-' ~ dom_id,
+  ]
+%}
+{% set pager_markup = pager|render %}
+<div{{ attributes.addClass(classes) }}>
+  {{ title_prefix }}
+  {{ title }}
+  {{ title_suffix }}
+
+  {# Wrapped in one clearfix: `.view-header`/`.view-filters` float left and
+     the pager floats right (theme's ported shanti-main.css), so without a
+     shared block-formatting-context container here the parent's height
+     collapses to 0 and the grid below paints over this whole row instead
+     of below it. #}
+  <div class="clearfix">
+    {% if header %}
+      <div class="view-header">
+        {{ header }}
+      </div>
+    {% endif %}
+
+    {% if exposed %}
+      <div class="view-filters">
+        {{ exposed }}
+      </div>
+    {% endif %}
+
+    {{ pager_markup }}
+  </div>
+
+  {{ attachment_before }}
+
+  {% if rows -%}
+    {{ rows }}
+  {% elseif empty -%}
+    {{ empty }}
+  {% endif %}
+  {{ pager_markup }}
+
+  {{ attachment_after }}
+  {{ more }}
+
+  {% if footer %}
+    <footer>
+      {{ footer }}
+    </footer>
+  {% endif %}
+
+  {{ feed_icons }}
+</div>

@@ -1,0 +1,56 @@
+{#
+  Page-jump widget pager (ShantiPager) -- markup ported to match production's
+  D7 "pagerer" module output exactly (table.pagerer > .pagerer-pager >
+  ul.pager), so the theme's existing ported pagerer/pager icon CSS applies
+  unchanged. See shanti-grid-view.js's `Drupal.behaviors.shantiPager` for the
+  widget input's client-side behavior (focus/select, Enter-to-jump, Escape,
+  arrow-key nudge).
+#}
+<table class="pagerer">
+  <tbody>
+    <tr>
+      <td></td>
+      <td></td>
+      <td class="pagerer pagerer-right">
+        <h2 class="visually-hidden">{{ 'Pages'|t }}</h2>
+        <div class="pagerer-pager">
+          <ul class="pager">
+            <li class="pager-first first{{ first_href ? ' active' : '' }}">
+              {% if first_href %}
+                <a href="{{ first_href }}" title="{{ 'Go to first page'|t }}"><span class="icon"></span></a>
+              {% else %}
+                <span class="icon"></span>
+              {% endif %}
+            </li>
+            <li class="pager-previous{{ previous_href ? ' active' : '' }}">
+              {% if previous_href %}
+                <a href="{{ previous_href }}" title="{{ 'Go to previous page'|t }}"><span class="icon"></span></a>
+              {% else %}
+                <span class="icon"></span>
+              {% endif %}
+            </li>
+            <li class="pager-item">{{ 'Page'|t }}</li>
+            <li class="pager-item widget active">
+              <input type="text" class="pagerer-page" name="{{ widget_state }}" title="{{ 'Enter page, then press Return.'|t }}" value="{{ current_page }}" />
+            </li>
+            <li class="pager-item">{{ 'of @total'|t({'@total': total_pages}) }}</li>
+            <li class="pager-next{{ next_href ? ' active' : '' }}">
+              {% if next_href %}
+                <a href="{{ next_href }}" title="{{ 'Go to next page'|t }}"><span class="icon"></span></a>
+              {% else %}
+                <span class="icon"></span>
+              {% endif %}
+            </li>
+            <li class="pager-last last{{ last_href ? ' active' : '' }}">
+              {% if last_href %}
+                <a href="{{ last_href }}" title="{{ 'Go to last page'|t }}"><span class="icon"></span></a>
+              {% else %}
+                <span class="icon"></span>
+              {% endif %}
+            </li>
+          </ul>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>

@@ -11,12 +11,57 @@
  * "article.main-col { max-width: 1050px !important; }", with D7 itself
  * overriding that to full width specifically on its Images homepage
  * (".front.images article.main-col"). Same technique here, scoped to
- * whatever page(s) actually carry the gallery view -- currently just
- * body.path-gallery, since the view isn't wired as the real front page
- * yet. */
+ * whatever page(s) actually carry the gallery view: /gallery directly, or
+ * as the site's actual front page -- D11's front-page body class is
+ * `.path-frontpage`, not D7's `.front`. */
 .path-gallery article.main-col,
-.front article.main-col:has(.shanti-grid-view-wrapper) {
+.path-frontpage article.main-col:has(.shanti-grid-view-wrapper) {
   max-width: 100% !important;
+}
+
+/* The theme's ported D7 CSS (shanti-main.css `ul.pager`/`.main-wrapper
+ * ul.pager li` rules) styles the pager assuming Bootstrap 3's own base
+ * `.pager` component (list-style: none, `li` inline) is still present to
+ * build on -- true in D7's Bootstrap 3 theme, but our D11 subtheme is
+ * genuine Bootstrap 5, which dropped `.pager` entirely. Without this, the
+ * <li> items render as a plain bulleted vertical list instead of an inline
+ * row. */
+.pagerer-pager .pager {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pagerer-pager .pager li {
+  display: inline;
+}
+
+/* Search/sort (left) sit beside the Shanti pager (right, `table.pagerer
+ * { float: right }` in the theme's ported shanti-main.css) rather than
+ * stacking above it -- ported from D7's sarvaka_images theme
+ * (shanti-main-images.css `.view-all-image-gallery .view-header`/
+ * `.view-filters`), which is Images-site-specific and was never part of
+ * the shared shanti_sarvaka base theme carried over for D11. Class names
+ * come from views-view--image-gallery.html.twig's override of core's
+ * default (unclassed) header/exposed-form markup. */
+.view-id-image_gallery .view-header,
+.view-id-image_gallery .view-filters {
+  float: left;
+  margin-top: 1rem;
+}
+
+.view-id-image_gallery .views-exposed-widget.views-widget-filter-title {
+  margin-left: 12px;
+}
+
+/* Bootstrap 5's own `.clearfix` utility should already cover this, but
+ * that depends on Bootstrap's CSS being loaded on whatever page carries
+ * this view -- defined locally too so the float layout above doesn't
+ * silently collapse if that assumption ever doesn't hold. */
+.view-id-image_gallery .clearfix::after {
+  content: '';
+  display: block;
+  clear: both;
 }
 
 .shanti-grid-view-wrapper {

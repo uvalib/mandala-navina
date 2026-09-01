@@ -27,3 +27,13 @@ masonry-grid:
     - core/once
     - core/drupalSettings
     - shanti_grid_view/pig
+
+# ShantiPager's widget input (type-a-page-number-and-press-Enter), ported
+# from D7's pagerer.js -- see shanti-pager.js for the specific subset of
+# pagerer's own widget behavior this replicates.
+shanti-pager:
+  js:
+    js/shanti-pager.js: {}
+  dependencies:
+    - core/drupal
+    - core/once

@@ -28,5 +28,24 @@ function shanti_grid_view_theme($existing, $type, $theme, $path) {
       'base hook' => 'node',
       'template' => 'node--shanti-image--grid-details',
     ],
+    // Same reasoning: the `views_view__image_gallery` suggestion Views
+    // itself computes (ViewExecutable::buildThemeFunctions()) doesn't get
+    // auto-matched to this module's template purely from file naming --
+    // register it explicitly rather than assume.
+    'views_view__image_gallery' => [
+      'base hook' => 'views_view',
+      'template' => 'views-view--image-gallery',
+    ],
+    'shanti_pager' => [
+      'variables' => [
+        'first_href' => NULL,
+        'previous_href' => NULL,
+        'next_href' => NULL,
+        'last_href' => NULL,
+        'current_page' => NULL,
+        'total_pages' => NULL,
+        'widget_state' => NULL,
+      ],
+    ],
   ];
 }
