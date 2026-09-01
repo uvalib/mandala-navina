@@ -38,24 +38,6 @@ content:
     third_party_settings: {  }
     weight: 0
     region: content
-  field_image_agents:
-    type: entity_reference_revisions_entity_view
-    label: hidden
-    settings:
-      view_mode: default
-      link: ''
-    third_party_settings: {  }
-    weight: 1
-    region: content
-  field_image_descriptions:
-    type: entity_reference_revisions_entity_view
-    label: hidden
-    settings:
-      view_mode: default
-      link: ''
-    third_party_settings: {  }
-    weight: 5
-    region: content
   field_kmap_collections:
     type: kmap_default_formatter
     label: hidden
@@ -94,8 +76,10 @@ hidden:
   field_iiif_id: true
   field_iiif_mms_id: true
   field_iiif_width: true
+  field_image_agents: true
   field_image_capture_device: true
   field_image_color: true
+  field_image_descriptions: true
   field_image_digital: true
   field_image_enhancement: true
   field_image_materials: true

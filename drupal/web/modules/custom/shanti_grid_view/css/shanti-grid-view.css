@@ -1,9 +1,23 @@
 /**
  * pig.js injects its own minimal figure-positioning CSS at runtime
- * (absolute positioning + transforms); this file only covers the wrapper,
- * the container's own sizing, and the click-to-open info panel that isn't
- * pig.js's concern.
+ * (absolute positioning + transforms); this file covers the wrapper, the
+ * full-width override, the click-to-open info panel's own positioning,
+ * and the grid_details node template's image-left/metadata-right layout
+ * (node--shanti-image--grid-details.html.twig) -- ported to roughly match
+ * production's dark popdown panel.
  */
+
+/* theme's ported D7 CSS (shanti-main.css) sets a blanket
+ * "article.main-col { max-width: 1050px !important; }", with D7 itself
+ * overriding that to full width specifically on its Images homepage
+ * (".front.images article.main-col"). Same technique here, scoped to
+ * whatever page(s) actually carry the gallery view -- currently just
+ * body.path-gallery, since the view isn't wired as the real front page
+ * yet. */
+.path-gallery article.main-col,
+.front article.main-col:has(.shanti-grid-view-wrapper) {
+  max-width: 100% !important;
+}
 
 .shanti-grid-view-wrapper {
   position: relative;
@@ -18,28 +32,111 @@
   cursor: pointer;
 }
 
+/* Positioned by JS (shanti-grid-view.js) via an inline `top`, directly
+ * below the clicked image's row -- see that file for why this is done
+ * against pig.js's own per-image translateY model rather than normal
+ * document flow. */
 .shanti-grid-view-panel {
-  position: relative;
-  margin-top: 1rem;
-  padding: 1.5rem;
+  position: absolute;
+  left: 0;
+  width: 100%;
+  z-index: 2;
   background: #1a1a1a;
   color: #f0f0f0;
-  border-radius: 0.25rem;
 }
 
 .shanti-grid-view-panel-close {
   position: absolute;
-  top: 0.5rem;
-  right: 0.75rem;
+  top: 0.75rem;
+  right: 1rem;
+  z-index: 1;
   border: 0;
   background: none;
   color: #f0f0f0;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   line-height: 1;
   cursor: pointer;
 }
 
-.shanti-grid-view-panel-body img {
+.shanti-grid-view-panel-body {
+  padding: 2rem;
+}
+
+/* node--shanti-image--grid-details.html.twig */
+.shanti-grid-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.shanti-grid-details-image {
+  flex: 0 1 auto;
+  max-width: 100%;
+}
+
+.shanti-grid-details-image img {
+  display: block;
   max-width: 100%;
   height: auto;
+}
+
+.shanti-grid-details-meta {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.shanti-grid-details-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.shanti-grid-details-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.shanti-grid-details-specs {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.75rem;
+  row-gap: 0.25rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.shanti-grid-details-specs span + span:not(.shanti-grid-details-ids)::before {
+  content: '|';
+  margin-right: 0.75rem;
+  opacity: 0.5;
+}
+
+.shanti-grid-details-ids {
+  flex-basis: 100%;
+}
+
+.shanti-grid-details-collections,
+.shanti-grid-details-kmaps {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.shanti-grid-details-description {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgb(255 255 255 / 15%);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.shanti-grid-details-links {
+  margin-top: 1.25rem;
 }

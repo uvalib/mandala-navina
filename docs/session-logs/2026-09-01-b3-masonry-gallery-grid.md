@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-01
 **Participants:** Than Grove, Claude Code
-**Outcome:** Sprint 2 Workstream B3 built and verified live in DDEV: a new `shanti_grid_view` module providing a real Views style plugin (`GridView`, PIG.js masonry) plus the click-to-open info-panel endpoint (`GridInfoController`), wired into a working `/gallery` page against real migrated Images data. Two real bugs found and fixed along the way.
+**Outcome:** Sprint 2 Workstream B3 built and verified live in DDEV: a new `shanti_grid_view` module providing a real Views style plugin (`GridView`, PIG.js masonry) plus the click-to-open info-panel endpoint (`GridInfoController`), wired into a working `/gallery` page against real migrated Images data. Two real bugs found and fixed along the way. **Update (same session, after first review):** Than asked for three follow-up fixes against the real production site — full-page width, the info panel opening in its own row directly below the clicked image (not just appended after the whole grid), and the panel's internal layout matching production's image-left/metadata-right structure. All three built and verified; see §8.
 
 ---
 
@@ -124,12 +124,102 @@ case:
   scale; if it's a real performance problem once tested against the full dataset,
   that's the first place to optimize.
 
+## 8. Follow-up fixes: full width, in-row shift, and production-matching layout
+
+Than reviewed the first pass against the real production site and asked for three
+fixes.
+
+### 8.1 Full page width
+
+The grid rendered inside the theme's default content column
+(`article.main-col { max-width: 1050px !important; }` — real, ported D7 CSS from
+`shanti-main.css`). D7 itself already had the answer: it overrides that same rule to
+full width specifically on its Images homepage (`.front.images article.main-col`).
+Added the equivalent override scoped to `body.path-gallery` (plus a forward-looking
+`:has()` selector in case the view becomes the real front page later) in the module's
+own CSS, rather than touching the shared theme stylesheet.
+
+### 8.2 In-row shift, not append-after-everything
+
+The first pass inserted the panel as a sibling *after the entire grid container*
+(`insertAdjacentElement('afterend', ...)`) — functional, but not what was asked: the
+panel needs to open in its own row directly below the *clicked image's row*, pushing
+only the rows below it down (screenshot supplied showed exactly this — D7's real
+popdown behavior).
+
+Read D7's actual mechanism (`pig-shanti-ext.js`'s `openPopdown`/`shiftDown`/
+`shiftImages`) to understand how it's really done: the panel is positioned via the
+clicked image's own row Y-coordinate, and every image below that row gets its
+transform's Y value shifted down by the panel's height. D7 pairs this with disabling
+pig.js's own scroll-driven re-layout (`Pig.prototype._getOnScroll` patched to a
+no-op) so its direct DOM transform edits never get overwritten by pig's own
+scroll/resize cycle.
+
+**Took a different, more robust path** that doesn't require that disable-scroll
+trade-off: pig.js keeps a public `pig.images` array of `ProgressiveImage` instances,
+each with a `style.translateY` model property that pig itself re-reads every time it
+(re)renders a figure (on scroll, on resize). Mutating that *model* property (not just
+the DOM's transform string) means pig.js's own normal scroll/resize cycle keeps
+rendering the shifted position correctly on its own — no need to disable
+virtualization, which was already proven working in this session's first pass. Height
+changes (open, content-loaded resize, close) all shift affected images by a delta,
+and the container's own height grows/shrinks to match so later page content doesn't
+overlap. A resize listener closes any open panel outright, since pig.js's resize
+handler fully recomputes every image's layout from scratch and would otherwise strand
+the panel at a stale row position.
+
+Verified: opened the panel on multiple different rows (including deep in the grid,
+not just row 1) — only rows below the clicked one shift down, rows above stay in
+place, and closing cleanly restores the original packed layout with no leftover gaps
+or overlaps.
+
+### 8.3 Production-matching internal layout
+
+The panel's content was rendering through Drupal's *default* `node.html.twig` (plain
+field stacking, including a "Submitted by Anonymous" line that has no equivalent in
+production) rather than a layout matching image-left/metadata-right with title,
+specs line, tags, and description, as shown in the reference screenshot.
+
+Built a real template override, `node--shanti-image--grid-details.html.twig`,
+structured to match D7's own `node--shanti_image--grid-details.tpl.php` (already
+captured in full in the earlier production-reference research): title with icon,
+specs line (photographer name, dimensions, date, Image Node ID, IIIF ID), collection/
+KMaps place/subject tags (reusing the `kmap_default_formatter` output), description,
+and a Details link through to the full node page. Simplified the `grid_details`
+entity view display to match — `field_image_agents`/`field_image_descriptions` moved
+to hidden, since the template reads the referenced paragraph's fields directly
+(`node.field_image_agents.0.entity.field_agent_name.value`) rather than going through
+the paragraph's own default view mode rendering, avoiding a verbose nested-paragraph
+render for what should be a single line.
+
+**Hit a real Drupal template-discovery gap along the way, not just a caching issue.**
+The override file was correctly named and placed, but direct testing (rendering the
+node via the entity view builder in isolation, independent of the route/controller)
+confirmed Drupal was still using the default template — genuinely not discovered, not
+a stale-cache artifact (confirmed by wiping the compiled Twig cache directory
+entirely and rebuilding, which made no difference). Fixed by explicitly registering
+the override in `hook_theme()`:
+```php
+'node__shanti_image__grid_details' => [
+  'base hook' => 'node',
+  'template' => 'node--shanti-image--grid-details',
+],
+```
+This is the robust, explicit way to guarantee a suggestion template is found
+regardless of any auto-discovery quirk for a hook owned by a different module
+(`node`, not `shanti_grid_view`) — confirmed working immediately after, both via
+direct view-builder rendering and live in the browser, complete with real KMaps
+place/subject tags (working links) and description text for nodes that have that
+data populated.
+
 ## Next-session starting point
 
 - Confirm with the team whether `/gallery` should become the actual front page, or
   stay a separate page.
 - PhotoSwipe lightbox assessment, if wanted.
-- KMaps popover widget porting (shared need with the info panel's place/subject tags).
+- KMaps popover widget porting (shared need with the info panel's place/subject tags
+  — production shows these as interactive popovers, this port shows plain linked
+  tags via the existing `kmap_default_formatter`).
 - Performance check against the full ~108k-image dataset once available in a
   more production-like environment than DDEV's local dataset.
 - Workstream D (uniform endpoint access docs) remains open and small — this session

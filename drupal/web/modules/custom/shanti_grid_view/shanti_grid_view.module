@@ -20,5 +20,13 @@ function shanti_grid_view_theme($existing, $type, $theme, $path) {
         'dom_id' => NULL,
       ],
     ],
+    // Explicit registration for the info-panel override template, rather
+    // than relying on node.module's node__{bundle}__{view_mode} suggestion
+    // to be auto-discovered purely from file naming/location -- guarantees
+    // Drupal finds it regardless of module-vs-theme template-scan order.
+    'node__shanti_image__grid_details' => [
+      'base hook' => 'node',
+      'template' => 'node--shanti-image--grid-details',
+    ],
   ];
 }

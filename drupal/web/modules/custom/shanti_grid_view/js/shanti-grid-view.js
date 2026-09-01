@@ -7,12 +7,20 @@
  * `filename` field is repurposed here as "the ready-to-use thumbnail URL"
  * -- urlForSize() below is an identity function, not a real size lookup.
  *
- * pig.js recycles/virtualizes DOM figures as the user scrolls (see its own
- * ProgressiveImage.load()/hide()), so there's no stable per-tile DOM
- * attribute to hang a node ID off of without patching the vendored file.
- * Instead: since each image's thumbnail URL is unique, a delegated click
- * listener looks up the clicked <img>'s `src` in a Map built from the same
- * data pig.js was given.
+ * The info panel opens in place, directly below the clicked image's row,
+ * pushing every row below it down -- same UX as D7's popdown. D7 achieves
+ * this by mutating each affected figure's DOM transform directly *and*
+ * disabling pig.js's own scroll-driven re-layout (Pig.prototype._getOnScroll
+ * patched to a no-op) so those direct DOM edits never get overwritten.
+ * Here, scroll virtualization is left enabled (proven working against the
+ * real page during testing) -- instead, each affected ProgressiveImage
+ * instance's *own* `style.translateY` (the model pig.js itself reads
+ * every time it (re)renders a figure) is mutated, so pig.js's normal
+ * scroll/resize cycle naturally keeps rendering the shifted position
+ * without fighting it. `pig.images` and `ProgressiveImage.prototype.
+ * _updateStyles` are plain (if underscore-prefixed) instance properties,
+ * not really private in a vendored, un-bundled script -- relied on here
+ * rather than duplicating pig.js's row-packing math ourselves.
  */
 ((Drupal, once, drupalSettings) => {
   Drupal.behaviors.shantiGridView = {
@@ -37,13 +45,41 @@
         });
         pig.enable();
 
-        let panel;
+        let panel = null;
+        let panelRowY = null;
+        let panelHeight = 0;
+
+        /**
+         * Shifts every image below {rowY} by {delta}px (negative to shift
+         * back up), and grows/shrinks the container to match, so later page
+         * content doesn't overlap.
+         */
+        const shiftBelow = (rowY, delta) => {
+          if (!delta) {
+            return;
+          }
+          pig.images.forEach((image) => {
+            if (image.style.translateY > rowY) {
+              image.style.translateY += delta;
+              if (image.existsOnPage) {
+                image._updateStyles();
+              }
+            }
+          });
+          pig.totalHeight += delta;
+          // eslint-disable-next-line no-param-reassign
+          container.style.height = `${pig.totalHeight}px`;
+        };
 
         const closePanel = () => {
-          if (panel) {
-            panel.remove();
-            panel = null;
+          if (!panel) {
+            return;
           }
+          shiftBelow(panelRowY, -panelHeight);
+          panel.remove();
+          panel = null;
+          panelRowY = null;
+          panelHeight = 0;
         };
 
         container.addEventListener('click', (event) => {
@@ -55,14 +91,27 @@
           if (!image) {
             return;
           }
+          const figure = img.closest('figure');
+          const progressiveImage = pig.images.find((candidate) => candidate.element === figure);
+          if (!progressiveImage) {
+            return;
+          }
 
-          closePanel();
-          panel = document.createElement('div');
-          panel.className = 'shanti-grid-view-panel';
-          panel.innerHTML = '<button type="button" class="shanti-grid-view-panel-close" aria-label="Close">×</button><div class="shanti-grid-view-panel-body">Loading…</div>';
+          const rowY = progressiveImage.style.translateY;
+          const sameRowAlreadyOpen = panel && panelRowY === rowY;
+          if (!sameRowAlreadyOpen) {
+            closePanel();
+          }
+
+          if (!panel) {
+            panel = document.createElement('div');
+            panel.className = 'shanti-grid-view-panel';
+            panel.style.top = `${rowY + progressiveImage.style.height}px`;
+            container.appendChild(panel);
+            panelRowY = rowY;
+          }
+          panel.innerHTML = '<button type="button" class="shanti-grid-view-panel-close" aria-label="Close">×</button><div class="shanti-grid-view-panel-body">' + Drupal.t('Loading…') + '</div>';
           panel.querySelector('.shanti-grid-view-panel-close').addEventListener('click', closePanel);
-          container.insertAdjacentElement('afterend', panel);
-          panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
           fetch(image.infoUrl, { headers: { Accept: 'text/html' } })
             .then((response) => {
@@ -72,17 +121,35 @@
               return response.text();
             })
             .then((html) => {
-              const body = panel && panel.querySelector('.shanti-grid-view-panel-body');
-              if (body) {
-                body.innerHTML = html;
+              if (!panel) {
+                return;
               }
+              panel.querySelector('.shanti-grid-view-panel-body').innerHTML = html;
+              const newHeight = panel.getBoundingClientRect().height;
+              shiftBelow(panelRowY, newHeight - panelHeight);
+              panelHeight = newHeight;
+              panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             })
             .catch(() => {
-              const body = panel && panel.querySelector('.shanti-grid-view-panel-body');
-              if (body) {
-                body.textContent = Drupal.t('Unable to load details for this image.');
+              if (!panel) {
+                return;
               }
+              panel.querySelector('.shanti-grid-view-panel-body').textContent = Drupal.t('Unable to load details for this image.');
+              const newHeight = panel.getBoundingClientRect().height;
+              shiftBelow(panelRowY, newHeight - panelHeight);
+              panelHeight = newHeight;
             });
+        });
+
+        // pig.js's own resize handler fully recomputes every image's
+        // translateY from scratch, which would strand an open panel at a
+        // stale row position -- close it rather than let it drift.
+        window.addEventListener('resize', () => closePanel());
+
+        document.addEventListener('keyup', (event) => {
+          if (event.key === 'Escape') {
+            closePanel();
+          }
         });
       });
     },

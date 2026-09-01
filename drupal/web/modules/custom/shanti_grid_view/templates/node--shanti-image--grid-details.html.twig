@@ -1,0 +1,66 @@
+{#
+/**
+ * @file
+ * shanti_image node in the 'grid_details' view mode -- the masonry-grid
+ * click-to-open info panel. Structure ported from D7's real
+ * node--shanti_image--grid-details.tpl.php (sarvaka_images theme):
+ * image left / metadata right, specs line (author, size, date, IDs),
+ * collection link, KMaps place/subject tags, description, Details link.
+ *
+ * Field access goes straight to `node` (not `content`) for anything not
+ * routed through a display-config formatter, so this template controls
+ * layout precisely rather than stacking whatever the entity view display
+ * produces field-by-field.
+ */
+#}
+{% set agent = node.field_image_agents.0.entity %}
+{% set description = node.field_image_descriptions.0.entity %}
+{% set width = node.field_iiif_width.value %}
+{% set height = node.field_iiif_height.value %}
+<article{{ attributes.addClass('shanti-grid-details') }}>
+  <div class="shanti-grid-details-image">
+    {{ content.field_image }}
+  </div>
+  <div class="shanti-grid-details-meta">
+    <h2 class="shanti-grid-details-title">
+      <span class="icon shanticon-photos" aria-hidden="true"></span>
+      <a href="{{ url }}">{{ label }}</a>
+    </h2>
+    <div class="shanti-grid-details-specs">
+      {% if agent and agent.field_agent_name.value %}
+        <span>{{ agent.field_agent_name.value }}</span>
+      {% endif %}
+      {% if width and height %}
+        <span>{{ width }}&times;{{ height }}</span>
+      {% endif %}
+      <span>{{ node.createdTime|date('M j, Y') }}</span>
+      <span class="shanti-grid-details-ids">Image Node ID: {{ node.id }} | IIIF ID: {{ node.field_iiif_id.value }}</span>
+    </div>
+    {% if content.field_kmap_collections|render|trim %}
+      <div class="shanti-grid-details-collections">
+        <span class="icon shanticon-stack" aria-hidden="true"></span>
+        {{ content.field_kmap_collections }}
+      </div>
+    {% endif %}
+    {% if content.field_places|render|trim %}
+      <div class="shanti-grid-details-kmaps">
+        <span class="icon shanticon-places" aria-hidden="true"></span>
+        {{ content.field_places }}
+      </div>
+    {% endif %}
+    {% if content.field_subjects|render|trim %}
+      <div class="shanti-grid-details-kmaps">
+        <span class="icon shanticon-subjects" aria-hidden="true"></span>
+        {{ content.field_subjects }}
+      </div>
+    {% endif %}
+    {% if description and description.field_description.value %}
+      <div class="shanti-grid-details-description">{{ description.field_description.value|raw }}</div>
+    {% endif %}
+    <div class="shanti-grid-details-links">
+      <a href="{{ url }}" class="btn btn-default btn-sm">
+        {{ 'Details'|t }} <span class="icon shanticon-angle-double-right" aria-hidden="true"></span>
+      </a>
+    </div>
+  </div>
+</article>
