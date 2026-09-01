@@ -72,7 +72,7 @@ here.
 |---|---|---|---|
 | B1 | OpenSeadragon deep-zoom viewer: `IiifDeepZoomFormatter` field formatter in `shanti_iiif`, reusing `IiifUrlBuilder::infoUrl()`; `shanti_iiif.libraries.yml` (OpenSeadragon vendor lib + behavior JS using `drupalSettings`, porting `shanti-main-images.js`'s overlay behavior) | Workstream A skeleton (A1–A2) | ☑ |
 | B2 | AJAX sibling carousel: new `shanti_images_carousel` module, `_entity_access: 'node.view'` route, controller reusing the proven `group_relationship`/`loadByEntity()` collection-lookup pattern (`NodeJsonController::buildCollection()`), new ±15-windowing query cached per-collection, JS behavior attached from `node--shanti_image.html.twig` | Workstream A skeleton, B1 (shared template touch-point) | ☐ |
-| B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate), Views config for the homepage gallery. **Production reference done 2026-09-01** (read-only review, no D11 code yet) — see [`b3-masonry-gallery-production-reference.md`](../planning/b3-masonry-gallery-production-reference.md): confirmed the info-panel endpoint's real D7 access gate is only `access content`, no per-node check (a concrete counter-example for D1's uniform pattern), PIG.js masonry engine details, and that the popdown is just a `grid_details` node view mode, not a bespoke serializer | Workstream A skeleton | ☐ |
+| B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate), Views config for the homepage gallery. **Built and verified live 2026-09-01** — see the session log. PhotoSwipe lightbox and the D7 data-source (non-entity) view mode were deliberately not ported; scope stayed to the entity/node case per the production-reference doc | Workstream A skeleton | ☑ |
 
 **Open scope question (flag, don't silently resolve):** whether D7's multi-image
 sequence viewer (`sdviewer.php` + `shanti_images_sdinit.js`) is in scope for B1 — treated
@@ -121,7 +121,10 @@ Images' own Paragraphs precedent) and must explicitly state that no migration co
       around the current node, and respects private-collection access (verified against
       both a public and a private collection).
 - [ ] The homepage gallery renders via the new `shanti_grid_view` Views style plugin
-      with working click-to-popdown.
+      with working click-to-popdown. **Partially done 2026-09-01**: the grid + popdown
+      both work, verified live (`/gallery` page), but the view isn't wired as the
+      site's actual front page yet (`system.site.yml` still points `/node`) — left
+      unchecked until that's done, a small remaining step, not a functional gap.
 - [x] `av-content-model-audit.md`, `sources-content-model-audit.md`, and
       `texts-content-model-audit.md` all exist, each naming its site's real D7
       field/entity-graph structure (not placeholders) against a real dump, each

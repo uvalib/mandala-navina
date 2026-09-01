@@ -1,0 +1,45 @@
+/**
+ * pig.js injects its own minimal figure-positioning CSS at runtime
+ * (absolute positioning + transforms); this file only covers the wrapper,
+ * the container's own sizing, and the click-to-open info panel that isn't
+ * pig.js's concern.
+ */
+
+.shanti-grid-view-wrapper {
+  position: relative;
+}
+
+.shanti-grid-view-grid {
+  position: relative;
+  width: 100%;
+}
+
+.shanti-grid-view-grid img {
+  cursor: pointer;
+}
+
+.shanti-grid-view-panel {
+  position: relative;
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: #1a1a1a;
+  color: #f0f0f0;
+  border-radius: 0.25rem;
+}
+
+.shanti-grid-view-panel-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  border: 0;
+  background: none;
+  color: #f0f0f0;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shanti-grid-view-panel-body img {
+  max-width: 100%;
+  height: auto;
+}

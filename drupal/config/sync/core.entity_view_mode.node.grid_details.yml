@@ -1,0 +1,11 @@
+uuid: 5cda0d17-3914-4703-8af5-cbaa04781578
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.grid_details
+label: 'Grid details'
+description: "The masonry-grid click-to-open info panel, ported from D7's shanti_grid_view popdown (node_view($node, 'grid_details'))."
+targetEntityType: node
+cache: true

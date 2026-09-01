@@ -1,0 +1,10 @@
+{#
+  Wrapper + empty container for the GridView Views style plugin.
+  All tile markup is built client-side by pig.js from the drupalSettings
+  payload keyed by {{ dom_id }} (see shanti-grid-view.js) -- there is
+  nothing to render server-side here beyond the mount point itself, same
+  as D7's "<div id='ppg-grid'></div>" in shanti-grid-view-gallery.tpl.php.
+#}
+<div class="shanti-grid-view-wrapper">
+  <div id="{{ dom_id }}" class="shanti-grid-view-grid" data-shanti-grid-view></div>
+</div>

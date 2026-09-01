@@ -1,0 +1,29 @@
+# pig.js itself, vendored (same checked-in-vendor-file pattern as
+# shanti_iiif/openseadragon). Reused verbatim from the D7 module's own
+# vendored copy rather than re-fetched from upstream -- it's small, stable,
+# and this exact file is proven working against the real production
+# gallery (schlosser/pig.js, MIT).
+pig:
+  remote: https://github.com/schlosser/pig.js
+  license:
+    name: MIT
+    url: https://github.com/schlosser/pig.js/blob/master/LICENSE
+    gpl-compatible: true
+  js:
+    js/vendor/pig/pig.js: {}
+
+# The behavior itself: masonry init from the GridView style plugin's
+# drupalSettings payload, plus click-to-open wiring against
+# GridInfoController (fetch, not D7's raw innerHTML swap via jQuery, but
+# the same idea).
+masonry-grid:
+  js:
+    js/shanti-grid-view.js: {}
+  css:
+    theme:
+      css/shanti-grid-view.css: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/drupalSettings
+    - shanti_grid_view/pig

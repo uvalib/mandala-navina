@@ -1,0 +1,9 @@
+name: 'Shanti Grid View'
+type: module
+description: 'Masonry/gallery grid view for image-heavy listings: a Views style plugin plus the click-to-open info-panel endpoint. Ports D7''s shanti_grid_view (PIG.js masonry + AJAX popdown), scoped to the entity/node case only — see docs/planning/b3-masonry-gallery-production-reference.md.'
+package: Mandala
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:views
+  - drupal:node
+  - shanti_iiif:shanti_iiif

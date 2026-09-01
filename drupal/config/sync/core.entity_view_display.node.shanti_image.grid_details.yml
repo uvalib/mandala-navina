@@ -1,0 +1,131 @@
+uuid: 8a7a5e1e-6b3f-4b0a-9c7e-2b6f1d9a3c4e
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.grid_details
+    - field.field.node.shanti_image.field_iiif_id
+    - field.field.node.shanti_image.field_iiif_width
+    - field.field.node.shanti_image.field_iiif_height
+    - field.field.node.shanti_image.field_image
+    - field.field.node.shanti_image.field_image_agents
+    - field.field.node.shanti_image.field_image_descriptions
+    - field.field.node.shanti_image.field_image_rotation
+    - field.field.node.shanti_image.field_kmap_collections
+    - field.field.node.shanti_image.field_places
+    - field.field.node.shanti_image.field_subjects
+    - node.type.shanti_image
+  module:
+    - entity_reference_revisions
+    - shanti_iiif
+    - shanti_kmaps_fields
+id: node.shanti_image.grid_details
+targetEntityType: node
+bundle: shanti_image
+mode: grid_details
+content:
+  field_image:
+    type: iiif_image
+    label: hidden
+    settings:
+      width: 800
+      height: 500
+      rotation: 0
+      scaled: true
+      upscale: true
+      iiif_id_field: field_iiif_id
+      rotation_field: field_image_rotation
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  field_image_agents:
+    type: entity_reference_revisions_entity_view
+    label: hidden
+    settings:
+      view_mode: default
+      link: ''
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  field_image_descriptions:
+    type: entity_reference_revisions_entity_view
+    label: hidden
+    settings:
+      view_mode: default
+      link: ''
+    third_party_settings: {  }
+    weight: 5
+    region: content
+  field_kmap_collections:
+    type: kmap_default_formatter
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  field_places:
+    type: kmap_default_formatter
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 3
+    region: content
+  field_subjects:
+    type: kmap_default_formatter
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 4
+    region: content
+hidden:
+  field_admin_notes: true
+  field_altitude: true
+  field_aperture: true
+  field_classification_notes: true
+  field_copyright_date: true
+  field_copyright_holder: true
+  field_copyright_statement: true
+  field_exposure_bias: true
+  field_external_classification: true
+  field_flash_settings: true
+  field_focal_length: true
+  field_general_note: true
+  field_iiif_height: true
+  field_iiif_id: true
+  field_iiif_mms_id: true
+  field_iiif_width: true
+  field_image_capture_device: true
+  field_image_color: true
+  field_image_digital: true
+  field_image_enhancement: true
+  field_image_materials: true
+  field_image_notes: true
+  field_image_quality: true
+  field_image_rotation: true
+  field_image_type: true
+  field_iso_speed_rating: true
+  field_keywords: true
+  field_kmap_terms: true
+  field_latitude: true
+  field_legacy_nid: true
+  field_legacy_site: true
+  field_lens: true
+  field_license_url: true
+  field_light_source: true
+  field_longitude: true
+  field_metering_mode: true
+  field_noise_reduction: true
+  field_organization_name: true
+  field_original_filename: true
+  field_other_ids: true
+  field_physical_size: true
+  field_private_note: true
+  field_project_name: true
+  field_rights_notes: true
+  field_sensing_method: true
+  field_sponsor_name: true
+  field_spot_feature: true
+  field_technical_notes: true
+  langcode: true
+  links: true
+  search_api_excerpt: true

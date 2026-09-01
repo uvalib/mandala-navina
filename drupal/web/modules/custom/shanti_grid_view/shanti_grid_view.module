@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * Masonry/gallery grid view: a Views style plugin (GridView) plus the
+ * click-to-open info-panel endpoint (GridInfoController). Ports D7's
+ * shanti_grid_view for the entity/node case only -- see
+ * docs/planning/b3-masonry-gallery-production-reference.md.
+ */
+
+/**
+ * Implements hook_theme().
+ */
+function shanti_grid_view_theme($existing, $type, $theme, $path) {
+  return [
+    'shanti_grid_view' => [
+      'variables' => [
+        'view' => NULL,
+        'options' => [],
+        'dom_id' => NULL,
+      ],
+    ],
+  ];
+}
