@@ -113,8 +113,10 @@ Images' own Paragraphs precedent) and must explicitly state that no migration co
       attributes, no jQuery-only BS3/4 plugins left unreplaced), renders all 12 D7
       regions with no visual regression against the live D7 site's page skeleton, and
       adds no additional regions.
-- [ ] A real migrated `shanti_image` node page shows a working OpenSeadragon deep-zoom
-      viewer sourced from the node's real `info.json`.
+- [x] A real migrated `shanti_image` node page shows a working OpenSeadragon deep-zoom
+      viewer sourced from the node's real `info.json`. (Verified 2026-09-01 against
+      node 111339 / `shanti-image-680701` in DDEV; see PR #170 and
+      `docs/session-logs/2026-09-01-b1-openseadragon-deep-zoom-viewer.md`.)
 - [ ] The sibling carousel AJAX-loads and windows the correct ±15 collection members
       around the current node, and respects private-collection access (verified against
       both a public and a private collection).
