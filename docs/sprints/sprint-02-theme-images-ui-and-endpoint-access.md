@@ -84,7 +84,7 @@ as out of scope for now per the planning doc, confirm with the team before B1 cl
 |---|---|---|---|
 | C1 | `docs/planning/av-content-model-audit.md` — start from contrib `kaltura`/`KalturaClient`, custom `mediabase` (`mb_metadata`/`mb_structure` most likely), `transcripts`. No single owner module — expect this to take longer to scope than C2/C3. | **Group** | ☑ |
 | C2 | `docs/planning/sources-content-model-audit.md` — start from `shanti_biblio_modules` and its submodules (bibcite-based, matches Spike 5) | Xiaoming | ☑ |
-| C3 | `docs/planning/texts-content-model-audit.md` — start from `shanti_texts`/`shanti_texts_features`/`shanti_footnotes` | Than | ☐ |
+| C3 | `docs/planning/texts-content-model-audit.md` — start from `shanti_texts`/`shanti_texts_features`/`shanti_footnotes` | Than | ☑ |
 
 Each audit follows `images-content-model-audit.md`'s structure (purpose →
 content-type/entity-graph inventory → field inventory → data profile against a real
@@ -113,7 +113,7 @@ Images' own Paragraphs precedent) and must explicitly state that no migration co
       both a public and a private collection).
 - [ ] The homepage gallery renders via the new `shanti_grid_view` Views style plugin
       with working click-to-popdown.
-- [ ] `av-content-model-audit.md`, `sources-content-model-audit.md`, and
+- [x] `av-content-model-audit.md`, `sources-content-model-audit.md`, and
       `texts-content-model-audit.md` all exist, each naming its site's real D7
       field/entity-graph structure (not placeholders) against a real dump, each
       explicitly scoped as audit-only.

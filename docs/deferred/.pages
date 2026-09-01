@@ -90,3 +90,4 @@ nav:
   - "kmassets:audit checks master, not the search reader (70-doc gap)": kmassets-audit-checks-master-not-search-reader.md
   - "Drupal image missing mysql client (drush sql:* silently no-ops)": drupal-image-missing-mysql-client.md
   - "AV production dump corrupted — no data profile": av-dump-corrupted-no-data-profile.md
+  - "OG collection_ref storage empty — use og_membership": og-collection-ref-storage-empty-use-og-membership.md
