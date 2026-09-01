@@ -173,14 +173,14 @@ content:
     weight: 21
     region: content
   field_image:
-    type: iiif_image
+    type: iiif_deep_zoom
     label: above
     settings:
       width: 800
       height: ''
-      rotation: 0
       scaled: true
       iiif_id_field: field_iiif_id
+      rotation_field: field_image_rotation
     third_party_settings: {  }
     weight: 1
     region: content

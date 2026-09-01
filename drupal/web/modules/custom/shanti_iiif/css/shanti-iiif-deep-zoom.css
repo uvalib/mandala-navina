@@ -1,0 +1,86 @@
+/**
+ * Deep-zoom viewer trigger button and fullscreen overlay.
+ * Module-owned rather than theme-owned since the markup is emitted by the
+ * IiifDeepZoomFormatter field formatter, not a template.
+ */
+
+.iiif-deep-zoom {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.iiif-deep-zoom-trigger {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  z-index: 1;
+  padding: 0.4rem 0.75rem;
+  border: 0;
+  border-radius: 0.25rem;
+  background: rgb(0 0 0 / 65%);
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.iiif-deep-zoom-trigger:hover,
+.iiif-deep-zoom-trigger:focus-visible {
+  background: rgb(0 0 0 / 85%);
+}
+
+.iiif-deep-zoom-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: #000;
+}
+
+.iiif-deep-zoom-overlay.is-open {
+  display: block;
+}
+
+.iiif-deep-zoom-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.iiif-deep-zoom-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 1;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 15%);
+  color: #fff;
+  cursor: pointer;
+}
+
+.iiif-deep-zoom-close:hover,
+.iiif-deep-zoom-close:focus-visible {
+  background: rgb(255 255 255 / 30%);
+}
+
+.iiif-deep-zoom-close::before,
+.iiif-deep-zoom-close::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.1rem;
+  height: 2px;
+  background: currentcolor;
+  transform-origin: center;
+}
+
+.iiif-deep-zoom-close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.iiif-deep-zoom-close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
