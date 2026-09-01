@@ -86,6 +86,16 @@
   overflow: visible !important;
 }
 
+/* pig.js also injects its own placeholder `background-color: #D5D5D5`
+ * (mid-grey) on every figure -- meant to stand in for a thumbnail while it
+ * loads, but it also shows through the 8px gaps between tiles
+ * (spaceBetweenImages), reading as a grey shading/border around every
+ * image. Production overrides this to white (`.pig-figure{background:#fff}`
+ * in its theme CSS); same override here. */
+.shanti-grid-view-grid figure {
+  background-color: #fff;
+}
+
 /* Positioned by JS (shanti-grid-view.js) via an inline `top`, directly
  * below the clicked image's row -- see that file for why this is done
  * against pig.js's own per-image translateY model rather than normal
