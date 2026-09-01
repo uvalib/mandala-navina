@@ -53,6 +53,19 @@
               element: overlay.querySelector('.iiif-deep-zoom-canvas'),
               prefixUrl: `${drupalSettings.shantiIiif.imagesPath}/`,
               tileSources: infoUrl,
+              // The IIIF server sends Access-Control-Allow-Origin: * but OSD
+              // won't request tiles in CORS mode unless told to -- without
+              // this, the browser treats tiles as opaque/tainted and OSD 6's
+              // WebGL drawer fails on texture creation.
+              crossOriginPolicy: 'Anonymous',
+              // Explicit canvas drawer: even with the CORS fix above, OSD
+              // 6.1's WebGL drawer left the final composited output canvas
+              // blank in testing (tiles fetched and decoded correctly --
+              // confirmed by sampling actual pixel data off the internal
+              // render canvas -- but never blitted to the visible one).
+              // Canvas is also what D7's original OSD 2.2.1 always used, so
+              // this isn't a downgrade from prior behavior.
+              drawer: 'canvas',
               degrees: rotation,
               showRotationControl: true,
               showNavigator: true,
