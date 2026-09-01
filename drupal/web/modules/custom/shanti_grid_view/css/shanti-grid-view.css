@@ -86,14 +86,24 @@
   overflow: visible !important;
 }
 
-/* pig.js also injects its own placeholder `background-color: #D5D5D5`
- * (mid-grey) on every figure -- meant to stand in for a thumbnail while it
- * loads, but it also shows through the 8px gaps between tiles
- * (spaceBetweenImages), reading as a grey shading/border around every
- * image. Production overrides this to white (`.pig-figure{background:#fff}`
- * in its theme CSS); same override here. */
-.shanti-grid-view-grid figure {
-  background-color: #fff;
+/* pig.js loads a *second* copy of every image as a blurred (`blur(30px)`)
+ * "thumbnail" placeholder (pig.js: ProgressiveImage.prototype.load), meant
+ * to be a genuinely tiny preview that's cheap to blur-up while the real
+ * image loads. Here `urlForSize()` is an identity function (see
+ * shanti-grid-view.js's file header) -- there's no separate tiny thumbnail
+ * URL, so this loads the *same* already-reasonably-sized row image a
+ * second time. Worse, pig's own CSS renders it unstretched at its natural
+ * size (`position: relative; width: auto`) rather than clipped to the
+ * tile, so a 30px blur on an image that size bleeds well past the tile's
+ * own edges -- into the gaps between tiles and out across the whole grid,
+ * reading as a stray shadow everywhere. It's also never removed once the
+ * real image loads (only on scroll-out), so this isn't transient. Simplest
+ * fix: don't render it -- the full image's own opacity fade-in (pig's
+ * `.pig-loaded` class) already covers the loading transition, and pig's
+ * own default `#D5D5D5` figure background (left as-is, not overridden)
+ * already covers the pre-load state. */
+.shanti-grid-view-grid figure img.pig-thumbnail {
+  display: none;
 }
 
 /* Positioned by JS (shanti-grid-view.js) via an inline `top`, directly
