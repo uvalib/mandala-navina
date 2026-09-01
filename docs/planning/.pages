@@ -18,3 +18,4 @@ nav:
   - "dev-0 from-scratch rebuild runbook": dev0-from-scratch-rebuild-runbook.md
   - "Sprint 2 Planning: Theme, Images UI, Endpoint Access": sprint-02-planning.md
   - "AV: Content Model Audit": av-content-model-audit.md
+  - "Sources: Content Model Audit": sources-content-model-audit.md
