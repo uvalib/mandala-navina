@@ -75,6 +75,14 @@ windowed around the current image:
 
 ### 3. Mosaic/gallery grid view (e.g. the images.mandala.library.virginia.edu homepage)
 
+**Production reference done 2026-09-01** — see
+[`b3-masonry-gallery-production-reference.md`](../planning/b3-masonry-gallery-production-reference.md)
+for a read-only review of the live site plus the real D7 module source: confirms the
+click-to-info-panel is just a `grid_details` node view mode (not a bespoke
+serializer), a real access-control gap in the D7 endpoint (`access content` only, no
+per-node check), and the PIG.js masonry engine's server-side aspect-ratio
+precomputation. Not yet implemented in D11.
+
 A general-purpose custom Views style plugin, not IIIF-specific:
 
 - `shanti_grid_view` (submodule of `shanti_general`,
