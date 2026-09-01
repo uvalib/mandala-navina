@@ -1,9 +1,19 @@
-# D7 collection membership must be read from `og_membership`, not `field_data_field_og_collection_ref` — confirmed on 3 of 3 sites checked
+# D7 collection membership must be read from `og_membership`, not `field_data_field_og_collection_ref` — confirmed on 3 of 3 sites checked; Images assumed the same
 
 **Area:** migration / OG / collections — cross-site
 **Raised during:** Sprint 2 Workstream C (content-model audits), Session 2026-09-01
 **Jira:** (add when available)
 **Priority:** High — will silently break any migration built the obvious way
+
+**Status (2026-09-01, Than):** `field_og_collection_ref` is a **vestigial field left
+over from an OG module version upgrade** — not a data-corruption bug, an artifact of
+how OG itself evolved (an older version stored membership on the field; the version
+this platform runs on stores it in `og_membership` instead, and the old field was never
+cleaned up). Treat the field as **irrelevant on every site**, including Images — assume
+Images has the identical empty-field/`og_membership`-authoritative shape without
+re-verifying it site-by-site, the same way it's now confirmed on AV/Sources/Texts.
+`og_membership` is the correct and only source to read for collection membership,
+platform-wide.
 
 ## The problem
 
@@ -20,9 +30,9 @@ every site checked:**
 | Sources | `biblio`/`asset_link` | 0 | 26,710 (`field_og_collection_ref`) + 52 (`field_og_parent_collection_ref`) |
 | Texts | `book`/`asset_link` | 0 | 7,419 (`field_og_collection_ref`) + 57 (`field_og_parent_collection_ref`) |
 
-Images was not re-checked for this specific gap (its own audit predates this finding),
-but given the pattern is 3-for-3 across every other checked site sharing the same
-`shanti_collections` module, it should be assumed affected until verified otherwise.
+Images was not re-checked for this specific gap (its own audit predates this finding).
+**Than's call: assume Images has the same shape without re-verifying** — the field is a
+known vestige of an OG version upgrade (see Status above), not a per-site anomaly.
 
 The real membership relationship lives entirely in the **`og_membership`** table,
 keyed by `field_name` (a label matching the field's machine name, not a mirror of its
@@ -51,9 +61,9 @@ independent of any migration concern.
    filtered by `entity_type='node'` and `field_name='field_og_collection_ref'` (or
    `field_og_parent_collection_ref` for subcollection→collection nesting) — not against
    any `field_data_field_og_collection_ref`-style table, on any site.
-2. **Verify Images too**, even though its own audit predates this finding — confirm
-   whether the same gap exists there before assuming migration parity.
-3. Treat this as **one shared migration-tooling fix**, not three (or four) separate
-   per-site workarounds — the root cause and remedy are identical across sites.
+2. ~~Verify Images too.~~ **Decided (Than, 2026-09-01): not needed** — assume parity,
+   it's a known vestigial OG-upgrade artifact, not a site-specific risk.
+3. Treat this as **one shared migration-tooling fix**, not four separate per-site
+   workarounds — the root cause and remedy are identical across every site.
 4. Fold into whatever OG → D11 Group mapping design work covers each site's access
    model (already an open item on each site's own audit).
