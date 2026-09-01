@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-01
 **Participants:** Than Grove (in a live group session with Yuji Shinozaki and Xiaoming Wang), Claude Code
-**Outcome:** Sprint 2 Workstream B1 built and verified live in DDEV: a new `IiifDeepZoomFormatter` field formatter renders a static thumbnail with a click-to-open OpenSeadragon deep-zoom viewer, replacing the plain `iiif_image` formatter on `shanti_image`'s default view.
+**Outcome:** Sprint 2 Workstream B1 built and verified live in DDEV: a new `IiifDeepZoomFormatter` field formatter renders a static thumbnail with a click-to-open OpenSeadragon deep-zoom viewer, replacing the plain `iiif_image` formatter on `shanti_image`'s default view. **Update (same session, later):** verifying against a real migrated image rather than seed data surfaced two real bugs (WebGL CORS mode, a compositing failure) — both found, root-caused, and fixed live; see §6.
 
 ---
 
@@ -74,7 +74,41 @@ Live in DDEV, not just code review:
   `IiifUrlBuilder` already have (not a CI gate in this repo currently), so the new file
   is consistent with, not worse than, existing convention.
 
-## 5. Open item carried into the sprint doc
+## 6. Real-image testing found two real bugs, both fixed
+
+The user asked to actually see the viewer working — pointed at a real migrated image
+(node 111339, "An Endless Knot!", IIIF id `shanti-image-680701`) instead of node 1's
+placeholder data. The overlay opened and the navigator minimap rendered the correct
+artwork thumbnail, but the main viewport stayed solid black. This turned out to be two
+real, stacked bugs — not a demo artifact, and both would have broken in production too
+(the IIIF server is cross-origin from the Drupal site regardless of environment):
+
+1. **Missing CORS mode.** Console showed `Error creating texture in WebGL` —
+   OpenSeadragon 6's WebGL drawer requires tiles to be fetched with
+   `crossOriginPolicy` set, or the browser treats them as tainted for texture
+   creation. Confirmed the IIIF server already sends
+   `Access-Control-Allow-Origin: *` (`curl -I`), so this was purely a missing
+   client-side setting, not a server gap. Added `crossOriginPolicy: 'Anonymous'`.
+2. **WebGL compositing failure, even after fixing #1.** Sampled the internal render
+   canvas's actual pixel data directly via `getImageData()` and found it held correct
+   colors matching the source artwork (real cyan/gold values) — the tiles were being
+   fetched and drawn correctly, but never composited to the final visible canvas.
+   Switched to the explicit `drawer: 'canvas'` option, sidestepping WebGL entirely —
+   also what D7's original OSD 2.2.1 always used, since the WebGL drawer didn't exist
+   as an OSD option back in 2016, so this isn't a behavioral downgrade from D7.
+
+Re-verified after both fixes: the viewer now renders genuine deep-zoom tile detail
+(not just the thumbnail) against real production data. Re-checked close button and
+Escape both still work after the drawer change. Fixed in commit `7522592`, PR #170
+updated with a comment documenting the finding.
+
+**Debugging note for future sessions:** the browser automation tool's console-message
+and network-request tracking both reset on navigation and only capture events *after*
+first being called post-navigation — reading them before triggering the action under
+test (to "arm" tracking), not just after, was necessary to see real errors rather than
+stale ones from a previous page load.
+
+## 7. Open item carried into the sprint doc
 
 The sprint backlog's own flagged scope question (D7 multi-image sequence viewer,
 `sdviewer.php`) is still explicitly left for team confirmation, not silently resolved
