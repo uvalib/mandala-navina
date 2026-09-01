@@ -97,11 +97,19 @@
             return;
           }
 
-          const rowY = progressiveImage.style.translateY;
-          const sameRowAlreadyOpen = panel && panelRowY === rowY;
+          // A currently-open panel on an *earlier* row shifts this row's
+          // translateY down; reading rowY before closing that panel would
+          // capture that shifted (soon to be stale) value. closePanel()
+          // reverses the shift synchronously, so read rowY only after it
+          // runs -- otherwise the new panel gets positioned using a Y that
+          // no longer matches the row's real (shifted-back) position,
+          // leaving a gap (or overlap) between the row and the panel.
+          const sameRowAlreadyOpen = panel && panelRowY === progressiveImage.style.translateY;
           if (!sameRowAlreadyOpen) {
             closePanel();
           }
+
+          const rowY = progressiveImage.style.translateY;
 
           if (!panel) {
             panel = document.createElement('div');
