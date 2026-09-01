@@ -218,47 +218,91 @@ Images' OG→D11-Group access mapping (Phase 1b/ADR-009-Step-1b concern) would m
 UVA-member and collection-admin grant realms — flagged as an input to that future work,
 not resolved here.
 
-## Data profile — NOT AVAILABLE (dump corrupted)
+## Data profile (production dump, 2026-09-01)
 
-Unlike the Images and Texts audits, this audit has **no production-data validation**.
-Both copies of the AV dump found in this environment are unusable:
+**Update 2026-09-01 (same day, later in the session):** the original 2026-06-11 dump
+was corrupted (see below for the incident record); Than re-exported a fresh dump
+(`mandala-prod-av-db_2026-09-01.sql.gz`, 186MB — much smaller than the corrupted
+1.7GB file, consistent with the earlier file being a bad/inflated export rather than a
+merely-truncated copy of the same size). **`gzip -t` passed** — loaded into DDEV's
+`d7_av` database and profiled successfully.
 
-- `~/Sandbox/Mandala/data/mandala-prod-av-db_2026-06-11.sql.gz` (1.7GB) — fails
-  `gzip -t` integrity check (`unexpected end of file`, truncated mid-stream). Attempting
-  to load it into a DDEV `d7_av` database confirmed the same: `gzcat` aborted partway and
-  fed a broken SQL statement to MySQL (`ERROR 1064 ... at line 28909`, a corrupted line
-  from a serialized-PHP blob, consistent with a mid-stream truncation, not a schema
-  problem).
-- `~/Sandbox/Mandala/mandala11/data/mandala-prod-av-db_2026-06-11.sql.gz` — despite the
-  identical filename (initially assumed to be a duplicate), this is a **different, much
-  smaller file** (24.8MB vs. 1.7GB) and is also gzip-corrupt.
+**Node counts:** 7,396 `video` · 4,187 `audio` (11,583 total) · 152 `collection` · 85
+`subcollection` · 4 `page` · 1 `source`. Also **68 nodes with a literal, corrupted
+`MISSING_TYPE` bundle value** in the raw `node.type` column (not a display artifact —
+confirmed via direct query) — a real, small data anomaly not previously known, flagged
+as a new open question (#8 below), not investigated further here.
 
-**No AV dump obtained out-of-band via S3/shared drive was checked here either** — only
-what already existed locally. Every finding above (content types, fields, entity graph,
-Kaltura integration, access model) is derived entirely from **static analysis of the D7
-module code**, not validated against real rows. That means, unlike Images:
-- Real `audio`/`video` node counts are unknown.
-- Field fill-rates (e.g. how often `field_thumbnail_image`, `field_transcript`,
-  `field_pbcore_description` are actually populated) are unknown.
-- Whether Open question #6's corrupted legacy columns
-  (`field_extended_cataloging`/`field_translation_lang_1/2`, pre-repair) still exist in
-  the data is unconfirmed.
-- The field_collection→Paragraphs fit (the audit's central structural recommendation)
-  is a code-level judgment, not data-validated the way Images' agent-reuse or
-  required-field cleanliness was.
+**The same `og_membership`-vs-field-storage bug found on Sources also affects AV.**
+`field_data_field_og_collection_ref` is **empty (0 rows)** for AV despite being a real
+`field_sql_storage` field, exactly like Sources. The actual collection-membership data
+lives in `og_membership`: 11,587 node memberships tagged `field_og_collection_ref`
+(covering essentially all 11,583 audio/video nodes) plus 85 subcollection→collection
+memberships tagged `field_og_parent_collection_ref` (matching the 85 subcollection
+count exactly). **Confirms the AV audit's original prediction** ("worth double-checking
+against the actual dump once loaded," open question #2 in the prior draft) and means
+the same migration-source-plugin fix Sources needs — read `og_membership`, not the
+Field API value table — applies here too.
 
-**Recommended before any AV modeling decision is finalized:** obtain a fresh, verified
-AV production dump (re-export or re-copy, then `gzip -t` it before use) and re-run this
-audit's data-profile section — the same way the Images audit validated its Paragraphs
-choice against real agent-reuse numbers before that decision was made.
+**Required/near-required fields: clean.**
+- `field_video_entryid` (Kaltura entry ID): 7,379 of 7,396 video nodes (99.8%) have a
+  value; 17 missing despite the field being required at the form level — a small
+  cleanup population for any pre-migration remediation.
+- `field_audio_entryid`: 4,186 of 4,187 audio nodes (99.98%) have a value; 1 missing.
+- `field_pbcore_title` (required, -1 cardinality): 11,583 of 11,583 nodes (100%) have
+  at least one title — 0 missing, matching Images' clean-required-field pattern.
+- `group_content_access` (required OG Visibility): 11,583 of 11,583 (100%) filled — no
+  gap here, unlike Sources' 91.2%.
+
+**Optional-field coverage:**
+- `field_workflow` (cataloging/QA state): 11,465 of 11,583 nodes (99.0%) have it — 118
+  missing.
+- `field_transcript`: 5,380 of 11,583 nodes (46.4%) have an attached transcript file —
+  just under half, a real gap worth knowing before scoping any transcript-dependent UI.
+- `field_kmap_terms`: 2,192 field-value rows; `field_subject`: 16,999 rows — KMaps
+  tagging is present but, as with Sources, not universal (exact per-node coverage not
+  separately computed here since both fields are unlimited-cardinality).
+
+**Open question #6 (corrupted-field history) — resolved with real numbers, not just a
+code-level warning.** The old corrupted columns genuinely still hold data in
+production, confirming they must be excluded from any migration:
+
+| Field | Row count |
+|---|---|
+| `field_extended_cataloging` (old, corrupted) | 2,482 |
+| `field_extended_cataloging_new` (replacement) | 8,508 |
+| `field_translation_lang_1` (old, corrupted) | 2,482 |
+| `field_translation_lang_2` (old, corrupted) | 2,482 |
+| `field_translation_input_lang_1` (replacement) | 8,715 |
+| `field_translation_input_lang_2` (replacement) | 8,715 |
+
+The old/corrupted fields hold exactly 2,482 rows each (a smaller, frozen subset —
+consistent with them having been abandoned in place rather than actively cleaned up
+after the repair). **Do not migrate the old-named fields**; use only the `_new`/
+`_input_lang` replacements.
+
+### Corrupted-dump incident record (2026-06-11 file)
+
+The original audit pass this session (before the re-export) found both local copies of
+the AV dump unusable:
+- `~/Sandbox/Mandala/data/mandala-prod-av-db_2026-06-11.sql.gz` (1.7GB) — failed
+  `gzip -t` (`unexpected end of file`); a load attempt confirmed `gzcat` aborting
+  mid-stream and feeding a truncated line into MySQL.
+- `~/Sandbox/Mandala/mandala11/data/mandala-prod-av-db_2026-06-11.sql.gz` — same
+  filename but a different, much smaller (24.8MB) file, also gzip-corrupt.
+
+Filed as [`av-dump-corrupted-no-data-profile.md`](../deferred/av-dump-corrupted-no-data-profile.md)
+at the time; **now resolved** by the 2026-09-01 re-export above — see that note for
+closure.
 
 ## What this audit establishes
 
-**All findings below are derived from static analysis of the D7 module code only — no
-production dump was usable for validation.** See
-[Data profile](#data-profile--not-available-dump-corrupted).
+**Structural findings are code-derived; the items below marked with counts are now
+validated against the real 2026-09-01 production dump** (see
+[Data profile](#data-profile-production-dump-2026-09-01)).
 
-- AV is **two node bundles** (`audio`, `video`), not a custom entity or a
+- AV is **two node bundles** (`audio`, `video` — 7,396 and 4,187 respectively), not a
+  custom entity or a
   `mediabase`-owned DB table — the prior team note ("mb_metadata/mb_structure" as schema
   owners) was incorrect; neither module defines `hook_schema()` or `hook_node_info()`.
   The bundles are defined by a Features export sub-component of `mediabase`
@@ -274,6 +318,12 @@ production dump was usable for validation.** See
   node ID), not a separate entity.
 - AV's access model is OG plus **two additional custom grant realms**
   (`group_access_uva_member`, `mb_collection_admin`) not present in Images' model.
+- **Data-verified:** collection membership is not readable from
+  `field_data_field_og_collection_ref` (0 rows) — it lives in `og_membership`, the same
+  bug independently found on Sources the same session. Required fields
+  (`field_pbcore_title`, `group_content_access`) are 100% clean; the two Kaltura
+  entry-id fields are >99.7% filled; the old corrupted cataloging/translation fields
+  still hold 2,482 rows each in production and must be excluded from migration.
 
 ## What this audit does NOT establish (still open)
 
@@ -293,15 +343,19 @@ production dump was usable for validation.** See
 5. **OG → D11 Group mapping for the two custom access realms** — `group_access_uva_member`
    and `mb_collection_admin` need an explicit mapping decision; deferred to the
    ADR-009-Step-1b-equivalent access work for AV, same as it was for Images.
-6. **Corrupted-field history.** `mb_structure_update_7003`/`7004` document that
-   `field_extended_cataloging` and `field_translation_lang_1/2` were corrupted in
-   production and ported to renamed replacement fields
-   (`field_extended_cataloging_new`, `field_translation_input_lang_1/2`). The old
-   corrupted columns/values may still exist in a fresh dump — **do not migrate them**;
-   unconfirmed either way since no usable dump was available for this audit (see
-   [Data profile](#data-profile--not-available-dump-corrupted)).
-7. **No production-data validation at all** (see Data profile section) — every
-   structural finding in this audit is static-code-derived, not row-verified.
+6. ~~**Corrupted-field history.**~~ **RESOLVED (2026-09-01).** `mb_structure_update_7003`/
+   `7004` document that `field_extended_cataloging` and `field_translation_lang_1/2`
+   were corrupted in production and ported to renamed replacement fields. Confirmed
+   against the real dump: the old corrupted fields still hold 2,482 rows each — **do
+   not migrate them**; use only `field_extended_cataloging_new`/
+   `field_translation_input_lang_1/2`. See [Data profile](#data-profile-production-dump-2026-09-01).
+7. ~~**No production-data validation at all.**~~ **RESOLVED (2026-09-01)** — a fresh,
+   verified dump was loaded and profiled; see Data profile.
+8. **NEW: 68 nodes carry a literal corrupted `MISSING_TYPE` bundle value** in
+   `node.type`, discovered during data profiling. Not investigated further — needs its
+   own follow-up before any AV migration (are these orphaned/deleted-type nodes, safe
+   to exclude, or a real data-repair job like the 2026 cataloging-field corruption
+   above?).
 
 ## Recommended next step
 
@@ -318,3 +372,8 @@ point is:
 - Fold the two custom access realms (open question #5) into whatever proxy-auth/access
   design work Phase 1b/2's OG→Group mapping produces, rather than treating AV's access
   model as a copy of Images'.
+- **Build the collection-membership migration source against `og_membership`, not
+  `field_data_field_og_collection_ref`** — confirmed empty here exactly as it was on
+  Sources; the same fix applies to both sites.
+- Investigate the 68 `MISSING_TYPE` nodes (open question #8) before they can silently
+  fall out of any migration source query filtered by known bundle names.
