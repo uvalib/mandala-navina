@@ -70,13 +70,20 @@ here.
 
 | | Task | Depends on | Status |
 |---|---|---|---|
-| B1 | OpenSeadragon deep-zoom viewer: `IiifDeepZoomFormatter` field formatter in `shanti_iiif`, reusing `IiifUrlBuilder::infoUrl()`; `shanti_iiif.libraries.yml` (OpenSeadragon vendor lib + behavior JS using `drupalSettings`, porting `shanti-main-images.js`'s overlay behavior) | Workstream A skeleton (A1–A2) | ☐ |
+| B1 | OpenSeadragon deep-zoom viewer: `IiifDeepZoomFormatter` field formatter in `shanti_iiif`, reusing `IiifUrlBuilder::infoUrl()`; `shanti_iiif.libraries.yml` (OpenSeadragon vendor lib + behavior JS using `drupalSettings`, porting `shanti-main-images.js`'s overlay behavior) | Workstream A skeleton (A1–A2) | ☑ |
 | B2 | AJAX sibling carousel: new `shanti_images_carousel` module, `_entity_access: 'node.view'` route, controller reusing the proven `group_relationship`/`loadByEntity()` collection-lookup pattern (`NodeJsonController::buildCollection()`), new ±15-windowing query cached per-collection, JS behavior attached from `node--shanti_image.html.twig` | Workstream A skeleton, B1 (shared template touch-point) | ☐ |
 | B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate), Views config for the homepage gallery | Workstream A skeleton | ☐ |
 
 **Open scope question (flag, don't silently resolve):** whether D7's multi-image
 sequence viewer (`sdviewer.php` + `shanti_images_sdinit.js`) is in scope for B1 — treated
 as out of scope for now per the planning doc, confirm with the team before B1 closes.
+**Built out of scope, as planned** — `IiifDeepZoomFormatter` renders a single-image
+viewer only. Worth noting for that confirmation: D7's own overlay code
+(`shanti-main-images.js`) hardcoded `is_series = false` and never wired up a real
+sequence source, so the D7 production site itself never exercised
+`OpenSeadragon`'s multi-image sequence mode in this code path either — the "is it in
+scope" question may be moot rather than deferred, but that's still the team's call to
+make, not assumed here.
 
 ### Workstream C — Content-model audits (AV, Sources, Texts) — audit only
 
@@ -106,8 +113,10 @@ Images' own Paragraphs precedent) and must explicitly state that no migration co
       attributes, no jQuery-only BS3/4 plugins left unreplaced), renders all 12 D7
       regions with no visual regression against the live D7 site's page skeleton, and
       adds no additional regions.
-- [ ] A real migrated `shanti_image` node page shows a working OpenSeadragon deep-zoom
-      viewer sourced from the node's real `info.json`.
+- [x] A real migrated `shanti_image` node page shows a working OpenSeadragon deep-zoom
+      viewer sourced from the node's real `info.json`. (Verified 2026-09-01 against
+      node 111339 / `shanti-image-680701` in DDEV; see PR #170 and
+      `docs/session-logs/2026-09-01-b1-openseadragon-deep-zoom-viewer.md`.)
 - [ ] The sibling carousel AJAX-loads and windows the correct ±15 collection members
       around the current node, and respects private-collection access (verified against
       both a public and a private collection).

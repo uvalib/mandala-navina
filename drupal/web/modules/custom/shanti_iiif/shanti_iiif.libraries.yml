@@ -1,0 +1,30 @@
+# OpenSeadragon itself, vendored (not composer-managed -- same pattern as
+# shanti_sarvaka's other checked-in vendor JS). D7's sarvaka_images theme
+# vendored 2.2.1 (2016); this ports to the current stable release instead
+# of the exact D7 version, since the library itself is an implementation
+# detail with no user-visible behavior change (ADR 010) and the D7 build
+# predates six years of OpenSeadragon fixes.
+openseadragon:
+  remote: https://github.com/openseadragon/openseadragon
+  version: 6.1.0
+  license:
+    name: BSD-3-Clause
+    url: https://github.com/openseadragon/openseadragon/blob/master/LICENSE.txt
+    gpl-compatible: true
+  js:
+    js/vendor/openseadragon/openseadragon.min.js: { minified: true }
+
+# The click-to-open behavior itself (IiifDeepZoomFormatter's attached
+# library). OpenSeadragon is a hard dependency -- both load together, but
+# the Viewer instance is only constructed on first click (see the JS file).
+deep-zoom-viewer:
+  js:
+    js/shanti-iiif-deep-zoom.js: {}
+  css:
+    theme:
+      css/shanti-iiif-deep-zoom.css: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/drupalSettings
+    - shanti_iiif/openseadragon

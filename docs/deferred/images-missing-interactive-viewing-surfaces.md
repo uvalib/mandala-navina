@@ -1,4 +1,4 @@
-# D11 Images has no interactive viewing surfaces — no deep-zoom viewer, no collection carousel, no mosaic/gallery view
+# D11 Images has no interactive viewing surfaces — no deep-zoom viewer (RESOLVED 2026-09-01), no collection carousel, no mosaic/gallery view
 
 **Area:** Images / UI-UX / shanti_iiif / views
 **Raised during:** Session 2026-08-19 — reviewing the live D7 site
@@ -20,7 +20,24 @@ Live D7 (`images.mandala.library.virginia.edu`) has three interactive viewing su
 built directly into Drupal — not just backend IIIF URL correctness, and not something the
 React client (`mandala-om`) supplies. None of the three exist in D11 yet.
 
-### 1. OpenSeadragon deep-zoom viewer on the image detail page
+### 1. OpenSeadragon deep-zoom viewer on the image detail page — RESOLVED 2026-09-01
+
+Built as Sprint 2 Workstream B1: `IiifDeepZoomFormatter` (`shanti_iiif` module),
+[PR #170](https://github.com/uvalib/mandala-navina/pull/170). Ports the same
+click-to-open/lazy-load/Escape-to-close UX described below, ~~against OpenSeadragon
+2.2.1~~ against OpenSeadragon 6.1.0 (vendored current stable, not the exact D7 version
+— implementation detail per ADR 010). Verified live against a real migrated image (not
+just seed data) — found and fixed two real WebGL bugs along the way (missing CORS mode,
+a compositing failure; switched to the explicit `canvas` drawer). See
+`docs/session-logs/2026-09-01-b1-openseadragon-deep-zoom-viewer.md` for the full record.
+
+**The multi-image sequence variant (`sdviewer.php` + `shanti_images_sdinit.js`,
+`|$|`-delimited series) described below was NOT ported** — deliberately out of scope
+per the Sprint 2 planning doc, still flagged for team confirmation before B1 is
+considered fully closed (D7's own code hardcoded `is_series = false` and never wired a
+real sequence source, so this open question may be moot).
+
+**Original finding, kept for context:**
 
 `sarvaka_images` theme + `shanti_images` module wire a real deep-zoom viewer into the node
 page itself:
@@ -109,6 +126,12 @@ persisted across deploy; solr-proxy's missing Bearer header on UserInfo). Flagge
 sizeable follow-on task (or several), not a quick fix: rebuilding an OpenSeadragon
 integration, an AJAX collection-scoped carousel, and a general-purpose masonry/gallery
 Views plugin, each from scratch against D11's stack.
+
+**Update 2026-09-01:** Scoped and picked up as Sprint 2 Workstream B (see
+`docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md`). B1 (item #1, the
+deep-zoom viewer) is done — see above. B2 (item #2, the sibling carousel) and B3 (item
+#3, the masonry/gallery grid) remain open, tracked in that sprint doc rather than here
+going forward.
 
 ## Cross-references
 
