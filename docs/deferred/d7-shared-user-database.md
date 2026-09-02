@@ -104,9 +104,18 @@ D7-multisite-specific behavior, not migration-relevant on its own).
   compatible hashing too (core still ships `PhpassHashedPassword` era logic
   for legacy migrations), so password migration is likely straightforward —
   confirm during implementation rather than assuming.
-- `realname` field migration: D11 has no `realname` module by default: decide
+- ~~`realname` field migration: D11 has no `realname` module by default: decide
   whether to bring it in as a dependency or fold the name into core user
-  fields.
+  fields.~~ **DECIDED 2026-09-02 (group): fold into core user fields, no
+  `realname` module dependency.** Confirmed in `d7_users.yml`: `field_first_name`
+  and `field_last_name` were never added or mapped — currently just a comment
+  ("decide during laptop migration-dev"). Implementation: add
+  `field_first_name`/`field_last_name` to the D11 user entity via CMI, map them
+  in the `d7_users` migration process pipeline (source values live in the same
+  `mandala_shared`-prefixed tables as `users`, per the prefix list above), and
+  backfill the 1,543 already-migrated users the same way the group-ownership fix
+  was backfilled today — not yet implemented, still open as a build task, but the
+  approach is no longer a decision.
 
 ## Cross-references
 

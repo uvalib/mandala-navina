@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-02
 **Participants:** Than Grove (driving), Yuji Shinozaki, Xiaoming Wang, Carla Arton, Claude Code
-**Status:** Agenda drafted pre-session; fill in Outcome/decisions below as the session proceeds.
+**Status:** Complete — 7 of 8 items resolved; item 1 (Group-role migration scheduling) still needs a follow-up date. See Outcome below.
 
 ---
 
@@ -44,14 +44,10 @@ than one person in the room.
   visibility coherence) / 1b.4 (paragraph access inheritance) tasks, which may share
   the same underlying mechanism.
 
-### 2. `realname` field decision — last unassigned loose end
-
-[`d7-shared-user-database.md`](../deferred/d7-shared-user-database.md) — **Low**
-
-- D11 has no `realname` module by default (D7 had it). Bring it in as a dependency to
-  match D7's display-name behavior, or fold display-name handling into core user
-  fields (`field_first_name`/`field_last_name`, already migrated) instead?
-- Still unassigned — smallest, lowest-priority item left on the whole agenda.
+The `realname` field question (previously item 2, last unassigned loose end) is
+resolved — see "Resolved during this meeting" below. **Item 1 above remains open**:
+folded into one Group-role migration effort, but no scheduling/owner decision was
+actually made this session — still needs a date and a driver.
 
 ---
 
@@ -119,6 +115,12 @@ session — noted here so nobody re-opens them without new information:
   match vs. a stored NetBadge identifier field). Relevant to ADR 013/014's SAML+OAuth2
   coexistence work, which assumes a Drupal account already exists to key `sub` off
   of — this decision determines which account that lookup resolves to.
+- **`realname` field — DECIDED: fold into core user fields, no `realname` module.**
+  Checked `d7_users.yml` first: `field_first_name`/`field_last_name` were never
+  actually added or mapped — still just a comment saying "decide later." Not yet
+  implemented (needs the CMI fields added, the migration process pipeline mapped,
+  and the 1,543 already-migrated users backfilled the same way group ownership was
+  today) — tracked as a build task, no longer an open decision.
 - **Solr pipeline cost/architecture conversation with Dave Goldstein** — **correction
   during this meeting**: `docs/roadmap.md`'s framing ("hasn't been opened yet") is stale.
   The conversation already happened (2026-06-26 update in the deferred note) and reframed
@@ -133,4 +135,15 @@ session — noted here so nobody re-opens them without new information:
 
 ## Outcome
 
-_(fill in as the session proceeds)_
+Seven of eight agenda items resolved live during this meeting — three real fixes
+shipped (staging→production Solr writes disabled on `dev-1`; 171 collection/
+subcollection groups re-owned to their real D7 creators; the migration checklist
+updated with the root-caused Group `postSave()` sequencing trap for Texts/Sources/AV),
+one ADR ratified (017), and three items assigned to Yuji (kmassets audit gap, rdx
+always-on review + ALB defect, Solr pipeline follow-up with Dave, SAML/NetBadge
+mapping). All landed in [PR #176](https://github.com/uvalib/mandala-navina/pull/176).
+
+**Only one item remains genuinely open:** item 1, the combined contributor +
+group-editor Group-role migration. Both permission models are already decided
+(ADR 015, Q2); what's missing is a scheduling call — when does this get built, given
+it's a hard cutover gate? Needs a follow-up before it can close.
