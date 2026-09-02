@@ -143,13 +143,17 @@ header/ancestors/feature-types; (2) grouped nested-query counts against `kmterms
    wires the BS5 popover on hover, fetches content from the new endpoint on first hover,
    caches client-side per key.
 
-**Open scope questions, to decide before starting** (see the session log this was
-proposed in for full framing):
+**Scope decisions:**
+- ~~Fold in enabling `field_kmap_terms` display in `grid_details`?~~ **DECIDED
+  2026-09-02 (Than): yes.** `field_kmap_terms` is currently `hidden: true` in
+  `core.entity_view_display.node.shanti_image.grid_details.yml` — a deliberate
+  per-view-mode visibility setting, not a bug, but production shows all three
+  categories (places/subjects/terms) in the same tag row and D11's panel currently
+  shows only two. Flip it to displayed as part of this work.
+
+**Still open, to decide before starting:**
 - One formatter with a setting, or two formatters (`kmap_default_formatter` vs
   `kmap_popover_formatter`, matching D7's explicit-opt-in split)?
-- Fold in enabling `field_kmap_terms` display in `grid_details`
-  (currently hidden — see the deferred cross-reference below) as part of this work,
-  since production shows terms in the same row?
 - Full "Related X" category parity (all six D7 categories) vs. trimming to what's
   actually non-zero for Images-only content today?
 
