@@ -207,18 +207,25 @@
             container.appendChild(panel);
             panelRowY = rowY;
           }
-          // Ports production's ppd-loading widget (pig-shanti-ext.js /
-          // shanti-pig-gallery.css): a 4-dot orbiting/fading spinner plus a
-          // pulsing "Loading..." label. Production shows a second, separate
-          // spinner for the details text (loaded via its own AJAX request,
-          // independent of the image); this port fetches the whole panel
-          // as one request, so one spinner covers both -- centered in the
-          // row rather than over just the image half.
+          // Ports production's two independent loading states
+          // (pig-shanti-ext.js / shanti-pig-gallery.css): the 4-dot
+          // orbiting/fading spinner + pulsing "Loading..." label for the
+          // image side, and a simpler rotating-ring spinner for the
+          // details side (production loads these via two separate AJAX
+          // requests; this port fetches the whole panel as one, but still
+          // shows both spinners positioned where their content will land,
+          // since the *image bytes themselves* still load separately from
+          // this fetch -- see the image-side handling below).
           panel.innerHTML = '<button type="button" class="shanti-grid-view-panel-close" aria-label="Close">×</button>'
             + '<div class="shanti-grid-view-panel-body">'
-            + '<div class="shanti-grid-view-loading" role="alert" aria-live="assertive">'
+            + '<div class="shanti-grid-view-loading-row">'
+            + '<div class="shanti-grid-view-loading shanti-grid-view-loading-image" role="alert" aria-live="assertive">'
             + '<ul class="shanti-grid-view-loading-dots"><li></li><li></li><li></li><li></li></ul>'
             + '<div class="shanti-grid-view-loading-text">' + Drupal.t('Loading…') + '</div>'
+            + '</div>'
+            + '<div class="shanti-grid-view-loading shanti-grid-view-loading-meta" role="alert" aria-live="assertive">'
+            + '<div class="shanti-grid-view-loading-ring"></div>'
+            + '</div>'
             + '</div>'
             + '</div>';
           panel.querySelector('.shanti-grid-view-panel-close').addEventListener('click', closePanel);
@@ -242,6 +249,27 @@
               // it (e.g. kmapsPopover's Bootstrap-popover wiring) -- attach
               // explicitly, scoped to just the inserted content.
               Drupal.attachBehaviors(panelBody);
+
+              // The fetched HTML's metadata is now fully ready, but its
+              // <img> tag still needs to actually download the real IIIF
+              // image bytes -- a separate, often slower, browser-managed
+              // request this fetch knows nothing about. Overlay the
+              // 4-dot spinner on the image box until that finishes (or
+              // the image is already cached and loads instantly).
+              const imageBox = panelBody.querySelector('.shanti-grid-details-image');
+              const img = imageBox ? imageBox.querySelector('img') : null;
+              if (img && !(img.complete && img.naturalWidth > 0)) {
+                const overlay = document.createElement('div');
+                overlay.className = 'shanti-grid-view-loading shanti-grid-view-loading-overlay';
+                overlay.innerHTML = '<ul class="shanti-grid-view-loading-dots"><li></li><li></li><li></li><li></li></ul>';
+                imageBox.appendChild(overlay);
+                const removeOverlay = () => {
+                  overlay.remove();
+                };
+                img.addEventListener('load', removeOverlay, { once: true });
+                img.addEventListener('error', removeOverlay, { once: true });
+              }
+
               measureAndShift();
               scrollPanelIntoView();
             })

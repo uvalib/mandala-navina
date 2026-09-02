@@ -163,18 +163,62 @@
   padding: 2rem;
 }
 
-/* Loading spinner shown while the panel's content fetch is in flight.
- * Ported from production's ppd-loading widget (pig-shanti-ext.js /
- * shanti-pig-gallery.css): 4 dots, each independently rotating around a
- * shared center and fading in/out on its own cycle, plus a pulsing
- * "Loading..." label. Centered in the row (both axes), not just over the
- * image half, since this port loads the whole panel as one fetch. */
+/* Two loading states, positioned where their eventual content lands --
+ * matching shanti-grid-details' own image-left/meta-right split. The image
+ * side (4-dot spinner) and meta side (ring spinner) both show while the
+ * panel's content fetch is in flight; see shanti-grid-view.js for how the
+ * image spinner then re-appears as an overlay once real content is in but
+ * the <img> itself is still downloading its actual IIIF bytes. */
+.shanti-grid-view-loading-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
 .shanti-grid-view-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 12rem;
+}
+
+.shanti-grid-view-loading-image {
+  flex: 1 1 320px;
+  max-width: 45%;
+}
+
+.shanti-grid-view-loading-meta {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+/* Overlaid on .shanti-grid-details-image once real content has loaded but
+ * the <img> itself hasn't finished downloading yet. */
+.shanti-grid-view-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: #1a1a1a;
+}
+
+.shanti-grid-details-image {
+  position: relative;
+}
+
+/* Simple rotating-ring spinner for the metadata side -- ports the same
+ * .loading/.loading-container pattern already in shanti-search.css
+ * (production's sitewide default spinner), recolored to match this
+ * panel's gold accent (production's own grid-view-specific override,
+ * shanti-pig-gallery.css's `.ppd-details .loading`) rather than
+ * shanti-search.css's sitewide blue. */
+.shanti-grid-view-loading-ring {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 100%;
+  border: 2px solid transparent;
+  border-color: transparent #b5953b transparent #b5953b;
+  animation: shanti-grid-view-loading-rotate 1.5s linear infinite;
+  opacity: 0.7;
 }
 
 .shanti-grid-view-loading-dots {
