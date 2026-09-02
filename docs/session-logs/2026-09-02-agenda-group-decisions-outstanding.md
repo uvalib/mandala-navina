@@ -44,20 +44,7 @@ than one person in the room.
   visibility coherence) / 1b.4 (paragraph access inheritance) tasks, which may share
   the same underlying mechanism.
 
-### 2. Staging Solr writes land on production
-
-[`solr-cross-environment-write-targets.md`](../deferred/solr-cross-environment-write-targets.md) — **Medium–High, live risk**
-
-- D7 staging on `dev-1` was never repointed: `mandala-sources-staging` and
-  `mandala-av-staging` both target the **production** Solr master. A routine reindex or
-  cron flush on staging writes to prod.
-- Inversely, production Visuals writes into the staging master.
-- Three crossings found in six sites — assume `dev-1` has more un-audited production
-  references beyond Solr.
-- **Needs infra ownership**, not just a Drupal-side fix: who repoints these, and when,
-  without risking a staging action corrupting prod data in the meantime.
-
-### 3. rdx (reindeer_x) ALB target unhealthy in production
+### 2. rdx (reindeer_x) ALB target unhealthy in production
 
 [`rdx-alb-target-unhealthy-in-production.md`](../deferred/rdx-alb-target-unhealthy-in-production.md) — **High, live production defect**
 
@@ -69,7 +56,7 @@ than one person in the room.
 - **Decision needed:** fix the unhealthy target regardless of the always-on question, or
   bundle both into one conversation since they're the same service?
 
-### 4. Solr pipeline cost/architecture conversation with Dave Goldstein
+### 3. Solr pipeline cost/architecture conversation with Dave Goldstein
 
 [`solr-pipeline-cost-discussion.md`](../deferred/solr-pipeline-cost-discussion.md) — **High, roadmap driving decision**
 
@@ -78,7 +65,7 @@ than one person in the room.
 - **Action needed:** just scheduling this — it's not a Drupal-side task, it's a
   conversation that hasn't started.
 
-### 5. Loose ends from the 2026-08-12 user migration (smaller, worth a mention)
+### 4. Loose ends from the 2026-08-12 user migration (smaller, worth a mention)
 
 [`d7-shared-user-database.md`](../deferred/d7-shared-user-database.md) — **Medium** (the migration itself is done; these are what's left)
 
@@ -127,6 +114,16 @@ session — noted here so nobody re-opens them without new information:
   than silently drifting the way dev-0 and DDEV did here (7 of 8 `EXPECT_LIST` keys
   diverged with nobody aware). Alert mechanism itself not yet chosen — tracked as a
   practical follow-up in [`canonical-d7-dev-source-dump.md`](../deferred/canonical-d7-dev-source-dump.md).
+- **Staging Solr writes land on production** — **FIXED live during the meeting.**
+  `mandala-sources-staging`'s `solr` search_api server disabled
+  (`search-api-server-disable`); `mandala-av-staging`'s `mandala_library_rw` apachesolr
+  environment repointed off production (`solr-set-env-url`, since a full module disable
+  would have cascaded through 6+ dependent modules on that site). Both verified live on
+  `dev-1`. **Production Visuals → staging left open, assigned to Yuji** to review —
+  lower urgency since it's the opposite (safer) direction, and Visuals' other search
+  backend is already confirmed dead. See
+  [`solr-cross-environment-write-targets.md`](../deferred/solr-cross-environment-write-targets.md)
+  for full detail.
 
 ## Outcome
 

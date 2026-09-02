@@ -3,9 +3,13 @@
 **Area:** solr / D7 legacy / environment isolation / production risk
 **Raised during:** Session 2026-08-13 (Solr index inventory across dev / staging / production)
 **Jira:** (add when available)
-**Priority:** **Medium–High — a staging site holds live write credentials/routes into a
-production index.** Low probability of harm today (the sites are quiet), high
-consequence if anyone runs a reindex on staging.
+**Priority:** **Medium — the two staging→production write paths are FIXED (2026-09-02, group
+decision).** `mandala-sources-staging`'s `solr` search_api server is disabled
+(`search-api-server-disable`, verified via `search-api-server-list`). `mandala-av-staging`'s
+`mandala_library_rw` apachesolr environment is repointed from the production Solr master to an
+inert local placeholder (`solr-set-env-url`, verified in `apachesolr_environment`). Neither can
+write to production anymore. **Production Visuals → staging remains open, assigned to Yuji** —
+see below.
 
 ## What was found
 
@@ -60,14 +64,24 @@ is empty because production Visuals has never written to it.
 
 1. **Audit `dev-1` for every remaining production reference**, not just Solr: file
    systems, external APIs, mail, IIIF, the KMaps servers. Solr was found incidentally.
-2. **Disable the two staging → production write servers** (`mandala-sources-staging`
-   server `solr`, `mandala-av-staging` env `mandala_library_rw`) or repoint them at the
-   staging master. Disabling is safer and matches the fact that these sites are clones,
-   not a real staging tier anyone tests search on.
-3. **Decide what production Visuals should do.** Given
+   **Still open — no owner assigned yet.**
+2. ~~**Disable the two staging → production write servers**~~ **DONE 2026-09-02** (group
+   decision, executed live on `dev-1`):
+   - `mandala-sources-staging`: `solr` search_api server disabled via
+     `drush search-api-server-disable solr -y`. Verified via `search-api-server-list` →
+     `solr` now shows `disabled`.
+   - `mandala-av-staging`: `mandala_library_rw` apachesolr environment repointed via
+     `drush solr-set-env-url http://127.0.0.1:8983/solr/disabled-was-production --id=mandala_library_rw`
+     (a full module disable was rejected — `apachesolr` cascades through 6+ dependent
+     modules on that site, too big a blast radius for this fix). Verified in
+     `apachesolr_environment` — URL no longer resolves to production.
+3. **Production Visuals writing into the staging master** — **assigned to Yuji,
+   2026-09-02 (group decision)** to review and decide. Given
    [`searchstax-defunct-external-solr-config.md`](searchstax-defunct-external-solr-config.md)
    shows its other backend is dead too, Visuals search on D7 is probably already
-   non-functional; the honest fix may be to turn it off rather than repoint it.
+   non-functional; the honest fix may be to turn it off rather than repoint it. Lower
+   urgency than the two fixed above — this direction is production→staging, not the
+   staging→production risk that motivated fixing #2 first.
 4. **Note it as a cutover consideration:** whatever D11 does for Sources and AV search
    must not inherit these targets.
 
