@@ -151,9 +151,16 @@ header/ancestors/feature-types; (2) grouped nested-query counts against `kmterms
   categories (places/subjects/terms) in the same tag row and D11's panel currently
   shows only two. Flip it to displayed as part of this work.
 
+- ~~One formatter with a setting, or two formatters?~~ **DECIDED 2026-09-02 (Than): two
+  formatters**, matching D7's `kmap_default_formatter`/`kmap_popover_formatter` split.
+  Reasoning: it's the least-surprising match to the legacy site; formatter selection is
+  already Drupal's native mechanism for "same field, different display" so a setting
+  toggle would reinvent that; and this is explicitly a special-case use — the plain
+  default formatter may still have other, unconfirmed uses elsewhere, so keeping them
+  as separate plugins avoids coupling the popover behavior to every consumer of the
+  default one.
+
 **Still open, to decide before starting:**
-- One formatter with a setting, or two formatters (`kmap_default_formatter` vs
-  `kmap_popover_formatter`, matching D7's explicit-opt-in split)?
 - Full "Related X" category parity (all six D7 categories) vs. trimming to what's
   actually non-zero for Images-only content today?
 
