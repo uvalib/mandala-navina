@@ -3,7 +3,12 @@
 **Area:** migration / users / infrastructure
 **Raised during:** Session 2026-07-10 (1b.1 — planning the user migration)
 **Jira:** (add when available)
-**Priority:** High — blocks the user migration (Sequencing item 1) and everything gated on it: `d7_images_collection_memberships` (211/249 rows currently skipped), Group membership `uid` correctness, SAML/NetBadge account mapping
+**Priority:** **Low — user migration DONE (2026-08-12) and historical group ownership FIXED
+(2026-09-02).** 1,543 users migrated from `mandala_shared` on dev-0; all 22 private groups
+now have real members; `d7_images_collection_memberships` went from 36/246 (stuck since
+2026-07-19) to **246/246**. The 171 collection/subcollection groups forced to `uid: 1` are
+now correctly re-owned to their real D7 creators — see below. What's left is just the
+still-open SAML/NetBadge mapping and `realname` design questions.
 
 ## What we found
 
@@ -59,7 +64,8 @@ D7-multisite-specific behavior, not migration-relevant on its own).
 - **SAML/NetBadge account mapping is a separate, real question**, not solved
   by migrating the `users` table alone — how migrated D11 accounts link to
   UVA Shibboleth-authenticated sessions needs its own mapping strategy
-  (`name`/`mail` match? a stored NetBadge identifier field?). Relevant to
+  (`name`/`mail` match? a stored NetBadge identifier field?).
+  **ASSIGNED to Yuji for a decision, 2026-09-02 (group decision).** Relevant to
   [ADR 013](../adr/013-drupal-source-of-truth-solr-client-compatibility.md)/[014](../adr/014-hybrid-solr-proxy-design.md)'s
   SAML+OAuth2 coexistence work (Spike 10, 1b.1 part 4) — that work assumes a
   Drupal account already exists to key `sub` off of; user migration is the
@@ -67,14 +73,26 @@ D7-multisite-specific behavior, not migration-relevant on its own).
 
 ## What's already gated on this
 
-- `d7_images_collection_memberships` (1b.2): 38/249 rows created, 211 skipped
+- ~~`d7_images_collection_memberships` (1b.2): 38/249 rows created, 211 skipped
   — those 211 reference D7 users that don't exist in D11 yet. Re-run once
-  users are migrated.
-- The 174 collection/subcollection groups that got `uid: 1` forced during
-  1b.2 (working around Group's uid=0-on-insert bug, itself since fixed by
-  PR #28) were never meant to be permanently owned by the admin account —
-  once real users exist, decide whether/how to correct historical group
-  ownership to the actual D7 creator.
+  users are migrated.~~ **DONE 2026-08-12** — re-run after the user migration
+  produced 210 created, 36 updated, 0 failed → **246/246**.
+- ~~The 174 collection/subcollection groups that got `uid: 1` forced during
+  1b.2... this correction (historical group ownership → actual D7 creator)
+  is still open~~ **FIXED 2026-09-02.** Checked the D7 source first: of 171
+  real collection/subcollection nodes (not 174 — the earlier count was
+  approximate), **zero have `uid: 0`**, so the Group insert-bug workaround
+  was never actually protecting real data here — it just discarded 137
+  legitimate creator assignments (34 of 171 were already correctly
+  `uid: 1`/ShantiAdmin). All 18 distinct D7 creator uids resolved cleanly
+  in `migrate_map_d7_users` to live, active D11 accounts, 1:1 identity-mapped
+  (D7 uid *N* → D11 uid *N* in every case). Fixed both the migration process
+  pipeline (`uid: uid` replacing the hardcoded `default_value: 1`, in
+  `d7_images_collections.yml` and `d7_images_subcollections.yml`, both
+  `config/install` and `config/sync` per the PR #28 drift lesson) and the
+  171 already-migrated groups on dev-0 directly (dry-run verified 137
+  corrections / 34 already-correct / 0 errors, then applied and
+  re-verified: 171/171 correct).
 
 ## Open questions for the actual migration design
 
@@ -86,9 +104,18 @@ D7-multisite-specific behavior, not migration-relevant on its own).
   compatible hashing too (core still ships `PhpassHashedPassword` era logic
   for legacy migrations), so password migration is likely straightforward —
   confirm during implementation rather than assuming.
-- `realname` field migration: D11 has no `realname` module by default: decide
+- ~~`realname` field migration: D11 has no `realname` module by default: decide
   whether to bring it in as a dependency or fold the name into core user
-  fields.
+  fields.~~ **DECIDED 2026-09-02 (group): fold into core user fields, no
+  `realname` module dependency.** Confirmed in `d7_users.yml`: `field_first_name`
+  and `field_last_name` were never added or mapped — currently just a comment
+  ("decide during laptop migration-dev"). Implementation: add
+  `field_first_name`/`field_last_name` to the D11 user entity via CMI, map them
+  in the `d7_users` migration process pipeline (source values live in the same
+  `mandala_shared`-prefixed tables as `users`, per the prefix list above), and
+  backfill the 1,543 already-migrated users the same way the group-ownership fix
+  was backfilled today — not yet implemented, still open as a build task, but the
+  approach is no longer a decision.
 
 ## Cross-references
 

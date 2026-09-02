@@ -2,8 +2,14 @@
 **Area:** solr / infrastructure / kmassets
 **Raised during:** Session 2026-06-12
 **Jira:** (add when available)
-**Priority:** High
-**Owner:** Yuji Shinozaki + Dave Goldstein
+**Priority:** High. **ASSIGNED directly to Yuji, 2026-09-02 (group decision)** — the original
+cost/architecture question is largely moot (see the 2026-06-26 update below: no always-on ECS
+to right-size). What remains is closing the loop with Dave on the still-open items in
+`kmasset-solr-doc-contract.md` §3 (direct-to-master access/credentials, second-writer
+acceptability, batch cadence, regen-directory support, failure-log reliability, timestamp
+keying) — notably, the direct-to-master sink already **shipped** in 1a.8 ahead of confirming
+those, so this needs following up on, not opening fresh.
+**Owner:** Yuji Shinozaki (point of contact with Dave Goldstein)
 
 ## Context
 

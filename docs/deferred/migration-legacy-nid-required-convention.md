@@ -98,6 +98,25 @@ development going forward, not just migrations.
       service token for the source site (`images`, `texts`, `sources`, `audio-video`,
       `visuals`, `mandala`) — note **AV's audio and video share one token**, because they
       share one D7 nid sequence. Set it with `default_value` (constant per migration).
+- [ ] **For any Group-entity (`collection`/`subcollection`, or a future Group bundle)
+      migration: map real `uid: uid`, never a hardcoded `default_value`, and declare
+      `migration_dependencies: required: [d7_users]` (or the equivalent user migration
+      id) so users import before groups.** Root cause, confirmed by reading
+      `Group::postSave()` (`drupal/web/modules/contrib/group/src/Entity/Group.php`):
+      on a group's first insert, if the group type grants creators a membership by
+      default, Group calls `$this->getOwner()` — reading the entity's own `uid` field
+      value at that exact moment — and adds that account as a member. If `uid` is `0`
+      (unset, or a lookup that hasn't resolved because users haven't migrated yet),
+      it silently creates a bogus anonymous membership. This is exactly what happened
+      to the 171 Images collection/subcollection groups (fixed 2026-09-02, see
+      [`d7-shared-user-database.md`](d7-shared-user-database.md)): the original fix was
+      a blanket `uid: 1` (admin) workaround, which "solved" the bug by discarding every
+      real creator instead of sequencing correctly. Checked the D7 source before that
+      fix: 0 of 171 real nodes had `uid: 0`, so a real, correctly-sequenced `uid: uid`
+      mapping would have avoided the whole problem — the workaround was never
+      necessary for this data. Only fires on insert (`$update === FALSE`), never on a
+      later `save()` of an existing group, so this is strictly a first-migration-run
+      concern, not something that needs revisiting on every deploy.
 - [ ] **Migrate the site's D7 `url_alias` rows.** D7 used pathauto to present
       user-friendly paths, and preserving those legacy paths in D11 is a **requirement**
       ([ADR 016](../adr/016-public-url-structure-single-host.md) decision 7) — they are
@@ -176,7 +195,7 @@ Two consumers already depend on this mapping being unique:
    vs `av-1631632` carry a **service prefix**, making service+nid the real composite key.
    That is precedent for the options below, not a coincidence.
 
-**DECIDED 2026-08-25 — [ADR 017](../adr/017-legacy-identity-composite-key.md) (Proposed):** the
+**DECIDED 2026-08-25, RATIFIED 2026-09-02 — [ADR 017](../adr/017-legacy-identity-composite-key.md) (Accepted):** the
 explicit `field_legacy_site` companion, using the kmassets service vocabulary. The two options
 that were weighed:
 

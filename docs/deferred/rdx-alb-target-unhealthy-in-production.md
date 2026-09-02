@@ -3,7 +3,10 @@
 **Area:** reindeer_x / rdx / ALB / production defect
 **Raised during:** Session 2026-07-14 (1b.1 part 4 — comparing reindeer_x across environments)
 **Jira:** (add when available)
-**Priority:** High — a live production defect, independent of the D11 rebuild
+**Priority:** High — a live production defect, independent of the D11 rebuild.
+**ASSIGNED to Yuji, 2026-09-02 (group decision), bundled with the always-on-rdx review below**
+— same service, same gate: the port fix and the two other respects stay blocked until that
+review lands, so one owner covers both.
 
 ## Measured, not inferred (2026-07-14)
 

@@ -345,7 +345,7 @@ existing as cross-reference examples for D1.
 | Images: OpenSeadragon deep-zoom viewer | **In** |
 | Images: AJAX sibling carousel | **In** |
 | Images: masonry/gallery grid Views plugin | **In** |
-| Images: multi-image sequence viewer (`sdviewer.php` equivalent) | **Open question** — not silently in or out |
+| Images: multi-image sequence viewer (`sdviewer.php` equivalent) | **RESOLVED 2026-09-02: not needed** — see the sprint doc's Workstream B section and `docs/deferred/images-missing-interactive-viewing-surfaces.md` |
 | AV/Sources/Texts content-model audits | **In** |
 | AV/Sources/Texts migration code, module scaffolding | **Out** |
 | Uniform endpoint-access pattern (D1) | **In** — documentation, no new code needed yet |

@@ -1,8 +1,8 @@
 # ADR 017: Legacy identity is a composite key — `field_legacy_site` + `field_legacy_nid`
 
-**Status:** Proposed — for discussion by Yuji Shinozaki, Than Grove and Xiaoming Wang, 2026-08-26
-**Date:** 2026-08-25 (proposed)
-**Deciders:** Yuji Shinozaki (Lead Architect) — direction set 2026-08-25; team sign-off pending
+**Status:** Accepted — 2026-09-02, ratified by Yuji Shinozaki, Than Grove, Xiaoming Wang
+**Date:** 2026-08-25 (proposed), 2026-09-02 (accepted)
+**Deciders:** Yuji Shinozaki (Lead Architect) — direction set 2026-08-25; team sign-off 2026-09-02
 **Relates to:** [ADR 005](005-single-site.md) (single-site redesign), [ADR 016](016-public-url-structure-single-host.md) (public URL structure), [ADR 006](006-kmterms-in-kmassets-shadow-pattern.md)
 **Resolves:** the gap recorded in [`migration-legacy-nid-required-convention.md`](../deferred/migration-legacy-nid-required-convention.md)
 

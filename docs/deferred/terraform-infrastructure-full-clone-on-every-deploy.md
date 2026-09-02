@@ -4,11 +4,11 @@
 **Raised during:** Session 2026-08-26 (watching the dev-0 deploy during the from-scratch rebuild)
 **Jira:** (add when available)
 **Priority:** Low-Medium — a real cost on every deploy, not a correctness bug
-**Status:** SCHEDULED — Yuji, 2026-08-27: land at the next meeting with Than + Xiaoming,
-alongside reviewing [#162](https://github.com/uvalib/mandala-navina/pull/162) and picking up
-[dev0-from-scratch-rebuild-runbook.md](../planning/dev0-from-scratch-rebuild-runbook.md) steps
-7–10. Not done solo because it touches `pipeline/**`, a deploy-trigger path, and the group
-would rather batch operational changes with the meeting.
+**Status:** DONE — 2026-09-02: group agreed to implement the proposed fix; landed as
+`--depth 1 --single-branch` in `pipeline/deployspec.yml:42`. Verified nothing downstream in
+`deployspec.yml` reads git history, tags, or other branches (only the current working tree, via
+`terraform init`/`apply` and the Ansible playbooks), matching the finding below. #162 and
+`dev0-from-scratch-rebuild-runbook.md` steps 7–10 remain separately scheduled.
 
 ## What was found
 
