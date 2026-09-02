@@ -207,7 +207,20 @@
             container.appendChild(panel);
             panelRowY = rowY;
           }
-          panel.innerHTML = '<button type="button" class="shanti-grid-view-panel-close" aria-label="Close">×</button><div class="shanti-grid-view-panel-body">' + Drupal.t('Loading…') + '</div>';
+          // Ports production's ppd-loading widget (pig-shanti-ext.js /
+          // shanti-pig-gallery.css): a 4-dot orbiting/fading spinner plus a
+          // pulsing "Loading..." label. Production shows a second, separate
+          // spinner for the details text (loaded via its own AJAX request,
+          // independent of the image); this port fetches the whole panel
+          // as one request, so one spinner covers both -- centered in the
+          // row rather than over just the image half.
+          panel.innerHTML = '<button type="button" class="shanti-grid-view-panel-close" aria-label="Close">×</button>'
+            + '<div class="shanti-grid-view-panel-body">'
+            + '<div class="shanti-grid-view-loading" role="alert" aria-live="assertive">'
+            + '<ul class="shanti-grid-view-loading-dots"><li></li><li></li><li></li><li></li></ul>'
+            + '<div class="shanti-grid-view-loading-text">' + Drupal.t('Loading…') + '</div>'
+            + '</div>'
+            + '</div>';
           panel.querySelector('.shanti-grid-view-panel-close').addEventListener('click', closePanel);
           measureAndShift();
 

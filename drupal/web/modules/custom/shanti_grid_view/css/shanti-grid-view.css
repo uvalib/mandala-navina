@@ -163,6 +163,170 @@
   padding: 2rem;
 }
 
+/* Loading spinner shown while the panel's content fetch is in flight.
+ * Ported from production's ppd-loading widget (pig-shanti-ext.js /
+ * shanti-pig-gallery.css): 4 dots, each independently rotating around a
+ * shared center and fading in/out on its own cycle, plus a pulsing
+ * "Loading..." label. Centered in the row (both axes), not just over the
+ * image half, since this port loads the whole panel as one fetch. */
+.shanti-grid-view-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 12rem;
+}
+
+.shanti-grid-view-loading-dots {
+  font-size: 60px;
+  width: 1em;
+  height: 1em;
+  position: relative;
+  margin: 0 auto;
+  list-style: none;
+  padding: 0;
+}
+
+.shanti-grid-view-loading-dots li {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.shanti-grid-view-loading-dots li:nth-child(1) {
+  left: 50%;
+  top: 0;
+  margin: 0 0 0 -0.1em;
+  background: #b5953b;
+  transform-origin: 50% 250%;
+  animation: shanti-grid-view-loading-rotate 1.13s linear infinite,
+    shanti-grid-view-loading-fade 4.67s ease-in-out infinite alternate;
+  width: 0.1em;
+  height: 0.1em;
+}
+
+.shanti-grid-view-loading-dots li:nth-child(2) {
+  top: 50%;
+  right: 0;
+  margin: -0.1em 0 0 0;
+  background: #fff;
+  transform-origin: -150% 100%;
+  animation: shanti-grid-view-loading-rotate 1.86s linear infinite,
+    shanti-grid-view-loading-fade 4.29s ease-in-out infinite alternate;
+  width: 0.21em;
+  height: 0.21em;
+}
+
+.shanti-grid-view-loading-dots li:nth-child(3) {
+  left: 50%;
+  bottom: 0;
+  margin: 0 0 0 -0.1em;
+  background: #b5953b;
+  transform-origin: 100% -300%;
+  animation: shanti-grid-view-loading-rotate 1.45s linear infinite,
+    shanti-grid-view-loading-fade 5.12s ease-in-out infinite alternate;
+  width: 0.18em;
+  height: 0.18em;
+}
+
+.shanti-grid-view-loading-dots li:nth-child(4) {
+  top: 50%;
+  left: 0;
+  margin: -0.1em 0 0 0;
+  background: #fff;
+  transform-origin: 500% 100%;
+  animation: shanti-grid-view-loading-rotate 1.72s linear infinite,
+    shanti-grid-view-loading-fade 5.25s ease-in-out infinite alternate;
+  width: 0.18em;
+  height: 0.18em;
+}
+
+@keyframes shanti-grid-view-loading-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shanti-grid-view-loading-fade {
+  0% {
+    opacity: 1;
+  }
+
+  12% {
+    opacity: 0.8;
+  }
+
+  19.5% {
+    opacity: 0.88;
+  }
+
+  37.2% {
+    opacity: 0.64;
+  }
+
+  40.5% {
+    opacity: 0.52;
+  }
+
+  52.7% {
+    opacity: 0.69;
+  }
+
+  60.2% {
+    opacity: 0.6;
+  }
+
+  66.6% {
+    opacity: 0.52;
+  }
+
+  70% {
+    opacity: 0.63;
+  }
+
+  79.9% {
+    opacity: 0.6;
+  }
+
+  84.2% {
+    opacity: 0.75;
+  }
+
+  91% {
+    opacity: 0.87;
+  }
+}
+
+.shanti-grid-view-loading-text {
+  animation: shanti-grid-view-loading-text-opacity 1s linear infinite;
+  color: #eee;
+  font-size: 1.1em;
+  letter-spacing: 0.175rem;
+  margin-top: 1rem;
+  opacity: 0.6;
+}
+
+@keyframes shanti-grid-view-loading-text-opacity {
+  0% {
+    opacity: 0.6;
+  }
+
+  20% {
+    opacity: 0.8;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.6;
+  }
+}
+
 /* node--shanti-image--grid-details.html.twig */
 .shanti-grid-details {
   display: flex;
