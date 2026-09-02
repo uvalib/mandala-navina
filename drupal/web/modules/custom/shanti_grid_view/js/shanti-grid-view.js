@@ -128,6 +128,28 @@
           panelHeight = newHeight;
         };
 
+        // Ports pig-shanti-ext.js's Pig.prototype.scrollToView: rather than
+        // a plain scrollIntoView (which only moves the minimum amount to
+        // bring an edge into view, and does nothing further once any part
+        // of the panel is visible), production positions the panel's
+        // *bottom* ~50px above the viewport's bottom edge -- this reliably
+        // shows the whole panel regardless of where on screen the click
+        // happened, including when the clicked image is near the bottom
+        // of the viewport (the case this exists for). Called after the
+        // panel has reached its real (content-driven) height, not on open
+        // -- our panel's height comes from real fetched content, unlike
+        // D7's fixed-height popdown, so scrolling before content loads
+        // would use a stale, too-short height.
+        const scrollPanelIntoView = () => {
+          if (!panel) {
+            return;
+          }
+          const rect = panel.getBoundingClientRect();
+          const diff = window.innerHeight - (rect.height + 50);
+          const targetTop = window.scrollY + rect.top - diff;
+          window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+        };
+
         const closePanel = () => {
           if (!panel) {
             return;
@@ -188,7 +210,6 @@
           panel.innerHTML = '<button type="button" class="shanti-grid-view-panel-close" aria-label="Close">×</button><div class="shanti-grid-view-panel-body">' + Drupal.t('Loading…') + '</div>';
           panel.querySelector('.shanti-grid-view-panel-close').addEventListener('click', closePanel);
           measureAndShift();
-          panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
           fetch(image.infoUrl, { headers: { Accept: 'text/html' } })
             .then((response) => {
@@ -209,6 +230,7 @@
               // explicitly, scoped to just the inserted content.
               Drupal.attachBehaviors(panelBody);
               measureAndShift();
+              scrollPanelIntoView();
             })
             .catch(() => {
               if (!panel) {
@@ -216,6 +238,7 @@
               }
               panel.querySelector('.shanti-grid-view-panel-body').textContent = Drupal.t('Unable to load details for this image.');
               measureAndShift();
+              scrollPanelIntoView();
             });
         });
 
