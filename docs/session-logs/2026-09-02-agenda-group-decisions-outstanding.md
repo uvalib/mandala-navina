@@ -14,18 +14,29 @@ that looked like they belonged here got resolved solo this session instead (see
 "Resolved before this meeting" below); what's left are the ones that genuinely need more
 than one person in the room.
 
-### 1. D7 editor permissions are OG-group-scoped, not migrated
+### 1. D7 editor permissions are OG-group-scoped — schedule Phase B, not design it
 
 [`d7-editor-permissions-og-group-scoped-not-migrated.md`](../deferred/d7-editor-permissions-og-group-scoped-not-migrated.md) — **High**
 
-- D7's real editor permissions are granted per-collection via `og_role_permission`, not
-  core `role_permission` (which is empty for editor/workflow-editor/shanti-editor).
-- D11's committed `content_editor` role (ADR 015) is sitewide and has zero overlap with
-  the actual Mandala content types (article/page only) — a sitewide role fix alone can't
-  be faithful to what D7 editors could actually do.
-- **Decision needed:** how to model per-collection editorial grants in D11 (Group
-  member-role permissions, most likely, matching the contributor-tier direction below) —
-  this is a design call, not just an implementation task.
+- **Not an open design question** — the model is already decided, in
+  [ADR 015](../adr/015-editorial-access-model-global-content-editor.md) (Accepted
+  2026-08-06). Confirmed on this call: two editor tiers —
+  **global `content_editor`** (create/edit/delete any content, in any group — the
+  "Phase A" role, already built and live for Images) and a **group editor** (per-group
+  Group role, `scope: individual`, create/edit/delete only within that one group —
+  reconstructing D7's OG `editor` role, "Phase B", **deferred but not designed yet in
+  practice — not built**).
+- D7's real `editor` role (142 active users) was never in core `role_permission` at
+  all — it lived entirely in OG's `og_role_permission`, per-collection. That's exactly
+  why a single sitewide role can't represent it; ADR 015 already reached that
+  conclusion, which is why Phase B is a distinct Group-role migration rather than a
+  bigger sitewide role.
+- **What's actually needed:** not a decision, a scheduling/resourcing call — when does
+  the Phase B group-role migration (`og_users_roles` → Group `individual`-scope roles)
+  get built? Those 142 D7 editors currently migrated as plain `authenticated` (ADR 015
+  item 4) and have **no group-scoped editorial access today** — that's the live gap.
+  Connects to the still-open 1b.3 (Solr-proxy visibility coherence) / 1b.4 (paragraph
+  access inheritance) tasks, which may share the same underlying mechanism.
 
 ### 2. Contributor CRUD tier still unwired in D11
 
