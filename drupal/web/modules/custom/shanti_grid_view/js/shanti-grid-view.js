@@ -201,7 +201,13 @@
               if (!panel) {
                 return;
               }
-              panel.querySelector('.shanti-grid-view-panel-body').innerHTML = html;
+              const panelBody = panel.querySelector('.shanti-grid-view-panel-body');
+              panelBody.innerHTML = html;
+              // The fragment is a raw fetch() response, not run through
+              // Drupal's AJAX framework, so behaviors never auto-attach to
+              // it (e.g. kmapsPopover's Bootstrap-popover wiring) -- attach
+              // explicitly, scoped to just the inserted content.
+              Drupal.attachBehaviors(panelBody);
               measureAndShift();
             })
             .catch(() => {

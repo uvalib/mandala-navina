@@ -6,3 +6,10 @@ services:
       - '@config.factory'
       - '@cache.default'
       - '@logger.factory'
+  shanti_kmaps_fields.popover_info:
+    class: Drupal\shanti_kmaps_fields\KmapsPopoverInfoService
+    arguments:
+      - '@http_client'
+      - '@config.factory'
+      - '@cache.default'
+      - '@logger.factory'

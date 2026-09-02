@@ -16,5 +16,18 @@ function shanti_kmaps_fields_theme(): array {
       ],
       'template' => 'kmaps-field-tags',
     ],
+    'kmaps_popover' => [
+      'variables' => [
+        'label' => '',
+        'domain' => '',
+        'kid' => 0,
+        'ftypes' => [],
+        'desc' => '',
+        'defs' => [],
+        'tree' => [],
+        'links' => [],
+      ],
+      'template' => 'kmaps-popover',
+    ],
   ];
 }

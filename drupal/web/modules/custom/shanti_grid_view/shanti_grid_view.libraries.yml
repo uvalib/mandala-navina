@@ -27,6 +27,13 @@ masonry-grid:
     - core/once
     - core/drupalSettings
     - shanti_grid_view/pig
+    # The info panel (GridInfoController) is fetched as a raw HTML fragment
+    # via fetch() + innerHTML, not Drupal's AJAX framework -- #attached
+    # libraries declared by formatters used inside that fragment (e.g.
+    # kmap_popover_formatter) never reach the browser that way. Attaching
+    # it here instead guarantees it's already loaded on the parent page
+    # before any panel ever opens.
+    - shanti_kmaps_fields/kmaps_popover
 
 # ShantiPager's widget input (type-a-page-number-and-press-Enter), ported
 # from D7's pagerer.js -- see shanti-pager.js for the specific subset of
