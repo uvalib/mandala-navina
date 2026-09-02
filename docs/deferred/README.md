@@ -26,15 +26,13 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 > session and looking for what to pick up, do not start these — put them on the next group-meeting
 > agenda instead.
 >
-> - **[kmassets:audit checks the write master, not the search reader](kmassets-audit-checks-master-not-search-reader.md)**
->   — for Yuji: a real 70-document gap between the two hosts slipped through a "clean" audit;
->   needs infrastructure-side confirmation of what `mandala-index-dev` actually is before anyone
->   acts on it.
+> _(none currently)_
 
 ## Open items
 
 | File | Area | Raised | Priority |
 |---|---|---|---|
+| [kmassets-audit-checks-master-not-search-reader.md](kmassets-audit-checks-master-not-search-reader.md) | solr / kmassets / mandala_kmassets_sync / search_api | Session 2026-08-28 | **High — ASSIGNED to Yuji, 2026-09-02 (group decision).** Real 70-document gap between the write master and the search reader slipped through a "clean" `kmassets:audit`; root-cause on Yuji's own timeline, starting with confirming what `mandala-index-dev` actually is |
 | [solr-sync-architecture-d11.md](solr-sync-architecture-d11.md) | solr / kmassets / kmterms | Session 2026-06-12 | High |
 | [solr-pipeline-cost-discussion.md](solr-pipeline-cost-discussion.md) | solr / infrastructure | Session 2026-06-12 | High |
 | [tibetan-search-quality.md](tibetan-search-quality.md) | solr / search / i18n | Session 2026-06-15 | Low (post-MVP) |
