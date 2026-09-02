@@ -3,7 +3,10 @@
 **Area:** reindeer_x / deployment / CI-CD / ECR / cutover
 **Raised during:** Session 2026-07-14 (1b.1 part 4 — writing the D11 app pipeline)
 **Jira:** (add when available)
-**Priority:** High — the current reindeer_x deployment does not survive the dev-0 replacement decided in the part-4 scope doc §5.1
+**Priority:** High — the current reindeer_x deployment does not survive the dev-0 replacement decided in the part-4 scope doc §5.1.
+**ASSIGNED to Yuji, 2026-09-02 (group decision)** — resolves the always-on-vs-batch-resync
+question this note and [`rdx-alb-target-unhealthy-in-production.md`](rdx-alb-target-unhealthy-in-production.md)
+are both gated on.
 
 ## What we found
 

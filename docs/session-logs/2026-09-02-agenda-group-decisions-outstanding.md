@@ -44,19 +44,7 @@ than one person in the room.
   visibility coherence) / 1b.4 (paragraph access inheritance) tasks, which may share
   the same underlying mechanism.
 
-### 2. rdx (reindeer_x) ALB target unhealthy in production
-
-[`rdx-alb-target-unhealthy-in-production.md`](../deferred/rdx-alb-target-unhealthy-in-production.md) — **High, live production defect**
-
-- Independent of the D11 rebuild — a real defect in a service that's currently live.
-  Re-verified still unhealthy as of 2026-08-11.
-- Tangled with the still-open "does reindeer_x need to be always-on" question
-  ([`reindeer-x-has-no-ecr-repo-or-pipeline.md`](../deferred/reindeer-x-has-no-ecr-repo-or-pipeline.md),
-  under review by Yuji).
-- **Decision needed:** fix the unhealthy target regardless of the always-on question, or
-  bundle both into one conversation since they're the same service?
-
-### 3. Solr pipeline cost/architecture conversation with Dave Goldstein
+### 2. Solr pipeline cost/architecture conversation with Dave Goldstein
 
 [`solr-pipeline-cost-discussion.md`](../deferred/solr-pipeline-cost-discussion.md) — **High, roadmap driving decision**
 
@@ -65,7 +53,7 @@ than one person in the room.
 - **Action needed:** just scheduling this — it's not a Drupal-side task, it's a
   conversation that hasn't started.
 
-### 4. Loose ends from the 2026-08-12 user migration (smaller, worth a mention)
+### 3. Loose ends from the 2026-08-12 user migration (smaller, worth a mention)
 
 [`d7-shared-user-database.md`](../deferred/d7-shared-user-database.md) — **Medium** (the migration itself is done; these are what's left)
 
@@ -124,6 +112,13 @@ session — noted here so nobody re-opens them without new information:
   backend is already confirmed dead. See
   [`solr-cross-environment-write-targets.md`](../deferred/solr-cross-environment-write-targets.md)
   for full detail.
+- **rdx (reindeer_x) ALB target unhealthy in production** — **assigned to Yuji**, bundled
+  with the still-open "does reindeer_x need to be always-on"
+  ([`reindeer-x-has-no-ecr-repo-or-pipeline.md`](../deferred/reindeer-x-has-no-ecr-repo-or-pipeline.md))
+  review — same service, same gate. The port fix and the other two respects (move to
+  dev-1, get the deployment into GitHub) stay blocked until that review lands; one owner
+  now covers both notes. See
+  [`rdx-alb-target-unhealthy-in-production.md`](../deferred/rdx-alb-target-unhealthy-in-production.md).
 
 ## Outcome
 
