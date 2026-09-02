@@ -23,7 +23,7 @@ display:
     display_plugin: default
     position: 0
     display_options:
-      title: 'Explore Images'
+      title: Images
       fields: {  }
       pager:
         type: shanti_pager
