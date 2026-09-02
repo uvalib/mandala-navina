@@ -25,8 +25,10 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 > These items are **blocked on a group conversation, not on implementation**. If you are driving a
 > session and looking for what to pick up, do not start these — put them on the next group-meeting
 > agenda instead.
->
-> _(none currently)_
+
+| File | Area | Raised | Priority |
+|---|---|---|---|
+| [config-export-drift-hand-edited-yaml.md](config-export-drift-hand-edited-yaml.md) | deployment / CMI / config sync / DX | Session 2026-09-02 (PR #177/#179) | Medium — how should hand-edited config YAML be validated before `main`, not just at deploy time? |
 
 ## Open items
 

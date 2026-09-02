@@ -755,6 +755,21 @@ $settings['update_free_access'] = FALSE;
 # ini_set('pcre.backtrack_limit', 200000);
 # ini_set('pcre.recursion_limit', 200000);
 
+// Raise the CLI memory_limit above the base image's 128M default. A single
+// long-running drush process (migrate:import, cim, kmassets:index-all)
+// accumulates static caches (cache tags, entity storage) across tens of
+// thousands of operations without ever clearing them the way a short-lived
+// web request would, and has hit the 128M ceiling three separate times,
+// worked around per-invocation each time (see
+// docs/deferred/migrate-large-migration-oom-and-resume-behavior.md).
+// memory_limit is PHP_INI_ALL (runtime-settable via ini_set(), per the note
+// above), and PHP_SAPI reliably distinguishes 'cli' from Apache's
+// 'apache2handler', so this only raises the limit for drush/composer/other
+// CLI scripts -- web requests keep the base image's default.
+if (PHP_SAPI === 'cli') {
+  ini_set('memory_limit', '1024M');
+}
+
 /**
  * Configuration overrides.
  *
