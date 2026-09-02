@@ -73,6 +73,7 @@ here.
 | B1 | OpenSeadragon deep-zoom viewer: `IiifDeepZoomFormatter` field formatter in `shanti_iiif`, reusing `IiifUrlBuilder::infoUrl()`; `shanti_iiif.libraries.yml` (OpenSeadragon vendor lib + behavior JS using `drupalSettings`, porting `shanti-main-images.js`'s overlay behavior) | Workstream A skeleton (A1–A2) | ☑ |
 | B2 | AJAX sibling carousel: new `shanti_images_carousel` module, `_entity_access: 'node.view'` route, controller reusing the proven `group_relationship`/`loadByEntity()` collection-lookup pattern (`NodeJsonController::buildCollection()`), new ±15-windowing query cached per-collection, JS behavior attached from `node--shanti_image.html.twig` | Workstream A skeleton, B1 (shared template touch-point) | ☐ |
 | B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate), Views config for the homepage gallery. **Built and verified live 2026-09-01** — see the session log. PhotoSwipe lightbox and the D7 data-source (non-entity) view mode were deliberately not ported; scope stayed to the entity/node case per the production-reference doc | Workstream A skeleton | ☑ |
+| B4 | KMaps popover ("mandala popover"): hover popover on every KMaps place/subject/term tag (icon trigger, term info + ancestor breadcrumb, "Full Entry" link, "Related X (N)" links). New `KmapsPopoverInfoService` in `shanti_kmaps_fields` (in-process, not D7's self-referential HTTP round-trip), a lazy-fetch controller/route, an extended/new field formatter, BS5 native popover JS behavior. **Planned 2026-09-02, not yet started** — see below | Workstream A skeleton (Bootstrap 5 popover), `shanti_kmaps_fields` (field type, already proven) | ☐ |
 
 **Scope question RESOLVED 2026-09-02 (Than): not needed for D11.** `IiifDeepZoomFormatter`
 renders a single-image viewer only, as built. Checked the actual D7 source at
@@ -86,6 +87,71 @@ production either. No D11 work needed; see
 [`images-missing-interactive-viewing-surfaces.md`](../deferred/images-missing-interactive-viewing-surfaces.md)
 for the full pointer, kept for reference in case a real multi-image sequence need comes
 up later.
+
+#### B4 — KMaps popover ("mandala popover"), planning
+
+**Raised 2026-09-02 (Than): a feature never previously flagged to the team, found to be
+central to the production UI.** On production, every KMaps place/subject/term tag (e.g.
+in the gallery info panel's tag row) carries a white speech-bubble icon; hovering shows a
+tooltip with term info, an ancestor breadcrumb, a "Full Entry" link, and "Related X (N)"
+links to other asset types. D11's current tags (`KmapsDefaultFormatter`) render as plain
+static links — this is the gap this item closes.
+
+**Investigated the real D7 mechanism before planning** (not the tempting but wrong lead):
+the visible widget is **not** `kmaps_explorer`'s old client-side `jquery.kmaps-popup.js`
+(that path does raw JSONP straight to Solr and its own module comments mark the
+count-fetching functions it duplicates as deprecated 2017 — do not port it). The real,
+current mechanism is `shanti_kmaps_fields`'s **`kmap_popover_formatter`** field formatter
+— server-side PHP on the exact field type D11 already has (Spike 1, `KmapsItem`). Two
+Solr calls per tag: (1) a single term-info lookup on `kmterms` (`q=uid:{domain}-{id}`) for
+header/ancestors/feature-types; (2) grouped nested-query counts against `kmterms` +
+`kmassets` for the "Related X (N)" links, only shown when count > 0.
+
+**Already in place in D11, no extra work needed:**
+- The anchor point already exists: `node--shanti-image--grid-details.html.twig` (B3's
+  info panel) already renders `field_places`/`field_subjects` through
+  `KmapsDefaultFormatter`, which **already emits `data-kmaps-key="places-41"`** on every
+  tag — just as a plain link today.
+- The Solr endpoints are already configured correctly:
+  `shanti_kmaps_admin.settings`'s `server_solr_terms`/`server_solr` both already route
+  through `mandala-solr-proxy`, not raw client-side JSONP like D7's old widget.
+- Bootstrap 5 (`drupal/bootstrap5`, already a composer dependency for Workstream A) ships
+  a native popover component (Popper-based, `data-bs-toggle="popover"`,
+  `trigger: 'hover'`) — should replace D7's hand-rolled mouseenter/mouseleave/manual
+  trigger jQuery logic, not require porting it by hand.
+- **A real simplification D11 gets for free**: D7's count-fetching is a *self-referential
+  HTTP round-trip* — the site calls its own `/mandala/popover/populate/{domain}/{id}`
+  endpoint over the network (flagged in the D7 source itself as a worker-pool-exhaustion
+  risk under load). D11 is single-site (ADR 005) — this becomes a plain in-process
+  service call, no HTTP hop, no separate self-call endpoint needed for that leg.
+
+**Proposed shape** (planning only, not yet built):
+1. New `KmapsPopoverInfoService` (`shanti_kmaps_fields`) — domain+id → term info +
+   related-counts, ported from `_shanti_kmaps_fields_kmaps_get_info()` +
+   `kmaps_explorer_get_popover_data()`'s Solr queries, in-process, cached (~12h TTL
+   matching D7).
+2. New lightweight controller/route (e.g. `/kmaps/popover/{domain}/{id}`) — the frontend
+   calls this **lazily on hover**, not pre-rendered into every tag at node-render time,
+   since the masonry gallery can show dozens of tags per page and pre-rendering all of
+   them would multiply Solr load for content nobody hovers. Public data, no per-node
+   access check needed (matches D7's `access content`-only gate).
+3. Extended/new field formatter — adds the icon trigger (`shanticon-menu3`, already
+   vendored in the theme's icon font) + `data-bs-toggle="popover"` wiring to the existing
+   tag markup.
+4. Small JS behavior in `shanti_kmaps_fields` (module-level, not gallery-specific — this
+   is a field-type behavior, the gallery panel is just today's one visible consumer) —
+   wires the BS5 popover on hover, fetches content from the new endpoint on first hover,
+   caches client-side per key.
+
+**Open scope questions, to decide before starting** (see the session log this was
+proposed in for full framing):
+- One formatter with a setting, or two formatters (`kmap_default_formatter` vs
+  `kmap_popover_formatter`, matching D7's explicit-opt-in split)?
+- Fold in enabling `field_kmap_terms` display in `grid_details`
+  (currently hidden — see the deferred cross-reference below) as part of this work,
+  since production shows terms in the same row?
+- Full "Related X" category parity (all six D7 categories) vs. trimming to what's
+  actually non-zero for Images-only content today?
 
 ### Workstream C — Content-model audits (AV, Sources, Texts) — audit only
 
