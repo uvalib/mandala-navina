@@ -14,42 +14,37 @@ that looked like they belonged here got resolved solo this session instead (see
 "Resolved before this meeting" below); what's left are the ones that genuinely need more
 than one person in the room.
 
-### 1. D7 editor permissions are OG-group-scoped — schedule Phase B, not design it
+### 1. Group-role migration: contributor + group-editor tiers, one effort — schedule it
 
-[`d7-editor-permissions-og-group-scoped-not-migrated.md`](../deferred/d7-editor-permissions-og-group-scoped-not-migrated.md) — **High**
-
-- **Not an open design question** — the model is already decided, in
-  [ADR 015](../adr/015-editorial-access-model-global-content-editor.md) (Accepted
-  2026-08-06). Confirmed on this call: two editor tiers —
-  **global `content_editor`** (create/edit/delete any content, in any group — the
-  "Phase A" role, already built and live for Images) and a **group editor** (per-group
-  Group role, `scope: individual`, create/edit/delete only within that one group —
-  reconstructing D7's OG `editor` role, "Phase B", **deferred but not designed yet in
-  practice — not built**).
-- D7's real `editor` role (142 active users) was never in core `role_permission` at
-  all — it lived entirely in OG's `og_role_permission`, per-collection. That's exactly
-  why a single sitewide role can't represent it; ADR 015 already reached that
-  conclusion, which is why Phase B is a distinct Group-role migration rather than a
-  bigger sitewide role.
-- **What's actually needed:** not a decision, a scheduling/resourcing call — when does
-  the Phase B group-role migration (`og_users_roles` → Group `individual`-scope roles)
-  get built? Those 142 D7 editors currently migrated as plain `authenticated` (ADR 015
-  item 4) and have **no group-scoped editorial access today** — that's the live gap.
-  Connects to the still-open 1b.3 (Solr-proxy visibility coherence) / 1b.4 (paragraph
-  access inheritance) tasks, which may share the same underlying mechanism.
-
-### 2. Contributor CRUD tier still unwired in D11
-
+[`d7-editor-permissions-og-group-scoped-not-migrated.md`](../deferred/d7-editor-permissions-og-group-scoped-not-migrated.md),
 [`authenticated-contributor-crud-not-wired-in-d11.md`](../deferred/authenticated-contributor-crud-not-wired-in-d11.md) — **High, cutover gate**
 
-- D7's `authenticated` role is the real contributor tier (CRUD-own on all asset types).
-  D11's `authenticated` role currently grants none of it — view-only.
-- Direction is already decided (Q2, 2026-08-07): wire as Group member-role permissions
-  (create within groups), not core sitewide create.
-- **Not a design question anymore — a scheduling one.** When does this land relative to
-  the rest of Sprint 2/3, given it's a cutover gate?
+- **Not an open design question for either tier** — both models are already decided.
+  [ADR 015](../adr/015-editorial-access-model-global-content-editor.md) (Accepted
+  2026-08-06) settled the editor side: **global `content_editor`** (create/edit/delete
+  any content, any group — "Phase A", already built and live for Images) plus a
+  **group editor** (per-group Group role, `scope: individual`, CRUD only within that
+  one group — reconstructing D7's OG `editor` role, "Phase B", deferred, not yet
+  built). Q2 (2026-08-07) settled the contributor side the same way: Group
+  member-role permissions (create-within-group), not core sitewide create.
+- **Folded into one agenda item because they're mechanically the same migration** —
+  both are Group-role reconstructions from D7's per-group role data
+  (`og_users_roles`/`og_role_permission`), just with different permission sets
+  (contributor = own-content-only within a group; group-editor = any-content within a
+  group). Building one naturally builds the scaffolding for the other.
+- D7's real `editor` role (142 active users) was never in core `role_permission` at
+  all — it lived entirely in OG's `og_role_permission`, per-collection, which is
+  exactly why neither tier can be a sitewide role.
+- **What's actually needed:** a single scheduling/resourcing call — when does this
+  combined Group-role migration (`og_users_roles` → Group `individual`-scope roles,
+  covering both contributor and group-editor permission sets) get built? Contributor
+  is a **hard cutover gate** (migrated users can currently author nothing); the 142
+  D7 editors currently migrated as plain `authenticated` have **no group-scoped
+  editorial access today** either. Connects to the still-open 1b.3 (Solr-proxy
+  visibility coherence) / 1b.4 (paragraph access inheritance) tasks, which may share
+  the same underlying mechanism.
 
-### 3. Canonical D7 dev-source dump: frozen or re-cut?
+### 2. Canonical D7 dev-source dump: frozen or re-cut?
 
 [`canonical-d7-dev-source-dump.md`](../deferred/canonical-d7-dev-source-dump.md) — **Medium now, High before cutover rehearsals**
 
@@ -59,7 +54,7 @@ than one person in the room.
   or get re-cut as staging/production cutover approaches? Cheap to decide now; expensive
   to leave open until rehearsals are underway and baselines have drifted further.
 
-### 4. Staging Solr writes land on production
+### 3. Staging Solr writes land on production
 
 [`solr-cross-environment-write-targets.md`](../deferred/solr-cross-environment-write-targets.md) — **Medium–High, live risk**
 
@@ -72,7 +67,7 @@ than one person in the room.
 - **Needs infra ownership**, not just a Drupal-side fix: who repoints these, and when,
   without risking a staging action corrupting prod data in the meantime.
 
-### 5. rdx (reindeer_x) ALB target unhealthy in production
+### 4. rdx (reindeer_x) ALB target unhealthy in production
 
 [`rdx-alb-target-unhealthy-in-production.md`](../deferred/rdx-alb-target-unhealthy-in-production.md) — **High, live production defect**
 
@@ -84,7 +79,7 @@ than one person in the room.
 - **Decision needed:** fix the unhealthy target regardless of the always-on question, or
   bundle both into one conversation since they're the same service?
 
-### 6. Solr pipeline cost/architecture conversation with Dave Goldstein
+### 5. Solr pipeline cost/architecture conversation with Dave Goldstein
 
 [`solr-pipeline-cost-discussion.md`](../deferred/solr-pipeline-cost-discussion.md) — **High, roadmap driving decision**
 
@@ -93,7 +88,7 @@ than one person in the room.
 - **Action needed:** just scheduling this — it's not a Drupal-side task, it's a
   conversation that hasn't started.
 
-### 7. Loose ends from the 2026-08-12 user migration (smaller, worth a mention)
+### 6. Loose ends from the 2026-08-12 user migration (smaller, worth a mention)
 
 [`d7-shared-user-database.md`](../deferred/d7-shared-user-database.md) — **Medium** (the migration itself is done; these are what's left)
 
