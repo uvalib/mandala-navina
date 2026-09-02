@@ -3,7 +3,12 @@
 **Area:** migration / users / infrastructure
 **Raised during:** Session 2026-07-10 (1b.1 — planning the user migration)
 **Jira:** (add when available)
-**Priority:** High — blocks the user migration (Sequencing item 1) and everything gated on it: `d7_images_collection_memberships` (211/249 rows currently skipped), Group membership `uid` correctness, SAML/NetBadge account mapping
+**Priority:** **Medium — user migration itself is DONE (2026-08-12).** 1,543 users
+migrated from `mandala_shared` on dev-0 exactly as this note specified; all 22 private
+groups now have real members; `d7_images_collection_memberships` went from 36/246 (stuck
+since 2026-07-19) to **246/246**. What's left is narrower than the original "blocks
+everything" framing: the historical group-ownership correction below (item 2), and the
+still-open SAML/NetBadge mapping and `realname` design questions.
 
 ## What we found
 
@@ -67,14 +72,15 @@ D7-multisite-specific behavior, not migration-relevant on its own).
 
 ## What's already gated on this
 
-- `d7_images_collection_memberships` (1b.2): 38/249 rows created, 211 skipped
+- ~~`d7_images_collection_memberships` (1b.2): 38/249 rows created, 211 skipped
   — those 211 reference D7 users that don't exist in D11 yet. Re-run once
-  users are migrated.
+  users are migrated.~~ **DONE 2026-08-12** — re-run after the user migration
+  produced 210 created, 36 updated, 0 failed → **246/246**.
 - The 174 collection/subcollection groups that got `uid: 1` forced during
   1b.2 (working around Group's uid=0-on-insert bug, itself since fixed by
   PR #28) were never meant to be permanently owned by the admin account —
-  once real users exist, decide whether/how to correct historical group
-  ownership to the actual D7 creator.
+  now that real users exist, this correction (historical group ownership →
+  actual D7 creator) is **still open**, not yet done as of this note.
 
 ## Open questions for the actual migration design
 
