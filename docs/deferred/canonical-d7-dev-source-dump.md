@@ -3,8 +3,9 @@
 **Area:** migration / source data / environments / DX
 **Raised during:** Session 2026-08-25 (dev-0 vs DDEV baseline mismatch)
 **Jira:** (add when available)
-**Priority:** Medium now, **High before cutover rehearsals** — it is what makes counts
-comparable between environments
+**Priority:** **Medium — direction DECIDED 2026-09-02 (Yuji, ratified by the group): re-cut,
+with a mandatory team alert on every re-cut.** Remaining work is the practical follow-ups below
+(dump identifier, refresh-path testing, alert mechanism), not a decision.
 
 ## The problem, measured
 
@@ -38,19 +39,14 @@ run and commit it as a dev-0-specific baseline.
 Everyone's local environment should be reproducible from the same dump, so a count difference
 means a real difference rather than an unshared assumption.
 
-## What still needs deciding
+## Decision (Yuji, ratified by the group 2026-09-02)
 
-**Does the canonical dump change as we approach staging and production?** The trade-off:
-
-- **Frozen** — baselines stay valid, every environment is comparable, and a count regression
-  is unambiguous. But it drifts from production reality, and the further it drifts the less a
-  green acceptance run says about the real cutover.
-- **Refreshed** — keeps fidelity with production, but invalidates every committed count on
-  each re-cut, and each refresh is an opportunity for exactly the confusion above.
-
-Suggested middle path, not yet agreed: **freeze per phase**, re-cut once at each phase
-boundary, and bake a dated dump identifier into `EXPECT_LIST` so a baseline is never ambiguous
-about which source it describes.
+**Re-cut, not frozen.** The canonical dump gets refreshed as the team approaches staging and
+production, rather than staying static for the whole project. **The team must be alerted
+whenever a re-cut happens**, so everyone knows to resync their local environment and re-baseline
+rather than silently drifting the way dev-0/DDEV did here. Mechanism for the alert (Slack post,
+session-log entry, a dated identifier bump that CI checks against) not yet specified — that's a
+practical follow-up, not an open decision.
 
 ## Practical follow-ups
 
@@ -63,3 +59,7 @@ about which source it describes.
    dump/load, but is **UNTESTED** — the one verified run used the earlier manual commands.
 4. Decide whether local DDEV should be re-seeded from the canonical dump, or whether local
    simply keeps its own baseline. (Currently the latter, by default rather than by choice.)
+5. **Pick and implement the resync-alert mechanism** for the decision above — every re-cut
+   must notify the team. Candidates: a Slack post, a session-log entry, or a dated identifier
+   bump in `EXPECT_LIST` that CI checks against so a stale baseline fails loudly instead of
+   silently.

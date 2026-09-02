@@ -44,17 +44,7 @@ than one person in the room.
   visibility coherence) / 1b.4 (paragraph access inheritance) tasks, which may share
   the same underlying mechanism.
 
-### 2. Canonical D7 dev-source dump: frozen or re-cut?
-
-[`canonical-d7-dev-source-dump.md`](../deferred/canonical-d7-dev-source-dump.md) — **Medium now, High before cutover rehearsals**
-
-- dev-0 and local DDEV currently run different D7 dumps (7 of 8 `EXPECT_LIST` keys
-  differ) — not wrong, just different baselines, which is fine for now.
-- **Decision needed:** does dev-0's dump stay frozen as the team's canonical dev source,
-  or get re-cut as staging/production cutover approaches? Cheap to decide now; expensive
-  to leave open until rehearsals are underway and baselines have drifted further.
-
-### 3. Staging Solr writes land on production
+### 2. Staging Solr writes land on production
 
 [`solr-cross-environment-write-targets.md`](../deferred/solr-cross-environment-write-targets.md) — **Medium–High, live risk**
 
@@ -67,7 +57,7 @@ than one person in the room.
 - **Needs infra ownership**, not just a Drupal-side fix: who repoints these, and when,
   without risking a staging action corrupting prod data in the meantime.
 
-### 4. rdx (reindeer_x) ALB target unhealthy in production
+### 3. rdx (reindeer_x) ALB target unhealthy in production
 
 [`rdx-alb-target-unhealthy-in-production.md`](../deferred/rdx-alb-target-unhealthy-in-production.md) — **High, live production defect**
 
@@ -79,7 +69,7 @@ than one person in the room.
 - **Decision needed:** fix the unhealthy target regardless of the always-on question, or
   bundle both into one conversation since they're the same service?
 
-### 5. Solr pipeline cost/architecture conversation with Dave Goldstein
+### 4. Solr pipeline cost/architecture conversation with Dave Goldstein
 
 [`solr-pipeline-cost-discussion.md`](../deferred/solr-pipeline-cost-discussion.md) — **High, roadmap driving decision**
 
@@ -88,7 +78,7 @@ than one person in the room.
 - **Action needed:** just scheduling this — it's not a Drupal-side task, it's a
   conversation that hasn't started.
 
-### 6. Loose ends from the 2026-08-12 user migration (smaller, worth a mention)
+### 5. Loose ends from the 2026-08-12 user migration (smaller, worth a mention)
 
 [`d7-shared-user-database.md`](../deferred/d7-shared-user-database.md) — **Medium** (the migration itself is done; these are what's left)
 
@@ -130,6 +120,13 @@ session — noted here so nobody re-opens them without new information:
   Texts/Sources/AV migrations just need to populate `field_legacy_site` per the existing
   checklist in [`migration-legacy-nid-required-convention.md`](../deferred/migration-legacy-nid-required-convention.md)
   when they're built.
+- **Canonical D7 dev-source dump: frozen or re-cut?** — **Decided (Yuji): re-cut**, not
+  frozen, as the team approaches staging/production, trading baseline stability for
+  fidelity with real production data. **Condition attached: every re-cut must alert the
+  whole team**, so people know to resync their local environment and re-baseline, rather
+  than silently drifting the way dev-0 and DDEV did here (7 of 8 `EXPECT_LIST` keys
+  diverged with nobody aware). Alert mechanism itself not yet chosen — tracked as a
+  practical follow-up in [`canonical-d7-dev-source-dump.md`](../deferred/canonical-d7-dev-source-dump.md).
 
 ## Outcome
 
