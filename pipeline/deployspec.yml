@@ -39,7 +39,7 @@ phases:
 
   pre_build:
     commands:
-      - git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/uvalib/terraform-infrastructure.git
+      - git clone --depth 1 --single-branch https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/uvalib/terraform-infrastructure.git
       - TF_INFRA=${CODEBUILD_SRC_DIR}/terraform-infrastructure
 
       # Everything below is committed to git only in ccrypt-encrypted .cpt form; the
