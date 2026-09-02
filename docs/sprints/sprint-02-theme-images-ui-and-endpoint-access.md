@@ -73,7 +73,7 @@ here.
 | B1 | OpenSeadragon deep-zoom viewer: `IiifDeepZoomFormatter` field formatter in `shanti_iiif`, reusing `IiifUrlBuilder::infoUrl()`; `shanti_iiif.libraries.yml` (OpenSeadragon vendor lib + behavior JS using `drupalSettings`, porting `shanti-main-images.js`'s overlay behavior) | Workstream A skeleton (A1–A2) | ☑ |
 | B2 | AJAX sibling carousel: new `shanti_images_carousel` module, `_entity_access: 'node.view'` route, controller reusing the proven `group_relationship`/`loadByEntity()` collection-lookup pattern (`NodeJsonController::buildCollection()`), new ±15-windowing query cached per-collection, JS behavior attached from `node--shanti_image.html.twig` | Workstream A skeleton, B1 (shared template touch-point) | ☐ |
 | B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate), Views config for the homepage gallery. **Built and verified live 2026-09-01** — see the session log. PhotoSwipe lightbox and the D7 data-source (non-entity) view mode were deliberately not ported; scope stayed to the entity/node case per the production-reference doc | Workstream A skeleton | ☑ |
-| B4 | KMaps popover ("mandala popover"): hover popover on every KMaps place/subject/term tag (icon trigger, term info + ancestor breadcrumb, "Full Entry" link, "Related X (N)" links). New `KmapsPopoverInfoService` in `shanti_kmaps_fields` (in-process, not D7's self-referential HTTP round-trip), a lazy-fetch controller/route, an extended/new field formatter, BS5 native popover JS behavior. **Planned 2026-09-02, not yet started** — see below | Workstream A skeleton (Bootstrap 5 popover), `shanti_kmaps_fields` (field type, already proven) | ☐ |
+| B4 | KMaps popover ("mandala popover"): hover popover on every KMaps place/subject/term tag (icon trigger, term info + ancestor breadcrumb, "Full Entry" link, "Related X (N)" links). New `KmapsPopoverInfoService` in `shanti_kmaps_fields` (in-process, not D7's self-referential HTTP round-trip), a new `kmap_popover_formatter` (server-rendered, no AJAX), BS5 popover JS behavior. **Built and verified live 2026-09-02** — see below | Workstream A skeleton (Bootstrap 5 popover), `shanti_kmaps_fields` (field type, already proven) | ☑ |
 
 **Scope question RESOLVED 2026-09-02 (Than): not needed for D11.** `IiifDeepZoomFormatter`
 renders a single-image viewer only, as built. Checked the actual D7 source at
@@ -215,6 +215,40 @@ the ~12h cache on both Solr calls.
   avoids a follow-up ticket to add each category back in as every future site migrates.
 
 **All scope questions resolved — plan is ready to implement.**
+
+**Built and verified live 2026-09-02.** Implemented exactly to spec:
+`KmapsPopoverInfoService` (Solr term-doc lookup + domain-specific related-count
+queries, cached), `KmapPopoverFormatter` (`kmap_popover_formatter`, server-rendered
+`#theme: kmaps_popover` render array), `kmaps-popover.html.twig` (matching
+`shanti_sarvaka_info_popover()`'s markup exactly), `kmaps-popover.js` (Bootstrap
+popover wiring, reading the pre-rendered sibling content, no AJAX), and the
+`grid_details` view mode switched to the new formatter with `field_kmap_terms`
+un-hidden.
+
+Two real bugs found and fixed during live verification (Chrome, DDEV, node 30289 —
+real data: 1 place, 26 subjects, 4 terms):
+1. **Render array used bare keys instead of `#`-prefixed ones** on the `'#theme' =>
+   'kmaps_popover'` array (`'label' => ...` instead of `'#label' => ...`) — Drupal's
+   `Element::children()` treats any non-`#` key as a child render element to
+   recurse into, so a plain string value threw `InvalidArgumentException`. Fixed by
+   explicitly prefixing every key.
+2. **The popover JS library never reached the browser.** `GridInfoController`
+   returns the info panel as a raw HTML string via `renderInIsolation()`, which
+   drops all `#attached` assets by design — and the panel's own insertion JS
+   (`shanti-grid-view.js`) sets `innerHTML` directly via `fetch()`, not through
+   Drupal's AJAX framework, so `Drupal.attachBehaviors()` never ran on the inserted
+   content either. Fixed both halves: added `shanti_kmaps_fields/kmaps_popover` as a
+   dependency of `shanti_grid_view`'s `masonry-grid` library (so it's already loaded
+   on the parent `/gallery` page before any panel opens) and added an explicit
+   `Drupal.attachBehaviors(panelBody)` call right after the fragment is inserted.
+   **Same trap applies to any future formatter used inside `grid_details` that
+   needs its own JS** — `#attached` alone will never be enough for content rendered
+   through this controller.
+
+Verified live end-to-end via the real `/gallery` → search → click-tile flow:
+correct popover content (label, description, feature type, ancestor breadcrumb,
+"Full Entry" link) and correct non-zero "Related X (N)" counts and icons for every
+category. Zero console errors.
 
 ### Workstream C — Content-model audits (AV, Sources, Texts) — audit only
 

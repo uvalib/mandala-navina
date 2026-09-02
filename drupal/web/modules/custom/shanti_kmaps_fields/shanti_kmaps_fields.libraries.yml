@@ -15,3 +15,12 @@ kmaps_display:
   css:
     component:
       css/kmaps_display.css: {}
+
+kmaps_popover:
+  version: VERSION
+  js:
+    js/kmaps-popover.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - bootstrap5/bootstrap5-js-latest

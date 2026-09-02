@@ -58,6 +58,12 @@
         {{ content.field_subjects }}
       </div>
     {% endif %}
+    {% if content.field_kmap_terms|render|trim %}
+      <div class="shanti-grid-details-kmaps">
+        <span class="icon shanticon-terms" aria-hidden="true"></span>
+        {{ content.field_kmap_terms }}
+      </div>
+    {% endif %}
     {% if description and description.field_description.value %}
       <div class="shanti-grid-details-description">{{ description.field_description.value|raw }}</div>
     {% endif %}

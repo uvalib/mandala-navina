@@ -12,6 +12,7 @@ dependencies:
     - field.field.node.shanti_image.field_image_descriptions
     - field.field.node.shanti_image.field_image_rotation
     - field.field.node.shanti_image.field_kmap_collections
+    - field.field.node.shanti_image.field_kmap_terms
     - field.field.node.shanti_image.field_places
     - field.field.node.shanti_image.field_subjects
     - node.type.shanti_image
@@ -46,18 +47,25 @@ content:
     weight: 2
     region: content
   field_places:
-    type: kmap_default_formatter
+    type: kmap_popover_formatter
     label: hidden
     settings: {  }
     third_party_settings: {  }
     weight: 3
     region: content
   field_subjects:
-    type: kmap_default_formatter
+    type: kmap_popover_formatter
     label: hidden
     settings: {  }
     third_party_settings: {  }
     weight: 4
+    region: content
+  field_kmap_terms:
+    type: kmap_popover_formatter
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 5
     region: content
 hidden:
   field_admin_notes: true
@@ -89,7 +97,6 @@ hidden:
   field_image_type: true
   field_iso_speed_rating: true
   field_keywords: true
-  field_kmap_terms: true
   field_latitude: true
   field_legacy_nid: true
   field_legacy_site: true

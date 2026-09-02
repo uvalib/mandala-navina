@@ -1,0 +1,69 @@
+{#
+  KMaps popover tag: a term label + speech-bubble trigger icon, with the
+  full popover body pre-rendered as a hidden sibling <div>. The JS behavior
+  (kmaps-popover.js) reads this static content on hover - no AJAX.
+
+  Ports shanti_sarvaka_info_popover() (D7 theme override) markup exactly,
+  so the already-ported CSS in shanti-main.css applies unchanged.
+
+  Variables:
+    label: term display label.
+    domain: places|subjects|terms.
+    kid: KMaps term ID.
+    ftypes: array of {label, url} - places only.
+    desc: string, or {wylie, subjects: [{label,url}], text} for terms.
+    defs: array of {n, defid} - terms with associated definitions.
+    tree: array of {label, url} - ancestor breadcrumb.
+    links: associative array of link label => {icon, href}.
+#}
+<span class="kmap-tag-group" data-kmdomain="{{ domain }}" data-kmid="{{ kid }}">
+  <span{% if label matches '/^[\\x{0F00}-\\x{0FFF}]/u' %} class="tib"{% endif %}>
+    {{- label -}}
+    {% if defs %}
+      <span class="deflinks">({% for def in defs %}<a href="#" title="{{ def.defid }}">{{ def.n }}</a>{% if not loop.last %}, {% endif %}{% endfor %})</span>
+    {% endif %}
+  </span>
+  <span class="popover-link">
+    <span class="popover-link-tip"></span>
+    <span class="icon shanticon-menu3"></span>
+  </span>
+</span>
+<div class="popover" data-title="{{ label }}" style="display: none;">
+  <span class="kmdomain" style="display: none;">{{ domain }}</span>
+  <span class="kmid" style="display: none;">{{ kid }}</span>
+  <div class="popover-body">
+    <div class="desc">
+      {% if desc is iterable %}
+        <div class="other"><strong>Wylie: </strong>{{ desc.wylie }}</div>
+        {% if desc.subjects %}
+          <div class="termtypes">
+            {% for s in desc.subjects %}<a href="{{ s.url }}" target="_blank">{{ s.label }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
+          </div>
+        {% endif %}
+        {{ desc.text }}
+      {% else %}
+        {{ desc }}
+      {% endif %}
+    </div>
+    {% if defs %}
+      <div class="defs"><strong>Definitions</strong> {% for def in defs %}<a href="#" title="{{ def.defid }}">{{ def.n }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</div>
+    {% endif %}
+    {% if ftypes %}
+      <div class="other clearfix"><p><strong>Feature Type</strong>
+        {% for f in ftypes %}<a href="{{ f.url }}" target="_blank">{{ f.label }}</a>{% if not loop.last %}; {% endif %}{% endfor %}
+      </p></div>
+    {% endif %}
+    {% if tree %}
+      <div class="parents clearfix"><p><strong>{{ domain|capitalize }}</strong>
+        {% for t in tree %}<a target="_blank" href="{{ t.url }}">{{ t.label }}</a>{% if not loop.last %}/{% endif %}{% endfor %}
+      </p></div>
+    {% endif %}
+  </div>
+  <div class="popover-footer">
+    {% for label, info in links %}
+      <div class="popover-footer-button">
+        <a href="{{ info.href }}" class="icon shanticon-{{ info.icon }}" target="_blank">{{ label }}</a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
