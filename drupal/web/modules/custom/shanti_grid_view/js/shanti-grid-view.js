@@ -107,23 +107,47 @@
 
         /**
          * Measures the panel's current rendered height (content + gap above
-         * it) and shifts rows below by however much that grew or shrank
-         * since the last measurement. Called synchronously right after the
-         * panel's content changes -- not after its image has loaded -- so
-         * opening the panel isn't gated on image load time. This is only
-         * correct because the panel content's own image reserves its final
-         * box size via CSS `aspect-ratio` (node--shanti-image--grid-details
-         * .html.twig, computed server-side from the node's known width/
-         * height) rather than the image's actual decoded pixels, so the
-         * panel's total height is already final the instant its HTML is
-         * inserted -- the image bytes can arrive whenever without changing
-         * panel height or triggering another shift.
+         * it), animates the panel's *own* box to that height (see the FLIP
+         * comment below), and shifts rows below by however much that grew
+         * or shrank since the last measurement. Called synchronously right
+         * after the panel's content changes -- not after its image has
+         * loaded -- so opening the panel isn't gated on image load time.
+         * This is only correct because the panel content's own image
+         * reserves its final box size via CSS `aspect-ratio`
+         * (node--shanti-image--grid-details.html.twig, computed
+         * server-side from the node's known width/height) rather than the
+         * image's actual decoded pixels, so the panel's total height is
+         * already final the instant its HTML is inserted -- the image
+         * bytes can arrive whenever without changing panel height or
+         * triggering another shift.
          */
         const measureAndShift = () => {
           if (!panel) {
             return;
           }
-          const newHeight = PANEL_GAP + panel.getBoundingClientRect().height;
+
+          // FLIP technique: `height: auto` can't be CSS-transitioned, so
+          // to animate the panel's own box growing/shrinking (not just the
+          // rows-below push, which already animates via shiftBelow's
+          // transform transition) we need explicit FROM and TO pixel
+          // heights. Clear any explicit height to measure the box's true
+          // natural (content-driven) size, put the previous explicit
+          // height back so the browser has a defined starting point, force
+          // a reflow, then set the new explicit height -- the CSS
+          // `transition: height` on .shanti-grid-view-panel animates the
+          // rest. On the very first call (panel just created, height
+          // initialized to 0px in the click handler below) this animates
+          // 0 -> the loading skeleton's height, so the row visibly starts
+          // growing the instant it's clicked rather than sitting static
+          // until content arrives.
+          const priorHeight = panel.style.height;
+          panel.style.height = 'auto';
+          const contentHeight = panel.getBoundingClientRect().height;
+          panel.style.height = priorHeight;
+          void panel.offsetHeight; // Force reflow so the FROM height registers before the change below.
+          panel.style.height = `${contentHeight}px`;
+
+          const newHeight = PANEL_GAP + contentHeight;
           shiftBelow(panelRowY, newHeight - panelHeight);
           panelHeight = newHeight;
         };
@@ -204,6 +228,11 @@
             panel = document.createElement('div');
             panel.className = 'shanti-grid-view-panel';
             panel.style.top = `${rowY + progressiveImage.style.height + PANEL_GAP}px`;
+            // Starting height for measureAndShift()'s FLIP animation to
+            // grow from -- so the panel visibly starts expanding the
+            // instant it's created, rather than appearing already at its
+            // loading-skeleton size.
+            panel.style.height = '0px';
             container.appendChild(panel);
             panelRowY = rowY;
           }
@@ -216,15 +245,31 @@
           // shows both spinners positioned where their content will land,
           // since the *image bytes themselves* still load separately from
           // this fetch -- see the image-side handling below).
+          //
+          // The image slot reuses the real content template's own sizing
+          // classes/aspect-ratio (node--shanti-image--grid-details
+          // .html.twig, shanti-grid-details-image[--portrait]) with the
+          // aspect ratio already known from the row's own thumbnail data
+          // -- so this slot is already sized correctly, matching the real
+          // image exactly, before the fetch even starts. The meta slot's
+          // real height is unknowable in advance, so it gets a generous
+          // fixed estimate instead; measureAndShift()'s FLIP animation
+          // smooths over whatever gap remains once real content arrives.
+          const isPortrait = image.aspectRatio > 0 && image.aspectRatio < 1;
           panel.innerHTML = '<button type="button" class="shanti-grid-view-panel-close" aria-label="Close">×</button>'
             + '<div class="shanti-grid-view-panel-body">'
-            + '<div class="shanti-grid-view-loading-row">'
+            + '<div class="shanti-grid-details">'
+            + '<div class="shanti-grid-details-image' + (isPortrait ? ' shanti-grid-details-image--portrait' : '') + '"'
+            + (image.aspectRatio ? ' style="aspect-ratio: ' + image.aspectRatio + ';"' : '') + '>'
             + '<div class="shanti-grid-view-loading shanti-grid-view-loading-image" role="alert" aria-live="assertive">'
             + '<ul class="shanti-grid-view-loading-dots"><li></li><li></li><li></li><li></li></ul>'
             + '<div class="shanti-grid-view-loading-text">' + Drupal.t('Loading…') + '</div>'
             + '</div>'
+            + '</div>'
+            + '<div class="shanti-grid-details-meta shanti-grid-view-loading-meta-slot">'
             + '<div class="shanti-grid-view-loading shanti-grid-view-loading-meta" role="alert" aria-live="assertive">'
             + '<div class="shanti-grid-view-loading-ring"></div>'
+            + '</div>'
             + '</div>'
             + '</div>'
             + '</div>';
