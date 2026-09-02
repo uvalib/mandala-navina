@@ -115,33 +115,80 @@ header/ancestors/feature-types; (2) grouped nested-query counts against `kmterms
 - The Solr endpoints are already configured correctly:
   `shanti_kmaps_admin.settings`'s `server_solr_terms`/`server_solr` both already route
   through `mandala-solr-proxy`, not raw client-side JSONP like D7's old widget.
-- Bootstrap 5 (`drupal/bootstrap5`, already a composer dependency for Workstream A) ships
-  a native popover component (Popper-based, `data-bs-toggle="popover"`,
-  `trigger: 'hover'`) — should replace D7's hand-rolled mouseenter/mouseleave/manual
-  trigger jQuery logic, not require porting it by hand.
+- Bootstrap 5's popover component (Popper-based, `bootstrap.Popover` JS API) is already
+  loaded site-wide — see the correction below for exactly how D7 drives it (static
+  pre-rendered content, not the declarative `data-bs-toggle` attribute).
 - **A real simplification D11 gets for free**: D7's count-fetching is a *self-referential
   HTTP round-trip* — the site calls its own `/mandala/popover/populate/{domain}/{id}`
   endpoint over the network (flagged in the D7 source itself as a worker-pool-exhaustion
   risk under load). D11 is single-site (ADR 005) — this becomes a plain in-process
   service call, no HTTP hop, no separate self-call endpoint needed for that leg.
 
-**Proposed shape** (planning only, not yet built):
-1. New `KmapsPopoverInfoService` (`shanti_kmaps_fields`) — domain+id → term info +
-   related-counts, ported from `_shanti_kmaps_fields_kmaps_get_info()` +
-   `kmaps_explorer_get_popover_data()`'s Solr queries, in-process, cached (~12h TTL
-   matching D7).
-2. New lightweight controller/route (e.g. `/kmaps/popover/{domain}/{id}`) — the frontend
-   calls this **lazily on hover**, not pre-rendered into every tag at node-render time,
-   since the masonry gallery can show dozens of tags per page and pre-rendering all of
-   them would multiply Solr load for content nobody hovers. Public data, no per-node
-   access check needed (matches D7's `access content`-only gate).
-3. Extended/new field formatter — adds the icon trigger (`shanticon-menu3`, already
-   vendored in the theme's icon font) + `data-bs-toggle="popover"` wiring to the existing
-   tag markup.
-4. Small JS behavior in `shanti_kmaps_fields` (module-level, not gallery-specific — this
-   is a field-type behavior, the gallery panel is just today's one visible consumer) —
-   wires the BS5 popover on hover, fetches content from the new endpoint on first hover,
-   caches client-side per key.
+**Correction after reading the actual D7 rendering + JS (not just the formatter PHP):**
+the earlier "lazy AJAX on hover" idea below was wrong — production does NOT lazy-fetch.
+`shanti_sarvaka_info_popover()` (the theme's override of `theme_info_popover`,
+`themes/shanti_sarvaka/template.php:1002`) renders the **entire popover body inline**,
+server-side, as a hidden sibling `<div class="popover" style="display:none">` right next
+to the tag — term description, feature types, ancestor breadcrumb, and every non-zero
+"Related X (N)" link, all pre-built into static HTML at node-render time. The trigger
+icon is `<span class="popover-link"><span class="popover-link-tip"></span><span
+class="icon shanticon-menu3"></span></span>`, wrapped together with the tag label in
+`<span class="kmap-tag-group" data-kmdomain="{domain}" data-kmid="{id}">`.
+`shanti-main.js`'s `Drupal.behaviors` (`js/shanti-main.js:364`) just finds each
+`.popover-link`, reads its sibling `.popover` div's `innerHTML` + `data-title`, and
+initializes Bootstrap's popover plugin with that as **static content** — zero AJAX calls
+ever, for any tag, at any time. All the Solr cost is paid once per node render, offset by
+the ~12h cache on both Solr calls.
+
+**This simplifies the D11 build — confirmed already in place, nothing new to add:**
+- CSS is **already ported verbatim** in `shanti-main.css` (`.kmap-tag-group`,
+  `.popover-link`, `.popover`, `.popover-footer`, `.popover-footer-button` — all present,
+  lines ~2035–2245) as part of Workstream A's wholesale theme port. No new CSS needed.
+- `bootstrap.bundle.js` (Popper + `bootstrap.Popover`) is **already loaded site-wide**
+  via `bootstrap5/bootstrap5-js-latest`, a declared dependency of `shanti_sarvaka`. No new
+  vendor JS needed.
+- **No new route or controller** — since content is server-rendered inline, not fetched.
+
+**Concrete build shape:**
+1. **`KmapsPopoverInfoService`** (new, `shanti_kmaps_fields/src/KmapsPopoverInfoService.php`,
+   registered in `shanti_kmaps_fields.services.yml`):
+   - `getTermInfo(string $domain, int $id): array` — one Solr GET to
+     `{server_solr_terms}/select?q=uid:{domain}-{id}&wt=json` via Drupal's `http_client`
+     (Guzzle), decode `response.docs[0]`. Cached (D11 cache API, bin `cache_default` or a
+     dedicated `cache_kmaps_popover` bin, key `kmaps_popover:info:{domain}-{id}`, TTL from
+     a new `shanti_kmaps_admin.settings:popover_cache_ttl` config, default 43200s/12h
+     matching D7).
+   - `getRelatedCounts(string $domain, int $id): array` — ports
+     `kmaps_explorer_get_popover_data()`'s three domain-specific branches
+     (`places`/`subjects`/`terms`, each with different nested-child-doc Solr query shapes
+     against `kmterms`) plus the shared `kmassets` asset-type-grouped count query, merged
+     and mapped to the 7 category keys (`subjects`, `places`, `images`, `audio-video`,
+     `sources`, `texts`, `visuals`) exactly as
+     `shanti_kmaps_fields_get_all_counts_by_kmapid()` does — but as one in-process method,
+     not a self-HTTP-call to a separate endpoint. Cached the same way.
+   - Both methods read Solr URLs from `shanti_kmaps_admin.settings` (`server_solr_terms`,
+     `server_solr`) — already configured, already routed through `mandala-solr-proxy`.
+2. **New `KmapPopoverFormatter`** (`src/Plugin/Field/FieldFormatter/KmapPopoverFormatter.php`,
+   `@FieldFormatter(id = "kmap_popover_formatter", label = "KMaps Tags (with popover)")`
+   on `shanti_kmaps_fields_default`) — for each item, calls the service, builds a render
+   array matching D7's `info_popover` theme variables (`label`, `domain`, `kid`, `ftypes`,
+   `desc`, `tree` (ancestor breadcrumb), `links` (Full Entry + non-zero Related-X links,
+   using the existing `explorer_{domain}` URL templates already in
+   `shanti_kmaps_admin.settings`)).
+3. **New Twig template** `templates/kmaps-popover.html.twig` replicating
+   `shanti_sarvaka_info_popover()`'s exact markup structure (`.kmap-tag-group` wrapper,
+   `.popover-link` trigger, hidden sibling `.popover` div with `.popover-body`/
+   `.popover-footer`) so the already-ported CSS applies with zero changes.
+4. **New JS behavior** (`shanti_kmaps_fields.libraries.yml` → new `kmaps_popover` library,
+   `js/kmaps-popover.js`) — `Drupal.behaviors.kmapsPopover`, using `once()`, porting
+   `shanti-main.js`'s logic: find each `.popover-link`, read the sibling `.popover` div's
+   content (already in the DOM, no fetch), initialize `new bootstrap.Popover(el, {title,
+   content, html: true, trigger: 'hover focus', placement: 'bottom', container: 'body'})`.
+   Module-level (not gallery-specific) since this is field-type behavior — the gallery
+   panel is just today's one consumer.
+5. **View mode config**: `core.entity_view_display.node.shanti_image.grid_details.yml` —
+   switch `field_places`/`field_subjects`/`field_kmap_terms` to `type:
+   kmap_popover_formatter`, un-hide `field_kmap_terms`.
 
 **Scope decisions:**
 - ~~Fold in enabling `field_kmap_terms` display in `grid_details`?~~ **DECIDED
