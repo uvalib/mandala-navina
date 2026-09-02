@@ -160,9 +160,14 @@ header/ancestors/feature-types; (2) grouped nested-query counts against `kmterms
   as separate plugins avoids coupling the popover behavior to every consumer of the
   default one.
 
-**Still open, to decide before starting:**
-- Full "Related X" category parity (all six D7 categories) vs. trimming to what's
-  actually non-zero for Images-only content today?
+- ~~Full "Related X" category parity vs. trim to what's non-zero today?~~ **DECIDED
+  2026-09-02 (Than): full parity.** Build all six category count queries (Sources,
+  Audio-Video, Photos, Texts, Visuals, Places/Subjects) now, even though most will show
+  0 (hidden) until Sources/Texts/AV migrate — the query shape is identical per category
+  (one extra `groupValue` branch each), so the marginal build cost is small, and this
+  avoids a follow-up ticket to add each category back in as every future site migrates.
+
+**All scope questions resolved — plan is ready to implement.**
 
 ### Workstream C — Content-model audits (AV, Sources, Texts) — audit only
 
