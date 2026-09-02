@@ -176,7 +176,7 @@ Two consumers already depend on this mapping being unique:
    vs `av-1631632` carry a **service prefix**, making service+nid the real composite key.
    That is precedent for the options below, not a coincidence.
 
-**DECIDED 2026-08-25 — [ADR 017](../adr/017-legacy-identity-composite-key.md) (Proposed):** the
+**DECIDED 2026-08-25, RATIFIED 2026-09-02 — [ADR 017](../adr/017-legacy-identity-composite-key.md) (Accepted):** the
 explicit `field_legacy_site` companion, using the kmassets service vocabulary. The two options
 that were weighed:
 
