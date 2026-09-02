@@ -64,7 +64,8 @@ D7-multisite-specific behavior, not migration-relevant on its own).
 - **SAML/NetBadge account mapping is a separate, real question**, not solved
   by migrating the `users` table alone — how migrated D11 accounts link to
   UVA Shibboleth-authenticated sessions needs its own mapping strategy
-  (`name`/`mail` match? a stored NetBadge identifier field?). Relevant to
+  (`name`/`mail` match? a stored NetBadge identifier field?).
+  **ASSIGNED to Yuji for a decision, 2026-09-02 (group decision).** Relevant to
   [ADR 013](../adr/013-drupal-source-of-truth-solr-client-compatibility.md)/[014](../adr/014-hybrid-solr-proxy-design.md)'s
   SAML+OAuth2 coexistence work (Spike 10, 1b.1 part 4) — that work assumes a
   Drupal account already exists to key `sub` off of; user migration is the

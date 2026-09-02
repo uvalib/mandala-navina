@@ -44,15 +44,14 @@ than one person in the room.
   visibility coherence) / 1b.4 (paragraph access inheritance) tasks, which may share
   the same underlying mechanism.
 
-### 2. Loose ends from the 2026-08-12 user migration (smaller, worth a mention)
+### 2. `realname` field decision — last unassigned loose end
 
-[`d7-shared-user-database.md`](../deferred/d7-shared-user-database.md) — **Low** (the migration and the group-ownership fix are both done; these two remain)
+[`d7-shared-user-database.md`](../deferred/d7-shared-user-database.md) — **Low**
 
-- **SAML/NetBadge account mapping:** how migrated D11 accounts link to UVA
-  Shibboleth-authenticated sessions still needs a strategy (`name`/`mail` match vs. a
-  stored NetBadge identifier field).
-- **`realname` field:** D11 has no `realname` module by default — bring it in as a
-  dependency, or fold the name into core user fields?
+- D11 has no `realname` module by default (D7 had it). Bring it in as a dependency to
+  match D7's display-name behavior, or fold display-name handling into core user
+  fields (`field_first_name`/`field_last_name`, already migrated) instead?
+- Still unassigned — smallest, lowest-priority item left on the whole agenda.
 
 ---
 
@@ -116,6 +115,10 @@ session — noted here so nobody re-opens them without new information:
   `config/sync`) and corrected all 171 already-migrated groups on dev-0 directly
   (dry-run verified, then applied: 171/171 correct). See
   [`d7-shared-user-database.md`](../deferred/d7-shared-user-database.md).
+- **SAML/NetBadge account mapping — assigned to Yuji** for a decision (`name`/`mail`
+  match vs. a stored NetBadge identifier field). Relevant to ADR 013/014's SAML+OAuth2
+  coexistence work, which assumes a Drupal account already exists to key `sub` off
+  of — this decision determines which account that lookup resolves to.
 - **Solr pipeline cost/architecture conversation with Dave Goldstein** — **correction
   during this meeting**: `docs/roadmap.md`'s framing ("hasn't been opened yet") is stale.
   The conversation already happened (2026-06-26 update in the deferred note) and reframed
