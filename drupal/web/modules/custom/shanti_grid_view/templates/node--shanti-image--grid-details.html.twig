@@ -21,8 +21,15 @@
   {# aspect-ratio lets the browser reserve this box's final size purely from
      CSS, before the image itself has actually loaded -- so the panel's
      total height (and the row-push it triggers) is known immediately on
-     insert rather than only after the image's bytes arrive. #}
-  <div class="shanti-grid-details-image"{% if width and height %} style="aspect-ratio: {{ width }} / {{ height }};"{% endif %}>
+     insert rather than only after the image's bytes arrive.
+
+     Portrait images (height > width) get a modifier class: the default
+     sizing is width-driven (flex-basis grows up to max-width: 45%, height
+     computed from that width via aspect-ratio) -- fine for landscape, but
+     unbounded for portrait, where a tall/narrow image can make the whole
+     row taller than the viewport. The modifier flips a portrait image to
+     height-driven sizing instead (see shanti-grid-view.css). #}
+  <div class="shanti-grid-details-image{% if width and height and height > width %} shanti-grid-details-image--portrait{% endif %}"{% if width and height %} style="aspect-ratio: {{ width }} / {{ height }};"{% endif %}>
     {{ content.field_image }}
   </div>
   <div class="shanti-grid-details-meta">

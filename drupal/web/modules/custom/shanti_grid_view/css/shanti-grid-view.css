@@ -180,6 +180,19 @@
   max-width: 45%;
 }
 
+/* Portrait images (height > width): the default width-driven sizing above
+ * computes height unbounded from a wide flex-basis, which for a tall/narrow
+ * image can make the whole panel row taller than the viewport. Flip to
+ * height-driven sizing instead -- cap the height, drop the flex-basis so
+ * the box doesn't claim a wide starting width, and let `aspect-ratio`
+ * (still set inline per-node) compute the narrower width from that capped
+ * height. max-width stays as a safety net for near-square images. */
+.shanti-grid-details-image--portrait {
+  flex: 0 1 auto;
+  width: auto;
+  max-height: 60vh;
+}
+
 .shanti-grid-details-image img {
   display: block;
   width: 100%;
