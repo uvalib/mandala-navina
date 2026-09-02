@@ -15,10 +15,12 @@ process:
   status: status
   created: created
   changed: changed
-  # Force uid=1 (admin) to avoid Group auto-creating uid=0 memberships on insert.
-  uid:
-    plugin: default_value
-    default_value: 1
+  # Real D7 creator uid, 1:1 identity-mapped to D11 uid by the user migration
+  # (verified 2026-09-02: 0 of 171 source collection/subcollection nodes have
+  # uid=0, so Group's uid=0-on-insert bug never actually applies to this data
+  # - the prior blanket default_value:1 workaround discarded real ownership
+  # for no reason). See docs/deferred/d7-shared-user-database.md.
+  uid: uid
 
   # D7 group_access field: 0=public, 1=private, 2=subscribable.
   field_group_access: group_access/0/value

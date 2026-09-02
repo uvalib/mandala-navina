@@ -3,11 +3,11 @@
 **Area:** migration / users / infrastructure
 **Raised during:** Session 2026-07-10 (1b.1 — planning the user migration)
 **Jira:** (add when available)
-**Priority:** **Medium — user migration itself is DONE (2026-08-12).** 1,543 users
-migrated from `mandala_shared` on dev-0 exactly as this note specified; all 22 private
-groups now have real members; `d7_images_collection_memberships` went from 36/246 (stuck
-since 2026-07-19) to **246/246**. What's left is narrower than the original "blocks
-everything" framing: the historical group-ownership correction below (item 2), and the
+**Priority:** **Low — user migration DONE (2026-08-12) and historical group ownership FIXED
+(2026-09-02).** 1,543 users migrated from `mandala_shared` on dev-0; all 22 private groups
+now have real members; `d7_images_collection_memberships` went from 36/246 (stuck since
+2026-07-19) to **246/246**. The 171 collection/subcollection groups forced to `uid: 1` are
+now correctly re-owned to their real D7 creators — see below. What's left is just the
 still-open SAML/NetBadge mapping and `realname` design questions.
 
 ## What we found
@@ -76,11 +76,22 @@ D7-multisite-specific behavior, not migration-relevant on its own).
   — those 211 reference D7 users that don't exist in D11 yet. Re-run once
   users are migrated.~~ **DONE 2026-08-12** — re-run after the user migration
   produced 210 created, 36 updated, 0 failed → **246/246**.
-- The 174 collection/subcollection groups that got `uid: 1` forced during
-  1b.2 (working around Group's uid=0-on-insert bug, itself since fixed by
-  PR #28) were never meant to be permanently owned by the admin account —
-  now that real users exist, this correction (historical group ownership →
-  actual D7 creator) is **still open**, not yet done as of this note.
+- ~~The 174 collection/subcollection groups that got `uid: 1` forced during
+  1b.2... this correction (historical group ownership → actual D7 creator)
+  is still open~~ **FIXED 2026-09-02.** Checked the D7 source first: of 171
+  real collection/subcollection nodes (not 174 — the earlier count was
+  approximate), **zero have `uid: 0`**, so the Group insert-bug workaround
+  was never actually protecting real data here — it just discarded 137
+  legitimate creator assignments (34 of 171 were already correctly
+  `uid: 1`/ShantiAdmin). All 18 distinct D7 creator uids resolved cleanly
+  in `migrate_map_d7_users` to live, active D11 accounts, 1:1 identity-mapped
+  (D7 uid *N* → D11 uid *N* in every case). Fixed both the migration process
+  pipeline (`uid: uid` replacing the hardcoded `default_value: 1`, in
+  `d7_images_collections.yml` and `d7_images_subcollections.yml`, both
+  `config/install` and `config/sync` per the PR #28 drift lesson) and the
+  171 already-migrated groups on dev-0 directly (dry-run verified 137
+  corrections / 34 already-correct / 0 errors, then applied and
+  re-verified: 171/171 correct).
 
 ## Open questions for the actual migration design
 

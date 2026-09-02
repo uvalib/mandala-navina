@@ -46,12 +46,8 @@ than one person in the room.
 
 ### 2. Loose ends from the 2026-08-12 user migration (smaller, worth a mention)
 
-[`d7-shared-user-database.md`](../deferred/d7-shared-user-database.md) — **Medium** (the migration itself is done; these are what's left)
+[`d7-shared-user-database.md`](../deferred/d7-shared-user-database.md) — **Low** (the migration and the group-ownership fix are both done; these two remain)
 
-- **Historical group ownership:** 174 collection/subcollection groups still owned by
-  `uid: 1` (forced during 1b.2 to work around a Group insert bug, since fixed by PR #28).
-  Now that 1,543 real users exist, decide whether/how to correct ownership to the actual
-  D7 creator.
 - **SAML/NetBadge account mapping:** how migrated D11 accounts link to UVA
   Shibboleth-authenticated sessions still needs a strategy (`name`/`mail` match vs. a
   stored NetBadge identifier field).
@@ -110,6 +106,16 @@ session — noted here so nobody re-opens them without new information:
   dev-1, get the deployment into GitHub) stay blocked until that review lands; one owner
   now covers both notes. See
   [`rdx-alb-target-unhealthy-in-production.md`](../deferred/rdx-alb-target-unhealthy-in-production.md).
+- **Historical group ownership — FIXED live during the meeting.** Checked the D7 source
+  first rather than assuming: of 171 real collection/subcollection nodes, **zero** have
+  `uid: 0`, so the Group insert-bug workaround that forced every migrated group to
+  `uid: 1` was never protecting real data — it just discarded 137 legitimate creator
+  assignments. All 18 distinct D7 creator uids resolved cleanly to live D11 accounts,
+  1:1 identity-mapped. Fixed the migration process pipeline (`uid: uid`, both
+  `d7_images_collections.yml` and `d7_images_subcollections.yml`, `config/install` and
+  `config/sync`) and corrected all 171 already-migrated groups on dev-0 directly
+  (dry-run verified, then applied: 171/171 correct). See
+  [`d7-shared-user-database.md`](../deferred/d7-shared-user-database.md).
 - **Solr pipeline cost/architecture conversation with Dave Goldstein** — **correction
   during this meeting**: `docs/roadmap.md`'s framing ("hasn't been opened yet") is stale.
   The conversation already happened (2026-06-26 update in the deferred note) and reframed
