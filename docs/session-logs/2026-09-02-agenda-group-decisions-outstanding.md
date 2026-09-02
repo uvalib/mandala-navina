@@ -44,16 +44,7 @@ than one person in the room.
   visibility coherence) / 1b.4 (paragraph access inheritance) tasks, which may share
   the same underlying mechanism.
 
-### 2. Solr pipeline cost/architecture conversation with Dave Goldstein
-
-[`solr-pipeline-cost-discussion.md`](../deferred/solr-pipeline-cost-discussion.md) — **High, roadmap driving decision**
-
-- Flagged in `docs/roadmap.md` as a conversation that needs to happen and hasn't been
-  opened yet. Gates downstream Solr architecture spikes.
-- **Action needed:** just scheduling this — it's not a Drupal-side task, it's a
-  conversation that hasn't started.
-
-### 3. Loose ends from the 2026-08-12 user migration (smaller, worth a mention)
+### 2. Loose ends from the 2026-08-12 user migration (smaller, worth a mention)
 
 [`d7-shared-user-database.md`](../deferred/d7-shared-user-database.md) — **Medium** (the migration itself is done; these are what's left)
 
@@ -119,6 +110,17 @@ session — noted here so nobody re-opens them without new information:
   dev-1, get the deployment into GitHub) stay blocked until that review lands; one owner
   now covers both notes. See
   [`rdx-alb-target-unhealthy-in-production.md`](../deferred/rdx-alb-target-unhealthy-in-production.md).
+- **Solr pipeline cost/architecture conversation with Dave Goldstein** — **correction
+  during this meeting**: `docs/roadmap.md`'s framing ("hasn't been opened yet") is stale.
+  The conversation already happened (2026-06-26 update in the deferred note) and reframed
+  the picture — there's no always-on ECS to right-size, so the original cost worry
+  receded, and a direct-to-master sink came out of it and **already shipped** (1a.8).
+  **Assigned to Yuji** to close the loop with Dave on the still-open items from that
+  conversation (`kmasset-solr-doc-contract.md` §3: direct-to-master credentials,
+  second-writer acceptability, batch cadence, regen-directory support, failure-log
+  reliability, timestamp keying) — worth following up on since the sink shipped ahead of
+  Dave confirming those. See
+  [`solr-pipeline-cost-discussion.md`](../deferred/solr-pipeline-cost-discussion.md).
 
 ## Outcome
 
