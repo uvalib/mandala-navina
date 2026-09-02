@@ -33,9 +33,23 @@ a compositing failure; switched to the explicit `canvas` drawer). See
 
 **The multi-image sequence variant (`sdviewer.php` + `shanti_images_sdinit.js`,
 `|$|`-delimited series) described below was NOT ported** — deliberately out of scope
-per the Sprint 2 planning doc, still flagged for team confirmation before B1 is
-considered fully closed (D7's own code hardcoded `is_series = false` and never wired a
-real sequence source, so this open question may be moot).
+per the Sprint 2 planning doc, and now **decided: not needed for D11** (2026-09-02,
+Than). Checked the actual D7 source at
+`docroot/sites/all/modules/custom/shanti_images/` in the legacy `mandala-drupal` repo:
+
+- `sdviewer.php` is a standalone, unfinished page — title literally "Test of SeaDragon,"
+  hardcodes a single OpenSeadragon instance reading one tile source off a `?json=` query
+  param. It is the beginning of a new function, never finished or wired into any live
+  page.
+- `js/shanti_images_sdinit.js` does compute `is_series` dynamically from a
+  `data-iiifurls` attribute split on `|$|` (correcting the earlier note above, which said
+  D7 hardcoded `is_series = false` — it doesn't; the flag is real, only the page that
+  would set the attribute was never built).
+- No caller anywhere in the module sets `data-iiifurls` on any real page, so the series
+  path exists in code but was never reachable in production.
+
+No D11 work needed. Left here only as a pointer to where the abandoned prototype lives
+in the legacy repo, in case a real multi-image sequence need ever comes up later.
 
 **Original finding, kept for context:**
 

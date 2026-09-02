@@ -48,7 +48,7 @@ here.
 | In scope (Sprint 2) | Out of scope (later) |
 |---|---|
 | D11 base theme `shanti_sarvaka`, ported from the real D7 theme files, rebuilt on Bootstrap 5 | Per-asset-type regions, sub-themes, or distinct page skins (see Goal) |
-| All three Images interactive UI surfaces: OpenSeadragon deep-zoom viewer, AJAX sibling carousel, masonry/gallery grid | D7's multi-image sequence viewer variant (`sdviewer.php` equivalent) — **open question, not decided either way** |
+| All three Images interactive UI surfaces: OpenSeadragon deep-zoom viewer, AJAX sibling carousel, masonry/gallery grid | D7's multi-image sequence viewer variant (`sdviewer.php` equivalent) — **RESOLVED 2026-09-02: not needed, was an unfinished D7 prototype never reachable in production** |
 | Content-model audits for AV, Sources, Texts (data/field/entity-graph inventory only) | AV/Sources/Texts migration code, `mandala_migrations` scaffolding, any content-type/module creation |
 | Uniform node-access pattern write-up (D1) | New endpoints for sites that don't have one yet (per Than, D7's AJAX endpoints are low-importance/low-consumer; default answer is no) |
 | Authenticated-fetch identity-forwarding spike (D2) — design doc only | Implementing the spike's chosen direction; touching the external `mandala-wp-proxy` repo |
@@ -74,16 +74,18 @@ here.
 | B2 | AJAX sibling carousel: new `shanti_images_carousel` module, `_entity_access: 'node.view'` route, controller reusing the proven `group_relationship`/`loadByEntity()` collection-lookup pattern (`NodeJsonController::buildCollection()`), new ±15-windowing query cached per-collection, JS behavior attached from `node--shanti_image.html.twig` | Workstream A skeleton, B1 (shared template touch-point) | ☐ |
 | B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate), Views config for the homepage gallery. **Built and verified live 2026-09-01** — see the session log. PhotoSwipe lightbox and the D7 data-source (non-entity) view mode were deliberately not ported; scope stayed to the entity/node case per the production-reference doc | Workstream A skeleton | ☑ |
 
-**Open scope question (flag, don't silently resolve):** whether D7's multi-image
-sequence viewer (`sdviewer.php` + `shanti_images_sdinit.js`) is in scope for B1 — treated
-as out of scope for now per the planning doc, confirm with the team before B1 closes.
-**Built out of scope, as planned** — `IiifDeepZoomFormatter` renders a single-image
-viewer only. Worth noting for that confirmation: D7's own overlay code
-(`shanti-main-images.js`) hardcoded `is_series = false` and never wired up a real
-sequence source, so the D7 production site itself never exercised
-`OpenSeadragon`'s multi-image sequence mode in this code path either — the "is it in
-scope" question may be moot rather than deferred, but that's still the team's call to
-make, not assumed here.
+**Scope question RESOLVED 2026-09-02 (Than): not needed for D11.** `IiifDeepZoomFormatter`
+renders a single-image viewer only, as built. Checked the actual D7 source at
+`docroot/sites/all/modules/custom/shanti_images/` in the legacy `mandala-drupal` repo:
+`sdviewer.php` is an unfinished standalone test page (titled "Test of SeaDragon",
+hardcodes one tile source off a `?json=` query param) — the beginning of a new function,
+never wired into any live page. `js/shanti_images_sdinit.js` does compute `is_series`
+correctly from a `data-iiifurls` (`|$|`-delimited) attribute, but nothing in the module
+ever sets that attribute anywhere, so the sequence path was never reachable in D7
+production either. No D11 work needed; see
+[`images-missing-interactive-viewing-surfaces.md`](../deferred/images-missing-interactive-viewing-surfaces.md)
+for the full pointer, kept for reference in case a real multi-image sequence need comes
+up later.
 
 ### Workstream C — Content-model audits (AV, Sources, Texts) — audit only
 
