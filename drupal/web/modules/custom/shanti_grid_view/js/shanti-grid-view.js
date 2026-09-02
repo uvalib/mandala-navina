@@ -189,21 +189,16 @@
           }
         };
 
-        container.addEventListener('click', (event) => {
-          const img = event.target.closest('img');
-          if (!img) {
-            return;
-          }
-          const image = infoByThumbUrl.get(img.src);
-          if (!image) {
-            return;
-          }
-          const figure = img.closest('figure');
-          const progressiveImage = pig.images.find((candidate) => candidate.element === figure);
-          if (!progressiveImage) {
-            return;
-          }
-
+        /**
+         * Opens (or, if a panel is already open on the same row, swaps the
+         * content of) the info panel for one image. Shared by the tile
+         * click handler and the prev/next arrows -- production's own
+         * gotoImage('prev'/'next') (pig-shanti-ext.js) works the same way,
+         * just walking the image array and feeding the result through the
+         * identical open-or-swap logic a real click uses, rather than
+         * having separate navigation logic.
+         */
+        const openPanelFor = (figure, progressiveImage, image) => {
           // A currently-open panel on an *earlier* row shifts this row's
           // translateY down; reading rowY before closing that panel would
           // capture that shifted (soon to be stale) value. closePanel()
@@ -235,6 +230,18 @@
             panel.style.height = '0px';
             container.appendChild(panel);
             panelRowY = rowY;
+            // Delegated once here (not re-attached after every content
+            // swap below, unlike the close button which is easier to
+            // just recreate each time) since close/prev/next are the
+            // panel's only interactive chrome and never leave the DOM.
+            panel.addEventListener('click', (panelEvent) => {
+              if (panelEvent.target.closest('.shanti-grid-view-panel-prev')) {
+                gotoAdjacentImage('prev');
+              }
+              else if (panelEvent.target.closest('.shanti-grid-view-panel-next')) {
+                gotoAdjacentImage('next');
+              }
+            });
           }
           // Ports production's two independent loading states
           // (pig-shanti-ext.js / shanti-pig-gallery.css): the 4-dot
@@ -257,6 +264,14 @@
           // smooths over whatever gap remains once real content arrives.
           const isPortrait = image.aspectRatio > 0 && image.aspectRatio < 1;
           panel.innerHTML = '<button type="button" class="shanti-grid-view-panel-close" aria-label="Close">×</button>'
+            // Ports production's ppd-nav-arrow buttons (pig-shanti-ext.js's
+            // gotoImage('prev'/'next')): step to the adjacent image in
+            // gallery order, staying open in place if it's on the same
+            // row, closing and reopening at the new row otherwise -- the
+            // exact same logic openPanelFor already applies to a real
+            // click, since gotoAdjacentImage feeds its result through it.
+            + '<button type="button" class="shanti-grid-view-panel-nav shanti-grid-view-panel-prev" aria-label="' + Drupal.t('Previous image') + '"><span class="icon shanticon-arrow3-left" aria-hidden="true"></span></button>'
+            + '<button type="button" class="shanti-grid-view-panel-nav shanti-grid-view-panel-next" aria-label="' + Drupal.t('Next image') + '"><span class="icon shanticon-arrow3-right" aria-hidden="true"></span></button>'
             + '<div class="shanti-grid-view-panel-body">'
             + '<div class="shanti-grid-details">'
             + '<div class="shanti-grid-details-image' + (isPortrait ? ' shanti-grid-details-image--portrait' : '') + '"'
@@ -326,7 +341,58 @@
               measureAndShift();
               scrollPanelIntoView();
             });
+        };
+
+        container.addEventListener('click', (event) => {
+          const img = event.target.closest('img');
+          if (!img) {
+            return;
+          }
+          const image = infoByThumbUrl.get(img.src);
+          if (!image) {
+            return;
+          }
+          const figure = img.closest('figure');
+          const progressiveImage = pig.images.find((candidate) => candidate.element === figure);
+          if (!progressiveImage) {
+            return;
+          }
+          openPanelFor(figure, progressiveImage, image);
         });
+
+        /**
+         * Steps to the previous/next image in gallery order (wrapping at
+         * either end), reusing openPanelFor's own same-row/different-row
+         * logic -- matches production's gotoImage(). Looks the image data
+         * up via the ProgressiveImage's own `filename` (== each image's
+         * thumbUrl, see imageData above) rather than reading the target
+         * figure's real <img src>, since pig.js only renders <img> DOM for
+         * figures near the current scroll position -- the adjacent image
+         * may not be one of them yet.
+         */
+        const gotoAdjacentImage = (direction) => {
+          if (!selectedFigure) {
+            return;
+          }
+          const currentProgressiveImage = pig.images.find((candidate) => candidate.element === selectedFigure);
+          if (!currentProgressiveImage) {
+            return;
+          }
+          const currentIndex = pig.images.indexOf(currentProgressiveImage);
+          let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+          if (nextIndex < 0) {
+            nextIndex = pig.images.length - 1;
+          }
+          if (nextIndex > pig.images.length - 1) {
+            nextIndex = 0;
+          }
+          const nextProgressiveImage = pig.images[nextIndex];
+          const nextImage = infoByThumbUrl.get(nextProgressiveImage.filename);
+          if (!nextImage) {
+            return;
+          }
+          openPanelFor(nextProgressiveImage.element, nextProgressiveImage, nextImage);
+        };
 
         // pig.js's own resize handler fully recomputes every image's
         // translateY from scratch, which would strand an open panel at a

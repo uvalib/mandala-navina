@@ -167,6 +167,62 @@
   cursor: pointer;
 }
 
+/* Ports production's .ppd-nav-arrow (shanti-pig-gallery.css) -- values
+ * kept identical (size, color, hover/active states, icon color/size)
+ * except position: production anchors these to the clicked image tile
+ * itself; here they're anchored to the panel (the "dropdown"), one on
+ * each side, vertically centered on the panel's own height. */
+.shanti-grid-view-panel-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  width: 3rem;
+  height: 6rem;
+  margin-top: -3rem;
+  border: 1px solid #303030;
+  border-radius: 0.3rem;
+  background: #242424;
+  box-shadow: inset 0 0 10px #111;
+  cursor: pointer;
+}
+
+.shanti-grid-view-panel-nav:hover {
+  background: #2e2e2e;
+  border-color: #444;
+}
+
+.shanti-grid-view-panel-nav:active {
+  background: #202020;
+  border-color: #555;
+}
+
+.shanti-grid-view-panel-prev {
+  left: 0.5rem;
+}
+
+.shanti-grid-view-panel-next {
+  right: 0.5rem;
+}
+
+.shanti-grid-view-panel-nav .icon {
+  font-size: 1.75rem;
+}
+
+.shanti-grid-view-panel-nav .icon::before {
+  color: #444;
+}
+
+.shanti-grid-view-panel-nav:hover .icon::before {
+  color: #707070;
+}
+
+.shanti-grid-view-panel-nav:active .icon::before {
+  color: #aaa;
+}
+
 .shanti-grid-view-panel-body {
   padding: 2rem;
 }
