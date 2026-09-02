@@ -1,0 +1,51 @@
+<?php
+
+/**
+ * @file
+ * Masonry/gallery grid view: a Views style plugin (GridView) plus the
+ * click-to-open info-panel endpoint (GridInfoController). Ports D7's
+ * shanti_grid_view for the entity/node case only -- see
+ * docs/planning/b3-masonry-gallery-production-reference.md.
+ */
+
+/**
+ * Implements hook_theme().
+ */
+function shanti_grid_view_theme($existing, $type, $theme, $path) {
+  return [
+    'shanti_grid_view' => [
+      'variables' => [
+        'view' => NULL,
+        'options' => [],
+        'dom_id' => NULL,
+      ],
+    ],
+    // Explicit registration for the info-panel override template, rather
+    // than relying on node.module's node__{bundle}__{view_mode} suggestion
+    // to be auto-discovered purely from file naming/location -- guarantees
+    // Drupal finds it regardless of module-vs-theme template-scan order.
+    'node__shanti_image__grid_details' => [
+      'base hook' => 'node',
+      'template' => 'node--shanti-image--grid-details',
+    ],
+    // Same reasoning: the `views_view__image_gallery` suggestion Views
+    // itself computes (ViewExecutable::buildThemeFunctions()) doesn't get
+    // auto-matched to this module's template purely from file naming --
+    // register it explicitly rather than assume.
+    'views_view__image_gallery' => [
+      'base hook' => 'views_view',
+      'template' => 'views-view--image-gallery',
+    ],
+    'shanti_pager' => [
+      'variables' => [
+        'first_href' => NULL,
+        'previous_href' => NULL,
+        'next_href' => NULL,
+        'last_href' => NULL,
+        'current_page' => NULL,
+        'total_pages' => NULL,
+        'widget_state' => NULL,
+      ],
+    ],
+  ];
+}

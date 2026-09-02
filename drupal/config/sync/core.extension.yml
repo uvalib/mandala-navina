@@ -3,6 +3,7 @@ _core:
 module:
   announcements_feed: 0
   automated_cron: 0
+  better_exposed_filters: 0
   big_pipe: 0
   block: 0
   block_content: 0
@@ -57,6 +58,7 @@ module:
   search_api_solr: 0
   search_api_solr_devel: 0
   serialization: 0
+  shanti_grid_view: 0
   shanti_iiif: 0
   shanti_kmaps_admin: 0
   shanti_kmaps_fields: 0

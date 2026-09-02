@@ -42,6 +42,12 @@ class IiifUrlBuilder {
    *   uses exact w,h which can distort. D7 default is true.
    * @param string $format
    *   Output format — "jpg" (default), "png", "tif", "gif".
+   * @param bool $upscale
+   *   Whether to allow enlarging past the source's native size (IIIF "^"
+   *   prefix, combined with $scaled as "^!w,h"). Only meaningful when
+   *   $scaled is TRUE. Default FALSE preserves prior behavior for existing
+   *   callers; grid/masonry thumbnails want TRUE so a tile always fills its
+   *   box exactly regardless of the source image's native resolution.
    */
   public function buildUrl(
     string $i3fid,
@@ -51,9 +57,10 @@ class IiifUrlBuilder {
     string $region = 'full',
     bool $scaled = TRUE,
     string $format = 'jpg',
+    bool $upscale = FALSE,
   ): string {
     $base = $this->identifierBase($i3fid);
-    $size = $this->buildSize($width, $height, $scaled);
+    $size = $this->buildSize($width, $height, $scaled, $upscale);
     return $base . '/' . $region . '/' . $size . '/' . $rotation . '/default.' . $format;
   }
 
@@ -83,7 +90,7 @@ class IiifUrlBuilder {
   /**
    * Compose the IIIF size segment from width/height/scaled.
    */
-  protected function buildSize(int|string|null $width, int|string|null $height, bool $scaled): string {
+  protected function buildSize(int|string|null $width, int|string|null $height, bool $scaled, bool $upscale = FALSE): string {
     $w = ($width === NULL || $width === '') ? NULL : $width;
     $h = ($height === NULL || $height === '') ? NULL : $height;
 
@@ -95,7 +102,14 @@ class IiifUrlBuilder {
       $h = $w;
     }
 
-    return ($scaled ? '!' : '') . ($w ?? '') . ',' . ($h ?? '');
+    // The "!" (and "^!") scale-mode prefix requires both dimensions -- the
+    // Cantaloupe server this reads from returns 400 for e.g. "^!,250"
+    // (confirmed live). When only one dimension is given, IIIF's own
+    // unprefixed "w," / ",h" syntax already means "fit within bounds,
+    // preserve aspect ratio" for that single dimension, so no prefix (and
+    // no $upscale) applies -- there's nothing left for "!" to mean.
+    $prefix = ($scaled && $w !== NULL && $h !== NULL) ? (($upscale ? '^' : '') . '!') : '';
+    return $prefix . ($w ?? '') . ',' . ($h ?? '');
   }
 
 }

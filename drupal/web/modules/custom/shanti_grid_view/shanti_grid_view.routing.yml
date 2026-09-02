@@ -1,0 +1,20 @@
+# Path deliberately mirrors D7's shanti/grid/info/%/% for continuity with
+# anyone who remembers the old URL, though nothing outside this module
+# depends on it (unlike mandala_node_api's /api/json/{node}, which is a real
+# published contract in the kmassets Solr index).
+#
+# Unlike the D7 original (access arguments => array('access content'), no
+# per-node check -- see b3-masonry-gallery-production-reference.md), this
+# route gates on the real per-entity check via _entity_access, same
+# convention as mandala_node_api.node_json.
+shanti_grid_view.info:
+  path: '/shanti/grid/info/node/{node}'
+  defaults:
+    _controller: '\Drupal\shanti_grid_view\Controller\GridInfoController::info'
+  requirements:
+    _entity_access: 'node.view'
+    node: \d+
+  options:
+    parameters:
+      node:
+        type: entity:node

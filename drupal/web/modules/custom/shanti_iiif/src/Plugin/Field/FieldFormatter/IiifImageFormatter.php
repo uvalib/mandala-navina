@@ -30,7 +30,9 @@ class IiifImageFormatter extends FormatterBase {
       'height' => '',
       'rotation' => 0,
       'scaled' => TRUE,
+      'upscale' => FALSE,
       'iiif_id_field' => 'field_iiif_id',
+      'rotation_field' => '',
     ] + parent::defaultSettings();
   }
 
@@ -55,12 +57,30 @@ class IiifImageFormatter extends FormatterBase {
       '#title' => $this->t('Rotation'),
       '#default_value' => $this->getSetting('rotation'),
       '#options' => [0 => '0°', 90 => '90°', 180 => '180°', 270 => '270°'],
+      '#description' => $this->t('Fallback used when "Rotation field" below is blank or empty on the entity.'),
+    ];
+    $elements['rotation_field'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Rotation field'),
+      '#default_value' => $this->getSetting('rotation_field'),
+      '#description' => $this->t('Optional. Machine name of an integer field (degrees) that overrides the static "Rotation" setting above per-entity, e.g. <code>field_image_rotation</code>. Leave blank to always use the static value.'),
     ];
     $elements['scaled'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Scale within bounds (preserves aspect ratio)'),
       '#default_value' => (bool) $this->getSetting('scaled'),
       '#description' => $this->t('Uses IIIF "!w,h" size syntax. Off uses exact "w,h" which can distort.'),
+    ];
+    $elements['upscale'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Allow upscaling past the source image'),
+      '#default_value' => (bool) $this->getSetting('upscale'),
+      '#description' => $this->t('Uses IIIF "^!w,h" size syntax. Only applies when "Scale within bounds" is on. Useful for fixed-size grid tiles that must fill their box regardless of source resolution.'),
+      '#states' => [
+        'visible' => [
+          ':input[name$="[settings_edit_form][settings][scaled]"]' => ['checked' => TRUE],
+        ],
+      ],
     ];
     $elements['iiif_id_field'] = [
       '#type' => 'textfield',
@@ -76,12 +96,19 @@ class IiifImageFormatter extends FormatterBase {
     $w = $this->getSetting('width') ?: 'auto';
     $h = $this->getSetting('height') ?: 'auto';
     $scaled = $this->getSetting('scaled') ? 'scaled' : 'exact';
+    $rotation_field = $this->getSetting('rotation_field');
+    $rotation_summary = $rotation_field
+      ? $this->t('rotation from @f (falls back to @r°)', [
+        '@f' => $rotation_field,
+        '@r' => $this->getSetting('rotation'),
+      ])
+      : $this->t('rotation @r°', ['@r' => $this->getSetting('rotation')]);
     return [
-      $this->t('Size: @w × @h (@scaled), rotation @r°', [
+      $this->t('Size: @w × @h (@scaled), @rotation', [
         '@w' => $w,
         '@h' => $h,
         '@scaled' => $scaled,
-        '@r' => $this->getSetting('rotation'),
+        '@rotation' => $rotation_summary,
       ]),
       $this->t('IIIF id from: @f', ['@f' => $this->getSetting('iiif_id_field')]),
     ];
@@ -99,14 +126,22 @@ class IiifImageFormatter extends FormatterBase {
       return [];
     }
 
+    $rotation = (int) $this->getSetting('rotation');
+    $rotation_field = $this->getSetting('rotation_field');
+    if ($rotation_field && $entity->hasField($rotation_field) && !$entity->get($rotation_field)->isEmpty()) {
+      $rotation = (int) $entity->get($rotation_field)->value;
+    }
+
     $builder = \Drupal::service('shanti_iiif.url_builder');
     $url = $builder->buildUrl(
       $i3fid,
       $this->getSetting('width') ?: NULL,
       $this->getSetting('height') ?: NULL,
-      (int) $this->getSetting('rotation'),
+      $rotation,
       'full',
       (bool) $this->getSetting('scaled'),
+      'jpg',
+      (bool) $this->getSetting('upscale'),
     );
 
     // One element rather than per-item: the IIIF identifier is per-entity,

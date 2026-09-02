@@ -1,0 +1,26 @@
+# Schema for shanti_grid_view's Views plugins. Without this, ShantiPager's
+# options fall back to core's generic `views.pager.*: type: views_pager`
+# wildcard (views.pager.schema.yml), which omits the id/total_pages/tags/
+# quantity mapping SqlBase-derived pagers actually have -- config:export
+# then writes those as loosely-typed strings ('0' instead of 0), producing
+# spurious diffs against re-imported config. Same shape as core's own
+# views.pager.full entry, since ShantiPager extends Full.
+views.pager.shanti_pager:
+  type: views_pager_sql
+  label: 'Shanti pager'
+  mapping:
+    tags:
+      type: mapping
+      label: 'Tags'
+      mapping:
+        first:
+          type: label
+          label: 'First page link text'
+        last:
+          type: label
+          label: 'Last page link text'
+    quantity:
+      type: integer
+      label: 'Number of pager links visible'
+      constraints:
+        PositiveOrZero: []
