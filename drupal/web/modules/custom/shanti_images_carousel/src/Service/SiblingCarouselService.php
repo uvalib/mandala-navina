@@ -154,20 +154,29 @@ class SiblingCarouselService {
     $relStorage = $this->entityTypeManager->getStorage('group_relationship');
     $nodeStorage = $this->entityTypeManager->getStorage('node');
 
+    // Real collections run into the thousands of members (6,228 direct
+    // members on one real dev-0 collection, confirmed live) -- loading a
+    // full node entity per member, either via GroupRelationship::getEntity()
+    // here or via Node::loadMultiple() for the sort below, exhausts PHP's
+    // memory limit. getEntityId() reads the reference field's target id
+    // without loading the referenced entity; the sort below runs as a single
+    // DB-side ORDER BY (EntityQuery::sort()) rather than an in-PHP usort
+    // over loaded entities, for the same reason.
     $nids = [];
     foreach ([$collection, ...array_values($subcollections)] as $group) {
       foreach ($relStorage->loadByGroup($group, 'group_node:shanti_image') as $relationship) {
-        $nids[(int) $relationship->getEntity()->id()] = TRUE;
+        $nids[(int) $relationship->getEntityId()] = TRUE;
       }
     }
     $nids = array_keys($nids);
 
     if ($nids) {
-      $nodes = $nodeStorage->loadMultiple($nids);
-      usort($nids, static function (int $a, int $b) use ($nodes) {
-        $created = $nodes[$b]->getCreatedTime() <=> $nodes[$a]->getCreatedTime();
-        return $created !== 0 ? $created : strcmp((string) $nodes[$a]->label(), (string) $nodes[$b]->label());
-      });
+      $nids = array_values($nodeStorage->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('nid', $nids, 'IN')
+        ->sort('created', 'DESC')
+        ->sort('title', 'ASC')
+        ->execute());
     }
 
     $subcollectionTags = array_map(static fn ($g) => $g->getCacheTags(), array_values($subcollections));
