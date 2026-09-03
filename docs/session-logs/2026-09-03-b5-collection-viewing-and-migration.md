@@ -1,7 +1,7 @@
 # Session Log: B3 Fixes, B2 Carousel, and B5 Collection Viewing + Migration
 
 **Date:** 2026-09-03  
-**Participants:** Than Grove, Claude Code  
+**Participants:** Than Grove, Yuji Shinozaki, Xiaoming Wang, Claude Code  
 **Outcome:** Full day's session (supersedes/extends the earlier partial log,
 [2026-09-03-b3-gallery-search-sort-css-and-prs-merged.md](2026-09-03-b3-gallery-search-sort-css-and-prs-merged.md),
 which covers only the morning's B3 portion). B3 gallery popdown fixes finished (PR

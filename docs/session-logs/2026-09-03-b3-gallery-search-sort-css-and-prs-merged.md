@@ -1,7 +1,7 @@
 # Session Log: B3 Gallery Search/Sort CSS Fix and PR Merges
 
 **Date:** 2026-09-03  
-**Participants:** Than Grove, Claude Code  
+**Participants:** Than Grove, Yuji Shinozaki, Xiaoming Wang, Claude Code  
 **Outcome:** B3 gallery popdown fixes item #6 (search/sort row CSS) finished — all 6/6
 items done. Fixed a real pre-existing bug along the way: every `.view-id-image_gallery`
 CSS rule matched nothing, since D11's Views never emits that class the way D7's did.
