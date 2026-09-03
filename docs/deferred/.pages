@@ -93,3 +93,4 @@ nav:
   - "OG collection_ref storage empty — use og_membership": og-collection-ref-storage-empty-use-og-membership.md
   - "Hand-edited config YAML drifts from what Drupal computes (needs a team decision)": config-export-drift-hand-edited-yaml.md
   - "migrate:import --update nulls uid on entity:group rows": migrate-entity-group-update-mode-nulls-uid.md
+  - "15 collection featured images missing on production (404)": collection-featured-images-missing-on-production.md
