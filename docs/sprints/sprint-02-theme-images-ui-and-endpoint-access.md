@@ -1,7 +1,8 @@
 # Sprint 2: D11 base theme, Images interactive UI, and other-asset-type groundwork
 
-**Status:** ◐ In progress — Workstream A (base theme) closed and merged 2026-09-01
-([PR #169](https://github.com/uvalib/mandala-navina/pull/169)); B, C, D not yet started.
+**Status:** ◐ In progress — Workstreams A, C closed; B1/B3/B4 closed (B2 open); D not
+yet started. Workstream A (base theme) closed and merged 2026-09-01
+([PR #169](https://github.com/uvalib/mandala-navina/pull/169)).
 **Phase:** [Roadmap](../roadmap.md) Phase 2 setup — the shared theme foundation and
 Images' remaining UI, plus the research groundwork Phase 2's per-site tracks (Texts,
 Sources) and Phase 3 (AV) will need before they fork off.
@@ -72,7 +73,7 @@ here.
 |---|---|---|---|
 | B1 | OpenSeadragon deep-zoom viewer: `IiifDeepZoomFormatter` field formatter in `shanti_iiif`, reusing `IiifUrlBuilder::infoUrl()`; `shanti_iiif.libraries.yml` (OpenSeadragon vendor lib + behavior JS using `drupalSettings`, porting `shanti-main-images.js`'s overlay behavior) | Workstream A skeleton (A1–A2) | ☑ |
 | B2 | AJAX sibling carousel: new `shanti_images_carousel` module, `_entity_access: 'node.view'` route, controller reusing the proven `group_relationship`/`loadByEntity()` collection-lookup pattern (`NodeJsonController::buildCollection()`), new ±15-windowing query cached per-collection, JS behavior attached from `node--shanti_image.html.twig` | Workstream A skeleton, B1 (shared template touch-point) | ☐ |
-| B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate), Views config for the homepage gallery. **Built and verified live 2026-09-01** — see the session log. PhotoSwipe lightbox and the D7 data-source (non-entity) view mode were deliberately not ported; scope stayed to the entity/node case per the production-reference doc | Workstream A skeleton | ☑ |
+| B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate), Views config for the homepage gallery. **Built and verified live 2026-09-01**; wired as the actual front page (`system.site.yml` `page.front: /gallery`) same day. **6 real popdown/gallery bugs reported from live use, all fixed and verified 2026-09-01→09-03** (scroll-to-panel, loading spinners, details text styling, same-row re-click, prev/next nav arrows, duplicate title + search/sort row CSS — see [PR #180](https://github.com/uvalib/mandala-navina/pull/180)). PhotoSwipe lightbox and the D7 data-source (non-entity) view mode were deliberately not ported; scope stayed to the entity/node case per the production-reference doc | Workstream A skeleton | ☑ |
 | B4 | KMaps popover ("mandala popover"): hover popover on every KMaps place/subject/term tag (icon trigger, term info + ancestor breadcrumb, "Full Entry" link, "Related X (N)" links). New `KmapsPopoverInfoService` in `shanti_kmaps_fields` (in-process, not D7's self-referential HTTP round-trip), a new `kmap_popover_formatter` (server-rendered, no AJAX), BS5 popover JS behavior. **Built and verified live 2026-09-02** — see below | Workstream A skeleton (Bootstrap 5 popover), `shanti_kmaps_fields` (field type, already proven) | ☑ |
 
 **Scope question RESOLVED 2026-09-02 (Than): not needed for D11.** `IiifDeepZoomFormatter`
@@ -273,7 +274,7 @@ Images' own Paragraphs precedent) and must explicitly state that no migration co
 
 ## Acceptance criteria
 
-- [ ] `shanti_sarvaka` is the site's default theme (`drush config:get system.theme
+- [x] `shanti_sarvaka` is the site's default theme (`drush config:get system.theme
       default`), a genuine Bootstrap 5 subtheme (BS5 JS/CSS loaded, `data-bs-*`
       attributes, no jQuery-only BS3/4 plugins left unreplaced), renders all 12 D7
       regions with no visual regression against the live D7 site's page skeleton, and
@@ -285,11 +286,11 @@ Images' own Paragraphs precedent) and must explicitly state that no migration co
 - [ ] The sibling carousel AJAX-loads and windows the correct ±15 collection members
       around the current node, and respects private-collection access (verified against
       both a public and a private collection).
-- [ ] The homepage gallery renders via the new `shanti_grid_view` Views style plugin
-      with working click-to-popdown. **Partially done 2026-09-01**: the grid + popdown
-      both work, verified live (`/gallery` page), but the view isn't wired as the
-      site's actual front page yet (`system.site.yml` still points `/node`) — left
-      unchecked until that's done, a small remaining step, not a functional gap.
+- [x] The homepage gallery renders via the new `shanti_grid_view` Views style plugin
+      with working click-to-popdown, wired as the site's actual front page
+      (`system.site.yml` `page.front: /gallery`, done 2026-09-01). All 6 real
+      popdown/gallery bugs reported from live use fixed and verified 2026-09-03
+      ([PR #180](https://github.com/uvalib/mandala-navina/pull/180)).
 - [x] `av-content-model-audit.md`, `sources-content-model-audit.md`, and
       `texts-content-model-audit.md` all exist, each naming its site's real D7
       field/entity-graph structure (not placeholders) against a real dump, each
