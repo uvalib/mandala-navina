@@ -490,11 +490,11 @@ reused by every consumer below, not rebuilt per-consumer:
    to build yet since no other site has migrated.
 
 **Real open questions / new work, not yet resolved:**
-1. **No featured-image field on Group entities yet.** Production's card grids (both
-   `/collections` and a collection's own page) show a thumbnail — D7 modeled
-   collections as nodes with `field_general_featured_image`; D11's Group bundles have
-   no image field today. Needs adding (new field, or compute one from the collection's
-   own content — e.g. its first/most-recent member's thumbnail — worth deciding which).
+1. ~~No featured-image field on Group entities yet.~~ **RESOLVED 2026-09-03** ([PR
+   #183](https://github.com/uvalib/mandala-navina/pull/183)): added
+   `field_featured_image` (image) and `field_overview` (long text with summary,
+   matching D7's `body` field labeled "Overview") to both `collection` and
+   `subcollection` Group bundles, with default form/view display config.
 2. **The `shanti-thumbnail` component's non-Image field variants can't be built or
    verified yet** — no other site is migrated, so there's no real D11 content to plug
    into it or test against. Build the component generically (configurable field-row
