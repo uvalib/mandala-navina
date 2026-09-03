@@ -1,0 +1,9 @@
+image-page:
+  css:
+    theme:
+      css/shanti-images-carousel.css: {}
+  js:
+    js/shanti-images-carousel.js: {}
+  dependencies:
+    - core/once
+    - core/drupal

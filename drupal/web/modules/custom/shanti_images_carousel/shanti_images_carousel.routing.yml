@@ -1,0 +1,15 @@
+# Ports D7's /api/carouseldata/{nid} (see CarouselController's docblock for
+# why the access model differs -- D7's was blanket-public, this route gates
+# on the *current* node's own view access, same convention as
+# mandala_node_api.node_json and shanti_grid_view's GridInfoController).
+shanti_images_carousel.data:
+  path: '/api/carouseldata/{node}'
+  defaults:
+    _controller: '\Drupal\shanti_images_carousel\Controller\CarouselController::data'
+  requirements:
+    _entity_access: 'node.view'
+    node: \d+
+  options:
+    parameters:
+      node:
+        type: entity:node

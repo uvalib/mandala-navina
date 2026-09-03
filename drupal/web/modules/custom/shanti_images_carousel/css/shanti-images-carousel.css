@@ -1,0 +1,150 @@
+/**
+ * Single-image page core layout. Ports the structural shape of production's
+ * shanti-image-page.css (1720 lines) only for what this round's markup
+ * actually uses -- title/info line, Collections/Classification columns,
+ * description, and the sibling carousel strip. The action-icon row and
+ * technical-metadata modal (deferred, see the Sprint 2 doc's B2 planning
+ * subsection) will need the rest of that file when they're built.
+ */
+
+.shanti-image-page {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  padding: 1rem 0;
+}
+
+.shanti-image-page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-basis: 100%;
+  margin-bottom: 0.5rem;
+  text-decoration: none;
+}
+
+.shanti-image-page-display {
+  flex: 2 1 500px;
+  min-width: 0;
+}
+
+.shanti-image-page-detail {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.shanti-image-page-title h1 {
+  margin-bottom: 0.4rem;
+}
+
+.shanti-image-page-info {
+  padding-left: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.shanti-image-page-info li {
+  display: inline-block;
+  margin-right: 1rem;
+}
+
+.shanti-image-page-summary {
+  margin: 1rem 0;
+}
+
+.shanti-image-page-summary h5 {
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05rem;
+  color: #888;
+}
+
+.shanti-image-page-summary ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.shanti-image-page-kmap-items li {
+  margin-bottom: 0.4rem;
+}
+
+.shanti-image-page-description {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgb(0 0 0 / 10%);
+}
+
+/* Sibling carousel: a horizontally-scrolling strip with scroll-snap +
+ * prev/next buttons that scrollBy a fixed amount (see the JS file's header
+ * comment for why this isn't built on jssor-slider). */
+.shanti-image-page-carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+.shanti-image-page-carousel--empty {
+  display: none;
+}
+
+.shanti-image-page-carousel-strip {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 0.25rem 2.5rem;
+  flex: 1;
+}
+
+.shanti-image-page-carousel-item {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  height: 65px;
+  border: 2px solid transparent;
+  border-radius: 0.2rem;
+  overflow: hidden;
+  opacity: 0.75;
+  transition: opacity 150ms ease, border-color 150ms ease;
+}
+
+.shanti-image-page-carousel-item:hover {
+  opacity: 1;
+}
+
+.shanti-image-page-carousel-item--active {
+  opacity: 1;
+  border-color: #b5953b;
+}
+
+.shanti-image-page-carousel-item img {
+  display: block;
+  height: 100%;
+  width: auto;
+}
+
+.shanti-image-page-carousel-item--portrait img {
+  width: 100%;
+  height: auto;
+}
+
+.shanti-image-page-carousel-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  width: 2rem;
+  height: 2rem;
+  margin-top: -1rem;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+
+.shanti-image-page-carousel-nav--prev {
+  left: 0;
+}
+
+.shanti-image-page-carousel-nav--next {
+  right: 0;
+}

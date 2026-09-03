@@ -1,0 +1,10 @@
+name: 'Shanti Images Carousel'
+type: module
+description: 'Single-image page core layout + AJAX sibling carousel for shanti_image nodes. Ports D7''s /api/carouseldata/{nid} + node--shanti-image.tpl.php for the core layout only -- see docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md (Workstream B2 planning).'
+package: Mandala
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - group:group
+  - shanti_iiif:shanti_iiif
+  - shanti_kmaps_fields:shanti_kmaps_fields
