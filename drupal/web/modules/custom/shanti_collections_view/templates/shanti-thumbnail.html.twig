@@ -12,6 +12,8 @@
  * - url: link target for the thumbnail image and title.
  * - thumbnail: pre-rendered thumbnail markup (e.g. an image field's
  *   render array/markup), or null.
+ * - default_image_url: fallback <img> src used when `thumbnail` is empty
+ *   (e.g. no featured image set), or null for no fallback.
  * - icon: shanticon suffix (e.g. "stack") shown over the thumbnail.
  * - title: the card's title text.
  * - badge: small type/subtype label under the title (e.g. "Public
@@ -26,8 +28,10 @@
   <div class="shanti-thumbnail-image">
     <a href="{{ url }}" class="shanti-thumbnail-link">
       <span class="overlay"><span class="icon" aria-hidden="true"></span></span>
-      {% if thumbnail %}
+      {% if thumbnail|render|trim %}
         {{ thumbnail }}
+      {% elseif default_image_url %}
+        <img class="img-responsive" src="{{ default_image_url }}" alt="">
       {% endif %}
       {% if icon %}
         <span class="icon shanticon-{{ icon }}" aria-hidden="true"></span>

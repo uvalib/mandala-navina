@@ -152,7 +152,7 @@ display:
         collection_id:
           id: collection_id
           table: node_field_data
-          field: nid
+          field: collection_membership
           relationship: none
           group_type: group
           admin_label: 'Collection membership'

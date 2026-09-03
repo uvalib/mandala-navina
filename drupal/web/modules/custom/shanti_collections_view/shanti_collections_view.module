@@ -13,6 +13,34 @@
 use Drupal\group\Entity\GroupInterface;
 
 /**
+ * Implements hook_views_data().
+ *
+ * Registers a virtual field for the collection_membership argument plugin.
+ * Views' handler manager resolves an argument's plugin from the *field's
+ * own* registered views-data definition (ViewsHandlerManager::getHandler()
+ * reads `$data[$field]['argument']['id']`), not from the plugin_id stored
+ * in the view's config -- that override path only exists for
+ * aggregation/group-by. Pointing the argument at the real `nid` field (as
+ * originally built) silently resolved to core's own `node_nid` handler
+ * instead of this module's plugin, with no error -- the argument still
+ * "worked" (filtered by nid = the raw argument value, i.e. the group id
+ * itself), which is how this went unnoticed until a real collection page
+ * showed exactly one coincidentally-matching node. A virtual field with no
+ * real column, declared here, is the correct fix -- see
+ * CollectionMembership's own docblock.
+ */
+function shanti_collections_view_views_data() {
+  $data['node_field_data']['collection_membership'] = [
+    'title' => t('Collection membership'),
+    'help' => t('Filters to nodes that are members of a given collection group (and its subcollections).'),
+    'argument' => [
+      'id' => 'collection_membership',
+    ],
+  ];
+  return $data;
+}
+
+/**
  * Implements hook_theme().
  */
 function shanti_collections_view_theme($existing, $type, $theme, $path) {
@@ -77,6 +105,21 @@ function _shanti_collections_view_preprocess_teaser(array &$variables, GroupInte
     _shanti_collections_view_item_count($group) . ' ' . (_shanti_collections_view_item_count($group) === 1 ? 'item' : 'items'),
   ];
   $variables['thumbnail_parent'] = _shanti_collections_view_parent_link($group);
+
+  if ($group->get('field_featured_image')->isEmpty()) {
+    $variables['thumbnail_default_image_url'] = _shanti_collections_view_default_image_url();
+  }
+}
+
+/**
+ * The generic collection thumbnail production falls back to when a
+ * collection/subcollection has no featured image set. Vendored directly
+ * from the real D7 asset (sarvaka_images theme's own default image, itself
+ * sourced from the mediabase module) rather than hotlinking production.
+ */
+function _shanti_collections_view_default_image_url(): string {
+  $path = \Drupal::service('extension.list.module')->getPath('shanti_collections_view') . '/images/collections-generic.png';
+  return base_path() . $path;
 }
 
 /**
