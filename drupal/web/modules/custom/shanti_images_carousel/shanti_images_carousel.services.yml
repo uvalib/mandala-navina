@@ -1,0 +1,6 @@
+services:
+  shanti_images_carousel.sibling_carousel:
+    class: Drupal\shanti_images_carousel\Service\SiblingCarouselService
+    arguments:
+      - '@entity_type.manager'
+      - '@cache.default'

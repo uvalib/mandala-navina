@@ -1,0 +1,57 @@
+<?php
+
+/**
+ * @file
+ * Single-image page core layout + AJAX sibling carousel for shanti_image
+ * nodes. Ports D7's node--shanti-image.tpl.php (core layout only -- see
+ * docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md, Workstream
+ * B2 planning, for what's explicitly deferred) and /api/carouseldata/{nid}
+ * (SiblingCarouselService + CarouselController).
+ */
+
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_theme().
+ */
+function shanti_images_carousel_theme($existing, $type, $theme, $path) {
+  return [
+    // Explicit registration rather than relying on node.module's
+    // node__{bundle} suggestion to be auto-discovered purely from file
+    // naming/location -- same reasoning shanti_grid_view's hook_theme()
+    // documents for its own grid_details override (a lesson already hit
+    // twice in this codebase, see that module's shanti_grid_view.module).
+    'node__shanti_image' => [
+      'base hook' => 'node',
+      'template' => 'node--shanti-image',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_node().
+ *
+ * Adds the "Mandala Collections" link variable the template needs --
+ * computed here (a service call) rather than in Twig, which can't reach
+ * services directly.
+ */
+function shanti_images_carousel_preprocess_node(array &$variables) {
+  $node = $variables['node'];
+  // The node--shanti-image.html.twig override applies to the 'default'
+  // *display config* (core.entity_view_display.node.shanti_image.default
+  // .yml, since no dedicated .full.yml exists), but the full-page render
+  // always passes view_mode 'full' to preprocess -- 'default' is only ever
+  // seen in contexts like Views' "Content: Default" row plugin. Gate on
+  // 'full' to match what a real page load actually reports.
+  if (!$node instanceof NodeInterface || $node->bundle() !== 'shanti_image' || $variables['view_mode'] !== 'full') {
+    return;
+  }
+
+  /** @var \Drupal\shanti_images_carousel\Service\SiblingCarouselService $siblingCarousel */
+  $siblingCarousel = \Drupal::service('shanti_images_carousel.sibling_carousel');
+  $collection = $siblingCarousel->getImmediateCollection($node);
+  $variables['owning_collection'] = $collection ? [
+    'title' => $collection->label(),
+    'url' => $collection->toUrl()->toString(),
+  ] : NULL;
+}

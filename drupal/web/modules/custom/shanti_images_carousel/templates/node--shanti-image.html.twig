@@ -1,0 +1,94 @@
+{#
+/**
+ * @file
+ * shanti_image node, default/full view mode -- the single-image page.
+ * Structure ported from D7's real node--shanti-image.tpl.php
+ * (sarvaka_images theme): back-arrow, main image, sibling carousel,
+ * title/creator/type/pixel-dims line, Collections + Classification
+ * columns, description. Deliberately does NOT port the action-icon row
+ * (edit/IIIF-viewer/download-sizes) or the technical-metadata modal -- see
+ * docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md's B2
+ * planning subsection for why those are a follow-up, not missing by
+ * accident.
+ *
+ * Field access goes straight to `node` for anything not routed through a
+ * display-config formatter, matching
+ * node--shanti-image--grid-details.html.twig's own convention -- this
+ * template controls layout precisely rather than stacking whatever the
+ * entity view display produces field-by-field.
+ */
+#}
+{{ attach_library('shanti_images_carousel/image-page') }}
+{% set agent = node.field_image_agents.0.entity %}
+{% set description = node.field_image_descriptions.0.entity %}
+{% set width = node.field_iiif_width.value %}
+{% set height = node.field_iiif_height.value %}
+<article{{ attributes.addClass('shanti-image-page') }}>
+  {% if owning_collection %}
+    <a href="{{ owning_collection.url }}" class="shanti-image-page-back">
+      <span class="icon shanticon-arrow-left_2" aria-hidden="true"></span> {{ 'Back'|t }}
+    </a>
+  {% endif %}
+
+  <section class="shanti-image-page-display">
+    {{ content.field_image }}
+    <div class="shanti-image-page-carousel" data-nid="{{ node.id }}" aria-label="{{ 'Sibling images in this collection'|t }}"></div>
+  </section>
+
+  <aside class="shanti-image-page-detail">
+    <header class="shanti-image-page-title">
+      <h1>{{ label }}</h1>
+      <ul class="shanti-image-page-info list-inline">
+        {% if agent and agent.field_agent_name.value %}
+          <li><span>{{ agent.field_agent_name.value }}</span></li>
+        {% endif %}
+        {% if content.field_image_type|render|trim %}
+          <li>{{ content.field_image_type }}</li>
+        {% endif %}
+        {% if width and height %}
+          <li><span>{{ width }} &times; {{ height }} px</span></li>
+        {% endif %}
+      </ul>
+    </header>
+
+    <div class="row shanti-image-page-summary">
+      {% if owning_collection %}
+        <div class="col-xs-12 col-sm-6">
+          <h5>{{ 'Mandala Collections'|t }}</h5>
+          <ul>
+            <li>
+              <span class="icon shanticon-stack" title="{{ 'Collection'|t }}" aria-hidden="true"></span>
+              <a href="{{ owning_collection.url }}">{{ owning_collection.title }}</a>
+            </li>
+          </ul>
+        </div>
+      {% endif %}
+      {% if content.field_places|render|trim or content.field_subjects|render|trim or content.field_kmap_terms|render|trim or content.field_kmap_collections|render|trim %}
+        <div class="col-xs-12 col-sm-6">
+          <h5>{{ 'Classification'|t }}</h5>
+          <ul class="shanti-image-page-kmap-items">
+            {% if content.field_places|render|trim %}
+              <li><span class="icon shanticon-places" aria-hidden="true"></span> {{ content.field_places }}</li>
+            {% endif %}
+            {% if content.field_subjects|render|trim %}
+              <li><span class="icon shanticon-subjects" aria-hidden="true"></span> {{ content.field_subjects }}</li>
+            {% endif %}
+            {% if content.field_kmap_collections|render|trim %}
+              <li><span class="icon shanticon-stack" aria-hidden="true"></span> {{ content.field_kmap_collections }}</li>
+            {% endif %}
+            {% if content.field_kmap_terms|render|trim %}
+              <li><span class="icon shanticon-terms" aria-hidden="true"></span> {{ content.field_kmap_terms }}</li>
+            {% endif %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if description and description.field_description.value %}
+      <div class="shanti-image-page-description">
+        <h5>{{ 'Description'|t }}</h5>
+        {{ description.field_description.value|raw }}
+      </div>
+    {% endif %}
+  </aside>
+</article>
