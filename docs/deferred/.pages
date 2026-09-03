@@ -94,3 +94,4 @@ nav:
   - "Hand-edited config YAML drifts from what Drupal computes (needs a team decision)": config-export-drift-hand-edited-yaml.md
   - "migrate:import --update nulls uid on entity:group rows": migrate-entity-group-update-mode-nulls-uid.md
   - "15 collection featured images missing on production (404)": collection-featured-images-missing-on-production.md
+  - "dev-0 files/styles/ directory was root-owned (fixed live)": dev0-image-styles-directory-root-owned.md
