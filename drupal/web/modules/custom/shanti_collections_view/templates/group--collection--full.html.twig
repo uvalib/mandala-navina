@@ -10,13 +10,23 @@
  */
 #}
 {{ attach_library('shanti_collections_view/thumbnail-grid') }}
+{# Render each field to a string exactly once -- Drupal marks a render
+   array #printed after its first render, so checking `field|render|trim`
+   and then separately printing `{{ field }}` silently renders nothing the
+   second time (same gotcha fixed in shanti-thumbnail.html.twig; |raw is
+   safe on output since the content comes from Drupal's own render
+   pipeline, not user input -- |trim degrades the safe-markup object back
+   to a plain string, needed for the truthy check but losing the
+   auto-escape exemption, hence |raw on print). #}
+{% set featured_image_markup = content.field_featured_image|render|trim %}
+{% set overview_markup = content.field_overview|render|trim %}
 <article{{ attributes.addClass('shanti-collection-page') }}>
   <div class="shanti-collection-page-main">
-    {% if content.field_featured_image|render|trim %}
-      <div class="shanti-collection-page-image">{{ content.field_featured_image }}</div>
+    {% if featured_image_markup %}
+      <div class="shanti-collection-page-image">{{ featured_image_markup|raw }}</div>
     {% endif %}
-    {% if content.field_overview|render|trim %}
-      <div class="shanti-collection-page-overview">{{ content.field_overview }}</div>
+    {% if overview_markup %}
+      <div class="shanti-collection-page-overview">{{ overview_markup|raw }}</div>
     {% endif %}
     {% if subcollections %}
       <p class="shanti-collection-page-subnote">{{ "The list below includes content from this Collection's Subcollections."|t }}</p>

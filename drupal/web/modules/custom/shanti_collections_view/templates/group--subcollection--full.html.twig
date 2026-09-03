@@ -8,6 +8,10 @@
  */
 #}
 {{ attach_library('shanti_collections_view/thumbnail-grid') }}
+{# See group--collection--full.html.twig's comment for why each field is
+   rendered to a string exactly once, then printed with |raw. #}
+{% set featured_image_markup = content.field_featured_image|render|trim %}
+{% set overview_markup = content.field_overview|render|trim %}
 <article{{ attributes.addClass('shanti-collection-page') }}>
   {% if parent_link %}
     <a href="{{ parent_link.url }}" class="shanti-collection-page-back">
@@ -15,11 +19,11 @@
     </a>
   {% endif %}
   <div class="shanti-collection-page-main">
-    {% if content.field_featured_image|render|trim %}
-      <div class="shanti-collection-page-image">{{ content.field_featured_image }}</div>
+    {% if featured_image_markup %}
+      <div class="shanti-collection-page-image">{{ featured_image_markup|raw }}</div>
     {% endif %}
-    {% if content.field_overview|render|trim %}
-      <div class="shanti-collection-page-overview">{{ content.field_overview }}</div>
+    {% if overview_markup %}
+      <div class="shanti-collection-page-overview">{{ overview_markup|raw }}</div>
     {% endif %}
     <div class="shanti-collection-page-content">{{ content_gallery }}</div>
   </div>
