@@ -72,7 +72,7 @@ here.
 | | Task | Depends on | Status |
 |---|---|---|---|
 | B1 | OpenSeadragon deep-zoom viewer: `IiifDeepZoomFormatter` field formatter in `shanti_iiif`, reusing `IiifUrlBuilder::infoUrl()`; `shanti_iiif.libraries.yml` (OpenSeadragon vendor lib + behavior JS using `drupalSettings`, porting `shanti-main-images.js`'s overlay behavior) | Workstream A skeleton (A1–A2) | ☑ |
-| B2 | **Scope expanded 2026-09-03 (Than): not just the carousel — the whole `shanti_image` single-image page needs production-parity styling**, since the default/full node view is currently genuinely unstyled Drupal defaults (confirmed — `core.entity_view_display.node.shanti_image.default.yml` dumps ~50 fields as plain "above"-labeled stacking, no custom template exists). This round's scope: AJAX sibling carousel + core page layout (title/creator/dims line, Collections section, KMaps classification tags, description). Action-icon row (edit/IIIF-viewer/download-size dropdown) and the technical-metadata modal are explicitly deferred to a follow-up — see planning subsection below. New `shanti_images_carousel` module, `_entity_access: 'node.view'` route, controller reusing the proven `group_relationship`/`loadByEntity()` collection-lookup pattern (`NodeJsonController::buildCollection()`), new ±15-windowing query cached per-collection, JS behavior attached from `node--shanti_image.html.twig` | Workstream A skeleton, B1 (shared template touch-point) | ◐ |
+| B2 | **Scope expanded 2026-09-03 (Than): not just the carousel — the whole `shanti_image` single-image page needs production-parity styling**, since the default/full node view was genuinely unstyled Drupal defaults (confirmed — `core.entity_view_display.node.shanti_image.default.yml` dumped ~50 fields as plain "above"-labeled stacking, no custom template existed). **This round's scope built and verified live 2026-09-03**: new `shanti_images_carousel` module — AJAX sibling carousel (`SiblingCarouselService`, `_entity_access: 'node.view'` route/controller, ±15-windowing query over the node's collection + subcollections sorted created DESC/title ASC, cached) + core page layout (`node--shanti-image.html.twig`: back-arrow, title/creator/dims line, Collections section, KMaps classification tags via the existing `kmap_popover_formatter`, description). Action-icon row (edit/IIIF-viewer/download-size dropdown) and the technical-metadata modal remain explicitly deferred to a follow-up — see planning subsection below | Workstream A skeleton, B1 (shared template touch-point) | ◐ |
 | B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate), Views config for the homepage gallery. **Built and verified live 2026-09-01**; wired as the actual front page (`system.site.yml` `page.front: /gallery`) same day. **6 real popdown/gallery bugs reported from live use, all fixed and verified 2026-09-01→09-03** (scroll-to-panel, loading spinners, details text styling, same-row re-click, prev/next nav arrows, duplicate title + search/sort row CSS — see [PR #180](https://github.com/uvalib/mandala-navina/pull/180)). PhotoSwipe lightbox and the D7 data-source (non-entity) view mode were deliberately not ported; scope stayed to the entity/node case per the production-reference doc | Workstream A skeleton | ☑ |
 | B4 | KMaps popover ("mandala popover"): hover popover on every KMaps place/subject/term tag (icon trigger, term info + ancestor breadcrumb, "Full Entry" link, "Related X (N)" links). New `KmapsPopoverInfoService` in `shanti_kmaps_fields` (in-process, not D7's self-referential HTTP round-trip), a new `kmap_popover_formatter` (server-rendered, no AJAX), BS5 popover JS behavior. **Built and verified live 2026-09-02** — see below | Workstream A skeleton (Bootstrap 5 popover), `shanti_kmaps_fields` (field type, already proven) | ☑ |
 
@@ -333,6 +333,45 @@ a follow-up — see "Deferred" below.
 - Uploaded-By / Original-file / UID / Node-ID / extended "detail-columns" collapsible
   section.
 - PhotoSwipe lightbox (already deferred once in B3, stays deferred).
+
+**Built and verified live 2026-09-03.** Implemented largely to spec, with one deliberate
+deviation from the original plan: the carousel does **not** use the theme's vendored
+`jssor-slider` (`shanti_sarvaka.libraries.yml`) — grepped the whole codebase first and
+found zero existing usage anywhere to follow (it was vendored by Workstream A but never
+actually invoked by any behavior), so integrating its exact markup/API blind was a real
+risk with nothing local to verify against. Built a plain horizontally-scrolling strip
+(CSS scroll-snap + prev/next buttons that `scrollBy` a fixed amount) instead — same
+"browse siblings" behavior, using patterns already proven in this codebase.
+
+A real PHP fatal was hit and fixed during live verification: `array_merge()` with a
+positional array argument *after* a spread (`...`) argument — always a fatal in PHP,
+regardless of position — silently broke `getOrderedCollectionMemberNids()`'s cache-tag
+building, which meant `hook_preprocess_node()` threw before setting `owning_collection`
+on every single page load (no watchdog entry either, since preprocess hooks in this
+call path fail before dblog is reached) — the Collections/Classification sections and
+back-arrow all silently rendered as empty until this was found. **Reusable lesson**:
+`array_merge($a, ...$b, $c)` is invalid PHP — a spread argument must be last, or wrap
+everything in `array_merge(...[$a, ...$b, $c])` instead. Second, more mundane bug: the
+`hook_preprocess_node()` gate initially checked `$variables['view_mode'] !== 'default'`
+— wrong test, since a real page load reports view mode **`full`** to preprocess (the
+`'default'` view-mode *config* is what backs `full` when no dedicated `.full.yml`
+exists, but preprocess never sees that name) — corrected to gate on `'full'`.
+
+Verified live in DDEV via Chrome browser automation: a node with a direct collection
+membership (back-arrow, Collections link, 8-sibling carousel all correct), a node
+belonging only to a subcollection (confirms the subcollection→parent-collection
+resolution the sibling pool is drawn from, and that the "Mandala Collections" link
+correctly points at the *immediate* group, matching D7's own behavior), a node with no
+collection at all (back-arrow/Collections/carousel all correctly absent, matching D7's
+`nodata` case), and a node with real KMaps classification tags (popovers working,
+reusing B4's `kmap_popover_formatter` unmodified). Confirmed the carousel endpoint's
+access control mirrors the node's own access exactly (403/200 pattern matched between
+`/node/{nid}` and `/api/carouseldata/{nid}` for both a gated and an open node) — not
+D7's blanket-public gap. `phpcs` (Drupal, DrupalPractice standards) clean on all PHP;
+the JS file's own phpcs "violations" are a known pre-existing false-positive pattern in
+this codebase (Drupal's PHP-oriented JS sniffs misparse template-literal URLs and lower
+case `null`/`true` — confirmed identical false positives already present in the proven,
+merged `shanti_grid_view.js`), not a real issue.
 
 ### Workstream C — Content-model audits (AV, Sources, Texts) — audit only
 
