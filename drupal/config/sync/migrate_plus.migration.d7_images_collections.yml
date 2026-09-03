@@ -31,10 +31,27 @@ process:
   field_legacy_site:
     plugin: default_value
     default_value: images
+  field_overview/value: body/0/value
+  field_overview/summary: body/0/summary
+  # D7's 'filtered_html' format has no D11 equivalent (D11's formats are
+  # basic_html/full_html/plain_text/restricted_html) -- default_value
+  # matches the convention already used for every other formatted-text
+  # field in d7_images_shanti_image.yml, not a per-row format lookup.
+  field_overview/format:
+    plugin: default_value
+    default_value: basic_html
+  field_featured_image/target_id:
+    - plugin: skip_on_empty
+      method: process
+      source: field_general_featured_image/0/fid
+    - plugin: migration_lookup
+      migration: d7_images_collection_featured_image
+      source: field_general_featured_image/0/fid
 destination:
   plugin: 'entity:group'
   default_bundle: collection
 idMap: {  }
 migration_dependencies:
-  optional: {  }
+  optional:
+    - d7_images_collection_featured_image
 include: null

@@ -1,0 +1,24 @@
+uuid: d33696bc-9243-4dd9-a1cc-36e91b0a02d8
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.group.field_overview
+    - group.type.collection
+  module:
+    - text
+id: group.collection.field_overview
+field_name: field_overview
+entity_type: group
+bundle: collection
+label: Overview
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  display_summary: true
+  required_summary: false
+  allowed_formats: {  }
+field_type: text_with_summary

@@ -1,0 +1,48 @@
+{#
+/**
+ * @file
+ * Subcollection group, default/full view mode -- same shape as the
+ * collection page, plus a parent-collection breadcrumb link and no
+ * Subcollections sidebar section (subcollections don't nest further in
+ * this data model).
+ */
+#}
+{{ attach_library('shanti_collections_view/thumbnail-grid') }}
+{# See group--collection--full.html.twig's comment for why each field is
+   rendered to a string exactly once, then printed with |raw. #}
+{% set featured_image_markup = content.field_featured_image|render|trim %}
+{% set overview_markup = content.field_overview|render|trim %}
+<article{{ attributes.addClass('shanti-collection-page') }}>
+  {% if parent_link %}
+    <a href="{{ parent_link.url }}" class="shanti-collection-page-back">
+      <span class="icon shanticon-arrow-left_2" aria-hidden="true"></span> {{ parent_link.title }}
+    </a>
+  {% endif %}
+  <div class="shanti-collection-page-main">
+    {% if featured_image_markup %}
+      <div class="shanti-collection-page-image">{{ featured_image_markup|raw }}</div>
+    {% endif %}
+    {% if overview_markup %}
+      <div class="shanti-collection-page-overview">{{ overview_markup|raw }}</div>
+    {% endif %}
+    <div class="shanti-collection-page-content">{{ content_gallery }}</div>
+  </div>
+  <aside class="shanti-collection-page-sidebar">
+    {% if owner %}
+      <h5>{{ 'Owner'|t }}</h5>
+      <p><a href="{{ owner.url }}">{{ owner.name }}</a></p>
+    {% endif %}
+    {% if accessibility_statement %}
+      <h5>{{ 'Accessibility'|t }}</h5>
+      <p>{{ accessibility_statement }}</p>
+    {% endif %}
+    {% if members %}
+      <h5>{{ 'Members'|t }}</h5>
+      <ul>
+        {% for member in members %}
+          <li><a href="{{ member.url }}">{{ member.name }}</a></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </aside>
+</article>

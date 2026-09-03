@@ -1,0 +1,199 @@
+<?php
+
+/**
+ * @file
+ * Collection/subcollection viewing: "All Collections"/"My Collections" pages
+ * and the shared shanti-thumbnail card component. Ports D7's
+ * shanti_collections module's `collections`/`collections_by_users` views for
+ * the D11 Group-based (not OG-based) data model -- see
+ * docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md's B5
+ * planning subsection.
+ */
+
+use Drupal\group\Entity\GroupInterface;
+
+/**
+ * Implements hook_views_data().
+ *
+ * Registers a virtual field for the collection_membership argument plugin.
+ * Views' handler manager resolves an argument's plugin from the *field's
+ * own* registered views-data definition (ViewsHandlerManager::getHandler()
+ * reads `$data[$field]['argument']['id']`), not from the plugin_id stored
+ * in the view's config -- that override path only exists for
+ * aggregation/group-by. Pointing the argument at the real `nid` field (as
+ * originally built) silently resolved to core's own `node_nid` handler
+ * instead of this module's plugin, with no error -- the argument still
+ * "worked" (filtered by nid = the raw argument value, i.e. the group id
+ * itself), which is how this went unnoticed until a real collection page
+ * showed exactly one coincidentally-matching node. A virtual field with no
+ * real column, declared here, is the correct fix -- see
+ * CollectionMembership's own docblock.
+ */
+function shanti_collections_view_views_data() {
+  $data['node_field_data']['collection_membership'] = [
+    'title' => t('Collection membership'),
+    'help' => t('Filters to nodes that are members of a given collection group (and its subcollections).'),
+    'argument' => [
+      'id' => 'collection_membership',
+    ],
+  ];
+  return $data;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function shanti_collections_view_theme($existing, $type, $theme, $path) {
+  return [
+    // Explicit registration rather than relying on group.module's
+    // group__{bundle}__{view_mode} suggestion to be auto-discovered purely
+    // from file naming/location -- same lesson hit twice already in this
+    // codebase (shanti_grid_view's grid_details override, shanti_images
+    // _carousel's node--shanti-image.html.twig).
+    'group__collection__teaser' => [
+      'base hook' => 'group',
+      'template' => 'group--collection--teaser',
+    ],
+    'group__subcollection__teaser' => [
+      'base hook' => 'group',
+      'template' => 'group--subcollection--teaser',
+    ],
+    'group__collection__full' => [
+      'base hook' => 'group',
+      'template' => 'group--collection--full',
+    ],
+    'group__subcollection__full' => [
+      'base hook' => 'group',
+      'template' => 'group--subcollection--full',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_group().
+ *
+ * Adds the shanti-thumbnail card variables the teaser templates need, and
+ * the sidebar/content variables the full-page templates need -- both
+ * computed here (entity queries, field-value formatting, the embedded
+ * gallery view) rather than in Twig, which can't reach services or do real
+ * computation.
+ */
+function shanti_collections_view_preprocess_group(array &$variables) {
+  $group = $variables['group'];
+  if (!$group instanceof GroupInterface || !in_array($group->bundle(), ['collection', 'subcollection'], TRUE)) {
+    return;
+  }
+
+  if ($variables['view_mode'] === 'teaser') {
+    _shanti_collections_view_preprocess_teaser($variables, $group);
+  }
+  elseif ($variables['view_mode'] === 'full') {
+    _shanti_collections_view_preprocess_full($variables, $group);
+  }
+}
+
+/**
+ * Builds the shanti-thumbnail card variables for the 'teaser' view mode.
+ */
+function _shanti_collections_view_preprocess_teaser(array &$variables, GroupInterface $group): void {
+  $variables['#attached']['library'][] = 'shanti_collections_view/thumbnail-grid';
+
+  $isPrivate = _shanti_collections_view_is_private($group);
+  $variables['thumbnail_badge'] = ($isPrivate ? 'Private' : 'Public') . ' ' . ucfirst($group->bundle());
+  $variables['thumbnail_meta'] = [
+    \Drupal::service('date.formatter')->format($group->getCreatedTime(), 'custom', 'F Y'),
+    _shanti_collections_view_item_count($group) . ' ' . (_shanti_collections_view_item_count($group) === 1 ? 'item' : 'items'),
+  ];
+  $variables['thumbnail_parent'] = _shanti_collections_view_parent_link($group);
+
+  if ($group->get('field_featured_image')->isEmpty()) {
+    $variables['thumbnail_default_image_url'] = _shanti_collections_view_default_image_url();
+  }
+}
+
+/**
+ * The generic collection thumbnail production falls back to when a
+ * collection/subcollection has no featured image set. Vendored directly
+ * from the real D7 asset (sarvaka_images theme's own default image, itself
+ * sourced from the mediabase module) rather than hotlinking production.
+ */
+function _shanti_collections_view_default_image_url(): string {
+  $path = \Drupal::service('extension.list.module')->getPath('shanti_collections_view') . '/images/collections-generic.png';
+  return base_path() . $path;
+}
+
+/**
+ * Builds the sidebar + embedded content-gallery variables for 'full'.
+ */
+function _shanti_collections_view_preprocess_full(array &$variables, GroupInterface $group): void {
+  $variables['#attached']['library'][] = 'shanti_collections_view/thumbnail-grid';
+
+  $isPrivate = _shanti_collections_view_is_private($group);
+  $variables['accessibility_statement'] = $isPrivate
+    ? 'This collection is Private - only accessible to members.'
+    : 'This collection is Public - accessible to all site users.';
+
+  $owner = $group->getOwner();
+  $variables['owner'] = $owner ? ['name' => $owner->getDisplayName(), 'url' => $owner->toUrl()->toString()] : NULL;
+
+  $variables['parent_link'] = _shanti_collections_view_parent_link($group);
+
+  // Direct-children subcollections only, matching D7's Subcollections pane
+  // (shanti_collections.views_default.inc) -- subcollections don't nest
+  // further in this data model (field_parent_collection only exists on the
+  // subcollection bundle).
+  $variables['subcollections'] = [];
+  if ($group->bundle() === 'collection') {
+    $subs = \Drupal::entityTypeManager()->getStorage('group')->loadByProperties([
+      'type' => 'subcollection',
+      'field_parent_collection' => $group->id(),
+    ]);
+    foreach ($subs as $sub) {
+      $variables['subcollections'][] = ['title' => $sub->label(), 'url' => $sub->toUrl()->toString()];
+    }
+  }
+
+  // Members: the group's own user memberships (group_membership plugin) --
+  // unrelated to *content* membership (that's the embedded gallery below).
+  // Real member lists stay small (people, not content), so loading the
+  // full user entities here is fine -- unlike the content-membership query,
+  // which must stay DB-side only (see SiblingCarouselService's own OOM
+  // lesson).
+  $variables['members'] = [];
+  $relStorage = \Drupal::entityTypeManager()->getStorage('group_relationship');
+  foreach ($relStorage->loadByGroup($group, 'group_membership') as $relationship) {
+    $user = $relationship->getEntity();
+    if ($user) {
+      $variables['members'][] = ['name' => $user->getDisplayName(), 'url' => $user->toUrl()->toString()];
+    }
+  }
+
+  // The collection's own content -- for shanti_image (Images), the same
+  // masonry gallery /gallery uses (B3), filtered to this collection + its
+  // subcollections via the collection_membership Views argument. Other
+  // content types get their own gallery variant once they migrate (see the
+  // B5 planning subsection) -- not built yet, so this is the one and only
+  // content-view option for now.
+  $variables['content_gallery'] = views_embed_view('collection_gallery', 'embed_1', (string) $group->id());
+}
+
+function _shanti_collections_view_is_private(GroupInterface $group): bool {
+  return (int) ($group->hasField('field_group_access') ? $group->get('field_group_access')->value : 0) === 1;
+}
+
+function _shanti_collections_view_item_count(GroupInterface $group): int {
+  return (int) \Drupal::entityQuery('group_relationship')
+    ->accessCheck(FALSE)
+    ->condition('gid', $group->id())
+    ->condition('plugin_id', 'group_membership', '<>')
+    ->count()
+    ->execute();
+}
+
+function _shanti_collections_view_parent_link(GroupInterface $group): ?array {
+  if ($group->bundle() !== 'subcollection' || !$group->hasField('field_parent_collection') || $group->get('field_parent_collection')->isEmpty()) {
+    return NULL;
+  }
+  $parent = $group->get('field_parent_collection')->entity;
+  return $parent instanceof GroupInterface ? ['title' => $parent->label(), 'url' => $parent->toUrl()->toString()] : NULL;
+}

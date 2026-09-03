@@ -1,0 +1,62 @@
+{#
+/**
+ * @file
+ * Collection group, default/full view mode -- the collection's own page.
+ * Structure ported from D7's Panels page composition (shanti_collections
+ * .pages_default.inc): featured image, overview text, content gallery
+ * (Images-specific for now -- see the B5 planning subsection for what other
+ * content types get once they migrate), and a sidebar (Owner, Accessibility,
+ * Subcollections, Members).
+ */
+#}
+{{ attach_library('shanti_collections_view/thumbnail-grid') }}
+{# Render each field to a string exactly once -- Drupal marks a render
+   array #printed after its first render, so checking `field|render|trim`
+   and then separately printing `{{ field }}` silently renders nothing the
+   second time (same gotcha fixed in shanti-thumbnail.html.twig; |raw is
+   safe on output since the content comes from Drupal's own render
+   pipeline, not user input -- |trim degrades the safe-markup object back
+   to a plain string, needed for the truthy check but losing the
+   auto-escape exemption, hence |raw on print). #}
+{% set featured_image_markup = content.field_featured_image|render|trim %}
+{% set overview_markup = content.field_overview|render|trim %}
+<article{{ attributes.addClass('shanti-collection-page') }}>
+  <div class="shanti-collection-page-main">
+    {% if featured_image_markup %}
+      <div class="shanti-collection-page-image">{{ featured_image_markup|raw }}</div>
+    {% endif %}
+    {% if overview_markup %}
+      <div class="shanti-collection-page-overview">{{ overview_markup|raw }}</div>
+    {% endif %}
+    {% if subcollections %}
+      <p class="shanti-collection-page-subnote">{{ "The list below includes content from this Collection's Subcollections."|t }}</p>
+    {% endif %}
+    <div class="shanti-collection-page-content">{{ content_gallery }}</div>
+  </div>
+  <aside class="shanti-collection-page-sidebar">
+    {% if owner %}
+      <h5>{{ 'Owner'|t }}</h5>
+      <p><a href="{{ owner.url }}">{{ owner.name }}</a></p>
+    {% endif %}
+    {% if accessibility_statement %}
+      <h5>{{ 'Accessibility'|t }}</h5>
+      <p>{{ accessibility_statement }}</p>
+    {% endif %}
+    {% if subcollections %}
+      <h5>{{ 'Subcollections'|t }}</h5>
+      <ul>
+        {% for sub in subcollections %}
+          <li><a href="{{ sub.url }}">{{ sub.title }}</a></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% if members %}
+      <h5>{{ 'Members'|t }}</h5>
+      <ul>
+        {% for member in members %}
+          <li><a href="{{ member.url }}">{{ member.name }}</a></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </aside>
+</article>

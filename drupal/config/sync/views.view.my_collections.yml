@@ -1,0 +1,228 @@
+uuid: 3d9a6e1b-4c8f-4a2e-b6d3-7f1c9e4a2b5d
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.collection
+    - group.type.subcollection
+  module:
+    - group
+id: my_collections
+label: 'My Collections'
+module: views
+description: 'Plain list of the current user''s collection/subcollection memberships. D11 port of D7 shanti_collections module''s "collections_by_users" view (OG-based) for the D11 Group-based data model -- deliberately unstyled, matching production''s own plain list (not the shanti-thumbnail card grid "All Collections" uses). See docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md (Workstream B5 planning).'
+tag: ''
+base_table: group_relationship_field_data
+base_field: id
+display:
+  default:
+    id: default
+    display_title: Default
+    display_plugin: default
+    position: 0
+    display_options:
+      title: 'My Collections'
+      fields:
+        type:
+          id: type
+          table: groups_field_data
+          field: type
+          relationship: gid
+          group_type: group
+          admin_label: ''
+          entity_type: group
+          entity_field: type
+          plugin_id: field
+          label: ''
+          exclude: false
+          alter:
+            alter_text: false
+          element_label_colon: false
+        label:
+          id: label
+          table: groups_field_data
+          field: label
+          relationship: gid
+          group_type: group
+          admin_label: ''
+          entity_type: group
+          entity_field: label
+          plugin_id: field
+          label: ''
+          exclude: false
+          alter:
+            alter_text: false
+            make_link: true
+            path: ''
+          element_label_colon: false
+      pager:
+        type: shanti_pager
+        options:
+          offset: 0
+          pagination_heading_level: h4
+          items_per_page: 20
+          total_pages: 0
+          id: 0
+          tags:
+            next: 'Next ›'
+            previous: '‹ Previous'
+            first: '« First'
+            last: 'Last »'
+          expose:
+            items_per_page: false
+            items_per_page_label: 'Items per page'
+            items_per_page_options: '5, 10, 25, 50'
+            items_per_page_options_all: false
+            items_per_page_options_all_label: '- All -'
+            offset: false
+            offset_label: Offset
+          quantity: 9
+      exposed_form:
+        type: basic
+        options:
+          submit_button: Apply
+          reset_button: false
+          reset_button_label: Reset
+          exposed_sorts_label: 'Sort by'
+          expose_sort_order: true
+          sort_asc_label: Asc
+          sort_desc_label: Desc
+      access:
+        type: perm
+        options:
+          perm: 'view group'
+      cache:
+        type: tag
+        options: {  }
+      empty:
+        area:
+          id: area
+          table: views
+          field: area
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: text
+          empty: true
+          content:
+            value: 'You are not a member of any collection.'
+            format: basic_html
+          tokenize: false
+      sorts:
+        label:
+          id: label
+          table: groups_field_data
+          field: label
+          relationship: gid
+          group_type: group
+          admin_label: ''
+          entity_type: group
+          entity_field: label
+          plugin_id: standard
+          order: ASC
+      arguments:
+        entity_id:
+          id: entity_id
+          table: group_relationship_field_data
+          field: entity_id
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: group_relationship
+          entity_field: entity_id
+          plugin_id: numeric
+          default_action: default
+          title_enable: false
+          default_argument_type: current_user
+          summary_options:
+            items_per_page: 25
+          summary:
+            format: default_summary
+      filters:
+        plugin_id:
+          id: plugin_id
+          table: group_relationship_field_data
+          field: plugin_id
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: group_relationship
+          entity_field: plugin_id
+          plugin_id: string
+          operator: '='
+          value: group_membership
+          group: 1
+        type:
+          id: type
+          table: groups_field_data
+          field: type
+          relationship: gid
+          group_type: group
+          admin_label: ''
+          entity_type: group
+          entity_field: type
+          plugin_id: bundle
+          operator: in
+          value:
+            collection: collection
+            subcollection: subcollection
+          group: 1
+      style:
+        type: html_list
+        options:
+          type: ul
+          wrapper_class: item-list
+          class: my-collections-list
+      row:
+        type: fields
+        options:
+          default_field_elements: true
+          inline: {  }
+          separator: ''
+          hide_empty: false
+      query:
+        type: views_query
+        options:
+          query_comment: ''
+          disable_sql_rewrite: false
+          distinct: false
+          replica: false
+          query_tags: {  }
+      relationships:
+        gid:
+          id: gid
+          table: group_relationship_field_data
+          field: gid
+          relationship: none
+          group_type: group
+          admin_label: Group
+          required: true
+      header: {  }
+      footer: {  }
+      display_extenders: {  }
+    cache_metadata:
+      max-age: -1
+      contexts:
+        - 'languages:language_interface'
+        - url
+        - url.query_args
+        - user
+        - user.permissions
+      tags: {  }
+  page_1:
+    id: page_1
+    display_title: Page
+    display_plugin: page
+    position: 1
+    display_options:
+      display_extenders: {  }
+      path: my_collections
+    cache_metadata:
+      max-age: -1
+      contexts:
+        - 'languages:language_interface'
+        - url
+        - url.query_args
+        - user
+        - user.permissions
+      tags: {  }

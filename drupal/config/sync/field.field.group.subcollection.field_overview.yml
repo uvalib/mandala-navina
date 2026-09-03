@@ -1,0 +1,24 @@
+uuid: 3c586127-98f3-46c6-9019-65f2ab419195
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.group.field_overview
+    - group.type.subcollection
+  module:
+    - text
+id: group.subcollection.field_overview
+field_name: field_overview
+entity_type: group
+bundle: subcollection
+label: Overview
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  display_summary: true
+  required_summary: false
+  allowed_formats: {  }
+field_type: text_with_summary
