@@ -1,0 +1,9 @@
+name: 'Shanti Collections View'
+type: module
+description: 'Collection/subcollection viewing: the "All Collections"/"My Collections" pages, and the shared shanti-thumbnail card component their grids (and future non-Image content-type galleries) render with. See docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md (Workstream B5 planning).'
+package: Mandala
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:views
+  - group:group
+  - shanti_images_carousel:shanti_images_carousel

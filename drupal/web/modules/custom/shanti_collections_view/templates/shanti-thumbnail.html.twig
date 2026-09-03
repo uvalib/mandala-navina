@@ -1,0 +1,55 @@
+{#
+/**
+ * @file
+ * Shared card component -- ports D7's `.shanti-thumbnail` markup, confirmed
+ * (2026-09-03) to be identical across completely different entity types in
+ * the real D7 templates (a collection node's teaser and an AV asset-link
+ * node's teaser both emit this exact structure, only the metadata rows
+ * plugged into `.body-wrap` differ). One component, many consumers -- don't
+ * fork this per content type; plug different `meta` rows in instead.
+ *
+ * Variables:
+ * - url: link target for the thumbnail image and title.
+ * - thumbnail: pre-rendered thumbnail markup (e.g. an image field's
+ *   render array/markup), or null.
+ * - icon: shanticon suffix (e.g. "stack") shown over the thumbnail.
+ * - title: the card's title text.
+ * - badge: small type/subtype label under the title (e.g. "Public
+ *   Collection"), or null.
+ * - meta: array of plain-text metadata lines (e.g. created date, item
+ *   count) shown in the body.
+ * - footer_title / footer_url: an optional parent-entity link shown in the
+ *   card's footer (e.g. a subcollection's parent collection).
+ */
+#}
+<li class="shanti-thumbnail{% if extra_class %} {{ extra_class }}{% endif %}">
+  <div class="shanti-thumbnail-image">
+    <a href="{{ url }}" class="shanti-thumbnail-link">
+      <span class="overlay"><span class="icon" aria-hidden="true"></span></span>
+      {% if thumbnail %}
+        {{ thumbnail }}
+      {% endif %}
+      {% if icon %}
+        <span class="icon shanticon-{{ icon }}" aria-hidden="true"></span>
+      {% endif %}
+    </a>
+  </div>
+  <div class="shanti-thumbnail-info">
+    <div class="body-wrap">
+      <div class="shanti-thumbnail-field shanti-field-title">
+        <a href="{{ url }}" class="shanti-thumbnail-link">{{ title }}</a>
+      </div>
+      {% if badge %}
+        <div class="shanti-thumbnail-field shanti-field-badge">{{ badge }}</div>
+      {% endif %}
+      {% for line in meta %}
+        <div class="shanti-thumbnail-field shanti-field-meta">{{ line }}</div>
+      {% endfor %}
+    </div>
+    {% if footer_title %}
+      <div class="footer-wrap">
+        <a href="{{ footer_url }}" class="shanti-thumbnail-link">{{ footer_title }}</a>
+      </div>
+    {% endif %}
+  </div>
+</li>

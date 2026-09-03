@@ -1,0 +1,19 @@
+{#
+/**
+ * @file
+ * Subcollection group, 'teaser' view mode -- the card shown in "All
+ * Collections" grids. Same shanti-thumbnail component as the collection
+ * teaser, plus a footer link to the parent collection when one exists.
+ */
+#}
+{% include '@shanti_collections_view/shanti-thumbnail.html.twig' with {
+  url: url,
+  thumbnail: content.field_featured_image,
+  icon: 'stack',
+  title: label,
+  badge: thumbnail_badge,
+  meta: thumbnail_meta,
+  footer_title: thumbnail_parent ? thumbnail_parent.title : null,
+  footer_url: thumbnail_parent ? thumbnail_parent.url : null,
+  extra_class: 'subcollection',
+} only %}

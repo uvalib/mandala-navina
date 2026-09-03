@@ -1,0 +1,20 @@
+{#
+/**
+ * @file
+ * Collection group, 'teaser' view mode -- the card shown in "All
+ * Collections" grids. Renders the shared shanti-thumbnail component (see
+ * that file's docblock); metadata variables (thumbnail_badge,
+ * thumbnail_meta) come from shanti_collections_view_preprocess_group().
+ */
+#}
+{% include '@shanti_collections_view/shanti-thumbnail.html.twig' with {
+  url: url,
+  thumbnail: content.field_featured_image,
+  icon: 'stack',
+  title: label,
+  badge: thumbnail_badge,
+  meta: thumbnail_meta,
+  footer_title: null,
+  footer_url: null,
+  extra_class: 'collection',
+} only %}

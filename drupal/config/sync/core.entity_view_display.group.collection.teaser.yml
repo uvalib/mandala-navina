@@ -1,0 +1,37 @@
+uuid: 2307858e-aac1-45b1-83f4-81f3d213c27b
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.group.teaser
+    - field.field.group.collection.field_featured_image
+    - field.field.group.collection.field_group_access
+    - field.field.group.collection.field_legacy_nid
+    - field.field.group.collection.field_legacy_site
+    - field.field.group.collection.field_overview
+    - group.type.collection
+id: group.collection.teaser
+targetEntityType: group
+bundle: collection
+mode: teaser
+content:
+  label:
+    type: string
+    label: hidden
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: -5
+    region: content
+hidden:
+  changed: true
+  created: true
+  field_featured_image: true
+  field_group_access: true
+  field_legacy_nid: true
+  field_legacy_site: true
+  field_overview: true
+  langcode: true
+  search_api_excerpt: true
+  uid: true

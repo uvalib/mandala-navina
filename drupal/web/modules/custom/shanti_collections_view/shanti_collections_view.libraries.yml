@@ -1,0 +1,4 @@
+thumbnail-grid:
+  css:
+    theme:
+      css/shanti-collections-view.css: {}

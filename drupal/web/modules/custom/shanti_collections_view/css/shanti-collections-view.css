@@ -1,0 +1,102 @@
+/**
+ * Shared shanti-thumbnail card component (ports D7's .shanti-thumbnail --
+ * confirmed identical across content types, see the Twig template's own
+ * docblock) plus the "All Collections" grid wrapper.
+ */
+
+.view-id-collections .view-content,
+.shanti-thumbnail-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.shanti-thumbnail {
+  flex: 1 1 220px;
+  max-width: 260px;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 0.3rem;
+  overflow: hidden;
+  background: #fff;
+}
+
+.shanti-thumbnail-image {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #d5d5d5;
+}
+
+.shanti-thumbnail-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.shanti-thumbnail-image .icon.shanticon-stack {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: #fff;
+  text-shadow: 0 0 4px rgb(0 0 0 / 60%);
+}
+
+.shanti-thumbnail-image .overlay {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0%);
+  transition: background 150ms ease;
+}
+
+.shanti-thumbnail:hover .overlay {
+  background: rgb(0 0 0 / 15%);
+}
+
+.shanti-thumbnail-info {
+  padding: 0.75rem 1rem;
+}
+
+.shanti-thumbnail-field {
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.shanti-field-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.shanti-field-title a,
+.shanti-thumbnail-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.shanti-field-badge {
+  color: #888;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.03rem;
+}
+
+.shanti-field-meta {
+  color: #666;
+}
+
+.footer-wrap {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgb(0 0 0 / 10%);
+  background: #b5953b;
+  color: #fff;
+  font-size: 0.8rem;
+  padding: 0.4rem 1rem;
+  margin: 0.5rem -1rem -0.75rem;
+}
+
+.footer-wrap a {
+  color: #fff;
+}
