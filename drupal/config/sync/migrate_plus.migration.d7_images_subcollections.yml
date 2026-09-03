@@ -36,6 +36,19 @@ process:
     migration: d7_images_collections
     source: parent_collection_nid
     no_stub: true
+  field_overview/value: body/0/value
+  field_overview/summary: body/0/summary
+  # Same convention as d7_images_collections.yml -- see that file's comment.
+  field_overview/format:
+    plugin: default_value
+    default_value: basic_html
+  field_featured_image/target_id:
+    - plugin: skip_on_empty
+      method: process
+      source: field_general_featured_image/0/fid
+    - plugin: migration_lookup
+      migration: d7_images_collection_featured_image
+      source: field_general_featured_image/0/fid
 destination:
   plugin: 'entity:group'
   default_bundle: subcollection
@@ -43,4 +56,6 @@ idMap: {  }
 migration_dependencies:
   required:
     - d7_images_collections
+  optional:
+    - d7_images_collection_featured_image
 include: null
