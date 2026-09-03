@@ -1,0 +1,52 @@
+{#
+/**
+ * @file
+ * Collection group, default/full view mode -- the collection's own page.
+ * Structure ported from D7's Panels page composition (shanti_collections
+ * .pages_default.inc): featured image, overview text, content gallery
+ * (Images-specific for now -- see the B5 planning subsection for what other
+ * content types get once they migrate), and a sidebar (Owner, Accessibility,
+ * Subcollections, Members).
+ */
+#}
+{{ attach_library('shanti_collections_view/thumbnail-grid') }}
+<article{{ attributes.addClass('shanti-collection-page') }}>
+  <div class="shanti-collection-page-main">
+    {% if content.field_featured_image|render|trim %}
+      <div class="shanti-collection-page-image">{{ content.field_featured_image }}</div>
+    {% endif %}
+    {% if content.field_overview|render|trim %}
+      <div class="shanti-collection-page-overview">{{ content.field_overview }}</div>
+    {% endif %}
+    {% if subcollections %}
+      <p class="shanti-collection-page-subnote">{{ "The list below includes content from this Collection's Subcollections."|t }}</p>
+    {% endif %}
+    <div class="shanti-collection-page-content">{{ content_gallery }}</div>
+  </div>
+  <aside class="shanti-collection-page-sidebar">
+    {% if owner %}
+      <h5>{{ 'Owner'|t }}</h5>
+      <p><a href="{{ owner.url }}">{{ owner.name }}</a></p>
+    {% endif %}
+    {% if accessibility_statement %}
+      <h5>{{ 'Accessibility'|t }}</h5>
+      <p>{{ accessibility_statement }}</p>
+    {% endif %}
+    {% if subcollections %}
+      <h5>{{ 'Subcollections'|t }}</h5>
+      <ul>
+        {% for sub in subcollections %}
+          <li><a href="{{ sub.url }}">{{ sub.title }}</a></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% if members %}
+      <h5>{{ 'Members'|t }}</h5>
+      <ul>
+        {% for member in members %}
+          <li><a href="{{ member.url }}">{{ member.name }}</a></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </aside>
+</article>

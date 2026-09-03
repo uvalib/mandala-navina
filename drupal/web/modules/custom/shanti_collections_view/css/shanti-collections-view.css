@@ -100,3 +100,53 @@
 .footer-wrap a {
   color: #fff;
 }
+
+/* Collection/subcollection full page -- image+overview+gallery on the
+ * left, Owner/Accessibility/Subcollections/Members sidebar on the right. */
+.shanti-collection-page {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  padding: 1rem 0;
+}
+
+.shanti-collection-page-back {
+  flex-basis: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+}
+
+.shanti-collection-page-main {
+  flex: 3 1 600px;
+  min-width: 0;
+}
+
+.shanti-collection-page-sidebar {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.shanti-collection-page-sidebar h5 {
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05rem;
+  color: #888;
+  margin-top: 1.25rem;
+}
+
+.shanti-collection-page-sidebar ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.shanti-collection-page-image img {
+  max-width: 100%;
+  height: auto;
+}
+
+.shanti-collection-page-subnote {
+  color: #666;
+  font-size: 0.9rem;
+}

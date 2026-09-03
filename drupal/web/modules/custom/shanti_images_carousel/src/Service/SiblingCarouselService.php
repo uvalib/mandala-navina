@@ -63,7 +63,7 @@ class SiblingCarouselService {
       return [];
     }
 
-    $nids = $this->getOrderedCollectionMemberNids($topCollection);
+    $nids = $this->getCollectionMemberNids($topCollection);
     if (!$nids) {
       return [];
     }
@@ -136,10 +136,14 @@ class SiblingCarouselService {
    * _shanti_images_get_coll_node_ids()'s sort exactly
    * (shanti_images.inc:239-243).
    *
+   * Public -- also used by shanti_collections_view's collection-content
+   * gallery (B5), which needs the full unwindowed list for a Views
+   * contextual filter, not just B2's ±N carousel window.
+   *
    * @return int[]
    *   Ordered node ids.
    */
-  protected function getOrderedCollectionMemberNids(GroupInterface $collection): array {
+  public function getCollectionMemberNids(GroupInterface $collection): array {
     $cid = self::CACHE_PREFIX . $collection->id();
     if ($cached = $this->cache->get($cid)) {
       return $cached->data;
