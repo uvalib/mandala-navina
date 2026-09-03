@@ -75,7 +75,7 @@ here.
 | B2 | **Scope expanded 2026-09-03 (Than): not just the carousel — the whole `shanti_image` single-image page needs production-parity styling**, since the default/full node view was genuinely unstyled Drupal defaults (confirmed — `core.entity_view_display.node.shanti_image.default.yml` dumped ~50 fields as plain "above"-labeled stacking, no custom template existed). **This round's scope built and verified live 2026-09-03**: new `shanti_images_carousel` module — AJAX sibling carousel (`SiblingCarouselService`, `_entity_access: 'node.view'` route/controller, ±15-windowing query over the node's collection + subcollections sorted created DESC/title ASC, cached) + core page layout (`node--shanti-image.html.twig`: back-arrow, title/creator/dims line, Collections section, KMaps classification tags via the existing `kmap_popover_formatter`, description). Action-icon row (edit/IIIF-viewer/download-size dropdown) and the technical-metadata modal remain explicitly deferred to a follow-up — see planning subsection below | Workstream A skeleton, B1 (shared template touch-point) | ◐ |
 | B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate), Views config for the homepage gallery. **Built and verified live 2026-09-01**; wired as the actual front page (`system.site.yml` `page.front: /gallery`) same day. **6 real popdown/gallery bugs reported from live use, all fixed and verified 2026-09-01→09-03** (scroll-to-panel, loading spinners, details text styling, same-row re-click, prev/next nav arrows, duplicate title + search/sort row CSS — see [PR #180](https://github.com/uvalib/mandala-navina/pull/180)). PhotoSwipe lightbox and the D7 data-source (non-entity) view mode were deliberately not ported; scope stayed to the entity/node case per the production-reference doc | Workstream A skeleton | ☑ |
 | B4 | KMaps popover ("mandala popover"): hover popover on every KMaps place/subject/term tag (icon trigger, term info + ancestor breadcrumb, "Full Entry" link, "Related X (N)" links). New `KmapsPopoverInfoService` in `shanti_kmaps_fields` (in-process, not D7's self-referential HTTP round-trip), a new `kmap_popover_formatter` (server-rendered, no AJAX), BS5 popover JS behavior. **Built and verified live 2026-09-02** — see below | Workstream A skeleton (Bootstrap 5 popover), `shanti_kmaps_fields` (field type, already proven) | ☑ |
-| B5 | **Added to scope 2026-09-03 (Than): Collection/subcollection viewing.** "All Collections" and "My Collections" views (universal infrastructure, not Images-specific — Group entities aren't tied to one content type, even though Images is the only migrated site with real data today), plus rebuilding the Group canonical page (currently renders genuinely blank in D11) to show its content — for Images, the existing `shanti_grid_view` masonry gallery (B3) filtered to the collection + its subcollections; other content types get production's "thumbnail teaser gallery" pattern instead, once they migrate. See planning subsection below — **plan only, not yet built** | Workstream A skeleton, B3 (reuses `GridView`), B2 (reuses/generalizes the collection-membership query `SiblingCarouselService` already built) | ☐ |
+| B5 | **Added to scope 2026-09-03 (Than): Collection/subcollection viewing.** "All Collections" and "My Collections" views (universal infrastructure, not Images-specific — Group entities aren't tied to one content type, even though Images is the only migrated site with real data today), plus rebuilding the Group canonical page (currently renders genuinely blank in D11) to show its content — for Images, the existing `shanti_grid_view` masonry gallery (B3) filtered to the collection + its subcollections. All Collections/My Collections cards use a reusable `shanti-thumbnail` teaser component (confirmed 2026-09-03: identical markup already shared cross-content-type in D7, e.g. collection cards and AV asset cards) — the same component other content types' collection-content galleries will plug their own fields into once they migrate. See planning subsection below — **plan only, not yet built** | Workstream A skeleton, B3 (reuses `GridView`), B2 (reuses/generalizes the collection-membership query `SiblingCarouselService` already built) | ☐ |
 
 **Scope question RESOLVED 2026-09-02 (Than): not needed for D11.** `IiifDeepZoomFormatter`
 renders a single-image viewer only, as built. Checked the actual D7 source at
@@ -438,6 +438,23 @@ real, not assumed):
 - `collection_members` view — OG members (users) of a group, feeding the sidebar
   Members list — unrelated to *content* membership, don't confuse the two.
 
+**Correction 2026-09-03 (Than): the "All Collections"/"My Collections" cards are not a
+bespoke collection-card design — they're the same generic `shanti-thumbnail` teaser
+component non-Image content types use for their own galleries.** Confirmed by reading
+the real D7 templates directly: `sarvaka_images/templates/node--collection--teaser.tpl
+.php` and `sarvaka_mediabase/templates/node--asset-link--teaser.tpl.php` emit the
+*identical* structural markup (`<li class="shanti-thumbnail {subtype}">` →
+`.shanti-thumbnail-image` with an overlay icon and linked thumbnail →
+`.shanti-thumbnail-info` with a `.body-wrap` of 4-5 `.shanti-thumbnail-field` metadata
+rows → a `.footer-wrap` linking the parent collection) for two completely different
+entity types (a collection node vs. an AV asset-link node) — only the specific metadata
+fields plugged into `.body-wrap` differ (item count + type/access for a collection;
+creator + duration + collection title for an AV asset). **This means one reusable card
+component covers both**: the All/My Collections grid *and* the future non-Image
+collection-content gallery (item 2 below) are the same component, not two separate
+builds — Images' own collection-content view is the one deliberate exception, using the
+denser `shanti_grid_view` masonry gallery instead (per Than's original framing).
+
 **D11 building blocks already confirmed to exist — reuse, don't rebuild:**
 - `shanti_grid_view`'s `GridView` Views style plugin (B3) — exactly what Images' content
   view needs; just needs a contextual filter/argument scoping it to one collection's
@@ -458,18 +475,32 @@ real, not assumed):
 - `mandala_group_inheritance`'s visibility logic — source for the Accessibility
   statement text.
 
+**New shared component to build, since it serves multiple surfaces**: a `shanti-
+thumbnail` card render element/Twig component (image + overlay icon, title, a small
+configurable set of metadata field rows, footer parent-collection link) — ported once,
+reused by every consumer below, not rebuilt per-consumer:
+1. **All Collections** (`/collections`) — items are Group entities (collection +
+   subcollection bundles); metadata rows: type+visibility badge, created date, item
+   count; footer: parent collection (subcollections only).
+2. **A collection's own page's Subcollections list** — same component, same fields,
+   just contextually filtered.
+3. **Future non-Image content types' collection-content galleries** — items are nodes
+   of that type; metadata rows differ per type (this is where "varies by content type"
+   actually lives — different field rows plugged into the same card shell), but nothing
+   to build yet since no other site has migrated.
+
 **Real open questions / new work, not yet resolved:**
 1. **No featured-image field on Group entities yet.** Production's card grids (both
    `/collections` and a collection's own page) show a thumbnail — D7 modeled
    collections as nodes with `field_general_featured_image`; D11's Group bundles have
    no image field today. Needs adding (new field, or compute one from the collection's
    own content — e.g. its first/most-recent member's thumbnail — worth deciding which).
-2. **Non-Image content types' "thumbnail teaser gallery" can't be built or verified
-   yet** — no other site is migrated, so there's no real D11 data to build or test
-   against. Architecture should stay pluggable (a swappable content-view display per
-   bundle, matching D7's per-site Panels-pane-swap precedent) rather than hardcoding
-   Images' gallery as the only option, but the actual alternate view is a future site's
-   problem, not this sprint's.
+2. **The `shanti-thumbnail` component's non-Image field variants can't be built or
+   verified yet** — no other site is migrated, so there's no real D11 content to plug
+   into it or test against. Build the component generically (configurable field-row
+   slots) so it's ready when a future site needs its own variant, but that variant
+   itself is a future site's problem, not this sprint's — only the Group-entity variant
+   (item 1/2 above) has real data today.
 3. **Add-content action buttons (Add Existing/New Image, Add Subcollection) are
    permission-gated** and tie directly into the already-flagged **contributor-tier
    cutover gate** ([[project-editorial-access-model]] memory: contributor tier is
