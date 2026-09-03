@@ -75,6 +75,7 @@ here.
 | B2 | **Scope expanded 2026-09-03 (Than): not just the carousel — the whole `shanti_image` single-image page needs production-parity styling**, since the default/full node view was genuinely unstyled Drupal defaults (confirmed — `core.entity_view_display.node.shanti_image.default.yml` dumped ~50 fields as plain "above"-labeled stacking, no custom template existed). **This round's scope built and verified live 2026-09-03**: new `shanti_images_carousel` module — AJAX sibling carousel (`SiblingCarouselService`, `_entity_access: 'node.view'` route/controller, ±15-windowing query over the node's collection + subcollections sorted created DESC/title ASC, cached) + core page layout (`node--shanti-image.html.twig`: back-arrow, title/creator/dims line, Collections section, KMaps classification tags via the existing `kmap_popover_formatter`, description). Action-icon row (edit/IIIF-viewer/download-size dropdown) and the technical-metadata modal remain explicitly deferred to a follow-up — see planning subsection below | Workstream A skeleton, B1 (shared template touch-point) | ◐ |
 | B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate), Views config for the homepage gallery. **Built and verified live 2026-09-01**; wired as the actual front page (`system.site.yml` `page.front: /gallery`) same day. **6 real popdown/gallery bugs reported from live use, all fixed and verified 2026-09-01→09-03** (scroll-to-panel, loading spinners, details text styling, same-row re-click, prev/next nav arrows, duplicate title + search/sort row CSS — see [PR #180](https://github.com/uvalib/mandala-navina/pull/180)). PhotoSwipe lightbox and the D7 data-source (non-entity) view mode were deliberately not ported; scope stayed to the entity/node case per the production-reference doc | Workstream A skeleton | ☑ |
 | B4 | KMaps popover ("mandala popover"): hover popover on every KMaps place/subject/term tag (icon trigger, term info + ancestor breadcrumb, "Full Entry" link, "Related X (N)" links). New `KmapsPopoverInfoService` in `shanti_kmaps_fields` (in-process, not D7's self-referential HTTP round-trip), a new `kmap_popover_formatter` (server-rendered, no AJAX), BS5 popover JS behavior. **Built and verified live 2026-09-02** — see below | Workstream A skeleton (Bootstrap 5 popover), `shanti_kmaps_fields` (field type, already proven) | ☑ |
+| B5 | **Added to scope 2026-09-03 (Than): Collection/subcollection viewing.** "All Collections" and "My Collections" views (universal infrastructure, not Images-specific — Group entities aren't tied to one content type, even though Images is the only migrated site with real data today), plus rebuilding the Group canonical page (currently renders genuinely blank in D11) to show its content — for Images, the existing `shanti_grid_view` masonry gallery (B3) filtered to the collection + its subcollections; other content types get production's "thumbnail teaser gallery" pattern instead, once they migrate. See planning subsection below — **plan only, not yet built** | Workstream A skeleton, B3 (reuses `GridView`), B2 (reuses/generalizes the collection-membership query `SiblingCarouselService` already built) | ☐ |
 
 **Scope question RESOLVED 2026-09-02 (Than): not needed for D11.** `IiifDeepZoomFormatter`
 renders a single-image viewer only, as built. Checked the actual D7 source at
@@ -372,6 +373,120 @@ the JS file's own phpcs "violations" are a known pre-existing false-positive pat
 this codebase (Drupal's PHP-oriented JS sniffs misparse template-literal URLs and lower
 case `null`/`true` — confirmed identical false positives already present in the proven,
 merged `shanti_grid_view.js`), not a real issue.
+
+#### B5 — Collection/subcollection viewing (All Collections, My Collections, collection content), planning
+
+**Raised 2026-09-03 (Than): add collection viewing to this sprint.** "All Collections"
+and "My Collections" are universal infrastructure — Group entities aren't tied to one
+content type, even though Images is the only migrated site with real collection data
+today. Separately, a collection or subcollection's own page needs to show its content,
+and *how* varies by content type: Images uses the masonry gallery (B3); other types use
+production's "shanti thumbnail teaser" gallery pattern instead. **This is a plan only —
+not yet built**, produced by reading real production (`images.mandala.library.virginia
+.edu`) directly rather than guessing.
+
+**Confirmed D11 is genuinely greenfield here** (checked live, 2026-09-03):
+`/collections` 404s, and a Group's own canonical page (`/group/{id}`) renders
+completely blank — no content, no subcollections list, no members list, nothing. There
+is no existing D11 page to extend; all three surfaces below are new.
+
+**What production actually does** (read directly, not from the D7 source alone — the
+theme substantially overrides the raw Views config's plain-fields look):
+
+- **`/collections` ("All Collections")** — a card grid, 171 collections *and*
+  subcollections mixed together (171 total across both types), 36/page, paginated (5
+  pages), with an exposed title-search box. Each card: featured-image thumbnail, a
+  type+visibility icon badge (top-right corner — distinguishes Public/Private
+  Collection vs. Public/Private Subcollection), title, created date, item count, an
+  optional trimmed description, and a bottom ribbon naming the **parent** collection
+  when the card is a subcollection (e.g. "Provisional Collections", "Amdo Collection").
+- **`/my_collections` ("My Collections")** — genuinely plain: a two-column repeating
+  list of `[Type label] [Title link]` for every collection/subcollection the current
+  user is a member of, paginated. No card styling, no thumbnails — matches the raw D7
+  Views config far more closely than `/collections` does.
+- **`/collection/{slug}` (a collection's own page)** — breadcrumb (`Images > Collections
+  > {title}`), a featured-image thumbnail, a note ("The list below includes images from
+  this Collection's Subcollections.") when subcollections contribute members, then **the
+  exact same masonry gallery component `/gallery` uses** (search box, sort-by dropdown,
+  pager, tile grid) filtered to this collection **and its subcollections recursively**
+  (confirmed: item count matches collection+subcollections combined, not just direct
+  members — same recursive scope `SiblingCarouselService` already implements for B2's
+  carousel). A right sidebar shows: content-add actions (**Add Existing Image / Add New
+  Image / Add Subcollection** — permission-gated, admin/contributor only), **Owner**,
+  an **Accessibility** statement (derived from the collection's visibility setting),
+  a **Subcollections** list (direct children only), and a **Members** list (users, not
+  content).
+
+**D7 source architecture** (`shanti_collections` module — `.views_default.inc` +
+`.pages_default.inc`, **OG-based, not directly portable**: D11 uses Group 3.x per ADR
+011, and the underlying repo checkout mixes multiple legacy sites' configs, e.g. one
+`pages_default.inc` panel context plugs in a Texts-specific `all_texts` pane where
+Images plugs in its own gallery pane — confirms the "varies by content type" framing is
+real, not assumed):
+- `collections` view (path `/collections`) — node-type filter on `collection`
+  (D7 modeled collections as *nodes*, not Group entities), plain fields row, exposed
+  `contains` title filter. Also defines a `Subcollections` panel-pane display
+  (contextual-filtered by parent-collection reference) — used to build the sidebar list.
+- `collections_by_users` view (path `/my_collections`) — OG-membership-based, current
+  user as a contextual filter, `state=1` (active membership) filter.
+- `content_by_collection` view — `row_plugin: node` (each result renders via its own
+  node display, not fields) with a contextual filter on the collection reference field
+  — **this is the mechanism that makes content vary by type**: it doesn't know or care
+  what content type it's showing, it just defers to that type's own row rendering. Per
+  D7 site, a Panels page composes this pane alongside the sidebar pieces above (`node
+  _view` panel context per node type).
+- `collection_members` view — OG members (users) of a group, feeding the sidebar
+  Members list — unrelated to *content* membership, don't confuse the two.
+
+**D11 building blocks already confirmed to exist — reuse, don't rebuild:**
+- `shanti_grid_view`'s `GridView` Views style plugin (B3) — exactly what Images' content
+  view needs; just needs a contextual filter/argument scoping it to one collection's
+  members instead of the whole site.
+- The **collection-membership query already built for B2**
+  (`SiblingCarouselService::getOrderedCollectionMemberNids()`) — same "members of this
+  collection + its subcollections" scope this view needs. Should be **generalized into
+  a shared service** (or a reusable Views argument plugin backed by it) rather than
+  reimplemented — and must keep B2's hard-won lesson: query at the DB layer
+  (`EntityQuery`/SQL), never `loadMultiple()` a whole collection's members as full
+  entities (real collections run into the thousands — 6,228 confirmed live on one).
+- Group 3.x's own membership API (`group_relationship`, plugin `group_membership`) for
+  "My Collections" and the Members sidebar list — Group ships Views integration for
+  this natively, shouldn't need custom querying the way collection *content* membership
+  does.
+- `field_parent_collection` (already used by B2) for the Subcollections sidebar list —
+  direct children only, no recursion needed there.
+- `mandala_group_inheritance`'s visibility logic — source for the Accessibility
+  statement text.
+
+**Real open questions / new work, not yet resolved:**
+1. **No featured-image field on Group entities yet.** Production's card grids (both
+   `/collections` and a collection's own page) show a thumbnail — D7 modeled
+   collections as nodes with `field_general_featured_image`; D11's Group bundles have
+   no image field today. Needs adding (new field, or compute one from the collection's
+   own content — e.g. its first/most-recent member's thumbnail — worth deciding which).
+2. **Non-Image content types' "thumbnail teaser gallery" can't be built or verified
+   yet** — no other site is migrated, so there's no real D11 data to build or test
+   against. Architecture should stay pluggable (a swappable content-view display per
+   bundle, matching D7's per-site Panels-pane-swap precedent) rather than hardcoding
+   Images' gallery as the only option, but the actual alternate view is a future site's
+   problem, not this sprint's.
+3. **Add-content action buttons (Add Existing/New Image, Add Subcollection) are
+   permission-gated** and tie directly into the already-flagged **contributor-tier
+   cutover gate** ([[project-editorial-access-model]] memory: contributor tier is
+   "UNWIRED in D11" — a hard cutover blocker). Building these buttons without that
+   permission model in place would either show them to no one or the wrong people —
+   likely out of scope for this round, flagged as a dependency rather than silently
+   built anyway.
+4. **Views-on-Group-entities mechanics unconfirmed** — need to verify Group 3.x's Views
+   data integration supports a `group` base-table page view cleanly (card row template,
+   exposed title filter) the way `shanti_grid_view` already proved for `node`; if gaps
+   exist, may need a custom row plugin similar to `GridView`'s node-side one.
+
+**Scope not yet decided with Than — worth confirming before implementation starts:**
+whether this round targets all three surfaces (All Collections, My Collections,
+collection content view) together, or splits them (e.g. All/My Collections first, since
+they're simpler and don't depend on resolving the featured-image-field question, with
+the collection content view as a closely-following second piece).
 
 ### Workstream C — Content-model audits (AV, Sources, Texts) — audit only
 
