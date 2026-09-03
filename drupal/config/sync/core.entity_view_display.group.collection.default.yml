@@ -1,0 +1,56 @@
+uuid: 52a0ac98-d7cb-4085-ac88-4d76d2486218
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.group.collection.field_featured_image
+    - field.field.group.collection.field_group_access
+    - field.field.group.collection.field_legacy_nid
+    - field.field.group.collection.field_legacy_site
+    - field.field.group.collection.field_overview
+    - group.type.collection
+    - image.style.medium
+  module:
+    - image
+    - text
+id: group.collection.default
+targetEntityType: group
+bundle: collection
+mode: default
+content:
+  field_featured_image:
+    type: image
+    label: hidden
+    settings:
+      image_link: ''
+      image_style: medium
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: -10
+    region: content
+  field_overview:
+    type: text_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: -9
+    region: content
+  label:
+    type: string
+    label: hidden
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: -5
+    region: content
+hidden:
+  changed: true
+  created: true
+  field_group_access: true
+  field_legacy_nid: true
+  field_legacy_site: true
+  langcode: true
+  search_api_excerpt: true
+  uid: true
