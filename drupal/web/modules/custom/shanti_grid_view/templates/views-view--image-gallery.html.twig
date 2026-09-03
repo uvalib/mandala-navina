@@ -23,8 +23,18 @@
  * @see \template_preprocess_views_view()
  */
 #}
+{#
+  D11's Views no longer auto-adds 'view-id-<id>' (etc.) wrapper classes the
+  way D7's Views 2/3 did -- template_preprocess_views_view() only sets
+  css_name/css_class variables, never pushes them onto `attributes`. Since
+  this template is dedicated to the image_gallery view, add a stable class
+  of our own here rather than relying on a class Views itself never emits;
+  shanti-grid-view.css's view-scoped rules (.view-header/.view-filters
+  float layout, the sort/search label + width fixes) target this.
+#}
 {%
   set classes = [
+    'shanti-image-gallery-view',
     dom_id ? 'js-view-dom-id-' ~ dom_id,
   ]
 %}

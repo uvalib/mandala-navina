@@ -41,24 +41,47 @@
  * stacking above it -- ported from D7's sarvaka_images theme
  * (shanti-main-images.css `.view-all-image-gallery .view-header`/
  * `.view-filters`), which is Images-site-specific and was never part of
- * the shared shanti_sarvaka base theme carried over for D11. Class names
- * come from views-view--image-gallery.html.twig's override of core's
- * default (unclassed) header/exposed-form markup. */
-.view-id-image_gallery .view-header,
-.view-id-image_gallery .view-filters {
+ * the shared shanti_sarvaka base theme carried over for D11.
+ * `.view-header`/`.view-filters` come from views-view--image-gallery.html
+ * .twig's override of core's default (unclassed) header/exposed-form
+ * markup; `.shanti-image-gallery-view` is that same template's own added
+ * class, since D11's Views (unlike D7's) never emits a `view-id-*` class
+ * of its own to scope to. */
+.shanti-image-gallery-view .view-header,
+.shanti-image-gallery-view .view-filters {
   float: left;
   margin-top: 1rem;
 }
 
-.view-id-image_gallery .views-exposed-widget.views-widget-filter-title {
+.shanti-image-gallery-view .views-exposed-widget.views-widget-filter-title {
   margin-left: 12px;
+}
+
+/* Production renders the search field with no <label> at all, and hides the
+ * sort dropdown's own label via CSS (`.form-type-select label {display:none
+ * !important}` in shanti-main-images.css) -- BEF's D11 exposed form emits
+ * both labels, so hide them here to match. Class names come from the real
+ * rendered form (views-exposed-form-image-gallery-page-1): BEF's
+ * "sort_bef_combine" combined dropdown and the plain "search" text filter. */
+.shanti-image-gallery-view .form-item-search label,
+.shanti-image-gallery-view .form-item-sort-bef-combine label {
+  display: none;
+}
+
+/* Caps the sort dropdown's width to match production's bootstrap-select
+ * wrapper (`max-width: 350px`, computed from `.bootstrap-select.form-control
+ * {max-width: 25em}` in shanti-main-images.css) -- D11 uses a native
+ * Bootstrap 5 <select> instead of the BS3 selectpicker widget, so this
+ * targets the <select> itself rather than a wrapper. */
+.shanti-image-gallery-view .form-item-sort-bef-combine select {
+  max-width: 350px;
 }
 
 /* Bootstrap 5's own `.clearfix` utility should already cover this, but
  * that depends on Bootstrap's CSS being loaded on whatever page carries
  * this view -- defined locally too so the float layout above doesn't
  * silently collapse if that assumption ever doesn't hold. */
-.view-id-image_gallery .clearfix::after {
+.shanti-image-gallery-view .clearfix::after {
   content: '';
   display: block;
   clear: both;
