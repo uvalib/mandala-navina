@@ -12,11 +12,25 @@ dependencies:
     - field.field.group.subcollection.field_parent_collection
     - field.field.group.subcollection.field_visibility_overridden
     - group.type.subcollection
+    - image.style.medium
+  module:
+    - image
 id: group.subcollection.teaser
 targetEntityType: group
 bundle: subcollection
 mode: teaser
 content:
+  field_featured_image:
+    type: image
+    label: hidden
+    settings:
+      image_link: ''
+      image_style: medium
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: -10
+    region: content
   label:
     type: string
     label: hidden
@@ -29,7 +43,6 @@ content:
 hidden:
   changed: true
   created: true
-  field_featured_image: true
   field_group_access: true
   field_legacy_nid: true
   field_legacy_site: true

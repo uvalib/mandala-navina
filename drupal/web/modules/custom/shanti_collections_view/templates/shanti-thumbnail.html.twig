@@ -24,12 +24,23 @@
  *   card's footer (e.g. a subcollection's parent collection).
  */
 #}
+{# Render the field's render array to a string exactly once -- Drupal marks
+   a render array #printed after its first render, so checking
+   `thumbnail|render|trim` and then separately printing `{{ thumbnail }}`
+   would silently render nothing the second time (hit and fixed this exact
+   gotcha elsewhere already this session: the pager, grid_details).
+   `|render` returns Drupal's own safe-markup object; piping it through
+   `|trim` afterwards degrades it back to a plain string, so `{{ }}`'s
+   normal autoescaping HTML-escapes it on output -- `|raw` below is safe
+   because the content genuinely came from Drupal's own render pipeline,
+   not user input. #}
+{% set thumbnail_markup = thumbnail|render|trim %}
 <li class="shanti-thumbnail{% if extra_class %} {{ extra_class }}{% endif %}">
   <div class="shanti-thumbnail-image">
     <a href="{{ url }}" class="shanti-thumbnail-link">
       <span class="overlay"><span class="icon" aria-hidden="true"></span></span>
-      {% if thumbnail|render|trim %}
-        {{ thumbnail }}
+      {% if thumbnail_markup %}
+        {{ thumbnail_markup|raw }}
       {% elseif default_image_url %}
         <img class="img-responsive" src="{{ default_image_url }}" alt="">
       {% endif %}

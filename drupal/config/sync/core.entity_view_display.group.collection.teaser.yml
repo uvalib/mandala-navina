@@ -10,11 +10,25 @@ dependencies:
     - field.field.group.collection.field_legacy_site
     - field.field.group.collection.field_overview
     - group.type.collection
+    - image.style.medium
+  module:
+    - image
 id: group.collection.teaser
 targetEntityType: group
 bundle: collection
 mode: teaser
 content:
+  field_featured_image:
+    type: image
+    label: hidden
+    settings:
+      image_link: ''
+      image_style: medium
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: -10
+    region: content
   label:
     type: string
     label: hidden
@@ -27,7 +41,6 @@ content:
 hidden:
   changed: true
   created: true
-  field_featured_image: true
   field_group_access: true
   field_legacy_nid: true
   field_legacy_site: true
