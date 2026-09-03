@@ -17,12 +17,31 @@
 {% set description = node.field_image_descriptions.0.entity %}
 {% set width = node.field_iiif_width.value %}
 {% set height = node.field_iiif_height.value %}
+{# A 90/270 rotation swaps the *effective* (rendered) width/height -- the
+   IIIF server returns the image bytes already rotated, so a landscape-
+   stored image with a 90/270 rotation is actually portrait on screen.
+   Same rotation-aware swap as GridView.php's thumbnail aspect-ratio calc
+   (shanti_grid_view_views_pre_render() in D7); using the raw stored
+   dimensions here without it mis-sizes -- and fails to portrait-cap --
+   any rotated image. #}
+{% set rotation = node.field_image_rotation.value|default(0) %}
+{% set rotated = (rotation // 90) is odd %}
+{% set effective_width = rotated ? height : width %}
+{% set effective_height = rotated ? width : height %}
 <article{{ attributes.addClass('shanti-grid-details') }}>
   {# aspect-ratio lets the browser reserve this box's final size purely from
      CSS, before the image itself has actually loaded -- so the panel's
      total height (and the row-push it triggers) is known immediately on
-     insert rather than only after the image's bytes arrive. #}
-  <div class="shanti-grid-details-image"{% if width and height %} style="aspect-ratio: {{ width }} / {{ height }};"{% endif %}>
+     insert rather than only after the image's bytes arrive.
+
+     Portrait images (effective height > effective width) get a modifier
+     class: the default sizing is width-driven (flex-basis grows up to
+     max-width: 45%, height computed from that width via aspect-ratio) --
+     fine for landscape, but unbounded for portrait, where a tall/narrow
+     image can make the whole row taller than the viewport. The modifier
+     flips a portrait image to height-driven sizing instead (see
+     shanti-grid-view.css). #}
+  <div class="shanti-grid-details-image{% if effective_width and effective_height and effective_height > effective_width %} shanti-grid-details-image--portrait{% endif %}"{% if effective_width and effective_height %} style="aspect-ratio: {{ effective_width }} / {{ effective_height }};"{% endif %}>
     {{ content.field_image }}
   </div>
   <div class="shanti-grid-details-meta">
