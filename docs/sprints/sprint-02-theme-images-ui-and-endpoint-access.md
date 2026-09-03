@@ -75,7 +75,7 @@ here.
 | B2 | **Scope expanded 2026-09-03 (Than): not just the carousel — the whole `shanti_image` single-image page needs production-parity styling**, since the default/full node view was genuinely unstyled Drupal defaults (confirmed — `core.entity_view_display.node.shanti_image.default.yml` dumped ~50 fields as plain "above"-labeled stacking, no custom template existed). **This round's scope built and verified live 2026-09-03**: new `shanti_images_carousel` module — AJAX sibling carousel (`SiblingCarouselService`, `_entity_access: 'node.view'` route/controller, ±15-windowing query over the node's collection + subcollections sorted created DESC/title ASC, cached) + core page layout (`node--shanti-image.html.twig`: back-arrow, title/creator/dims line, Collections section, KMaps classification tags via the existing `kmap_popover_formatter`, description). Action-icon row (edit/IIIF-viewer/download-size dropdown) and the technical-metadata modal remain explicitly deferred to a follow-up — see planning subsection below | Workstream A skeleton, B1 (shared template touch-point) | ◐ |
 | B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate), Views config for the homepage gallery. **Built and verified live 2026-09-01**; wired as the actual front page (`system.site.yml` `page.front: /gallery`) same day. **6 real popdown/gallery bugs reported from live use, all fixed and verified 2026-09-01→09-03** (scroll-to-panel, loading spinners, details text styling, same-row re-click, prev/next nav arrows, duplicate title + search/sort row CSS — see [PR #180](https://github.com/uvalib/mandala-navina/pull/180)). PhotoSwipe lightbox and the D7 data-source (non-entity) view mode were deliberately not ported; scope stayed to the entity/node case per the production-reference doc | Workstream A skeleton | ☑ |
 | B4 | KMaps popover ("mandala popover"): hover popover on every KMaps place/subject/term tag (icon trigger, term info + ancestor breadcrumb, "Full Entry" link, "Related X (N)" links). New `KmapsPopoverInfoService` in `shanti_kmaps_fields` (in-process, not D7's self-referential HTTP round-trip), a new `kmap_popover_formatter` (server-rendered, no AJAX), BS5 popover JS behavior. **Built and verified live 2026-09-02** — see below | Workstream A skeleton (Bootstrap 5 popover), `shanti_kmaps_fields` (field type, already proven) | ☑ |
-| B5 | **Added to scope 2026-09-03 (Than): Collection/subcollection viewing.** "All Collections" and "My Collections" views (universal infrastructure, not Images-specific — Group entities aren't tied to one content type, even though Images is the only migrated site with real data today), plus rebuilding the Group canonical page (previously genuinely blank in D11) to show its content — for Images, the existing `shanti_grid_view` masonry gallery (B3) filtered to the collection + its subcollections. All Collections/My Collections cards use a reusable `shanti-thumbnail` teaser component (confirmed 2026-09-03: identical markup already shared cross-content-type in D7, e.g. collection cards and AV asset cards) — the same component other content types' collection-content galleries will plug their own fields into once they migrate. **Built and verified live 2026-09-03** — new `field_featured_image`/`field_overview` Group fields, new `shanti_collections_view` module (`/collections`, `/my_collections`, the Group full-page template + sidebar, the `collection_gallery` embedded view + `CollectionMembership` Views argument reusing/generalizing B2's `SiblingCarouselService`) — see [PR #183](https://github.com/uvalib/mandala-navina/pull/183) (open) and the planning subsection below. Non-Image content types' gallery variant stays unbuilt (no other site migrated yet, matches the plan's explicit scope) | Workstream A skeleton, B3 (reuses `GridView`), B2 (reuses/generalizes the collection-membership query `SiblingCarouselService` already built) | ☑ |
+| B5 | **Added to scope 2026-09-03 (Than): Collection/subcollection viewing.** "All Collections" and "My Collections" views (universal infrastructure, not Images-specific — Group entities aren't tied to one content type, even though Images is the only migrated site with real data today), plus rebuilding the Group canonical page (previously genuinely blank in D11) to show its content — for Images, the existing `shanti_grid_view` masonry gallery (B3) filtered to the collection + its subcollections. All Collections/My Collections cards use a reusable `shanti-thumbnail` teaser component (confirmed 2026-09-03: identical markup already shared cross-content-type in D7, e.g. collection cards and AV asset cards) — the same component other content types' collection-content galleries will plug their own fields into once they migrate. **Built, migrated, and verified live 2026-09-03** — new `field_featured_image`/`field_overview` Group fields; new `shanti_collections_view` module (`/collections`, `/my_collections`, the Group full-page template + sidebar, the `collection_gallery` embedded view + `CollectionMembership` Views argument reusing/generalizing B2's `SiblingCarouselService`); a real featured-image/overview migration from D7 (`d7_images_collection_featured_image`, a new scoped file-entity migration + source plugin — 135/150 images migrated, 15 genuine production 404s tracked separately) baked into the permanent `d7_images_collections`/`subcollections` migration definitions so it runs automatically at the real staging cutover. Several real bugs found live and fixed: a Views argument-plugin resolution gap (custom `plugin_id` silently ignored for real DB columns — fixed via a virtual `hook_views_data()` field), the render-array-printed-twice Twig gotcha (hit on both the card grid and the collection's own page), and a hidden-by-default teaser field-display component. See [PR #183](https://github.com/uvalib/mandala-navina/pull/183) and the planning subsection below. Non-Image content types' gallery variant stays unbuilt (no other site migrated yet, matches the plan's explicit scope) | Workstream A skeleton, B3 (reuses `GridView`), B2 (reuses/generalizes the collection-membership query `SiblingCarouselService` already built) | ☑ |
 
 **Scope question RESOLVED 2026-09-02 (Than): not needed for D11.** `IiifDeepZoomFormatter`
 renders a single-image viewer only, as built. Checked the actual D7 source at
@@ -513,11 +513,52 @@ reused by every consumer below, not rebuilt per-consumer:
    exposed title filter) the way `shanti_grid_view` already proved for `node`; if gaps
    exist, may need a custom row plugin similar to `GridView`'s node-side one.
 
-**Scope not yet decided with Than — worth confirming before implementation starts:**
-whether this round targets all three surfaces (All Collections, My Collections,
-collection content view) together, or splits them (e.g. All/My Collections first, since
-they're simpler and don't depend on resolving the featured-image-field question, with
-the collection content view as a closely-following second piece).
+**Scope decided and built, same session (2026-09-03): all three surfaces together.**
+All Collections, My Collections, and the collection content view (Images gallery +
+sidebar) were all built and verified live in one pass, not split.
+
+**Featured-image/overview migration, built the same session**: a real D7→D11 migration
+for `field_overview` (trivial, from `body`) and `field_featured_image` (a new scoped
+file-entity migration + `D7ImageCollectionFeaturedImageFile` source plugin in
+`mandala_migrations`, inner-joining `file_managed` to the featured-image field table
+rather than core's stock `d7_file` source, which has no scoping and would pull in all
+55,122 D7 files for the ~150 actually needed). Fetches image bytes over plain HTTP from
+production's public files path (confirmed live: the original file is served with no
+auth). Both mappings are added directly to the permanent `d7_images_collections`/
+`subcollections` migration YAML, so they run automatically at the real staging/
+production cutover — not a one-off script. Live run: 135/150 images migrated; 15 failed
+on genuine current production 404s, tracked separately in
+[collection-featured-images-missing-on-production.md](../deferred/collection-featured-images-missing-on-production.md).
+Backfilling the two fields onto the 174 *already-migrated* Group entities hit a
+separate pre-existing bug (`migrate:import --update` fails on every row — confirmed
+unrelated to this session's changes via git-stash; documented in
+[migrate-entity-group-update-mode-nulls-uid.md](../deferred/migrate-entity-group-update-mode-nulls-uid.md)),
+worked around with a direct Entity API backfill for this local/dev-0 population only —
+the real cutover doesn't need the workaround, since that's a fresh import.
+
+**Three more real bugs found live and fixed** while getting the card grid and
+collection page fully working:
+1. A Views argument plugin's stored `plugin_id` is silently ignored when the argument
+   is configured against a real database column that already has its own registered
+   handler (`ViewsHandlerManager::getHandler()` resolves from the field's own
+   views-data definition, not the config) — `CollectionMembership` was pointed at the
+   real `nid` field and silently ran core's default `Nid` argument instead, making a
+   collection's own page show exactly one (wrong) image. Fixed by registering a virtual
+   field via `hook_views_data()` with no real column, so there's no competing handler.
+2. The classic "printing a render array twice silently renders nothing the second
+   time" gotcha (already hit and fixed twice elsewhere this session — the pager,
+   `grid_details`) recurred in the new `shanti-thumbnail.html.twig` component and in
+   both `group--collection--full.html.twig`/`group--subcollection--full.html.twig`.
+3. The `teaser` view display for both Group bundles never explicitly configured
+   `field_featured_image` as a visible component when first created — Drupal defaulted
+   it to hidden, so the field was absent from `content[]` entirely (not a render bug)
+   for any entity with a real image, and the default-thumbnail fallback (which only
+   checks the field *value*, not display visibility) never triggered either — blank
+   tile, no `<img>` at all.
+
+Verified end-to-end live: `/collections` shows real production images or the default
+placeholder for every tile, no blanks; a collection's own page shows its real featured
+image, overview text, and correctly-scoped embedded gallery.
 
 ### Workstream C — Content-model audits (AV, Sources, Texts) — audit only
 
