@@ -1,10 +1,16 @@
 # ADR 018: AV migration track starts now, in parallel — supersedes ADR 009's strict ordering (not its risk analysis)
 
-**Status:** Accepted — Yuji Shinozaki (Lead Architect), 2026-09-04. Than Grove and
-Xiaoming Wang were not in this session (Than begins a two-week absence the same day
-this was decided); to be confirmed with them, not held pending it.
+**Status:** Accepted — 2026-09-04, ratified by Yuji Shinozaki, Than Grove and
+Xiaoming Wang.
 **Date:** 2026-09-04
-**Deciders:** Yuji Shinozaki
+**Deciders:** Yuji Shinozaki (Lead Architect), Than Grove, Xiaoming Wang — all three
+present when this was decided.
+
+> **Header correction, 2026-09-04 (metadata only, decision text untouched):** this ADR
+> was first recorded as "accepted by Yuji alone, to be confirmed with Than and
+> Xiaoming." That was wrong — Than and Xiaoming were in the session and the decision was
+> ratified by all three at the time. Corrected in the same way ADR 004's Status line was
+> updated when ADR 013 superseded it; nothing below this header changed.
 **Supersedes:** [ADR 009](009-migration-sequencing-strategy.md) — the *ordering* only
 (Phase 3's "AV strictly after Texts/Sources close" sequencing). ADR 009's risk
 analysis, its Phase 0/1 content, and the "AV is hardest" conclusion are unchanged and
