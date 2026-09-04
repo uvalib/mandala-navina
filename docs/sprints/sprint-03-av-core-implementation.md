@@ -1,7 +1,8 @@
 # Sprint 3: AV core implementation (`audio`/`video`, Kaltura, access, collections)
 
 **Status:** ○ Planned — not started. Blocked on [Spike 7](../spikes/spike-07-kaltura-av-integration.md)
-(Kaltura, still Pending).
+(Kaltura, ◐ Partial — started 2026-09-04, module landscape + a live D11 prototype
+done, upload/ingest and a real migration source plugin still open).
 **Phase:** [Roadmap](../roadmap.md) Phase 3 (AV) — reordered ahead of strict "last"
 sequencing by [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md).
 **Lead:** Yuji Shinozaki, per ADR 018.
@@ -51,7 +52,7 @@ Inherited from [ADR 008](../adr/008-mvp-migrate-not-improve.md) /
 
 | | Task | Depends on | Status |
 |---|---|---|---|
-| AV1 | Spike 7 — Kaltura module landscape survey, playback prototype, upload/ingest assessment, partner/credential re-provisioning confirmation | — | ○ |
+| AV1 | Spike 7 — Kaltura module landscape survey, playback prototype, upload/ingest assessment, partner/credential re-provisioning confirmation | — | ◐ (module survey + live playback prototype done 2026-09-04; upload/ingest + migration source plugin open) |
 | AV2 | Content-type decision: one bundle with a media-kind field, or `audio`/`video` kept as two — scope note (ADR-010-style) | AV content-model audit (done) | ○ |
 | AV3 | PBCore/workflow `field_collection` → Paragraphs modeling decision + build | AV2 | ○ |
 | AV4 | Migrate API source plugins for `audio`/`video` nodes; collection membership sourced from `og_membership`; exclude old corrupted fields; `field_transcript` migrated inertly | AV1–AV3 | ○ |

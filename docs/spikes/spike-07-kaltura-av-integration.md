@@ -1,7 +1,77 @@
 # Spike 7: Kaltura AV Integration on Drupal 11
-**Status:** Pending  
-**Date:** —  
-**Branch/commit:** —
+**Status:** ◐ Partial — started 2026-09-04 (Yuji)
+**Date:** 2026-09-04 (module survey + live D11 prototype)
+**Branch/commit:** untracked local experiment only, not committed (see note at end of
+this section)
+
+## Progress 2026-09-04: module survey + live D11 prototype (real work, not just reading)
+
+**A maintained D11-installable contrib module exists: `drupal/kaltura_media`
+(1.0.4, 2023-09-22, Evolving Web, 151 sites reporting use).** This directly answers
+most of work item 1 (module landscape survey) and item 3 (playback path). The
+original `kaltura` module the D7 site actually runs (7.x-3.2) has **no D9/10/11
+release at all and is marked Unsupported** — confirmed dead end, not usable as a
+starting point.
+
+**Verified live, not just read:**
+- Downloaded the real 1.0.4 release tarball, patched its `core_version_requirement`
+  from `^8 || ^9 || ^10` to add `^11` (a one-line change — the only thing standing
+  between it and formal D11 support), and installed it directly into a running
+  Drupal 11.4.5 DDEV instance (`drush pm:enable kaltura_media` — succeeded cleanly,
+  no fatal errors, no missing-dependency failures).
+- Ran `upgrade_status:analyze` against it for deeper deprecated-API confidence beyond
+  the info.yml declaration. **Found 3 real, all non-blocking, issues**: (1) a
+  deprecated `FileSystemInterface::EXISTS_REPLACE` constant (removed in Drupal 12,
+  not 11 — fine for now, worth fixing anyway since we'd be touching the file), (2) a
+  genuine **pre-existing latent bug in the module itself** — `Kaltura.php` catches
+  `FileException` in its thumbnail-download error path but never imports that class
+  (`use` statement missing), so that catch branch would fatal with a class-not-found
+  error if it ever actually triggered (dormant until a thumbnail HTTP fetch fails),
+  (3) a logger-injection code-quality warning (DependencySerializationTrait). None of
+  these block D11 use; all are small, well-understood fixes.
+- **Rendered the module's actual embed output using the real Kaltura IDs Spike 6
+  already found live in production** (`partnerId=381832`, `uiconf_id=24762821`,
+  `entry_id=1_lbuv4kg1`, node 42016) via `drush php:eval` + the renderer service.
+  Output:
+  ```html
+  <div class="kaltura-player" id="kaltura-player-1_lbuv4kg1"></div>
+  <script src="//cdnapisec.kaltura.com/p/381832/sp/38183200/embedIframeJs/uiconf_id/24762821/partner_id/381832"></script>
+  <script>kWidget.embed({
+    'targetId': 'kaltura-player-1_lbuv4kg1',
+    'wid': '_381832',
+    'uiconf_id': '24762821',
+    'entry_id': '1_lbuv4kg1'
+  })</script>
+  ```
+  This is **structurally identical** to the live D7 embed Spike 6 captured
+  (`mwEmbedFrame.php` with the same `wid`/`uiconf_id`/`entry_id` params) — same
+  partner account, same player config, same `kWidget.embed()` call shape. This
+  meaningfully de-risks the "Kaltura partner/credential re-provisioning" open
+  question: D11 does not need a new Kaltura profile/player to be provisioned to
+  prove playback, it can point at the exact same live partner/uiconf IDs the D7
+  site already uses.
+- **Field model fit**: `kaltura_media`'s field type stores `entry_id`/`partner_id`/
+  `uiconf_id`/`domain` per field item (richer than D7's `field_kaltura_entryid`,
+  which stores only a scalar entry-id string and reads partner/uiconf config from
+  Drupal *variables*). A migration source plugin would populate `partner_id`/
+  `uiconf_id`/`domain` from the same constant Spike 6 already found
+  (`381832`/`24762821`), not per-row — straightforward.
+
+**Cleanup note:** the module was uninstalled and its files removed from the working
+tree after the test (`drupal/web/modules/contrib/` is gitignored — composer-managed
+contrib is never committed directly — so nothing was ever at risk of being committed
+accidentally). `composer require drupal/kaltura_media` **fails outright** as-is
+(Composer resolves the *unpatched* published version's `^8 || ^9 || ^10` constraint
+against root `drupal/core: ^11` and refuses) — a real installation would need either a
+`cweagans/composer-patches` patch on `kaltura_media.info.yml`, or a fork/replace
+entry, not a plain `composer require`. That packaging step is the concrete next
+action, not a new unknown.
+
+**What this does NOT yet establish** (still open, unchanged from the original spike
+scope below): the upload/ingest path (this prototype only proved playback of an
+*existing* entry ID); whether `METADATA_PROFILE_ID`/`MB_MAIN_PLAYER_ID` map onto
+anything `kaltura_media` needs; the multi-site/partner credential model question; a
+real migration source plugin.
 
 ## Theory
 The D7 Kaltura module's two responsibilities — uploading AV content to Kaltura and embedding the Kaltura player in node display — can both be satisfied on D11 using a combination of Drupal core Media, a D11-compatible Kaltura contrib module or custom Media Source plugin, and the Kaltura API v3, without loss of workflow or playback capability.
