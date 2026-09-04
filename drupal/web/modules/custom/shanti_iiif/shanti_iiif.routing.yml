@@ -5,3 +5,19 @@ shanti_iiif.settings:
     _title: 'Shanti IIIF Settings'
   requirements:
     _permission: 'administer site configuration'
+
+# Ports D7's /image/download/{i3fid}/{width} -- see ImageDownloadController's
+# docblock for why this gates on _entity_access: 'node.view' where D7's did
+# not (blanket 'access content' only, no per-node check).
+shanti_iiif.image_download:
+  path: '/api/iiif-download/{node}/{size}'
+  defaults:
+    _controller: '\Drupal\shanti_iiif\Controller\ImageDownloadController::download'
+  requirements:
+    _entity_access: 'node.view'
+    node: \d+
+    size: 'large|medium|small|original'
+  options:
+    parameters:
+      node:
+        type: entity:node

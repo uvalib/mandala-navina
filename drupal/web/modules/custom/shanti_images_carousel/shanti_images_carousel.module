@@ -54,4 +54,10 @@ function shanti_images_carousel_preprocess_node(array &$variables) {
     'title' => $collection->label(),
     'url' => $collection->toUrl()->toString(),
   ] : NULL;
+
+  // node.access() isn't Twig-sandbox-safe (TwigSandboxPolicy only allows
+  // get*/has*/is*-prefixed methods and a short exact-name list -- 'access'
+  // is neither), so the edit-link visibility check has to happen here, not
+  // in the template.
+  $variables['can_edit'] = $node->access('update');
 }
