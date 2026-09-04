@@ -1,8 +1,10 @@
 # Spike 7: Kaltura AV Integration on Drupal 11
 **Status:** ◐ Partial — started 2026-09-04 (Yuji)
 **Date:** 2026-09-04 (module survey + live D11 prototype)
-**Branch/commit:** untracked local experiment only, not committed (see note at end of
-this section)
+**Branch/commit:** the packaging solution (below) is a real, working local change to
+`drupal/composer.json` + `drupal/patches/`, **not yet committed** — pending Yuji's
+go-ahead per the "confirm before shared-state changes" norm (it touches
+`composer.lock`, which every teammate's next `composer install` would pick up).
 
 ## Progress 2026-09-04: module survey + live D11 prototype (real work, not just reading)
 
@@ -72,6 +74,61 @@ scope below): the upload/ingest path (this prototype only proved playback of an
 *existing* entry ID); whether `METADATA_PROFILE_ID`/`MB_MAIN_PLAYER_ID` map onto
 anything `kaltura_media` needs; the multi-site/partner credential model question; a
 real migration source plugin.
+
+## Progress 2026-09-04 (continued, same day): real `composer require` packaging solved
+
+The manual hand-patch used for the prototype above (`sed`-editing a downloaded
+tarball, copying it straight into `web/modules/contrib/`) is not how a real
+dependency gets added — `composer require drupal/kaltura_media` fails outright as
+published, because **the drupal/core version constraint that blocks it lives in
+Composer's own package metadata, not in a file** — a `composer-patches` file patch
+alone cannot fix that (patches apply after the dependency solver has already
+succeeded or failed). Built and verified the real two-part fix:
+
+1. **A local Composer `package`-type repository override** in `composer.json`,
+   listed *before* `packages.drupal.org` so it wins (repository order determines
+   which definition Composer uses for a given name+version — first match wins).
+   It re-declares `drupal/kaltura_media` 1.0.4 with a corrected
+   `require: {"drupal/core": "^8 || ^9 || ^10 || ^11"}`, sourced from the real
+   `dist` tarball (`ftp.drupal.org`) — **not** `git.drupalcode.org` as a `source`,
+   which was tried first and failed: the raw git tag lacks the "Information added
+   by Drupal.org packaging script" footer lines the tarball has, so a patch built
+   against the tarball doesn't apply against a git checkout. Dist-from-tarball
+   fixed this.
+2. **`cweagans/composer-patches` (^2.0)**, newly added, applying two real patches
+   from a new `drupal/patches/` directory:
+   - `kaltura_media-d11-core-version.patch` — the same one-line
+     `core_version_requirement` addition as the earlier prototype, now applied
+     automatically on every `composer install`/`update` instead of by hand.
+   - `kaltura_media-file-exists-deprecation-and-missing-import.patch` — fixes the
+     two real code issues `upgrade_status:analyze` found in the first prototype
+     pass: the deprecated `FileSystemInterface::EXISTS_REPLACE` constant (→
+     `FileExists::Replace`) and the missing `use Drupal\Core\File\Exception\FileException;`
+     import that made one catch branch dormant-broken.
+
+**Verified end-to-end, not just configured:** `ddev composer update drupal/kaltura_media`
+resolves cleanly, downloads the tarball, and applies both patches
+(`- Patching drupal/kaltura_media`, no errors). Confirmed the installed files
+actually carry both fixes (grepped for `FileExists`/`FileException`/
+`core_version_requirement` post-install). Re-enabled the module and re-rendered the
+same real Kaltura embed test from the first prototype pass (`partnerId=381832`,
+`uiconf_id=24762821`, `entry_id=1_lbuv4kg1`) — **identical correct output**, confirming
+the patches didn't break anything. `upgrade_status:analyze` no longer flags the two
+patched issues; it does newly flag several inherited-member "Check manually" items
+(`t()`, `$configuration`, `$pluginDefinition`, `$configFactory`,
+`getConfiguration()`) that did **not** appear in the pre-patch scan — these look like
+static-analysis noise (the class instantiates and renders correctly at runtime, which
+is stronger evidence than a static scan), but the cause of the discrepancy wasn't
+root-caused before time ran out; worth a second look before treating `kaltura_media`
+as fully clean.
+
+**Local DDEV state restored** after the test (module uninstalled, config drift back to
+the same pre-existing baseline as before this session — unrelated `views.view.collections`
+etc. entries that predate this work). The `composer.json`/`composer.lock`/
+`drupal/patches/` changes themselves are **left in place, uncommitted**, pending a
+go/no-go on landing them now (inert until Sprint 3 actually wires the module into a
+field/display — adding the dependency doesn't use it anywhere yet) versus bundling
+them into Sprint 3's own first PR.
 
 ## Theory
 The D7 Kaltura module's two responsibilities — uploading AV content to Kaltura and embedding the Kaltura player in node display — can both be satisfied on D11 using a combination of Drupal core Media, a D11-compatible Kaltura contrib module or custom Media Source plugin, and the Kaltura API v3, without loss of workflow or playback capability.
