@@ -1,10 +1,10 @@
 # Spike 7: Kaltura AV Integration on Drupal 11
 **Status:** ◐ Partial — started 2026-09-04 (Yuji)
 **Date:** 2026-09-04 (module survey + live D11 prototype)
-**Branch/commit:** the packaging solution (below) is a real, working local change to
-`drupal/composer.json` + `drupal/patches/`, **not yet committed** — pending Yuji's
-go-ahead per the "confirm before shared-state changes" norm (it touches
-`composer.lock`, which every teammate's next `composer install` would pick up).
+**Branch/commit:** `f383ff6` (pushed directly to `main`, 2026-09-04) — the packaging
+solution below (`drupal/composer.json` + `drupal/patches/`), landed inert (nothing
+references `kaltura_media` in `config/sync` yet) so Sprint 3 starts from a working
+base.
 
 ## Progress 2026-09-04: module survey + live D11 prototype (real work, not just reading)
 
@@ -124,11 +124,12 @@ as fully clean.
 
 **Local DDEV state restored** after the test (module uninstalled, config drift back to
 the same pre-existing baseline as before this session — unrelated `views.view.collections`
-etc. entries that predate this work). The `composer.json`/`composer.lock`/
-`drupal/patches/` changes themselves are **left in place, uncommitted**, pending a
-go/no-go on landing them now (inert until Sprint 3 actually wires the module into a
-field/display — adding the dependency doesn't use it anywhere yet) versus bundling
-them into Sprint 3's own first PR.
+etc. entries that predate this work). **Committed to `main` (`f383ff6`, 2026-09-04):**
+`composer.json`, `composer.lock`, `drupal/patches/`, `drupal/patches.lock.json` — Yuji
+decided to land it now rather than hold for Sprint 3, since it's inert as committed
+(nothing in `config/sync` references `kaltura_media` yet) and means Sprint 3 starts
+from a working base instead of re-deriving this. Anyone running `composer install`
+after pulling `main` will now pull `kaltura_media` down automatically.
 
 ## Theory
 The D7 Kaltura module's two responsibilities — uploading AV content to Kaltura and embedding the Kaltura player in node display — can both be satisfied on D11 using a combination of Drupal core Media, a D11-compatible Kaltura contrib module or custom Media Source plugin, and the Kaltura API v3, without loss of workflow or playback capability.
