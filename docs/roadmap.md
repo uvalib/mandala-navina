@@ -117,6 +117,16 @@ Now the deliberate parallelism earns its keep — each owner takes an independen
   as a parallel track now (personnel availability, not a revised risk call — the risk
   analysis below is unchanged), beginning with the two still-open Phase 0 items,
   Spike 7 and the AV transcript format triage.
+  - **Split into two independently-schedulable sprints (Yuji, 2026-09-04):** the AV
+    content-model audit found `field_transcript` is a plain file field on the D7
+    `audio`/`video` node, not a separate entity — so **AV core** (content type,
+    Kaltura playback, PBCore/workflow → Paragraphs, the two extra OG access realms,
+    collections/UI) can migrate without the transcript pipeline being solved,
+    carrying `field_transcript` across as an inert migrated file field in the
+    meantime. **AV transcripts** (Spike 11's scope: the D7 authoring-pipeline
+    decision, TCU model, viewer, search) is a separate later sprint that depends on
+    AV core's nodes existing, not the reverse. Spike 7 (Kaltura) blocks AV core;
+    Spike 11 blocks the transcripts sprint; neither spike blocks the other.
 - **Spike 6 — API URL strategy** + React app reconciliation: the cutover gate
   (single domain vs. subdomain aliases vs. 301 redirects).
 
