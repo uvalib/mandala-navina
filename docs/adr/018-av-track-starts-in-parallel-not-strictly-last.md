@@ -14,7 +14,13 @@ restated below, not revised.
 (2026-09-01 — the evidence this ADR relies on and does not revise), [Spike 7](../spikes/spike-07-kaltura-av-integration.md)
 (Kaltura, still Pending), [Spike 11](../spikes/spike-11-av-transcript-replication.md)
 (AV transcript replication, still Pending), [roadmap.md](../roadmap.md) (the still-open
-"AV transcript format" Phase 0 item this ADR reactivates)
+"AV transcript format" Phase 0 item this ADR reactivates). **Forward references added
+2026-09-04, same day, once scheduling detail resolved into concrete sprints:**
+[Sprint 3](../sprints/sprint-03-av-core-implementation.md) (AV core — this ADR's track,
+made concrete) and [Sprint 4](../sprints/sprint-04-av-transcripts.md) (AV transcripts,
+split out as a dependent, independently-schedulable sprint — see Sprint 3/4 for the
+rationale; this ADR's own Decision text still describes AV as one track, which the
+sprint split refines without reversing).
 
 > ADRs are immutable; this ADR does not edit ADR 009's content. ADR 009's Status line
 > is updated to point here, matching the precedent set by [ADR 013](013-drupal-source-of-truth-solr-client-compatibility.md)
