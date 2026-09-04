@@ -53,19 +53,54 @@ ever going to appear where I looked. The signals were in things I had already
 listed and not opened (`mb_upload_keepalive()`, `mb_kaltura_form_alter()`, and the
 `all_media` widget's name).
 
-**What is still genuinely unknown:** which mode AV's `field_video`/`field_audio`
-instances are actually configured for. The widget's button is "add existing" only
-when the instance's `add_existing` setting is `'both'`/`'existing'`, otherwise it's
-the uploader — that setting lives in `field_config_instance` in the production DB.
-**I could not read it here: the AV production dump on this machine
-(`~/mandala-prod-av-db_2023-12-05.sql.gz`, 219MB) is CORRUPT** — `gzip -t` fails
-with "unexpected end of file", and streaming it dies partway (reaches `cache*`
-tables, never gets as far as `system`/`field_config_instance`). **This is now the
-third corrupt AV dump** after the two the [content-model audit](../planning/av-content-model-audit.md)
-recorded on 2026-06-11 — worth treating as a pattern, not a coincidence. Than's
-machine has the good 2026-09-01 dump loaded as `d7_av`; that, or dev-1, can settle
-the `add_existing` setting and whether `kaltura_chunked_uploader` is enabled in
-production.
+### Settled from real production data (2026-09-01 dump, same session)
+
+Both remaining unknowns are now **confirmed against the real production AV database**
+(`mandala-prod-av-db_2026-09-01.sql.gz` — Yuji had downloaded the known-good
+re-export to the repo root; `gzip -t` passes, unlike the three corrupt dumps noted
+below; gitignored via `*.sql.gz`, never committable). Read by streaming the dump, no
+DB load needed:
+
+1. **`kaltura_chunked_uploader` IS enabled in production** — `system` table row
+   `'…/kaltura_chunked_uploader.module','kaltura_chunked_uploader','module','',1,…`
+   (status `1`). Also enabled alongside it: `kaltura`, `field_kaltura`,
+   `kaltura_views`, `mb_kaltura`, `mb_metadata`, `audio_video`, `media_listings`.
+2. **`add_existing = 0` on BOTH `field_video` and `field_audio` instances.** In
+   `kaltura_widget_hendler()` the "add existing" branch requires `'both'` or
+   `'existing'`; `0` is neither, so both fields take the **else** (uploader) branch,
+   and since the chunked uploader is enabled the button resolves to
+   `kaltura/nojs/chunked-upload/field_kaltura_video` /
+   `…/field_kaltura_audio`.
+
+**Conclusion, stronger than the correction above:** on the production AV node form
+the media button is **exclusively an upload control**. There is no "browse existing
+Kaltura entries" option there at all — that capability exists only on the separate
+admin batch-import page (Path A). The two ingest paths are cleanly divided:
+**Path A attaches entries that already exist in Kaltura (creating new nodes); Path B
+uploads new files to Kaltura from the node form.** The editor-facing help text on the
+audio field says exactly this: *"Click on button to add a media item or click on X to
+remove the media item."*
+
+**Two incidental corrections to the [AV content-model audit](../planning/av-content-model-audit.md):**
+- The audit says the field's widget is `all_media`. That is the field *type's declared
+  default* (`'default_widget' => 'all_media'` in `field_kaltura_field_info()`), **not
+  what the instances actually use** — production has `field_kaltura_video` and
+  `field_kaltura_audio` (the type-specific "Video only"/"Audio only" widgets). Doesn't
+  change the upload conclusion (all widget types route through the same
+  `kaltura_widget_hendler()`), but it's the wrong value to build a migration against.
+- **There is no single Kaltura player `uiconf_id` to carry over.** At least three are
+  in play: the video field's display settings use **31832371** (the same one the React
+  app's `audiovideo.js` hardcodes), a second display formatter on both fields uses
+  **48501** (the contrib module's own default), and the live D7 node-view embed Spike 6
+  captured used **24762821**. The partner ID is consistently `381832`, but "D11 can
+  reuse the existing player config" — as the earlier prototype section puts it — needs
+  narrowing to *which* player, per view mode, in Sprint 3.
+
+**Dump hygiene note:** the copy on this machine at `~/mandala-prod-av-db_2023-12-05.sql.gz`
+(219MB) is **corrupt** — `gzip -t` fails with "unexpected end of file" and streaming
+dies at the `cache*` tables, before `system`/`field_config_instance`. That is the
+**third** corrupt AV dump after the two the content-model audit recorded on
+2026-06-11. Always `gzip -t` an AV dump before drawing a negative conclusion from it.
 
 **Revised D11 implication (this supersedes the softer version below):**
 `kaltura_media`'s "type in an Entry ID" form is **not** near-parity. D7 editors can
@@ -159,11 +194,12 @@ this site** — real findings:
 
 **Still genuinely open, not resolved here:**
 - ~~Whether AV staff actually use the base `kaltura` module's stock uploader form~~
-  **Answered by the correction above: an in-node-form upload path exists and Mandala
-  actively supports it.** What remains open is narrower — which mode AV's field
-  instances are configured for (`add_existing`), whether `kaltura_chunked_uploader`
-  is enabled in production, and whether staff in practice upload here or via
-  Kaltura's KMC. Needs the good `d7_av` dump (Than's machine) or dev-1.
+  **RESOLVED — see "Settled from real production data" above.** The node form's media
+  button is exclusively a chunked upload to Kaltura (`add_existing = 0` on both
+  fields, `kaltura_chunked_uploader` enabled). The only thing still unverified is
+  *behavioural* rather than technical: how often staff actually use it versus
+  uploading in Kaltura's KMC and importing via the admin page — a question for the AV
+  content staff, not the codebase.
 - The `captionAsset->add()` cross-reference to Spike 11 (Kaltura-native caption
   storage, separate from the `transcripts_apachesolr`/XSLT pipeline already found) —
   flagged for Spike 11, not chased here.

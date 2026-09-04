@@ -183,6 +183,19 @@ features (`editors_pick`, `favorites`, `loanable`).
   `field_kaltura_player_default` (a Kaltura player embed). Instance settings (player
   dimensions, thumbnail size, `entry_widget`, delivery type) are presentation config
   riding on the field, not separate entities.
+  - **Correction 2026-09-04 (Spike 7, verified against the 2026-09-01 production
+    dump):** `all_media` is the field type's *declared default* widget, **not what the
+    production instances use** — `field_video` is configured with
+    `field_kaltura_video` and `field_audio` with `field_kaltura_audio` (the
+    type-specific "Video only" / "Audio only" widgets). All widget types route through
+    the same `kaltura_widget_hendler()`, so behaviour is unchanged, but a migration
+    should be built against the actual instance values.
+  - **Also 2026-09-04: `entry_widget` (the Kaltura player `uiconf_id`) is not a single
+    value.** The video field's display settings carry **31832371** (the same id the
+    React `audiovideo.js` hardcodes) and a second formatter on both fields carries
+    **48501** (contrib's own default), while the live D7 node-view embed observed in
+    Spike 6 used **24762821**. Partner id is consistently `381832`. Whichever player
+    D11 adopts has to be chosen per view mode, not assumed to be one id.
 - **SDK:** the vendored `libraries/KalturaClient` PHP SDK — a dependency only, not
   inventoried here.
 - **Config:** partner ID / admin secret / secret / sub-partner ID are stored as Drupal
@@ -196,8 +209,19 @@ features (`editors_pick`, `favorites`, `loanable`).
   import mechanism is broken — AV runs a customized Kaltura ingestion path, not stock
   contrib behavior. This is functional/module-layer work (per the 2026-08-25 theme audit's
   finding that Kaltura lives at the module layer, not the theme layer), separately tracked
-  as **Spike 7 (○ Pending)** — this audit does not re-scope that spike, only confirms
+  as **Spike 7** — this audit does not re-scope that spike, only confirms
   where the customization lives.
+  - **Expanded 2026-09-04 (Spike 7): there are TWO ingest paths, not one.** The
+    admin import page above is only half of it. The **video/audio node form itself
+    uploads new media files to Kaltura** via the field widget's chunked-upload modal
+    (`kaltura/nojs/chunked-upload/…`), with `kaltura_chunked_uploader` confirmed
+    enabled in production and `add_existing = 0` on both field instances — so on the
+    node form that button is *exclusively* an uploader, with no browse-existing
+    option. `mb_kaltura` actively supports this with a dedicated
+    `mb_kaltura/upload-keepalive` route and `keepalive.js` on both node forms to keep
+    sessions alive through long uploads. Relevant to migration only indirectly, but
+    central to post-cutover authoring: D11's `kaltura_media` has no upload capability
+    at all. See [Spike 7](../spikes/spike-07-kaltura-av-integration.md).
 
 ## Access / collections pattern
 
