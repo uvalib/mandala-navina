@@ -352,11 +352,21 @@ validated against the real 2026-09-01 production dump** (see
    `field_translation_input_lang_1/2`. See [Data profile](#data-profile-production-dump-2026-09-01).
 7. ~~**No production-data validation at all.**~~ **RESOLVED (2026-09-01)** — a fresh,
    verified dump was loaded and profiled; see Data profile.
-8. **NEW: 68 nodes carry a literal corrupted `MISSING_TYPE` bundle value** in
-   `node.type`, discovered during data profiling. Not investigated further — needs its
-   own follow-up before any AV migration (are these orphaned/deleted-type nodes, safe
-   to exclude, or a real data-repair job like the 2026 cataloging-field corruption
-   above?).
+8. ~~**68 nodes carry a literal corrupted `MISSING_TYPE` bundle value.**~~
+   **ROOT-CAUSED (2026-09-04, Spike 7's upload/ingest investigation).** Not
+   corruption from an unknown source — `mb_kaltura.inc`'s `create_node_mediabase()`
+   (the Kaltura-entry-import function) maps `$entry->mediaType` to a bundle
+   (`KalturaMediaType::VIDEO` → `video`, `::AUDIO` → `audio`) and falls back to the
+   **literal string `'MISSING_TYPE'`**, saved onto the node with no validation and no
+   abort, whenever an imported Kaltura entry's media type doesn't cleanly map to
+   VIDEO/AUDIO — most likely Kaltura `IMAGE` entries or entries with an unset/
+   unexpected type, imported through the same admin page as real audio/video
+   content. These are real nodes an editor genuinely created via the normal import
+   workflow, not database corruption — still needs a disposition decision before
+   migration (exclude, or repair to a real bundle by checking the underlying
+   Kaltura entry's actual type), but the "is this corruption or a real data shape"
+   question is now answered. See [Spike 7](../spikes/spike-07-kaltura-av-integration.md)
+   for the full code-level finding.
 
 ## Recommended next step
 

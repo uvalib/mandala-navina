@@ -6,6 +6,92 @@ solution below (`drupal/composer.json` + `drupal/patches/`), landed inert (nothi
 references `kaltura_media` in `config/sync` yet) so Sprint 3 starts from a working
 base.
 
+## Progress 2026-09-04 (continued, same day): the real D7 upload/ingest workflow
+
+Read the actual `mb_kaltura` module in full (`mb_kaltura.module` + `mb_kaltura.inc`,
+~2,150 lines together) rather than assuming from the original spike's generic
+"file picked in Drupal → posted to Kaltura API" framing. **That framing is wrong for
+this site** — real findings:
+
+- **There is no Drupal-side file-upload-to-Kaltura path for primary AV media at
+  all.** Grepped every upload-related Kaltura API call (`uploadToken`,
+  `media->addContent`, `media->upload`, `->add(`) across the whole `mediabase`
+  module family — the only hits are `captionAsset->add()` (pushing a *transcript
+  caption* to Kaltura, a live cross-reference for Spike 11 not chased further here)
+  and `metadata->add()` (dead code — see below). **The base contrib `kaltura` module
+  does have its own uploader form** (`kaltura_uploader_form`/`_submit`/
+  `_validate_file` in `kaltura.module`), but nothing in `mb_kaltura` references,
+  wires, or menu-alters it the way it does the import path — whether AV staff
+  actually use that stock form out-of-band, or media is uploaded entirely outside
+  Drupal (Kaltura's own KMC), is **unconfirmed, flagged as open below**, not assumed.
+- **The real workflow is the reverse: import (pull), not upload (push).**
+  `mb_kaltura_menu_alter()` explicitly overrides the base module's own "Import
+  Kaltura Items" page because "their import mechanism is broken." The real path:
+  `mb_kaltura_import_form()` → `get_importable_entries()` calls the real Kaltura API
+  (`$kaltura_client->media->listAction()` with `KalturaMediaEntryFilter`/
+  `KalturaFilterPager`), lists entries in the Kaltura account, and filters out any
+  already linked to a local node (cross-referencing every `field_kaltura_entryid`
+  field's stored values via `get_local_entries()`). An editor checks entries from
+  that table, types a title per entry, picks a collection + author, and submits — a
+  **batch operation whose only real step is `create_node_mediabase($entry_id,
+  $title, $collection_nid, $author_uid)`** per checked entry.
+- **🔴 Root cause found for the AV audit's open question #8 (68 `MISSING_TYPE`
+  nodes).** `create_node_mediabase()` maps `$entry->mediaType` to a Drupal bundle:
+  `KalturaMediaType::VIDEO` → `video`, `::AUDIO` → `audio`, and **the fallback for
+  anything else is the literal string `$type = 'MISSING_TYPE'`, saved onto the node
+  anyway** (no validation, no abort). This is not corruption from an unknown source —
+  it's this exact function creating nodes with a genuinely invalid bundle value
+  whenever a Kaltura entry's `mediaType` doesn't cleanly map to VIDEO/AUDIO (most
+  likely Kaltura `IMAGE` entries, or entries with an unset/unexpected media type,
+  imported through this same admin page). **Resolves the audit's open question**;
+  update propagated to the audit doc itself, see below.
+- **PBCore auto-population from Kaltura is dead code, never wired in — confirmed,
+  not assumed.** `create_node_mediabase()`'s own docblock carries `@todo Add pbcore
+  title one time` / `@todo Add pbcore instantiation one time`. The block that would
+  call `_apply_remote_pbcore()` is **commented out** in the function body,
+  and grepping the entire module for call sites of `_apply_remote_pbcore`,
+  `autopopulate_pbcore_identifier`, `autopopulate_pbcore_title`,
+  `_populate_pbcore_instantiation`, and `_save_kaltura_metadata` finds **zero
+  invocations anywhere** — all five functions are defined but never called. **A
+  freshly-imported D7 node has only**: title (editor-typed at import), collection
+  membership, author, the entry-id field, Kaltura's tag string, and a partner-data
+  identifier — the rich PBCore descriptive/technical/workflow metadata the content
+  audit inventoried is filled in **by hand, as a separate cataloging step after
+  import**, not synced automatically. This matters for Sprint 3: it means D11's
+  migration only needs to preserve whatever a cataloger actually typed into D7's
+  fields (already covered by the planned `field_collection` migration) — there is no
+  "Kaltura metadata sync" behavior to replicate, because it never worked in D7
+  either.
+- **One real Drupal→Kaltura write exists, but only for audio thumbnails.**
+  `mb_kaltura_node_presave()` → `_mb_kaltura_add_audio_thumb()`: if an audio node's
+  `field_thumbnail_image` changes, the file is pushed to Kaltura via
+  `$kclient->baseEntry->updateThumbnailFromUrl()` (falling back to a generic
+  placeholder image if none is set). This is the one place primary content
+  genuinely flows *from* Drupal *to* Kaltura in the whole module.
+- **D11's `kaltura_media` module already matches the real workflow shape**, not the
+  wrong upload-focused one: its `KalturaForm.php` (`media_library_add` form) is a
+  plain "enter an already-known Entry ID / partner ID / uiconf ID" form — exactly
+  what's needed once media exists in Kaltura, which is always true for D7's real
+  workflow. **The one real gap versus D7** is the "browse a paginated list of
+  not-yet-imported Kaltura account entries" convenience UI
+  (`mb_kaltura_import_form`'s table) — `kaltura_media` requires knowing the entry ID
+  already. Not a migration blocker (D11's migration reads the entry ID straight off
+  each D7 node, per the content audit); would matter for **ongoing post-cutover
+  content creation**, and could be built later as a thin controller wrapping
+  `media->listAction()` + the same "filter out already-linked entries" logic, if the
+  team wants full parity.
+
+**Still genuinely open, not resolved here:**
+- Whether AV staff actually use the base `kaltura` module's stock uploader form
+  today (out-of-band from `mb_kaltura`'s customizations), or media reaches Kaltura
+  entirely outside Drupal. Matters for whether D11 needs *any* upload UI at all, or
+  purely an entry-ID-reference flow.
+- The `captionAsset->add()` cross-reference to Spike 11 (Kaltura-native caption
+  storage, separate from the `transcripts_apachesolr`/XSLT pipeline already found) —
+  flagged for Spike 11, not chased here.
+- The Kaltura API's authentication model / current partner admin-secret validity
+  (Work item 2 of this spike, unchanged).
+
 ## Progress 2026-09-04: module survey + live D11 prototype (real work, not just reading)
 
 **A maintained D11-installable contrib module exists: `drupal/kaltura_media`

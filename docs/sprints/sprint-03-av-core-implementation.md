@@ -45,7 +45,7 @@ Inherited from [ADR 008](../adr/008-mvp-migrate-not-improve.md) /
 | KMaps field wiring (same proven pattern as Images) + Solr/kmassets sync for the AV bundle(s) | Search **quality** improvements (same MVP boundary as every other site) |
 | Collection/gallery UI reusing the `shanti-thumbnail` component (Sprint 2 B5) | Spike 6 (API/URL reconciliation) — the cutover gate, handled once per the roadmap, not per site |
 | Excluding the old corrupted `field_extended_cataloging`/`field_translation_lang_1/2` fields (use the `_new`/`_input_lang` replacements) | — |
-| Investigating the 68 `MISSING_TYPE` corrupted-bundle nodes before any migration source query filters by bundle name | — |
+| Deciding disposition for the 68 `MISSING_TYPE` nodes before any migration source query filters by bundle name — root cause confirmed 2026-09-04 (Spike 7): `create_node_mediabase()`'s bundle-mapping fallback for non-video/audio Kaltura entries, not corruption | — |
 | `field_transcript` migrated as a plain, inert file field (download-only) | Any processing of `field_transcript`'s content — Sprint 4 |
 
 ## Backlog
@@ -56,7 +56,7 @@ Inherited from [ADR 008](../adr/008-mvp-migrate-not-improve.md) /
 | AV2 | Content-type decision: one bundle with a media-kind field, or `audio`/`video` kept as two — scope note (ADR-010-style) | AV content-model audit (done) | ○ |
 | AV3 | PBCore/workflow `field_collection` → Paragraphs modeling decision + build | AV2 | ○ |
 | AV4 | Migrate API source plugins for `audio`/`video` nodes; collection membership sourced from `og_membership`; exclude old corrupted fields; `field_transcript` migrated inertly | AV1–AV3 | ○ |
-| AV5 | 68 `MISSING_TYPE` node investigation — orphaned/safe-to-exclude vs. a real data-repair job | — (can run in parallel with AV1–AV4) | ○ |
+| AV5 | 68 `MISSING_TYPE` node disposition — root cause confirmed (Kaltura entries whose `mediaType` doesn't map to VIDEO/AUDIO, imported anyway with an invalid bundle string); decide exclude vs. repair-to-real-type | — (can run in parallel with AV1–AV4) | ○ |
 | AV6 | KMaps field wiring (reuse Images pattern, already proven) | AV4 | ○ |
 | AV7 | OG → D11 Group access mapping, including `group_access_uva_member` and `mb_collection_admin` | AV4 | ○ |
 | AV8 | Solr/kmassets sync wiring for the AV bundle(s) | AV4, AV6 | ○ |
