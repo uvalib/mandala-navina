@@ -320,3 +320,8 @@ stops at data/field/entity-graph facts. When Sources' migration turn comes up:
   confirmed clean — the spike's remaining open items (zotero_feed liveness, CSL
   custom-type-id support, output comparison) are the real remaining risks, not field
   structure.
+- Any new AJAX/JSON/download endpoint Sources needs should follow the
+  `_entity_access: 'node.view'` convention documented in
+  [`entity-access-endpoint-convention.md`](entity-access-endpoint-convention.md) —
+  Images hit and fixed the same D7 blanket-permission gap three separate times this
+  sprint; don't reopen it here.

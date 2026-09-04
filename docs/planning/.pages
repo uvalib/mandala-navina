@@ -22,3 +22,4 @@ nav:
   - "Texts: Content Model Audit": texts-content-model-audit.md
   - "AV/Sources/Texts: Migration Complexity Comparison": av-sources-texts-migration-complexity-comparison.md
   - "B3: Masonry Gallery Production Reference": b3-masonry-gallery-production-reference.md
+  - "Uniform Asset-Endpoint Access: the _entity_access convention": entity-access-endpoint-convention.md
