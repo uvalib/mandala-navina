@@ -5,15 +5,26 @@
  * Structure ported from D7's real node--shanti-image.tpl.php
  * (sarvaka_images theme): back-arrow, main image, sibling carousel,
  * title/creator/type/pixel-dims line, Collections + Classification
- * columns, description, and the technical-metadata modal -- see
+ * columns, description, an Additional Details list, and the
+ * technical-metadata modal -- see
  * docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md's B2
- * Deferred section for why those are a follow-up, not missing by accident.
+ * Deferred section for the real D7 field-list confirmation and the
+ * decided split between the two.
  *
  * Field access goes straight to `node` for anything not routed through a
- * display-config formatter, matching
+ * display-config formatter (all 21 of these fields are in the default
+ * display's `hidden:` list, confirmed against
+ * core.entity_view_display.node.shanti_image.default.yml), matching
  * node--shanti-image--grid-details.html.twig's own convention -- this
  * template controls layout precisely rather than stacking whatever the
  * entity view display produces field-by-field.
+ *
+ * field_private_note is additionally gated on `can_edit` -- D7 restricted
+ * it via field_permissions (confirmed against the real production DB dump:
+ * field_config.field_permissions.type = 1 for this field only, every other
+ * field in this batch is type 0/public), and D11 has no equivalent gate
+ * wired yet, so it reuses the edit-link's own access check rather than
+ * being shown to every viewer.
  *
  * Action-icon row: edit link + download-size dropdown. Edit link visibility
  * (`can_edit`) is computed in shanti_images_carousel_preprocess_node(), not
@@ -34,6 +45,7 @@
 {% set description = node.field_image_descriptions.0.entity %}
 {% set width = node.field_iiif_width.value %}
 {% set height = node.field_iiif_height.value %}
+{% set has_technical_fields = node.field_aperture.value or node.field_exposure_bias.value or node.field_flash_settings.value or node.field_focal_length.value or node.field_iso_speed_rating.value or node.field_lens.value or node.field_light_source.value or node.field_metering_mode.value or node.field_noise_reduction.value or node.field_sensing_method.value or node.field_spot_feature.value or node.field_original_filename.value %}
 <article{{ attributes.addClass('shanti-image-page') }}>
   {% if owning_collection %}
     <a href="{{ owning_collection.url }}" class="shanti-image-page-back">
@@ -123,5 +135,99 @@
         {{ description.field_description.value|raw }}
       </div>
     {% endif %}
+
+    {% if node.field_latitude.value or node.field_longitude.value or node.field_altitude.value or node.field_organization_name.value or node.field_project_name.value or node.field_sponsor_name.value or node.field_keywords.value or node.field_general_note.value or (can_edit and node.field_private_note.value) %}
+      <div class="shanti-image-page-additional-details">
+        <h5>{{ 'Additional Details'|t }}</h5>
+        <ul>
+          {% if node.field_latitude.value %}
+            <li><span class="field-label">{{ 'Latitude:'|t }}</span> {{ node.field_latitude.value }}</li>
+          {% endif %}
+          {% if node.field_longitude.value %}
+            <li><span class="field-label">{{ 'Longitude:'|t }}</span> {{ node.field_longitude.value }}</li>
+          {% endif %}
+          {% if node.field_altitude.value %}
+            <li><span class="field-label">{{ 'Altitude:'|t }}</span> {{ node.field_altitude.value }}</li>
+          {% endif %}
+          {% if node.field_organization_name.value %}
+            <li><span class="field-label">{{ 'Organization Name:'|t }}</span> {{ node.field_organization_name.value }}</li>
+          {% endif %}
+          {% if node.field_project_name.value %}
+            <li><span class="field-label">{{ 'Project Name:'|t }}</span> {{ node.field_project_name.value }}</li>
+          {% endif %}
+          {% if node.field_sponsor_name.value %}
+            <li><span class="field-label">{{ 'Sponsor Name:'|t }}</span> {{ node.field_sponsor_name.value }}</li>
+          {% endif %}
+          {% if node.field_keywords.value %}
+            <li><span class="field-label">{{ 'Keywords:'|t }}</span> {{ node.field_keywords.value }}</li>
+          {% endif %}
+          {% if node.field_general_note.value %}
+            <li><span class="field-label">{{ 'General Note:'|t }}</span> {{ node.field_general_note.value }}</li>
+          {% endif %}
+          {% if can_edit and node.field_private_note.value %}
+            <li><span class="field-label">{{ 'Private Note:'|t }}</span> {{ node.field_private_note.value }}</li>
+          {% endif %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if has_technical_fields %}
+      <p class="shanti-image-page-technical-trigger">
+        <a href="#" data-bs-toggle="modal" data-bs-target="#shanti-image-technical-modal">{{ 'View Technical Metadata'|t }}</a>
+      </p>
+    {% endif %}
   </aside>
+
+  {% if has_technical_fields %}
+    <div class="modal fade" id="shanti-image-technical-modal" tabindex="-1" aria-labelledby="shanti-image-technical-modal-label" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title h5" id="shanti-image-technical-modal-label">{{ 'Technical Details for'|t }} &ldquo;{{ label|render|trim|raw }}&rdquo;</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|t }}"></button>
+          </div>
+          <div class="modal-body">
+            <ul class="shanti-image-page-technical-list">
+              {% if node.field_original_filename.value %}
+                <li><span class="field-label">{{ 'Original Filename:'|t }}</span> {{ node.field_original_filename.value }}</li>
+              {% endif %}
+              {% if node.field_aperture.value %}
+                <li><span class="field-label">{{ 'Aperture:'|t }}</span> {{ node.field_aperture.value }}</li>
+              {% endif %}
+              {% if node.field_exposure_bias.value %}
+                <li><span class="field-label">{{ 'Exposure Bias:'|t }}</span> {{ node.field_exposure_bias.value }}</li>
+              {% endif %}
+              {% if node.field_flash_settings.value %}
+                <li><span class="field-label">{{ 'Flash Settings:'|t }}</span> {{ node.field_flash_settings.value }}</li>
+              {% endif %}
+              {% if node.field_focal_length.value %}
+                <li><span class="field-label">{{ 'Focal Length:'|t }}</span> {{ node.field_focal_length.value }}</li>
+              {% endif %}
+              {% if node.field_iso_speed_rating.value %}
+                <li><span class="field-label">{{ 'ISO Speed Rating:'|t }}</span> {{ node.field_iso_speed_rating.value }}</li>
+              {% endif %}
+              {% if node.field_lens.value %}
+                <li><span class="field-label">{{ 'Lens:'|t }}</span> {{ node.field_lens.value }}</li>
+              {% endif %}
+              {% if node.field_light_source.value %}
+                <li><span class="field-label">{{ 'Light Source:'|t }}</span> {{ node.field_light_source.value }}</li>
+              {% endif %}
+              {% if node.field_metering_mode.value %}
+                <li><span class="field-label">{{ 'Metering Mode:'|t }}</span> {{ node.field_metering_mode.value }}</li>
+              {% endif %}
+              {% if node.field_noise_reduction.value %}
+                <li><span class="field-label">{{ 'Noise Reduction:'|t }}</span> {{ 'On'|t }}</li>
+              {% endif %}
+              {% if node.field_sensing_method.value %}
+                <li><span class="field-label">{{ 'Sensing Method:'|t }}</span> {{ node.field_sensing_method.value }}</li>
+              {% endif %}
+              {% if node.field_spot_feature.value %}
+                <li><span class="field-label">{{ 'Spot Feature:'|t }}</span> {{ node.field_spot_feature.value }}</li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
 </article>
