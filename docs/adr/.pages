@@ -18,3 +18,4 @@ nav:
   - "015: Editorial access model — global content_editor": 015-editorial-access-model-global-content-editor.md
   - "016: Public URL structure — one host, namespaced paths": 016-public-url-structure-single-host.md
   - "017: Legacy identity composite key": 017-legacy-identity-composite-key.md
+  - "018: AV track starts in parallel, not strictly last": 018-av-track-starts-in-parallel-not-strictly-last.md

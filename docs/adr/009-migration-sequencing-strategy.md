@@ -1,6 +1,9 @@
 # ADR 009: Migration sequencing strategy — Images pilot, mob-build, then parallel site tracks
 
-**Status:** Accepted  
+**Status:** Accepted — Phase 3 ordering ("AV strictly after Texts/Sources close")
+**superseded by [ADR 018](018-av-track-starts-in-parallel-not-strictly-last.md)**
+2026-09-04; everything else in this ADR (Phase 0/1 content, the risk analysis, "AV is
+hardest") remains Accepted and unrevised.
 **Date:** 2026-06-15  
 **Deciders:** Yuji Shinozaki (Lead Architect), Xiaoming Wang, Carla Arton, Dave Goldstein, David Germano, Than Grove, Andres Montano  
 **Relates to:** ADR 005 (single-site redesign), ADR 008 (MVP is migrate, not improve)

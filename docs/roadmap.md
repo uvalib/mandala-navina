@@ -112,7 +112,11 @@ Now the deliberate parallelism earns its keep — each owner takes an independen
 ### Phase 3 — Hardest site + cutover gate
 
 - **AV** (Kaltura + Tibetan transcripts): the convergence of the most risk vectors —
-  intentionally last, after other risks are retired.
+  intentionally last, after other risks are retired. **Ordering superseded 2026-09-04
+  by [ADR 018](adr/018-av-track-starts-in-parallel-not-strictly-last.md):** AV starts
+  as a parallel track now (personnel availability, not a revised risk call — the risk
+  analysis below is unchanged), beginning with the two still-open Phase 0 items,
+  Spike 7 and the AV transcript format triage.
 - **Spike 6 — API URL strategy** + React app reconciliation: the cutover gate
   (single domain vs. subdomain aliases vs. 301 redirects).
 

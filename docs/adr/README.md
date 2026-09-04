@@ -15,7 +15,7 @@ get a new ADR that references the old one, rather than editing in place.
 | [006](006-kmterms-in-kmassets-shadow-pattern.md) | Maintain kmterms-in-kmassets shadow entries for subjects, places, and terms | Accepted |
 | [007](007-reindeer-x-independent-service.md) | reindeer_x lives as an independent deployable service, not in the monorepo | Accepted |
 | [008](008-mvp-migrate-not-improve.md) | MVP scope is migrate, not improve | Accepted |
-| [009](009-migration-sequencing-strategy.md) | Migration sequencing: Images pilot → mob → parallel tracks → AV last | Accepted |
+| [009](009-migration-sequencing-strategy.md) | Migration sequencing: Images pilot → mob → parallel tracks → AV last | Accepted (Phase 3 ordering superseded by 018) |
 | [010](010-adr-008-scope-clarification.md) | Clarify scope of "migrate, not improve": user-facing features, not internal architecture (refines ADR 008) | Accepted |
 | [011](011-group-collections-inheritance.md) | Group collections inheritance: entity-reference nesting + custom hooks (Option D); lands in Sprint 1 Step 1b | Accepted |
 | [012](012-ddev-production-db-engine.md) | Local DDEV runs the production DB engine (MySQL 8.4), not DDEV's default MariaDB, for migration/collation fidelity | Accepted |
@@ -24,3 +24,4 @@ get a new ADR that references the old one, rather than editing in place.
 | [015](015-editorial-access-model-global-content-editor.md) | D11 editorial access model: global non-admin `content_editor` (shanti_editor equivalent), assigned only to former shanti_editors; per-group editors deferred to Group roles | Accepted |
 | [016](016-public-url-structure-single-host.md) | Public URL structure: one host, asset-type-namespaced paths (`/images/{nid}`, `/audio/{nid}`, `/video/{nid}`), flat `/api/json/{nid}`; legacy URLs redirected via `field_legacy_nid` | **Proposed** |
 | [017](017-legacy-identity-composite-key.md) | Legacy identity is a composite key: `field_legacy_site` + `field_legacy_nid`; discriminator is the D7 **site** (nid space), not the asset type; kmassets `service` vocabulary | Accepted |
+| [018](018-av-track-starts-in-parallel-not-strictly-last.md) | AV migration track starts now, in parallel with Texts/Sources, driven by Than's 2-week absence and Yuji's AV fit — not a revision of AV's risk profile (supersedes ADR 009's Phase 3 ordering only) | Accepted |
