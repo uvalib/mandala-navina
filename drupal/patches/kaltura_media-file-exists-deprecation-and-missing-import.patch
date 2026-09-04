@@ -1,0 +1,21 @@
+--- a/src/Plugin/media/Source/Kaltura.php	2026-09-04 11:25:17
++++ b/src/Plugin/media/Source/Kaltura.php	2026-09-04 11:25:17
+@@ -10,7 +10,9 @@
+ use Drupal\media\MediaInterface;
+ use Drupal\Core\Form\FormStateInterface;
+ use Drupal\Component\Utility\Crypt;
++use Drupal\Core\File\FileExists;
+ use Drupal\Core\File\FileSystemInterface;
++use Drupal\Core\File\Exception\FileException;
+ use Drupal\kaltura_media\Plugin\Field\FieldType\KalturaItem;
+ use Symfony\Component\DependencyInjection\ContainerInterface;
+ use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
+@@ -238,7 +240,7 @@
+     try {
+       $response = $this->httpClient->get($remote_thumbnail_url);
+       if ($response->getStatusCode() === 200) {
+-        $this->fileSystem->saveData((string) $response->getBody(), $local_thumbnail_uri, FileSystemInterface::EXISTS_REPLACE);
++        $this->fileSystem->saveData((string) $response->getBody(), $local_thumbnail_uri, FileExists::Replace);
+         return $local_thumbnail_uri;
+       }
+     }

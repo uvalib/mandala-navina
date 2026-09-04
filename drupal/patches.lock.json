@@ -1,0 +1,27 @@
+{
+    "_hash": "376b7ddb909d9c0606d0b7b3d987dc55f8a59e80b22683773029e8a31f9c40fc",
+    "patches": {
+        "drupal/kaltura_media": [
+            {
+                "package": "drupal/kaltura_media",
+                "description": "Declare Drupal 11 compatibility (drupal.org has not tagged a D11 release; module code itself is D11-clean per upgrade_status)",
+                "url": "patches/kaltura_media-d11-core-version.patch",
+                "sha256": "01b1e7b3af14215d0c56f7f5837993a9f1a2e9a7793bfdfccc9c755d62af873a",
+                "depth": 1,
+                "extra": {
+                    "provenance": "root"
+                }
+            },
+            {
+                "package": "drupal/kaltura_media",
+                "description": "Fix deprecated FileSystemInterface::EXISTS_REPLACE and a pre-existing missing FileException import (both found via upgrade_status:analyze, Spike 7)",
+                "url": "patches/kaltura_media-file-exists-deprecation-and-missing-import.patch",
+                "sha256": "b1cd7a3be5cc5dcdec96585e4de07487faaa212cc8930235f6675df5485b5f9b",
+                "depth": 1,
+                "extra": {
+                    "provenance": "root"
+                }
+            }
+        ]
+    }
+}
