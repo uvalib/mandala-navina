@@ -421,3 +421,9 @@ point is:
   Sources; the same fix applies to both sites.
 - Investigate the 68 `MISSING_TYPE` nodes (open question #8) before they can silently
   fall out of any migration source query filtered by known bundle names.
+- Any new AJAX/JSON/download endpoint AV's player or admin UI needs (Kaltura embed
+  data, transcript fetch, etc.) should follow the `_entity_access: 'node.view'`
+  convention documented in
+  [`entity-access-endpoint-convention.md`](entity-access-endpoint-convention.md) —
+  Images hit and fixed the same D7 blanket-permission gap three separate times this
+  sprint; don't reopen it a fourth time here.

@@ -298,3 +298,8 @@ sequences Texts/Sources after Images, before AV):
   clear practical winner.
 - No action needed on footnotes — Spike 4b already closed that path; production build
   work is tracked separately.
+- Any new AJAX/JSON/download endpoint Texts needs should follow the
+  `_entity_access: 'node.view'` convention documented in
+  [`entity-access-endpoint-convention.md`](entity-access-endpoint-convention.md) —
+  Images hit and fixed the same D7 blanket-permission gap three separate times this
+  sprint; don't reopen it here.

@@ -15,6 +15,7 @@
 | [Spike 9](spike-09-docs-hosting-confluence.md) | Documentation hosting & access control (mkdocs → public + Confluence) | Yuji | Individual | ○ Pending (low priority) — **partially superseded 2026-08-13**: two private docs repos now exist (`uvalib/mandala-legacy-docs`, `uvalib/mandala-navina-docs`), scoped to sensitive material only; submodule + Confluence sync still open |
 | [Spike 10](spike-10-saml-oauth2-coexistence.md) | SAML + OAuth2 coexistence on D11 (`simplesamlphp_auth` + `simple_oauth`) | Yuji | Individual | ● Proven — **1b.1 unblocked** (2026-07-09) |
 | [Spike 11](spike-11-av-transcript-replication.md) | AV time-synced transcript replication on D11 (data model + sync + search + migration) | Than | Individual | ○ Pending — backlog (AV / Phase 4); relates to Spikes 7, 4a, 6 |
+| [Spike 12](spike-12-authenticated-asset-fetch.md) | Authenticated asset-fetch identity forwarding (design only) — Sprint 2 D2 | Than | Individual | ✅ **Complete (design only, 2026-09-04)** — recommends resolving `sid`→uid via a new Redis key in the same shared instance ADR 014 already uses (reuses `mandala_solr_visibility`'s live write pattern), over a new synchronous cross-service HTTP call. Not recommended to build now — low priority per the existing deferred note; implementation explicitly out of scope for this spike |
 
 **Status key:** ● Proven · ✅ Complete · ◐ Partial / in progress · ○ Pending · ◇ Split into sub-spikes
 

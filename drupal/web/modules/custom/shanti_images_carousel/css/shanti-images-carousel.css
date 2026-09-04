@@ -163,3 +163,33 @@
 .shanti-image-page-carousel-nav--next {
   right: 0;
 }
+
+.shanti-image-page-additional-details {
+  margin-top: 1rem;
+}
+
+.shanti-image-page-additional-details h5 {
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05rem;
+  color: #888;
+}
+
+.shanti-image-page-additional-details ul {
+  padding-left: 0;
+  list-style: none;
+}
+
+.shanti-image-page-additional-details .field-label,
+.shanti-image-page-technical-list .field-label {
+  font-weight: 600;
+}
+
+.shanti-image-page-technical-trigger {
+  margin-top: 0.5rem;
+}
+
+.shanti-image-page-technical-list {
+  padding-left: 0;
+  list-style: none;
+}
