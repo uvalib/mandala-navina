@@ -73,6 +73,15 @@ the app's asset detail page.
 **Decision (2026-08-12, Than): defer.** Filed here rather than building a new cross-service
 trust path immediately. No option chosen yet between 1 and 2 above — revisit alongside 1b.3/1b.4.
 
+**Direction evaluated (2026-09-04), still deferred: [Spike 12](../spikes/spike-12-authenticated-asset-fetch.md)**
+develops Option 1 further and recommends a specific mechanism if this is ever built:
+solr-proxy writes a `mandala_solr_sid:{sid}` → uid key into the same shared Redis
+instance `mandala_solr_visibility` already writes `mandala_solr_fq:{uid}` into (ADR
+014), rather than a new synchronous cross-service HTTP endpoint — reuses live,
+already-proven infrastructure instead of a fourth trust relationship. **Still not
+implemented and still not recommended to build now** — low blast radius stands
+(Images is mostly public collections); revisit when a real consumer needs it.
+
 ## Cross-references
 
 - [Spike 6](../spikes/spike-06-api-compatibility.md) — where this was found, building

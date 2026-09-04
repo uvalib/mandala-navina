@@ -1,8 +1,11 @@
 # Sprint 2: D11 base theme, Images interactive UI, and other-asset-type groundwork
 
-**Status:** ◐ In progress — Workstreams A, C closed; B1/B3/B4 closed (B2 open); D not
-yet started. Workstream A (base theme) closed and merged 2026-09-01
-([PR #169](https://github.com/uvalib/mandala-navina/pull/169)).
+**Status:** ☑ **Complete (2026-09-04)** — all workstreams closed, all acceptance
+criteria met. Workstream A (base theme) closed and merged 2026-09-01
+([PR #169](https://github.com/uvalib/mandala-navina/pull/169)); B2 (last item open)
+closed 2026-09-04 across [PR #187](https://github.com/uvalib/mandala-navina/pull/187)
+(edit link + download proxy) and this PR (technical-metadata modal); D1/D2 (docs-only)
+closed the same day.
 **Phase:** [Roadmap](../roadmap.md) Phase 2 setup — the shared theme foundation and
 Images' remaining UI, plus the research groundwork Phase 2's per-site tracks (Texts,
 Sources) and Phase 3 (AV) will need before they fork off.
@@ -72,7 +75,7 @@ here.
 | | Task | Depends on | Status |
 |---|---|---|---|
 | B1 | OpenSeadragon deep-zoom viewer: `IiifDeepZoomFormatter` field formatter in `shanti_iiif`, reusing `IiifUrlBuilder::infoUrl()`; `shanti_iiif.libraries.yml` (OpenSeadragon vendor lib + behavior JS using `drupalSettings`, porting `shanti-main-images.js`'s overlay behavior) | Workstream A skeleton (A1–A2) | ☑ |
-| B2 | **Scope expanded 2026-09-03 (Than): not just the carousel — the whole `shanti_image` single-image page needs production-parity styling**, since the default/full node view was genuinely unstyled Drupal defaults (confirmed — `core.entity_view_display.node.shanti_image.default.yml` dumped ~50 fields as plain "above"-labeled stacking, no custom template existed). **This round's scope built and verified live 2026-09-03**: new `shanti_images_carousel` module — AJAX sibling carousel (`SiblingCarouselService`, `_entity_access: 'node.view'` route/controller — see [D1's convention doc](../planning/entity-access-endpoint-convention.md), ±15-windowing query over the node's collection + subcollections sorted created DESC/title ASC, cached) + core page layout (`node--shanti-image.html.twig`: back-arrow, title/creator/dims line, Collections section, KMaps classification tags via the existing `kmap_popover_formatter`, description). Action-icon row (edit/IIIF-viewer/download-size dropdown) and the technical-metadata modal remain explicitly deferred to a follow-up — see planning subsection below | Workstream A skeleton, B1 (shared template touch-point) | ◐ |
+| B2 | **Scope expanded 2026-09-03 (Than): not just the carousel — the whole `shanti_image` single-image page needs production-parity styling**, since the default/full node view was genuinely unstyled Drupal defaults (confirmed — `core.entity_view_display.node.shanti_image.default.yml` dumped ~50 fields as plain "above"-labeled stacking, no custom template existed). **This round's scope built and verified live 2026-09-03**: new `shanti_images_carousel` module — AJAX sibling carousel (`SiblingCarouselService`, `_entity_access: 'node.view'` route/controller — see [D1's convention doc](../planning/entity-access-endpoint-convention.md), ±15-windowing query over the node's collection + subcollections sorted created DESC/title ASC, cached) + core page layout (`node--shanti-image.html.twig`: back-arrow, title/creator/dims line, Collections section, KMaps classification tags via the existing `kmap_popover_formatter`, description). **Action-icon row and technical-metadata modal completed 2026-09-04** (see the Deferred subsection below for the full decision trail and field-list confirmation): edit link (gated on `can_edit`, computed in `hook_preprocess_node()` since `node.access()` isn't Twig-sandbox-safe — [PR #187](https://github.com/uvalib/mandala-navina/pull/187)); download-size dropdown backed by a same-origin proxy route (`shanti_iiif.image_download`, fixes the same D7 blanket-permission gap as B3/D1 — PR #187); "View in IIIF Viewer" icon deliberately skipped as redundant with the image's own click-to-zoom; 12-field technical-metadata modal + 9-field "Additional Details" main-list addition, `field_private_note` gated on `can_edit` after confirming via the real production DB dump that D7 restricted it (`field_permissions.type = 1`, unique among the 21 fields) and D11 has no equivalent permission wired yet (this PR) | Workstream A skeleton, B1 (shared template touch-point) | ☑ |
 | B3 | Masonry/gallery grid view: new `shanti_grid_view` module, `GridView` Views style plugin, masonry + PhotoSwipe libraries, `GridInfoController` AJAX popdown endpoint (same access gate — see [D1's convention doc](../planning/entity-access-endpoint-convention.md)), Views config for the homepage gallery. **Built and verified live 2026-09-01**; wired as the actual front page (`system.site.yml` `page.front: /gallery`) same day. **6 real popdown/gallery bugs reported from live use, all fixed and verified 2026-09-01→09-03** (scroll-to-panel, loading spinners, details text styling, same-row re-click, prev/next nav arrows, duplicate title + search/sort row CSS — see [PR #180](https://github.com/uvalib/mandala-navina/pull/180)). PhotoSwipe lightbox and the D7 data-source (non-entity) view mode were deliberately not ported; scope stayed to the entity/node case per the production-reference doc | Workstream A skeleton | ☑ |
 | B4 | KMaps popover ("mandala popover"): hover popover on every KMaps place/subject/term tag (icon trigger, term info + ancestor breadcrumb, "Full Entry" link, "Related X (N)" links). New `KmapsPopoverInfoService` in `shanti_kmaps_fields` (in-process, not D7's self-referential HTTP round-trip), a new `kmap_popover_formatter` (server-rendered, no AJAX), BS5 popover JS behavior. **Built and verified live 2026-09-02** — see below | Workstream A skeleton (Bootstrap 5 popover), `shanti_kmaps_fields` (field type, already proven) | ☑ |
 | B5 | **Added to scope 2026-09-03 (Than): Collection/subcollection viewing.** "All Collections" and "My Collections" views (universal infrastructure, not Images-specific — Group entities aren't tied to one content type, even though Images is the only migrated site with real data today), plus rebuilding the Group canonical page (previously genuinely blank in D11) to show its content — for Images, the existing `shanti_grid_view` masonry gallery (B3) filtered to the collection + its subcollections. All Collections/My Collections cards use a reusable `shanti-thumbnail` teaser component (confirmed 2026-09-03: identical markup already shared cross-content-type in D7, e.g. collection cards and AV asset cards) — the same component other content types' collection-content galleries will plug their own fields into once they migrate. **Built, migrated, and verified live 2026-09-03** — new `field_featured_image`/`field_overview` Group fields; new `shanti_collections_view` module (`/collections`, `/my_collections`, the Group full-page template + sidebar, the `collection_gallery` embedded view + `CollectionMembership` Views argument reusing/generalizing B2's `SiblingCarouselService`); a real featured-image/overview migration from D7 (`d7_images_collection_featured_image`, a new scoped file-entity migration + source plugin — 135/150 images migrated, 15 genuine production 404s tracked separately) baked into the permanent `d7_images_collections`/`subcollections` migration definitions so it runs automatically at the real staging cutover. Several real bugs found live and fixed: a Views argument-plugin resolution gap (custom `plugin_id` silently ignored for real DB columns — fixed via a virtual `hook_views_data()` field), the render-array-printed-twice Twig gotcha (hit on both the card grid and the collection's own page), and a hidden-by-default teaser field-display component. See [PR #183](https://github.com/uvalib/mandala-navina/pull/183) and the planning subsection below. Non-Image content types' gallery variant stays unbuilt (no other site migrated yet, matches the plan's explicit scope) | Workstream A skeleton, B3 (reuses `GridView`), B2 (reuses/generalizes the collection-membership query `SiblingCarouselService` already built) | ☑ |
@@ -628,7 +631,7 @@ Images' own Paragraphs precedent) and must explicitly state that no migration co
 | | Task | Depends on | Status |
 |---|---|---|---|
 | D1 | Document the `_entity_access: 'node.view'` enforcement pattern (verbatim from `mandala_node_api.routing.yml`) as committed convention for every future endpoint; cross-reference from B2/B3 and each of C's audit docs. **Built 2026-09-04**: [`docs/planning/entity-access-endpoint-convention.md`](../planning/entity-access-endpoint-convention.md), naming all four real D11 examples (`mandala_node_api.node_json`, `shanti_grid_view.info`, `shanti_images_carousel.data`, `shanti_iiif.image_download`) and the specific D7 access gap each one closes; cross-referenced from B2/B3 above and from each of the three C audit docs | B2/B3 as live examples (soft dependency) | ☑ |
-| D2 | `docs/spikes/spike-0X-authenticated-asset-fetch.md` — design spike (not implementation) for the identity-forwarding gap blocking authenticated JSON/AJAX fetch; evaluates a trusted `sid`→uid resolution call to solr-proxy; explicitly excludes touching `mandala-wp-proxy` or implementing the chosen direction | — | ☐ |
+| D2 | `docs/spikes/spike-0X-authenticated-asset-fetch.md` — design spike (not implementation) for the identity-forwarding gap blocking authenticated JSON/AJAX fetch; evaluates a trusted `sid`→uid resolution call to solr-proxy; explicitly excludes touching `mandala-wp-proxy` or implementing the chosen direction. **Built 2026-09-04**: [Spike 12](../spikes/spike-12-authenticated-asset-fetch.md) recommends a specific direction (a new `mandala_solr_sid:{sid}` Redis key in the same shared instance ADR 014 already uses, over a new synchronous cross-service HTTP endpoint) but does not implement it, per scope — building it stays deferred as low-priority, folded into the two related deferred notes it updates | — | ☑ |
 
 ## Acceptance criteria
 
@@ -641,9 +644,17 @@ Images' own Paragraphs precedent) and must explicitly state that no migration co
       viewer sourced from the node's real `info.json`. (Verified 2026-09-01 against
       node 111339 / `shanti-image-680701` in DDEV; see PR #170 and
       `docs/session-logs/2026-09-01-b1-openseadragon-deep-zoom-viewer.md`.)
-- [ ] The sibling carousel AJAX-loads and windows the correct ±15 collection members
+- [x] The sibling carousel AJAX-loads and windows the correct ±15 collection members
       around the current node, and respects private-collection access (verified against
-      both a public and a private collection).
+      both a public and a private collection). **Verified live in DDEV 2026-09-04**:
+      anonymous request to a public-collection node's carousel (`/api/carouseldata/21`,
+      "Poor People's Campaign", `field_group_access = 0`) → 200 with real sibling data;
+      anonymous request to a private-collection node's carousel
+      (`/api/carouseldata/1`, "The Universe", `field_group_access = 1`) → 403, matching
+      the node's own page access exactly; authenticated request to the same private
+      node's carousel → 200 with real sibling data. All four cases match the node's own
+      view access precisely, confirming B2/PR #182's OOM fix didn't regress the
+      underlying access check.
 - [x] The homepage gallery renders via the new `shanti_grid_view` Views style plugin
       with working click-to-popdown, wired as the site's actual front page
       (`system.site.yml` `page.front: /gallery`, done 2026-09-01). All 6 real
@@ -655,7 +666,7 @@ Images' own Paragraphs precedent) and must explicitly state that no migration co
       explicitly scoped as audit-only.
 - [x] The node-access enforcement pattern is written up as the copyable convention for
       future endpoints, cross-referenced from B2/B3.
-- [ ] The authenticated-fetch spike doc exists under `docs/spikes/` and names a
+- [x] The authenticated-fetch spike doc exists under `docs/spikes/` and names a
       recommended direction, not just a restatement of the blocking gap.
 
 ## References

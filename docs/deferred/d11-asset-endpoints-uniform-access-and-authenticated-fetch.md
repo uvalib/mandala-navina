@@ -8,8 +8,13 @@ endpoint audit
 migration checklist depends on it
 **Status:** **DECIDED 2026-08-26.** Than confirmed with Yuji directly (Xiaoming not required for
 the decision itself — see below); the convergence is accepted, scoped under ADR 010, and does not
-need its own ADR. Owned by Than for Sprint 2. Design of the authenticated-fetch half (§2) is not
-started and is the remaining work — see "Decision and plan" below.
+need its own ADR. Owned by Than for Sprint 2. **Half 1 (uniform node-access enforcement) is done**
+— see [D1's convention doc](../planning/entity-access-endpoint-convention.md), which documents all
+four D11 endpoints that already converged on this pattern. **Half 2 (authenticated fetch) design
+is done**: [Spike 12](../spikes/spike-12-authenticated-asset-fetch.md) (2026-09-04) recommends a
+direction (Redis-based `sid`→uid resolution, reusing ADR 014's shared Redis instance) but does not
+implement it — building it remains open, deliberately deferred as low-priority (see the spike's
+own recommendation).
 
 ## Decision and plan — 2026-08-26 (Than, confirmed with Yuji)
 
@@ -87,7 +92,9 @@ React client never holds a raw OAuth token — only opaque `sid`/`uid` cookies. 
 [mandala-node-api-no-identity-forwarded-through-json-proxy.md](mandala-node-api-no-identity-forwarded-through-json-proxy.md),
 which is the same problem stated from the client side. **That note now has a stated destination**
 rather than being an open question: identity should arrive via the SAML/OAuth2/Redis path, not via
-a new bespoke trust channel.
+a new bespoke trust channel. [Spike 12](../spikes/spike-12-authenticated-asset-fetch.md) develops
+this into a concrete recommended mechanism (a new Redis key, not a new HTTP endpoint) — the design
+question is now closed; only the build is still open.
 
 ## Open design questions
 
