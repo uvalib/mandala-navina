@@ -6,7 +6,83 @@ solution below (`drupal/composer.json` + `drupal/patches/`), landed inert (nothi
 references `kaltura_media` in `config/sync` yet) so Sprint 3 starts from a working
 base.
 
+## ⚠ CORRECTION 2026-09-04 (same session): there IS a supported in-Drupal upload path
+
+**The section below claims "there is no Drupal-side file-upload-to-Kaltura path for
+primary AV media." That claim is WRONG.** Yuji challenged it; re-checking found a
+second, fully supported ingest path that the first pass missed. The import/pull
+findings below remain accurate — they are just not the *whole* picture.
+
+**What was actually missed — two ingest paths exist, not one:**
+
+- **Path A — bulk admin import (pull).** `admin/content/mediabase/import` → batch
+  `create_node_mediabase()`. Described correctly below.
+- **Path B — per-node upload (push), from the video/audio node form itself.** The
+  `field_kaltura_entryid` field's `all_media` widget
+  (`contrib/kaltura/plugins/field_kaltura/field_kaltura.module`,
+  `kaltura_widget_hendler()`) renders a modal action button that is **either**
+  "add existing" (`kaltura/nojs/existing/…`) **or an uploader** — and when the
+  `kaltura_chunked_uploader` plugin is enabled, that uploader is
+  `kaltura/nojs/chunked-upload/<widget_type>` (falling back to `kaltura/nojs/kcw`,
+  the classic Kaltura Contribution Wizard, when it isn't). The contrib module ships
+  a complete chunked-upload implementation for this (`kaltura_chunked_uploader`
+  plugin: `jquery.fileupload-kaltura.js`, `webtoolkit.md5.js`, its own
+  `kaltura/%ctools_js/chunked-upload/%` and
+  `kaltura-chunked-uploader/ajax/add-media/%` routes).
+
+**Mandala actively supports Path B — this is not dormant contrib code:**
+- `mb_kaltura_menu()` defines `mb_kaltura/upload-keepalive`, described in its own
+  title as *"A Keep-alive callback to be called by js during long uploads."*
+- `mb_kaltura_form_alter()` attaches `js/keepalive.js` to **both**
+  `video_node_form` and `audio_node_form`; that JS pings the keepalive route every
+  60 seconds so the Drupal session survives a long upload.
+- The same `form_alter` manages the widget's **"add media" button visibility** —
+  hiding it when an `entryid` is already set, with JS to un-hide it if the media is
+  removed.
+
+Mandala wrote a custom route and JS whose only purpose is keeping sessions alive
+during long uploads *from the node form*. That is not something you build unless
+editors upload files there.
+
+**Why the first pass got it wrong (worth recording):** I grepped for *server-side
+PHP* Kaltura upload API calls (`uploadToken`, `media->addContent`, `media->upload`)
+inside the *custom* `mediabase` modules, found none, and treated that negative
+result as proof of absence. But the upload is **client-side — browser directly to
+Kaltura** — and the widget lives in the **contrib** module. No server-side call was
+ever going to appear where I looked. The signals were in things I had already
+listed and not opened (`mb_upload_keepalive()`, `mb_kaltura_form_alter()`, and the
+`all_media` widget's name).
+
+**What is still genuinely unknown:** which mode AV's `field_video`/`field_audio`
+instances are actually configured for. The widget's button is "add existing" only
+when the instance's `add_existing` setting is `'both'`/`'existing'`, otherwise it's
+the uploader — that setting lives in `field_config_instance` in the production DB.
+**I could not read it here: the AV production dump on this machine
+(`~/mandala-prod-av-db_2023-12-05.sql.gz`, 219MB) is CORRUPT** — `gzip -t` fails
+with "unexpected end of file", and streaming it dies partway (reaches `cache*`
+tables, never gets as far as `system`/`field_config_instance`). **This is now the
+third corrupt AV dump** after the two the [content-model audit](../planning/av-content-model-audit.md)
+recorded on 2026-06-11 — worth treating as a pattern, not a coincidence. Than's
+machine has the good 2026-09-01 dump loaded as `d7_av`; that, or dev-1, can settle
+the `add_existing` setting and whether `kaltura_chunked_uploader` is enabled in
+production.
+
+**Revised D11 implication (this supersedes the softer version below):**
+`kaltura_media`'s "type in an Entry ID" form is **not** near-parity. D7 editors can
+upload a media file directly from the node form; `kaltura_media` has no upload
+capability at all. So post-cutover authoring needs a real decision, not a nicety:
+either accept a workflow change (editors upload via Kaltura's own KMC, then paste
+the entry ID into D11) — which should be checked with the AV content staff who
+actually do this work, not assumed — or build an upload integration for D11. Still
+**not a migration blocker** (migration reads each node's existing entry ID), but it
+is a genuine functional gap for ongoing content creation and belongs in Sprint 3's
+scope discussion.
+
 ## Progress 2026-09-04 (continued, same day): the real D7 upload/ingest workflow
+
+> **⚠ Superseded in part by the correction above** — the "no upload path exists"
+> conclusion in the first bullet is wrong. Everything about the import/pull path,
+> `MISSING_TYPE`, and the dead PBCore auto-population code remains accurate.
 
 Read the actual `mb_kaltura` module in full (`mb_kaltura.module` + `mb_kaltura.inc`,
 ~2,150 lines together) rather than assuming from the original spike's generic
@@ -82,10 +158,12 @@ this site** — real findings:
   team wants full parity.
 
 **Still genuinely open, not resolved here:**
-- Whether AV staff actually use the base `kaltura` module's stock uploader form
-  today (out-of-band from `mb_kaltura`'s customizations), or media reaches Kaltura
-  entirely outside Drupal. Matters for whether D11 needs *any* upload UI at all, or
-  purely an entry-ID-reference flow.
+- ~~Whether AV staff actually use the base `kaltura` module's stock uploader form~~
+  **Answered by the correction above: an in-node-form upload path exists and Mandala
+  actively supports it.** What remains open is narrower — which mode AV's field
+  instances are configured for (`add_existing`), whether `kaltura_chunked_uploader`
+  is enabled in production, and whether staff in practice upload here or via
+  Kaltura's KMC. Needs the good `d7_av` dump (Than's machine) or dev-1.
 - The `captionAsset->add()` cross-reference to Spike 11 (Kaltura-native caption
   storage, separate from the `transcripts_apachesolr`/XSLT pipeline already found) —
   flagged for Spike 11, not chased here.

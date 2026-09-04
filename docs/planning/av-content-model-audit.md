@@ -296,6 +296,15 @@ Filed as [`av-dump-corrupted-no-data-profile.md`](../deferred/av-dump-corrupted-
 at the time; **now resolved** by the 2026-09-01 re-export above — see that note for
 closure.
 
+**A THIRD corrupt AV dump found 2026-09-04** (Spike 7 session, on Yuji's machine):
+`~/mandala-prod-av-db_2023-12-05.sql.gz`, 219MB, fails `gzip -t` with "unexpected end
+of file"; streaming it reaches the `cache*` tables and dies before `system` /
+`field_config_instance`. Different file, different date, same failure mode as the two
+2026-06-11 copies. Three for three on pre-2026-09-01 AV dumps — worth treating as a
+pattern in how these were produced/transferred rather than three coincidences, and a
+reason to always `gzip -t` an AV dump before trusting a negative finding drawn from
+it. The 2026-09-01 re-export remains the only known-good copy.
+
 ## What this audit establishes
 
 **Structural findings are code-derived; the items below marked with counts are now

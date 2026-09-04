@@ -39,7 +39,7 @@ Inherited from [ADR 008](../adr/008-mvp-migrate-not-improve.md) /
 |---|---|
 | `audio`/`video` content-type decision (collapse to one bundle vs. keep two) | The TCU/XSLT transcript authoring pipeline and D11 transcript data model |
 | PBCore/workflow `field_collection`s → Paragraphs (structurally easier than Images' node→Paragraph case, per the audit) | Transcript viewer, scroll-sync, and search-within-transcript |
-| Kaltura playback embed (Spike 7) | Kaltura *upload/ingest* workflow, unless Spike 7 finds it's required for parity (open per Spike 7) |
+| Kaltura playback embed (Spike 7) | Kaltura *upload/ingest* workflow — **but note (Spike 7, 2026-09-04): D7 genuinely has an in-node-form chunked upload to Kaltura, and `kaltura_media` has no upload capability at all.** Not a migration blocker, but a real post-cutover authoring gap needing a scope decision: accept a workflow change (upload via Kaltura KMC, paste entry ID) or build an upload integration |
 | Collection membership via `og_membership` (NOT `field_data_field_og_collection_ref`, confirmed empty — same bug as Sources) | Sub-subcollection nesting beyond what [ADR 011](../adr/011-group-collections-inheritance.md) already covers |
 | OG → D11 Group access mapping, **including AV's two extra realms** (`group_access_uva_member`, `mb_collection_admin`) — materially more elaborate than Images' model | The React app's independent transcript viewer / `mandala-av` Solr core (deliberately out of scope, see Spike 11's scope note) |
 | KMaps field wiring (same proven pattern as Images) + Solr/kmassets sync for the AV bundle(s) | Search **quality** improvements (same MVP boundary as every other site) |
