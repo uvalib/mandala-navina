@@ -5,17 +5,28 @@
  * Structure ported from D7's real node--shanti-image.tpl.php
  * (sarvaka_images theme): back-arrow, main image, sibling carousel,
  * title/creator/type/pixel-dims line, Collections + Classification
- * columns, description. Deliberately does NOT port the action-icon row
- * (edit/IIIF-viewer/download-sizes) or the technical-metadata modal -- see
+ * columns, description, and the technical-metadata modal -- see
  * docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md's B2
- * planning subsection for why those are a follow-up, not missing by
- * accident.
+ * Deferred section for why those are a follow-up, not missing by accident.
  *
  * Field access goes straight to `node` for anything not routed through a
  * display-config formatter, matching
  * node--shanti-image--grid-details.html.twig's own convention -- this
  * template controls layout precisely rather than stacking whatever the
  * entity view display produces field-by-field.
+ *
+ * Action-icon row: edit link + download-size dropdown. Edit link visibility
+ * (`can_edit`) is computed in shanti_images_carousel_preprocess_node(), not
+ * inline here -- node.access() isn't in Twig's sandbox-allowed method list
+ * (get*/has*/is*-prefixed + a short exact-name list only), so calling it
+ * directly throws a SecurityError. Group's own permission system already
+ * resolves that access check correctly for the member/content_editor/admin
+ * tiers -- see the Deferred section above. Download links point at
+ * shanti_iiif.image_download (gated on the same node.view access as the
+ * page itself, per that route's docblock); the dropdown itself needs no
+ * separate permission check, unlike the edit link. The "View in IIIF
+ * Viewer" icon is deliberately not built -- clicking the image itself
+ * already opens the deep-zoom viewer via IiifDeepZoomFormatter.
  */
 #}
 {{ attach_library('shanti_images_carousel/image-page') }}
@@ -31,6 +42,28 @@
   {% endif %}
 
   <section class="shanti-image-page-display">
+    {% if can_edit or node.field_iiif_id.value %}
+      <div class="shanti-image-page-actions">
+        {% if can_edit %}
+          <a href="{{ path('entity.node.edit_form', {'node': node.id}) }}" class="shanti-image-page-edit" title="{{ 'Edit this image’s information'|t }}">
+            <span class="icon shanticon-editor" aria-hidden="true"></span> {{ 'Edit'|t }}
+          </a>
+        {% endif %}
+        {% if node.field_iiif_id.value %}
+          <div class="btn-group shanti-image-page-download">
+            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ 'Download this image'|t }}">
+              <span class="icon shanticon-download" aria-hidden="true"></span> {{ 'Download'|t }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{{ path('shanti_iiif.image_download', {'node': node.id, 'size': 'original'}) }}">{{ 'Original'|t }}</a></li>
+              <li><a class="dropdown-item" href="{{ path('shanti_iiif.image_download', {'node': node.id, 'size': 'large'}) }}">{{ 'Large (1200px)'|t }}</a></li>
+              <li><a class="dropdown-item" href="{{ path('shanti_iiif.image_download', {'node': node.id, 'size': 'medium'}) }}">{{ 'Medium (800px)'|t }}</a></li>
+              <li><a class="dropdown-item" href="{{ path('shanti_iiif.image_download', {'node': node.id, 'size': 'small'}) }}">{{ 'Small (400px)'|t }}</a></li>
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
     {{ content.field_image }}
     <div class="shanti-image-page-carousel" data-nid="{{ node.id }}" aria-label="{{ 'Sibling images in this collection'|t }}"></div>
   </section>

@@ -28,6 +28,21 @@
   min-width: 0;
 }
 
+.shanti-image-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.shanti-image-page-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  text-decoration: none;
+}
+
 .shanti-image-page-detail {
   flex: 1 1 320px;
   min-width: 0;
