@@ -323,17 +323,66 @@ a follow-up — see "Deferred" below.
   `field_kmap_collections` is an unrelated KMaps taxonomy tag field, not this.
 
 **Deferred to a follow-up** (flagged explicitly so it isn't lost):
-- Action-icon row: edit link, "View in IIIF Viewer" icon (may be redundant with the
-  deep-zoom formatter's own trigger), download-size dropdown (Large/Medium/Small/
-  Original via `IiifUrlBuilder::buildUrl()` at each size).
-- Technical-metadata modal: a new `metadata` view mode (real D7 field list not yet
-  confirmed — likely the EXIF/technical fields: aperture, ISO, focal length, lens,
-  flash, sensing method, exposure bias, metering mode, light source, noise reduction,
-  capture device, enhancement, quality) + Bootstrap modal, matching D7's
-  `node--shanti-image--metadata.tpl.php` (plain modal wrapping `render($content)`).
-- Uploaded-By / Original-file / UID / Node-ID / extended "detail-columns" collapsible
+- Action-icon row: real D7 source read directly (`sarvaka_images/template.php:240-285`,
+  `shanti_images.module:103-109,1308-1319`, `js/shanti-main-images.js:200-247`) —
+  **decisions below, 2026-09-04**:
+  - **Edit link** — trivial conditional (`node_access('update', $node)` in D7), not
+    itself a blocker. The real dependency is the existing, already-tracked gap in
+    [[project-editorial-access-model]]: which D11 role grants `update` on a
+    `shanti_image` node — the contributor tier this needs is confirmed to exist in D7
+    but is unwired in D11 (cutover gate). Build the link once that's resolved; don't
+    treat it as separate new scope.
+  - **"View in IIIF Viewer" icon** — ~~build~~ **skipped for now (Than, 2026-09-04)**.
+    Confirmed it only ever opened the same OpenSeadragon deep-zoom viewer D11's
+    `IiifDeepZoomFormatter` (B1, PR #170) already provides via its own click-to-open
+    behavior on the image itself — just show the image, no separate icon needed.
+  - **Download-size dropdown** (Large/Medium/Small/Original, 1200/800/400px + full,
+    via `IiifUrlBuilder::buildUrl()`) — still open, two real items, not yet decided:
+    1. D7's `image/download/%/%` route gates on blanket `access content` only, no
+       per-node check — the same access-control gap already found and fixed twice
+       this sprint (B2's carousel endpoint, B5's group content) under the established
+       `_entity_access: 'node.view'` convention (Workstream D1). Needs the same fix,
+       not a fresh gap to reopen.
+    2. The HTML5 `download` attribute (what forces Save-As instead of navigating) is
+       silently ignored by browsers for cross-origin URLs — this is *why* D7 proxies
+       IIIF-server bytes through its own origin rather than linking the IIIF server
+       directly, not just convenience. D11 needs either an equivalent same-origin
+       proxy route, or a client-side `fetch()`+Blob download (no server route, works
+       cross-origin) — not yet decided which.
+- Technical-metadata modal: real D7 field list now **confirmed 2026-09-04** by decoding
+  `field_config_instance` directly from the production Images DB dump
+  (`data/mandala-prod-images-db_2026-06-29-930.sql.gz`) — see field-by-field weights/
+  formatters below. Correcting the earlier guess in this doc: D7 never actually
+  configured a `metadata` view mode for any field, so `node_view($node, 'metadata')`
+  silently fell back to the `default` display and dumped **all 50 fields**, including
+  ones already shown on the main page (copyright, rights, notes, classification,
+  collection ref, etc.) — confirmed a D7 bug/oversight, not intentional curation, and
+  the modal is not to be replicated verbatim.
+
+  **Decided split (Than, 2026-09-04)**, based on which fields D7's `full` view mode
+  itself hides from the main page (21 of the 50) vs. shows (29 of the 50):
+  - **Technical-metadata modal** (12 fields): `field_aperture`,
+    `field_exposure_bias`, `field_flash_settings`, `field_focal_length`,
+    `field_iso_speed_rating`, `field_lens`, `field_light_source`,
+    `field_metering_mode`, `field_noise_reduction`, `field_sensing_method`,
+    `field_spot_feature`, `field_original_filename`.
+  - **Main field list** (conditionally shown, only if non-empty): the 29 fields
+    D7's `full` mode already shows, **plus** `field_latitude`, `field_longitude`,
+    `field_altitude`, `field_general_note`, `field_private_note`,
+    `field_organization_name`, `field_project_name`, `field_sponsor_name`,
+    `field_keywords` — all 9 were hidden from D7's main page too, but aren't
+    camera/technical fields, so they move to the main list rather than the modal.
+  - **Open item**: `field_private_note` may carry a D7 access restriction on who can
+    see it — confirm before exposing it on a public-facing field list in D11.
+- Uploaded-By / UID / Node-ID / extended "detail-columns" collapsible
   section.
-- PhotoSwipe lightbox (already deferred once in B3, stays deferred).
+- ~~PhotoSwipe lightbox~~ — **decided, not a follow-up item (Than, 2026-09-04)**:
+  confirmed it's triggered by clicking the main image on the single-image detail page,
+  and functions only as a frame/wrapper around the IIIF deep-zoom viewer — not an
+  independent gallery/lightbox feature in its own right. **Not being ported**: D11
+  already has its own `IiifDeepZoomFormatter`/OpenSeadragon integration (B1), which can
+  be given its own frame directly without pswp's overhead; also, per direct experience,
+  pswp itself "didn't work that well" in production. Removed from the follow-up list.
 
 **Built and verified live 2026-09-03.** Implemented largely to spec, with one deliberate
 deviation from the original plan: the carousel does **not** use the theme's vendored

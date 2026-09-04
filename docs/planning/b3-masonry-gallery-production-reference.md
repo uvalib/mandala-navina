@@ -168,8 +168,12 @@ image within the popdown).
 
 ## What this doc does NOT establish
 
-- No decision on porting PhotoSwipe/the lightbox — not yet exercised/understood in this
-  pass.
+- ~~No decision on porting PhotoSwipe/the lightbox~~ — **resolved 2026-09-04 (Than)**:
+  it's triggered from the single-image detail page (clicking the main image), and only
+  ever served as a frame around the IIIF deep-zoom viewer, not an independent feature.
+  Not being ported — D11's own `IiifDeepZoomFormatter` can get its own lighter frame
+  instead, and pswp itself didn't work well in production. See Sprint 2 doc's B2
+  Deferred section.
 - No decision on the KMaps popover widget's D11 porting scope.
 - No performance assessment of rendering 108k+ node rows' worth of grid data
   server-side for D11 (D7's approach batches width/height/rotation directly off the
