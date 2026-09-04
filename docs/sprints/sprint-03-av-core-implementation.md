@@ -63,7 +63,7 @@ Inherited from [ADR 008](../adr/008-mvp-migrate-not-improve.md) /
 | AV8 | Solr/kmassets sync wiring for the AV bundle(s) | AV4, AV6 | ○ |
 | AV9 | UI: Kaltura player field formatter; collection-content gallery variant of `shanti-thumbnail` (generalizing Sprint 2 B5) | AV1, AV4, Sprint 2 B5 (done) | ○ |
 | AV10 | **Kaltura configuration layer** — config-driven, extensible, covering the full element set inventoried below (players/`uiconf_id`, uploader widget ui_conf, delivery, player + thumbnail dimensions, rotate/stretch), selectable **per view mode** via formatter settings. Must carry the known values and accept new ones as config, no code change | AV1 | ○ |
-| AV11 | **Kaltura Session (KS) minting service** — server-side, using the official `kaltura/api-client-library` PHP SDK; short-TTL, upload-scoped KS handed to the browser. Admin secret read from container env (the `SOLRPROXY_CLIENT_SECRET` pattern), **never** in `config/sync` | AV1 | ○ |
+| AV11 | **Kaltura Session (KS) minting service** — server-side, using the official `kaltura/api-client-library` PHP SDK; short-TTL, upload-scoped KS handed to the browser. Secrets delivered at deploy time via the established ccrypt/`container_0.env.secret` pattern (see below), **never** in `config/sync` | AV1 | ○ |
 | AV12 | **Browser-direct chunked upload widget** — file selected on the node form uploads straight to Kaltura (`uploadToken.add` → chunked `uploadToken.upload` → `media.add`), never through PHP/the ALB; resulting `entryId` written into the `kaltura_media` field on submit. Pause/resume and a progress UI, matching D7's behaviour | AV10, AV11 | ○ |
 | AV13 | Migrate D7's **per-view-mode player configuration** (`entry_widget` in each `field_config_instance` display) into AV10's registry + formatter settings — not a single site-wide default | AV10, AV4 | ○ |
 
@@ -124,10 +124,38 @@ config, since "potentially more players" is an explicit requirement.
 > `kaltura_admin_secret` and `kaltura_secret` in **cleartext**, and they are present
 > in the production dumps we hold locally. Values are deliberately **not** recorded in
 > this public repo; ask Yuji, and see the private docs convention in
-> [docs/non-public-documentation.md](../non-public-documentation.md). For D11 these
-> must come from the container environment (the `SOLRPROXY_CLIENT_SECRET` pattern),
-> never `config/sync`, and the admin secret must never reach the browser — AV11's
-> KS-minting service exists precisely so it doesn't.
+> [docs/non-public-documentation.md](../non-public-documentation.md). The admin secret
+> must never reach the browser — AV11's KS-minting service exists precisely so it
+> doesn't.
+
+### Secret delivery: use the established ccrypt pattern (confirmed 2026-09-04)
+
+Decided by Yuji: secrets are passed in **at deploy time**, encrypted at rest and
+decrypted as needed. This is an existing house pattern in `terraform-infrastructure`
+(`mandala/drupal/<env>/ansible/`) — follow it rather than inventing anything:
+
+- **Three layered env files** are merged into the container's environment by
+  `deploy_backend.yml`:
+  `container_0.env.generated` → `container_0.env.managed` (**committed, non-secret**)
+  → `container_0.env.secret` (**gitignored plaintext**, `mandala/.gitignore: *.secret`),
+  combined via `container_env | combine(managed_env, secret_env)`.
+- **Only the encrypted form is committed**: `container_0.env.secret.cpt`
+  (**ccrypt**). Encrypt/decrypt with the repo's own helpers,
+  `scripts/crypt-key.ksh` / `scripts/decrypt-key.ksh` (`CRYPT_TOOL=ccrypt`) — the
+  same mechanism already used for the SAML `.pem.cpt` keys.
+- **`required_env_vars` is a fail-loud gate**: the playbook asserts every listed var
+  is present, non-empty, and not still `CHANGE_ME`, refusing to deploy otherwise.
+
+**So for Kaltura, the split follows the same rule the playbooks already document
+(non-secret → `.managed`, secret → `.secret`/`.cpt`):**
+
+| Goes in `container_0.env.managed` (committed) | Goes in `container_0.env.secret` (committed only as `.cpt`) |
+|---|---|
+| `KALTURA_PARTNER_ID` (381832), `KALTURA_SUBP_ID` (38183200), `KALTURA_SERVER_URL` | `KALTURA_ADMIN_SECRET`, `KALTURA_SECRET` |
+
+Add the secret ones to `required_env_vars` too — by the playbook's own "split by
+**failure mode**" reasoning, a missing Kaltura secret should refuse the deploy rather
+than ship a silently broken uploader.
 
 > **One datum worth not over-reading:** the `kaltura_last_imported` variable sits at
 > 2023-02-08. It is written by the **base contrib module's own** entry-sync
