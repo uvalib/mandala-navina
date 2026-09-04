@@ -1,7 +1,7 @@
 # Session Log: AV resequencing (ADR 018), sprint split, and Spike 7 progress
 
 **Date:** 2026-09-04
-**Participants:** Yuji Shinozaki, Claude Code
+**Participants:** Yuji Shinozaki, Than Grove, Xiaoming Wang, Claude Code
 **Outcome:** [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md)
 accepted (AV starts as a parallel track); AV split into
 [Sprint 3](../sprints/sprint-03-av-core-implementation.md) (core) and
@@ -44,8 +44,9 @@ AV begins with the two Phase 0 items nobody ever closed: **Spike 7 (Kaltura)** a
 **AV transcript format triage**.
 
 ADR 009's Status line was updated to point at 018 (metadata-only edit, matching the
-ADR 004 → 013 precedent); its content is untouched. Accepted by Yuji alone — Than and
-Xiaoming were not in session and still need to confirm.
+ADR 004 → 013 precedent); its content is untouched. **Ratified by all three (Yuji, Than,
+Xiaoming), who were in the session.** (This log and ADR 018's header both initially and
+wrongly recorded it as "accepted by Yuji alone, to be confirmed" — corrected same day.)
 
 ## 3. AV split into two sprints
 
@@ -196,9 +197,13 @@ conclusion from an AV dump.
 
 ## Open items
 
-- **ADR 018 needs Than's and Xiaoming's confirmation** — accepted by Yuji alone.
-- **Texts/Sources coverage during Than's absence is undecided** — pause, or partial
-  cover? Deliberately not resolved by ADR 018.
+- ~~ADR 018 needs Than's and Xiaoming's confirmation~~ — **RESOLVED: ratified by all
+  three in session.** The earlier "Yuji alone" note was a recording error, corrected
+  the same day in both this log and ADR 018's header.
+- ~~Texts/Sources coverage during Than's absence is undecided~~ — **DECIDED
+  2026-09-04: both tracks are PAUSED** rather than partially covered; capacity goes to
+  the AV track. Explicitly temporary, revisit when Than returns. Recorded in
+  [roadmap.md](../roadmap.md) Phase 2.
 - **Spike 7 remaining:** the Kaltura API auth/credential-validity check (does the
   partner admin secret still work against the live account) — effectively blocked on
   decrypting the secret anyway. A migration source plugin also remains.

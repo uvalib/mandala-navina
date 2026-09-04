@@ -101,8 +101,17 @@ foundation, because Images has substantial proxy-auth-gated content.
 
 Now the deliberate parallelism earns its keep — each owner takes an independent track.
 
-- **Texts** (Than): footnote markup transformation + Tibetan Unicode body round-trip.
-- **Sources** (Xiaoming): bibcite + Tibetan-in-references if present.
+> **⏸ Texts and Sources are PAUSED as of 2026-09-04** (team decision, alongside
+> [ADR 018](adr/018-av-track-starts-in-parallel-not-strictly-last.md)). Than is away for
+> two weeks and is the team's most up-to-speed person on both; rather than have someone
+> else pick up a partial slice of either, both tracks hold and capacity goes to the AV
+> track ADR 018 opened ([Sprint 3](sprints/sprint-03-av-core-implementation.md)). This is
+> the open question ADR 018 deliberately left unresolved, now answered. Explicitly
+> temporary — revisit when Than returns; nothing about the Texts/Sources *plans* below
+> changes, only when they get worked.
+
+- **Texts** (Than): footnote markup transformation + Tibetan Unicode body round-trip. ⏸ paused
+- **Sources** (Xiaoming): bibcite + Tibetan-in-references if present. ⏸ paused
 - **Collections** (owner TBD): finalize Spike 3 on D11 + implement the Option D
   custom hooks for nesting and access inheritance. (deferred:
   [group-subgroup-nesting-approach.md](deferred/group-subgroup-nesting-approach.md),
