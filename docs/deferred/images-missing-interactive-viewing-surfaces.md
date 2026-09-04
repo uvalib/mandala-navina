@@ -106,7 +106,12 @@ A general-purpose custom Views style plugin, not IIIF-specific:
   (auto-detected from the view's fields, per the module's own README).
 - Click a tile → AJAX "popdown" panel (`shanti/grid/info/{type}/{eid}` or
   `shanti/grid/dinfo/...` for data-source views) showing a larger image + metadata, plus a
-  "Details" link through to the full node page. Uses PhotoSwipe for the lightbox.
+  "Details" link through to the full node page. Uses PhotoSwipe for the lightbox. **Note
+  2026-09-04**: separately confirmed (on the single-image detail page, not this popdown)
+  that PhotoSwipe only ever serves as a frame around the IIIF deep-zoom viewer and isn't
+  worth porting — D11 already has its own deep-zoom viewer (`IiifDeepZoomFormatter`,
+  section 1 above) that doesn't need pswp's wrapper. See Sprint 2 doc's B2 Deferred
+  section for the decision.
 - Has its own admin settings page and an image-size cache table
   (`shanti_grid_image_sizes`).
 - The module's README cites both an IIIF example (`all_image_gallery` — the live homepage
