@@ -42,23 +42,38 @@ Confirmed fixed: the previously-500ing derivative URL now returns `200 image/web
 `ls -la` after the fix shows `styles/` as `www-data:www-data`, matching the rest of
 `files/`.
 
+## Follow-up: persistence mechanism confirmed (2026-09-04)
+
+Checked directly on dev-0 via `docker inspect mandala-drupal-0 --format '{{json .Mounts}}'`:
+`sites/default/files` (the whole tree, not `styles/` specifically) is a **bind mount**,
+not a Docker volume or part of the image's writable layer:
+
+```
+/mnt/data/mandala-drupal-0/sites/default/files → /opt/drupal/app/drupal/web/sites/default/files
+```
+
+(alongside separate bind mounts for `keys/` and the SimpleSAMLphp dirs — no named
+volumes anywhere in this container's mount list).
+
+This resolves the "is the fix ephemeral" question: it isn't. The `chown` run from
+inside the container as root wrote straight through to the host path — confirmed via
+`ls -la /mnt/data/mandala-drupal-0/sites/default/files/styles/` on the host, now
+`www-data:www-data` (uid/gid 33) — so a container restart or redeploy against the same
+bind mount will **not** reintroduce the root ownership; the fix is persisted at the
+host filesystem, not the container layer.
+
 ## Still open
 
-- **Root cause not investigated** — why is `styles/` root-owned while its sibling
-  directories aren't? Possibilities: created once by a root-context provisioning/deploy
-  step (Ansible, container build) before the app ever ran, or a leftover from an image
-  rebuild that ran as root. Worth checking `terraform-infrastructure`'s Ansible
-  playbooks / the Dockerfile for anywhere `styles/` (or `files/` generally) gets
-  explicitly created, to see if the ownership should be fixed at the source rather than
-  patched live each time.
-- **This fix is container-local and ephemeral** — a container restart/redeploy that
-  rebuilds the filesystem from the image (rather than reusing the same running
-  container's writable layer) could reintroduce the same root-ownership, depending on
-  how `files/` is actually persisted (bind mount vs. baked into the image vs. a
-  volume). Not confirmed which applies here. If the container gets rebuilt and image
-  styles start 500ing again, this is almost certainly why — re-apply the same `chown`,
-  and use that recurrence as a reason to actually fix it at the provisioning layer
-  instead of live-patching indefinitely.
+- **Root cause not investigated** — why was `styles/` root-owned while its sibling
+  directories weren't, given the fix persists at the host path? Possibilities: created
+  once by a root-context provisioning/deploy step (Ansible, container build) writing to
+  `/mnt/data/mandala-drupal-0/` before the app ever ran, or a leftover from some earlier
+  `docker exec -u root` on this host. Worth checking `terraform-infrastructure`'s
+  Ansible playbooks / the Dockerfile for anywhere `styles/` (or `files/` generally) gets
+  explicitly created, to fix it at the source rather than have it silently already-fixed
+  on this one host.
 - Worth checking whether staging/production have (or will have) the same root-owned
-  `styles/` directory before this becomes a real incident there instead of a caught-early
-  dev-0 finding.
+  `styles/` directory on their own `/mnt/data/<container>/sites/default/files/` host
+  paths before this becomes a real incident there instead of a caught-early dev-0
+  finding — each host's bind-mount source is independent, so dev-0 being fixed says
+  nothing about staging/production.
