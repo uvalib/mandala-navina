@@ -1,0 +1,10 @@
+uuid: 91b73eef-967e-47cf-a65b-a9c8b98663dc
+langcode: en
+status: true
+dependencies: {  }
+id: av_kmap_annotation
+label: 'AV KMaps Annotation'
+icon_uuid: null
+icon_default: null
+description: null
+behavior_plugins: {  }

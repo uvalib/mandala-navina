@@ -1,0 +1,48 @@
+uuid: 7bc1c998-6589-4c81-bb0d-2ca96fbe831d
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_aspect_ratio
+field_name: field_aspect_ratio
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: '4 to 3'
+      label: '4 to 3'
+    -
+      value: '4 to 3 16 to 9 letterbox'
+      label: '4 to 3 16 to 9 letterbox'
+    -
+      value: '4 to 3 16 to 9 anamorphic'
+      label: '4 to 3 16 to 9 anamorphic'
+    -
+      value: '16 to 9'
+      label: '16 to 9'
+    -
+      value: '5_5 to 3'
+      label: '5_5 to 3'
+    -
+      value: '7 to 3 Panavision or CinemaScope'
+      label: '7 to 3 Panavision or CinemaScope'
+    -
+      value: '2_35 to 1'
+      label: '2_35 to 1'
+    -
+      value: '1_85 to 1'
+      label: '1_85 to 1'
+    -
+      value: Other
+      label: Other
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

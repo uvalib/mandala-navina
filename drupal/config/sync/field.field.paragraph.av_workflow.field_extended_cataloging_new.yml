@@ -1,0 +1,21 @@
+uuid: 55ce26b5-290d-4076-a3ad-19b4a52af641
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_extended_cataloging_new
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_extended_cataloging_new
+field_name: field_extended_cataloging_new
+entity_type: paragraph
+bundle: av_workflow
+label: 'Extended cataloging new'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

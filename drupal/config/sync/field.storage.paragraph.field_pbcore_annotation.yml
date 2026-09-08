@@ -1,0 +1,19 @@
+uuid: 9f6c209b-68ca-46f6-b1ae-07c9269d6b89
+langcode: en
+status: true
+dependencies:
+  module:
+    - paragraphs
+    - text
+id: paragraph.field_pbcore_annotation
+field_name: field_pbcore_annotation
+entity_type: paragraph
+type: text_long
+settings: {  }
+module: text
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

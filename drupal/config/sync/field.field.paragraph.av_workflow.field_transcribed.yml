@@ -1,0 +1,21 @@
+uuid: e0d3d169-6145-4500-a9e1-73e2a2bacd75
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_transcribed
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_transcribed
+field_name: field_transcribed
+entity_type: paragraph
+bundle: av_workflow
+label: Transcribed
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

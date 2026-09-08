@@ -1,0 +1,23 @@
+uuid: df5f3591-23f5-404f-92cd-54ab76ba822e
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_kmap_id
+    - paragraphs.paragraphs_type.av_kmap_annotation
+id: paragraph.av_kmap_annotation.field_kmap_id
+field_name: field_kmap_id
+entity_type: paragraph
+bundle: av_kmap_annotation
+label: 'Kmap id'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

@@ -1,0 +1,21 @@
+uuid: 8bb13699-c193-4954-a6f6-aee10c465137
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_pbcore_language
+    - paragraphs.paragraphs_type.av_pbcore_title
+  module:
+    - options
+id: paragraph.av_pbcore_title.field_pbcore_language
+field_name: field_pbcore_language
+entity_type: paragraph
+bundle: av_pbcore_title
+label: 'Pbcore language'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

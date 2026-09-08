@@ -1,0 +1,21 @@
+uuid: d33407ef-8dea-40d9-bcaf-dd8881a27f64
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_format_standard
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - options
+id: paragraph.av_pbcore_instantiation.field_format_standard
+field_name: field_format_standard
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Format standard'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

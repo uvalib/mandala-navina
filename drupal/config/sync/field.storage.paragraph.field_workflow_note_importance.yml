@@ -1,0 +1,33 @@
+uuid: c4cc8c67-2485-4f1d-9fda-d5cfc5fd19b9
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_workflow_note_importance
+field_name: field_workflow_note_importance
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: '0'
+      label: Low
+    -
+      value: '1'
+      label: Medium
+    -
+      value: '2'
+      label: High
+    -
+      value: '3'
+      label: Immediate
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

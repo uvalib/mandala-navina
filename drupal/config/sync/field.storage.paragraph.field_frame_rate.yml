@@ -1,0 +1,90 @@
+uuid: c531dab3-cb60-466f-8402-bf88a22fb0b2
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_frame_rate
+field_name: field_frame_rate
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: '60 fields per sec'
+      label: '60 fields per sec'
+    -
+      value: '59_94 fields per sec'
+      label: '59_94 fields per sec'
+    -
+      value: '30 fps 60 fields per sec'
+      label: '30 fps 60 fields per sec'
+    -
+      value: '29_97 fps 59_94 fields per sec'
+      label: '29_97 fps 59_94 fields per sec'
+    -
+      value: '25 fps'
+      label: '25 fps'
+    -
+      value: '24 fps'
+      label: '24 fps'
+    -
+      value: '23_976 fps'
+      label: '23_976 fps'
+    -
+      value: '15 fps'
+      label: '15 fps'
+    -
+      value: '12 fps'
+      label: '12 fps'
+    -
+      value: '10 fps'
+      label: '10 fps'
+    -
+      value: '7 fps'
+      label: '7 fps'
+    -
+      value: '5 fps'
+      label: '5 fps'
+    -
+      value: '2 fps'
+      label: '2 fps'
+    -
+      value: '1 fps'
+      label: '1 fps'
+    -
+      value: '33 rpm'
+      label: '33 rpm'
+    -
+      value: '45 rpm'
+      label: '45 rpm'
+    -
+      value: '78 rpm'
+      label: '78 rpm'
+    -
+      value: '1 and 7_8 ips'
+      label: '1 and 7_8 ips'
+    -
+      value: '3 and 3_4 ips'
+      label: '3 and 3_4 ips'
+    -
+      value: '7 and 1_2 ips'
+      label: '7 and 1_2 ips'
+    -
+      value: '15 ips'
+      label: '15 ips'
+    -
+      value: '30 ips'
+      label: '30 ips'
+    -
+      value: other
+      label: other
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

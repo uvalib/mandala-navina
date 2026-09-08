@@ -1,0 +1,21 @@
+uuid: 1c95ddd0-5456-462a-bb59-a52fac465d73
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_media_needs_recompression
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_media_needs_recompression
+field_name: field_media_needs_recompression
+entity_type: paragraph
+bundle: av_workflow
+label: 'Media needs recompression'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

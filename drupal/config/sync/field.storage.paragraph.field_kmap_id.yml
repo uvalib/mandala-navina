@@ -1,0 +1,20 @@
+uuid: 51156f54-ffd9-4c39-a0f5-cb3348901e39
+langcode: en
+status: true
+dependencies:
+  module:
+    - paragraphs
+id: paragraph.field_kmap_id
+field_name: field_kmap_id
+entity_type: paragraph
+type: integer
+settings:
+  unsigned: false
+  size: normal
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

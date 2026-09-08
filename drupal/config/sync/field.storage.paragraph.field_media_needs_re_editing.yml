@@ -1,0 +1,30 @@
+uuid: d8c27eff-0552-43e1-9cca-452fe40d5048
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_media_needs_re_editing
+field_name: field_media_needs_re_editing
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 'Not Reviewed'
+      label: 'Not Reviewed'
+    -
+      value: 'Yes'
+      label: 'Yes'
+    -
+      value: 'No'
+      label: 'No'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

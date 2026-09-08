@@ -1,0 +1,27 @@
+uuid: ee4a376d-67d2-46b4-88b3-a7e1a9960261
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_pbcore_format_id
+    - paragraphs.paragraphs_type.av_pbcore_format_id
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - entity_reference_revisions
+id: paragraph.av_pbcore_instantiation.field_pbcore_format_id
+field_name: field_pbcore_format_id
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Pbcore format id'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_pbcore_format_id: av_pbcore_format_id
+    negate: 0
+field_type: entity_reference_revisions

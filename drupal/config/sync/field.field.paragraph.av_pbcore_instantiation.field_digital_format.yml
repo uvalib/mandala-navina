@@ -1,0 +1,21 @@
+uuid: 3c22a88e-5fd3-4255-8953-0073e0bf4082
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_digital_format
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - options
+id: paragraph.av_pbcore_instantiation.field_digital_format
+field_name: field_digital_format
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Digital format'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

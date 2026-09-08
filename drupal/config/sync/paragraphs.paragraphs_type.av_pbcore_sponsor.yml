@@ -1,0 +1,10 @@
+uuid: 5a1b4cb9-fb75-45b4-92f0-52484cd765c8
+langcode: en
+status: true
+dependencies: {  }
+id: av_pbcore_sponsor
+label: 'AV PBCore Sponsor'
+icon_uuid: null
+icon_default: null
+description: null
+behavior_plugins: {  }

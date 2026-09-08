@@ -1,0 +1,72 @@
+uuid: 9e6aed3e-1954-4774-8302-e837f1522ce7
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_format_standard
+field_name: field_format_standard
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 'ATSC video interlaced'
+      label: 'ATSC video interlaced'
+    -
+      value: 'ATSC video progressive'
+      label: 'ATSC video progressive'
+    -
+      value: 'Dolby Digital AC3 Audio'
+      label: 'Dolby Digital AC3 Audio'
+    -
+      value: 'DTA Audio'
+      label: 'DTA Audio'
+    -
+      value: Film
+      label: Film
+    -
+      value: 'Flash Video'
+      label: 'Flash Video'
+    -
+      value: 'Linear PCM Audio'
+      label: 'Linear PCM Audio'
+    -
+      value: 'MPEG Audio'
+      label: 'MPEG Audio'
+    -
+      value: 'MPEG video'
+      label: 'MPEG video'
+    -
+      value: 'NTSC video interlaced'
+      label: 'NTSC video interlaced'
+    -
+      value: 'NTSC video progressive'
+      label: 'NTSC video progressive'
+    -
+      value: 'PAL video'
+      label: 'PAL video'
+    -
+      value: QuickTime
+      label: QuickTime
+    -
+      value: RealSystems
+      label: RealSystems
+    -
+      value: 'SDDS Audio'
+      label: 'SDDS Audio'
+    -
+      value: 'SECAM video'
+      label: 'SECAM video'
+    -
+      value: 'Windows Media'
+      label: 'Windows Media'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

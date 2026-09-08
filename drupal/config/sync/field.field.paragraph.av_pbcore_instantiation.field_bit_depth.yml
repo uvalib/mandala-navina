@@ -1,0 +1,21 @@
+uuid: e34e57f0-a8bb-4757-ae44-9d3d0d5b22f2
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_bit_depth
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - options
+id: paragraph.av_pbcore_instantiation.field_bit_depth
+field_name: field_bit_depth
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Bit depth'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

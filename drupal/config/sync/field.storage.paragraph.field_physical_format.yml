@@ -1,0 +1,411 @@
+uuid: fdf6a5d7-242d-4616-99a1-4c72a27559fb
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_physical_format
+field_name: field_physical_format
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: '1 inch audio tape'
+      label: '1 inch audio tape'
+    -
+      value: '1 inch videotape EL3400'
+      label: '1 inch videotape EL3400'
+    -
+      value: '1 inch videotape EV 200'
+      label: '1 inch videotape EV 200'
+    -
+      value: '1 inch videotape Helical BVH 1000'
+      label: '1 inch videotape Helical BVH 1000'
+    -
+      value: '1 inch videotape IVC 700 or 800 or 900'
+      label: '1 inch videotape IVC 700 or 800 or 900'
+    -
+      value: '1 inch videotape PI 3V'
+      label: '1 inch videotape PI 3V'
+    -
+      value: '1 inch videotape SMPTE Type A'
+      label: '1 inch videotape SMPTE Type A'
+    -
+      value: '1 inch videotape SMPTE Type B'
+      label: '1 inch videotape SMPTE Type B'
+    -
+      value: '1 inch videotape SMPTE Type C'
+      label: '1 inch videotape SMPTE Type C'
+    -
+      value: '2 inch audio tape'
+      label: '2 inch audio tape'
+    -
+      value: '2 inch videotape Helical Ampex VR 1500'
+      label: '2 inch videotape Helical Ampex VR 1500'
+    -
+      value: '2 inch videotape Helical IVC 9000'
+      label: '2 inch videotape Helical IVC 9000'
+    -
+      value: '2 inch videotape Quad'
+      label: '2 inch videotape Quad'
+    -
+      value: '2 inch videotape Sony Helical SV 201'
+      label: '2 inch videotape Sony Helical SV 201'
+    -
+      value: '8 Track cassette'
+      label: '8 Track cassette'
+    -
+      value: '8mm Digital 8'
+      label: '8mm Digital 8'
+    -
+      value: '8mm Hi8 Video'
+      label: '8mm Hi8 Video'
+    -
+      value: '8mm video'
+      label: '8mm video'
+    -
+      value: 'Art original'
+      label: 'Art original'
+    -
+      value: 'Art print'
+      label: 'Art print'
+    -
+      value: 'Art reproduction'
+      label: 'Art reproduction'
+    -
+      value: 'Audio cart'
+      label: 'Audio cart'
+    -
+      value: 'BD Videodisc'
+      label: 'BD Videodisc'
+    -
+      value: 'Betacam Digital Digi Beta'
+      label: 'Betacam Digital Digi Beta'
+    -
+      value: 'Betacam SP'
+      label: 'Betacam SP'
+    -
+      value: 'Betacam SX'
+      label: 'Betacam SX'
+    -
+      value: Betacam
+      label: Betacam
+    -
+      value: 'Betamax or Super or HB'
+      label: 'Betamax or Super or HB'
+    -
+      value: Binder
+      label: Binder
+    -
+      value: Book
+      label: Book
+    -
+      value: Cartivision
+      label: Cartivision
+    -
+      value: 'CD Audio'
+      label: 'CD Audio'
+    -
+      value: 'CD ROM'
+      label: 'CD ROM'
+    -
+      value: 'CD Video'
+      label: 'CD Video'
+    -
+      value: Chart
+      label: Chart
+    -
+      value: CVC
+      label: CVC
+    -
+      value: D1
+      label: D1
+    -
+      value: D2
+      label: D2
+    -
+      value: D3
+      label: D3
+    -
+      value: D5
+      label: D5
+    -
+      value: D6
+      label: D6
+    -
+      value: D7
+      label: D7
+    -
+      value: 'DARS DA 88'
+      label: 'DARS DA 88'
+    -
+      value: DAT
+      label: DAT
+    -
+      value: 'DBX 700 VHS tape'
+      label: 'DBX 700 VHS tape'
+    -
+      value: DCT
+      label: DCT
+    -
+      value: 'DV Mini'
+      label: 'DV Mini'
+    -
+      value: 'DVC Pro 25'
+      label: 'DVC Pro 25'
+    -
+      value: 'DVC Pro 50 P'
+      label: 'DVC Pro 50 P'
+    -
+      value: 'DVC Pro 50'
+      label: 'DVC Pro 50'
+    -
+      value: 'DVCam Sony'
+      label: 'DVCam Sony'
+    -
+      value: 'DVD Audio'
+      label: 'DVD Audio'
+    -
+      value: 'DVD minus R'
+      label: 'DVD minus R'
+    -
+      value: 'DVD minus RW'
+      label: 'DVD minus RW'
+    -
+      value: 'DVD plus R DL'
+      label: 'DVD plus R DL'
+    -
+      value: 'DVD plus R'
+      label: 'DVD plus R'
+    -
+      value: 'DVD plus RW'
+      label: 'DVD plus RW'
+    -
+      value: 'DVD Video'
+      label: 'DVD Video'
+    -
+      value: 'ED Beta'
+      label: 'ED Beta'
+    -
+      value: 'EIAJ Cartridge'
+      label: 'EIAJ Cartridge'
+    -
+      value: 'EVD Videodisc China'
+      label: 'EVD Videodisc China'
+    -
+      value: 'F1 Beta tape'
+      label: 'F1 Beta tape'
+    -
+      value: 'Film 16mm'
+      label: 'Film 16mm'
+    -
+      value: 'Film 35mm'
+      label: 'Film 35mm'
+    -
+      value: 'Film 70mm'
+      label: 'Film 70mm'
+    -
+      value: 'Film 8mm'
+      label: 'Film 8mm'
+    -
+      value: Filmstrip
+      label: Filmstrip
+    -
+      value: 'Flash card'
+      label: 'Flash card'
+    -
+      value: 'Flash Memory'
+      label: 'Flash Memory'
+    -
+      value: 'Flip chart'
+      label: 'Flip chart'
+    -
+      value: 'half inch audio tape'
+      label: 'half inch audio tape'
+    -
+      value: 'half inch digital audio'
+      label: 'half inch digital audio'
+    -
+      value: 'half inch videotape CV'
+      label: 'half inch videotape CV'
+    -
+      value: 'half inch videotape EIAJ Type 1'
+      label: 'half inch videotape EIAJ Type 1'
+    -
+      value: 'half inch videotape Hawkeye or Recam or M'
+      label: 'half inch videotape Hawkeye or Recam or M'
+    -
+      value: 'half inch videotape V2000'
+      label: 'half inch videotape V2000'
+    -
+      value: 'half inch videotape VCR'
+      label: 'half inch videotape VCR'
+    -
+      value: 'Hard Drive'
+      label: 'Hard Drive'
+    -
+      value: 'HD D5'
+      label: 'HD D5'
+    -
+      value: 'HD D9'
+      label: 'HD D9'
+    -
+      value: 'HD DVC PRO HD'
+      label: 'HD DVC PRO HD'
+    -
+      value: 'HD Videodisc'
+      label: 'HD Videodisc'
+    -
+      value: HDCAM
+      label: HDCAM
+    -
+      value: HDD1000
+      label: HDD1000
+    -
+      value: HDV1000
+      label: HDV1000
+    -
+      value: 'High 8 DA78'
+      label: 'High 8 DA78'
+    -
+      value: 'Kodak PhotoCD'
+      label: 'Kodak PhotoCD'
+    -
+      value: 'Lacquer discs or acetates'
+      label: 'Lacquer discs or acetates'
+    -
+      value: 'Laser Videodisc CAV 12inch'
+      label: 'Laser Videodisc CAV 12inch'
+    -
+      value: 'Laser Videodisc CLV 12 inch'
+      label: 'Laser Videodisc CLV 12 inch'
+    -
+      value: 'LP Record 45'
+      label: 'LP Record 45'
+    -
+      value: 'LP Record'
+      label: 'LP Record'
+    -
+      value: 'M II'
+      label: 'M II'
+    -
+      value: 'Macthronics MVC 10'
+      label: 'Macthronics MVC 10'
+    -
+      value: Manuscript
+      label: Manuscript
+    -
+      value: Minidisc
+      label: Minidisc
+    -
+      value: 'MPEG IMX'
+      label: 'MPEG IMX'
+    -
+      value: Newspaper
+      label: Newspaper
+    -
+      value: 'one eighth inch audio cassette'
+      label: 'one eighth inch audio cassette'
+    -
+      value: 'one fourth inch audio cassette'
+      label: 'one fourth inch audio cassette'
+    -
+      value: 'one fourth inch audio tape'
+      label: 'one fourth inch audio tape'
+    -
+      value: 'one fourth inch videotape Akai8'
+      label: 'one fourth inch videotape Akai8'
+    -
+      value: Paper
+      label: Paper
+    -
+      value: Periodical
+      label: Periodical
+    -
+      value: Photograph
+      label: Photograph
+    -
+      value: Picture
+      label: Picture
+    -
+      value: Postcard
+      label: Postcard
+    -
+      value: Poster
+      label: Poster
+    -
+      value: Radiograph
+      label: Radiograph
+    -
+      value: 'Roland DM 80'
+      label: 'Roland DM 80'
+    -
+      value: 'S VHS'
+      label: 'S VHS'
+    -
+      value: 'Shellac discs'
+      label: 'Shellac discs'
+    -
+      value: Slide
+      label: Slide
+    -
+      value: Stereograph
+      label: Stereograph
+    -
+      value: 'Study print'
+      label: 'Study print'
+    -
+      value: 'Technical drawing'
+      label: 'Technical drawing'
+    -
+      value: 'three quarters inch videotape Umatic SP'
+      label: 'three quarters inch videotape Umatic SP'
+    -
+      value: 'three quarters inch videotape Umatic'
+      label: 'three quarters inch videotape Umatic'
+    -
+      value: Transparency
+      label: Transparency
+    -
+      value: 'UMD Videodisc Sony'
+      label: 'UMD Videodisc Sony'
+    -
+      value: UniHi
+      label: UniHi
+    -
+      value: 'V Cord II'
+      label: 'V Cord II'
+    -
+      value: 'V Cord'
+      label: 'V Cord'
+    -
+      value: VHS
+      label: VHS
+    -
+      value: VTR150
+      label: VTR150
+    -
+      value: VTR600
+      label: VTR600
+    -
+      value: VX
+      label: VX
+    -
+      value: 'W VHS'
+      label: 'W VHS'
+    -
+      value: 'Wall chart'
+      label: 'Wall chart'
+    -
+      value: Wire
+      label: Wire
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

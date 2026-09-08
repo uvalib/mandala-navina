@@ -1,0 +1,891 @@
+uuid: a816bf45-855d-4aae-9750-a963949fa935
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_digital_format
+field_name: field_digital_format
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 'video 3gpp'
+      label: 'video 3gpp'
+    -
+      value: 'video 3gpp2'
+      label: 'video 3gpp2'
+    -
+      value: 'video 3gpp tt'
+      label: 'video 3gpp tt'
+    -
+      value: 'video BMPEG'
+      label: 'video BMPEG'
+    -
+      value: 'video BT656'
+      label: 'video BT656'
+    -
+      value: 'video CelB'
+      label: 'video CelB'
+    -
+      value: 'video DV'
+      label: 'video DV'
+    -
+      value: 'video H261'
+      label: 'video H261'
+    -
+      value: 'video H263'
+      label: 'video H263'
+    -
+      value: 'video H263 1998'
+      label: 'video H263 1998'
+    -
+      value: 'video H263 2000'
+      label: 'video H263 2000'
+    -
+      value: 'video H264'
+      label: 'video H264'
+    -
+      value: 'video JPEG'
+      label: 'video JPEG'
+    -
+      value: 'video MJ2'
+      label: 'video MJ2'
+    -
+      value: 'video MP1S'
+      label: 'video MP1S'
+    -
+      value: 'video MP2P'
+      label: 'video MP2P'
+    -
+      value: 'video MP2T'
+      label: 'video MP2T'
+    -
+      value: 'video mp4'
+      label: 'video mp4'
+    -
+      value: 'video MP4V ES'
+      label: 'video MP4V ES'
+    -
+      value: 'video MPV'
+      label: 'video MPV'
+    -
+      value: 'video mpeg'
+      label: 'video mpeg'
+    -
+      value: 'video mpeg4 generic'
+      label: 'video mpeg4 generic'
+    -
+      value: 'video nv'
+      label: 'video nv'
+    -
+      value: 'video parityfec'
+      label: 'video parityfec'
+    -
+      value: 'video pointer'
+      label: 'video pointer'
+    -
+      value: 'video quicktime'
+      label: 'video quicktime'
+    -
+      value: 'video raw'
+      label: 'video raw'
+    -
+      value: 'video rtx'
+      label: 'video rtx'
+    -
+      value: 'video SMPTE292M'
+      label: 'video SMPTE292M'
+    -
+      value: 'video vc1'
+      label: 'video vc1'
+    -
+      value: 'video vnd_dlna_mpeg tts'
+      label: 'video vnd_dlna_mpeg tts'
+    -
+      value: 'video vnd_fvt'
+      label: 'video vnd_fvt'
+    -
+      value: 'video vnd_hns_video'
+      label: 'video vnd_hns_video'
+    -
+      value: 'video vnd_motorola_video'
+      label: 'video vnd_motorola_video'
+    -
+      value: 'video vnd_motorola_videop'
+      label: 'video vnd_motorola_videop'
+    -
+      value: 'video vnd_mpegurl'
+      label: 'video vnd_mpegurl'
+    -
+      value: 'video vnd_nokia_interleaved multimedia'
+      label: 'video vnd_nokia_interleaved multimedia'
+    -
+      value: 'video vnd_nokia_videovoip'
+      label: 'video vnd_nokia_videovoip'
+    -
+      value: 'video vnd_objectvideo'
+      label: 'video vnd_objectvideo'
+    -
+      value: 'video vnd_sealed_mpeg1'
+      label: 'video vnd_sealed_mpeg1'
+    -
+      value: 'video vnd_sealed_mpeg4'
+      label: 'video vnd_sealed_mpeg4'
+    -
+      value: 'video vnd_sealed_swf'
+      label: 'video vnd_sealed_swf'
+    -
+      value: 'video vnd_sealedmedia_softseal_mov'
+      label: 'video vnd_sealedmedia_softseal_mov'
+    -
+      value: 'video vnd_vivo'
+      label: 'video vnd_vivo'
+    -
+      value: 'audio 32kadpcm'
+      label: 'audio 32kadpcm'
+    -
+      value: 'audio 3gpp'
+      label: 'audio 3gpp'
+    -
+      value: 'audio 3gpp2'
+      label: 'audio 3gpp2'
+    -
+      value: 'audio ac3'
+      label: 'audio ac3'
+    -
+      value: 'audio AMR'
+      label: 'audio AMR'
+    -
+      value: 'audio AMR WB'
+      label: 'audio AMR WB'
+    -
+      value: 'audio amr wbplus'
+      label: 'audio amr wbplus'
+    -
+      value: 'audio asc'
+      label: 'audio asc'
+    -
+      value: 'audio basic'
+      label: 'audio basic'
+    -
+      value: 'audio BV16'
+      label: 'audio BV16'
+    -
+      value: 'audio BV32'
+      label: 'audio BV32'
+    -
+      value: 'audio clearmode'
+      label: 'audio clearmode'
+    -
+      value: 'audio CN'
+      label: 'audio CN'
+    -
+      value: 'audio DAT12'
+      label: 'audio DAT12'
+    -
+      value: 'audio dls'
+      label: 'audio dls'
+    -
+      value: 'audio dsr es201108'
+      label: 'audio dsr es201108'
+    -
+      value: 'audio dsr es202050'
+      label: 'audio dsr es202050'
+    -
+      value: 'audio dsr es202211'
+      label: 'audio dsr es202211'
+    -
+      value: 'audio dsr es202212'
+      label: 'audio dsr es202212'
+    -
+      value: 'audio eac3'
+      label: 'audio eac3'
+    -
+      value: 'audio DVI4'
+      label: 'audio DVI4'
+    -
+      value: 'audio EVRC'
+      label: 'audio EVRC'
+    -
+      value: 'audio EVRC0'
+      label: 'audio EVRC0'
+    -
+      value: 'audio EVRC1'
+      label: 'audio EVRC1'
+    -
+      value: 'audio EVRCB'
+      label: 'audio EVRCB'
+    -
+      value: 'audio EVRCB0'
+      label: 'audio EVRCB0'
+    -
+      value: 'audio EVRCB1'
+      label: 'audio EVRCB1'
+    -
+      value: 'audio EVRC QCP'
+      label: 'audio EVRC QCP'
+    -
+      value: 'audio G722'
+      label: 'audio G722'
+    -
+      value: 'audio G7221'
+      label: 'audio G7221'
+    -
+      value: 'audio G723'
+      label: 'audio G723'
+    -
+      value: 'audio G726 16'
+      label: 'audio G726 16'
+    -
+      value: 'audio G726 24'
+      label: 'audio G726 24'
+    -
+      value: 'audio G726 32'
+      label: 'audio G726 32'
+    -
+      value: 'audio G726 40'
+      label: 'audio G726 40'
+    -
+      value: 'audio G728'
+      label: 'audio G728'
+    -
+      value: 'audio G729'
+      label: 'audio G729'
+    -
+      value: 'audio G7291'
+      label: 'audio G7291'
+    -
+      value: 'audio G729D'
+      label: 'audio G729D'
+    -
+      value: 'audio G729E'
+      label: 'audio G729E'
+    -
+      value: 'audio GSM'
+      label: 'audio GSM'
+    -
+      value: 'audio GSM EFR'
+      label: 'audio GSM EFR'
+    -
+      value: 'audio iLBC'
+      label: 'audio iLBC'
+    -
+      value: 'audio L8'
+      label: 'audio L8'
+    -
+      value: 'audio L16'
+      label: 'audio L16'
+    -
+      value: 'audio L20'
+      label: 'audio L20'
+    -
+      value: 'audio L24'
+      label: 'audio L24'
+    -
+      value: 'audio LPC'
+      label: 'audio LPC'
+    -
+      value: 'audio mobile xmf'
+      label: 'audio mobile xmf'
+    -
+      value: 'audio MPA'
+      label: 'audio MPA'
+    -
+      value: 'audio mp4'
+      label: 'audio mp4'
+    -
+      value: 'audio MP4A LATM'
+      label: 'audio MP4A LATM'
+    -
+      value: 'audio mpa robust'
+      label: 'audio mpa robust'
+    -
+      value: 'audio mpeg'
+      label: 'audio mpeg'
+    -
+      value: 'audio mpeg4 generic'
+      label: 'audio mpeg4 generic'
+    -
+      value: 'audio parityfec'
+      label: 'audio parityfec'
+    -
+      value: 'audio PCMA'
+      label: 'audio PCMA'
+    -
+      value: 'audio PCMU'
+      label: 'audio PCMU'
+    -
+      value: 'audio prs_sid'
+      label: 'audio prs_sid'
+    -
+      value: 'audio QCELP'
+      label: 'audio QCELP'
+    -
+      value: 'audio RED'
+      label: 'audio RED'
+    -
+      value: 'audio rtp midi'
+      label: 'audio rtp midi'
+    -
+      value: 'audio rtx'
+      label: 'audio rtx'
+    -
+      value: 'audio SMV'
+      label: 'audio SMV'
+    -
+      value: 'audio SMV0'
+      label: 'audio SMV0'
+    -
+      value: 'audio SMV QCP'
+      label: 'audio SMV QCP'
+    -
+      value: 'audio t140c'
+      label: 'audio t140c'
+    -
+      value: 'audio t38'
+      label: 'audio t38'
+    -
+      value: 'audio telephone event'
+      label: 'audio telephone event'
+    -
+      value: 'audio tone'
+      label: 'audio tone'
+    -
+      value: 'audio VDVI'
+      label: 'audio VDVI'
+    -
+      value: 'audio VMR WB'
+      label: 'audio VMR WB'
+    -
+      value: 'audio vnd_3gpp_iufp'
+      label: 'audio vnd_3gpp_iufp'
+    -
+      value: 'audio vnd_4SB'
+      label: 'audio vnd_4SB'
+    -
+      value: 'audio vnd_audiokoz'
+      label: 'audio vnd_audiokoz'
+    -
+      value: 'audio vnd_CELP'
+      label: 'audio vnd_CELP'
+    -
+      value: 'audio vnd_cisco_nse'
+      label: 'audio vnd_cisco_nse'
+    -
+      value: 'audio vnd_cmles_radio events'
+      label: 'audio vnd_cmles_radio events'
+    -
+      value: 'audio vnd_cns_anp1'
+      label: 'audio vnd_cns_anp1'
+    -
+      value: 'audio vnd_cns_inf1'
+      label: 'audio vnd_cns_inf1'
+    -
+      value: 'audio vnd_digital winds'
+      label: 'audio vnd_digital winds'
+    -
+      value: 'audio vnd_dlna_adts'
+      label: 'audio vnd_dlna_adts'
+    -
+      value: 'audio vnd_everad_plj'
+      label: 'audio vnd_everad_plj'
+    -
+      value: 'audio vnd_hns_audio'
+      label: 'audio vnd_hns_audio'
+    -
+      value: 'audio vnd_lucent_voice'
+      label: 'audio vnd_lucent_voice'
+    -
+      value: 'audio vnd_nokia_mobile xmf'
+      label: 'audio vnd_nokia_mobile xmf'
+    -
+      value: 'audio vnd_nortel_vbk'
+      label: 'audio vnd_nortel_vbk'
+    -
+      value: 'audio vnd_nuera_ecelp4800'
+      label: 'audio vnd_nuera_ecelp4800'
+    -
+      value: 'audio vnd_nuera_ecelp7470'
+      label: 'audio vnd_nuera_ecelp7470'
+    -
+      value: 'audio vnd_nuera_ecelp9600'
+      label: 'audio vnd_nuera_ecelp9600'
+    -
+      value: 'audio vnd_octel_sbc'
+      label: 'audio vnd_octel_sbc'
+    -
+      value: 'audio vnd_rhetorex_32kadpcm'
+      label: 'audio vnd_rhetorex_32kadpcm'
+    -
+      value: 'audio vnd_sealedmedia_softseal_mpeg'
+      label: 'audio vnd_sealedmedia_softseal_mpeg'
+    -
+      value: 'audio vnd_vmx_cvsd'
+      label: 'audio vnd_vmx_cvsd'
+    -
+      value: 'image cgm'
+      label: 'image cgm'
+    -
+      value: 'image fits'
+      label: 'image fits'
+    -
+      value: 'image g3fax'
+      label: 'image g3fax'
+    -
+      value: 'image gif'
+      label: 'image gif'
+    -
+      value: 'image ief'
+      label: 'image ief'
+    -
+      value: 'image jp2'
+      label: 'image jp2'
+    -
+      value: 'image jpeg'
+      label: 'image jpeg'
+    -
+      value: 'image jpm'
+      label: 'image jpm'
+    -
+      value: 'image jpx'
+      label: 'image jpx'
+    -
+      value: 'image naplps'
+      label: 'image naplps'
+    -
+      value: 'image png'
+      label: 'image png'
+    -
+      value: 'image prs_btif'
+      label: 'image prs_btif'
+    -
+      value: 'image prs_pti'
+      label: 'image prs_pti'
+    -
+      value: 'image t38'
+      label: 'image t38'
+    -
+      value: 'image tiff'
+      label: 'image tiff'
+    -
+      value: 'image tiff fx'
+      label: 'image tiff fx'
+    -
+      value: 'image vnd_adobe_photoshop'
+      label: 'image vnd_adobe_photoshop'
+    -
+      value: 'image vnd_cns_inf2'
+      label: 'image vnd_cns_inf2'
+    -
+      value: 'image vnd_djvu'
+      label: 'image vnd_djvu'
+    -
+      value: 'image vnd_dwg'
+      label: 'image vnd_dwg'
+    -
+      value: 'image vnd_dxf'
+      label: 'image vnd_dxf'
+    -
+      value: 'image vnd_fastbidsheet'
+      label: 'image vnd_fastbidsheet'
+    -
+      value: 'image vnd_fpx'
+      label: 'image vnd_fpx'
+    -
+      value: 'image vnd_fst'
+      label: 'image vnd_fst'
+    -
+      value: 'image vnd_fujixerox_edmics mmr'
+      label: 'image vnd_fujixerox_edmics mmr'
+    -
+      value: 'image vnd_fujixerox_edmics rlc'
+      label: 'image vnd_fujixerox_edmics rlc'
+    -
+      value: 'image vnd_globalgraphics_pgb'
+      label: 'image vnd_globalgraphics_pgb'
+    -
+      value: 'image vnd_microsoft_icon'
+      label: 'image vnd_microsoft_icon'
+    -
+      value: 'image vnd_mix'
+      label: 'image vnd_mix'
+    -
+      value: 'image vnd_ms modi'
+      label: 'image vnd_ms modi'
+    -
+      value: 'image vnd_net fpx'
+      label: 'image vnd_net fpx'
+    -
+      value: 'image vnd_sealed_png'
+      label: 'image vnd_sealed_png'
+    -
+      value: 'image vnd_sealedmedia_softseal_gif'
+      label: 'image vnd_sealedmedia_softseal_gif'
+    -
+      value: 'image vnd_sealedmedia_softseal_jpg'
+      label: 'image vnd_sealedmedia_softseal_jpg'
+    -
+      value: 'image vnd_svf'
+      label: 'image vnd_svf'
+    -
+      value: 'image vnd_wap_wbmp'
+      label: 'image vnd_wap_wbmp'
+    -
+      value: 'image vnd_xiff'
+      label: 'image vnd_xiff'
+    -
+      value: 'text calendar'
+      label: 'text calendar'
+    -
+      value: 'text css'
+      label: 'text css'
+    -
+      value: 'text csv'
+      label: 'text csv'
+    -
+      value: 'text directory'
+      label: 'text directory'
+    -
+      value: 'text dns'
+      label: 'text dns'
+    -
+      value: 'text ecmascript (obsolete)'
+      label: 'text ecmascript (obsolete)'
+    -
+      value: 'text enriched'
+      label: 'text enriched'
+    -
+      value: 'text html'
+      label: 'text html'
+    -
+      value: 'text javascript (obsolete)'
+      label: 'text javascript (obsolete)'
+    -
+      value: 'text parityfec'
+      label: 'text parityfec'
+    -
+      value: 'text plain'
+      label: 'text plain'
+    -
+      value: 'text prs_fallenstein_rst'
+      label: 'text prs_fallenstein_rst'
+    -
+      value: 'text prs_lines_tag'
+      label: 'text prs_lines_tag'
+    -
+      value: 'text RED'
+      label: 'text RED'
+    -
+      value: 'text rfc822 headers'
+      label: 'text rfc822 headers'
+    -
+      value: 'text richtext'
+      label: 'text richtext'
+    -
+      value: 'text rtf'
+      label: 'text rtf'
+    -
+      value: 'text rtx'
+      label: 'text rtx'
+    -
+      value: 'text sgml'
+      label: 'text sgml'
+    -
+      value: 'text t140'
+      label: 'text t140'
+    -
+      value: 'text tab separated values'
+      label: 'text tab separated values'
+    -
+      value: 'text troff'
+      label: 'text troff'
+    -
+      value: 'text uri list'
+      label: 'text uri list'
+    -
+      value: 'text vnd_abc'
+      label: 'text vnd_abc'
+    -
+      value: 'text vnd_curl'
+      label: 'text vnd_curl'
+    -
+      value: 'text vnd_DMClientScript'
+      label: 'text vnd_DMClientScript'
+    -
+      value: 'text vnd_esmertec_theme descriptor'
+      label: 'text vnd_esmertec_theme descriptor'
+    -
+      value: 'text vnd_fly'
+      label: 'text vnd_fly'
+    -
+      value: 'text vnd_fmi_flexstor'
+      label: 'text vnd_fmi_flexstor'
+    -
+      value: 'text vnd_in3d_3dml'
+      label: 'text vnd_in3d_3dml'
+    -
+      value: 'text vnd_in3d_spot'
+      label: 'text vnd_in3d_spot'
+    -
+      value: 'text vnd_IPTC_NewsML'
+      label: 'text vnd_IPTC_NewsML'
+    -
+      value: 'text vnd_IPTC_NITF'
+      label: 'text vnd_IPTC_NITF'
+    -
+      value: 'text vnd_latex z'
+      label: 'text vnd_latex z'
+    -
+      value: 'text vnd_motorola_reflex'
+      label: 'text vnd_motorola_reflex'
+    -
+      value: 'text vnd_ms mediapackage'
+      label: 'text vnd_ms mediapackage'
+    -
+      value: 'text vnd_net2phone_commcenter_command'
+      label: 'text vnd_net2phone_commcenter_command'
+    -
+      value: 'text vnd_sun_j2me_app descriptor'
+      label: 'text vnd_sun_j2me_app descriptor'
+    -
+      value: 'text vnd_trolltech_linguist'
+      label: 'text vnd_trolltech_linguist'
+    -
+      value: 'text vnd_wap_si'
+      label: 'text vnd_wap_si'
+    -
+      value: 'text vnd_wap_sl'
+      label: 'text vnd_wap_sl'
+    -
+      value: 'text vnd_wap_wml'
+      label: 'text vnd_wap_wml'
+    -
+      value: 'text vnd_wap_wmlscript'
+      label: 'text vnd_wap_wmlscript'
+    -
+      value: 'text xml'
+      label: 'text xml'
+    -
+      value: 'text xml external parsed entity'
+      label: 'text xml external parsed entity'
+    -
+      value: 'application http'
+      label: 'application http'
+    -
+      value: 'application hyperstudio'
+      label: 'application hyperstudio'
+    -
+      value: 'application javascript'
+      label: 'application javascript'
+    -
+      value: 'application mac binhex40'
+      label: 'application mac binhex40'
+    -
+      value: 'application marc'
+      label: 'application marc'
+    -
+      value: 'application mbox'
+      label: 'application mbox'
+    -
+      value: 'application mediaservercontrol plus xml'
+      label: 'application mediaservercontrol plus xml'
+    -
+      value: 'application mp4'
+      label: 'application mp4'
+    -
+      value: 'application mpeg4 generic'
+      label: 'application mpeg4 generic'
+    -
+      value: 'application mpeg4 iod'
+      label: 'application mpeg4 iod'
+    -
+      value: 'application mpeg4 iod xmt'
+      label: 'application mpeg4 iod xmt'
+    -
+      value: 'application msword'
+      label: 'application msword'
+    -
+      value: 'application mxf'
+      label: 'application mxf'
+    -
+      value: 'application pdf'
+      label: 'application pdf'
+    -
+      value: 'application postscript'
+      label: 'application postscript'
+    -
+      value: 'application rdf plus xml'
+      label: 'application rdf plus xml'
+    -
+      value: 'application rtf'
+      label: 'application rtf'
+    -
+      value: 'application rtx'
+      label: 'application rtx'
+    -
+      value: 'application sgml'
+      label: 'application sgml'
+    -
+      value: 'application sgml open catalog'
+      label: 'application sgml open catalog'
+    -
+      value: 'application smil OBSOLETE'
+      label: 'application smil OBSOLETE'
+    -
+      value: 'application smil plus xml'
+      label: 'application smil plus xml'
+    -
+      value: 'application soap plus fastinfoset'
+      label: 'application soap plus fastinfoset'
+    -
+      value: 'application soap plus xml'
+      label: 'application soap plus xml'
+    -
+      value: 'application ssml plus xml'
+      label: 'application ssml plus xml'
+    -
+      value: 'application vnd_adobe_xfdf'
+      label: 'application vnd_adobe_xfdf'
+    -
+      value: 'application vnd_apple_installer plus xml'
+      label: 'application vnd_apple_installer plus xml'
+    -
+      value: 'application vnd_framemaker'
+      label: 'application vnd_framemaker'
+    -
+      value: 'application vnd_google earth_kml plus xml'
+      label: 'application vnd_google earth_kml plus xml'
+    -
+      value: 'application vnd_google earth_kmz'
+      label: 'application vnd_google earth_kmz'
+    -
+      value: 'application vnd_HandHeld Entertainment plus xml'
+      label: 'application vnd_HandHeld Entertainment plus xml'
+    -
+      value: 'application vnd_lotus 1 2 3'
+      label: 'application vnd_lotus 1 2 3'
+    -
+      value: 'application vnd_lotus approach'
+      label: 'application vnd_lotus approach'
+    -
+      value: 'application vnd_lotus freelance'
+      label: 'application vnd_lotus freelance'
+    -
+      value: 'application vnd_lotus notes'
+      label: 'application vnd_lotus notes'
+    -
+      value: 'application vnd_lotus organizer'
+      label: 'application vnd_lotus organizer'
+    -
+      value: 'application vnd_lotus screencam'
+      label: 'application vnd_lotus screencam'
+    -
+      value: 'application vnd_lotus wordpro'
+      label: 'application vnd_lotus wordpro'
+    -
+      value: 'application vnd_mozilla_xul plus xml'
+      label: 'application vnd_mozilla_xul plus xml'
+    -
+      value: 'application vnd_ms artgalry'
+      label: 'application vnd_ms artgalry'
+    -
+      value: 'application vnd_ms asf'
+      label: 'application vnd_ms asf'
+    -
+      value: 'application vnd_ms cab compressed'
+      label: 'application vnd_ms cab compressed'
+    -
+      value: 'application vnd_mseq'
+      label: 'application vnd_mseq'
+    -
+      value: 'application vnd_ms excel'
+      label: 'application vnd_ms excel'
+    -
+      value: 'application vnd_ms fontobject'
+      label: 'application vnd_ms fontobject'
+    -
+      value: 'application vnd_ms htmlhelp'
+      label: 'application vnd_ms htmlhelp'
+    -
+      value: 'application vnd_msign'
+      label: 'application vnd_msign'
+    -
+      value: 'application vnd_ms ims'
+      label: 'application vnd_ms ims'
+    -
+      value: 'application vnd_ms lrm'
+      label: 'application vnd_ms lrm'
+    -
+      value: 'application vnd_ms powerpoint'
+      label: 'application vnd_ms powerpoint'
+    -
+      value: 'application vnd_ms project'
+      label: 'application vnd_ms project'
+    -
+      value: 'application vnd_ms tnef'
+      label: 'application vnd_ms tnef'
+    -
+      value: 'application vnd_ms wmdrm_lic chlg req'
+      label: 'application vnd_ms wmdrm_lic chlg req'
+    -
+      value: 'application vnd_ms wmdrm_lic resp'
+      label: 'application vnd_ms wmdrm_lic resp'
+    -
+      value: 'application vnd_ms wmdrm_meter chlg req'
+      label: 'application vnd_ms wmdrm_meter chlg req'
+    -
+      value: 'application vnd_ms wmdrm_meter resp'
+      label: 'application vnd_ms wmdrm_meter resp'
+    -
+      value: 'application vnd_ms works'
+      label: 'application vnd_ms works'
+    -
+      value: 'application vnd_ms wpl'
+      label: 'application vnd_ms wpl'
+    -
+      value: 'application vnd_ms xpsdocument'
+      label: 'application vnd_ms xpsdocument'
+    -
+      value: 'application vnd_palm'
+      label: 'application vnd_palm'
+    -
+      value: 'application vnd_paos_xml'
+      label: 'application vnd_paos_xml'
+    -
+      value: 'application vnd_Quark_QuarkXPress'
+      label: 'application vnd_Quark_QuarkXPress'
+    -
+      value: 'application vnd_visio'
+      label: 'application vnd_visio'
+    -
+      value: 'application vnd_wordperfect'
+      label: 'application vnd_wordperfect'
+    -
+      value: 'application wordperfect5_1'
+      label: 'application wordperfect5_1'
+    -
+      value: 'application xhtml plus xml'
+      label: 'application xhtml plus xml'
+    -
+      value: 'application xml'
+      label: 'application xml'
+    -
+      value: 'application xml dtd'
+      label: 'application xml dtd'
+    -
+      value: 'application xml external parsed entity'
+      label: 'application xml external parsed entity'
+    -
+      value: 'application zip'
+      label: 'application zip'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

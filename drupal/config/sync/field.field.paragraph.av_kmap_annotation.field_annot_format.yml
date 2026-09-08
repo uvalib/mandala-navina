@@ -1,0 +1,21 @@
+uuid: 439a1b5c-cfa8-422d-b231-5be78dbd1982
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_annot_format
+    - paragraphs.paragraphs_type.av_kmap_annotation
+  module:
+    - options
+id: paragraph.av_kmap_annotation.field_annot_format
+field_name: field_annot_format
+entity_type: paragraph
+bundle: av_kmap_annotation
+label: 'Annot format'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

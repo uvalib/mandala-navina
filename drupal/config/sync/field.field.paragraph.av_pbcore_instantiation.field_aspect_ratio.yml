@@ -1,0 +1,21 @@
+uuid: 927ad509-2bcb-4c61-a46f-d72b84f00690
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_aspect_ratio
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - options
+id: paragraph.av_pbcore_instantiation.field_aspect_ratio
+field_name: field_aspect_ratio
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Aspect ratio'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

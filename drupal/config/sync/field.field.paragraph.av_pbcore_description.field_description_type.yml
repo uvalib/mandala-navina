@@ -1,0 +1,21 @@
+uuid: da80d6ed-63f4-4e70-81df-fa6e8b6554cc
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_description_type
+    - paragraphs.paragraphs_type.av_pbcore_description
+  module:
+    - options
+id: paragraph.av_pbcore_description.field_description_type
+field_name: field_description_type
+entity_type: paragraph
+bundle: av_pbcore_description
+label: 'Description type'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

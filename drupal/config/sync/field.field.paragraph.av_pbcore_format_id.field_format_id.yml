@@ -1,0 +1,19 @@
+uuid: b7938d19-43fa-4e9f-8fd7-27e9bea58b36
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_format_id
+    - paragraphs.paragraphs_type.av_pbcore_format_id
+id: paragraph.av_pbcore_format_id.field_format_id
+field_name: field_format_id
+entity_type: paragraph
+bundle: av_pbcore_format_id
+label: 'Format id'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

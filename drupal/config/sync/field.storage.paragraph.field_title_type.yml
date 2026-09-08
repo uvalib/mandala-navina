@@ -1,0 +1,240 @@
+uuid: 8833556d-829a-4b61-8962-bbfaee7ef327
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_title_type
+field_name: field_title_type
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 'Abridged Version'
+      label: 'Abridged Version'
+    -
+      value: 'Air Version'
+      label: 'Air Version'
+    -
+      value: Alternative
+      label: Alternative
+    -
+      value: 'Art Work'
+      label: 'Art Work'
+    -
+      value: Article
+      label: Article
+    -
+      value: Book
+      label: Book
+    -
+      value: 'Caption File'
+      label: 'Caption File'
+    -
+      value: 'Captioned Version'
+      label: 'Captioned Version'
+    -
+      value: 'Cell Phone Version'
+      label: 'Cell Phone Version'
+    -
+      value: Chapter
+      label: Chapter
+    -
+      value: Chart
+      label: Chart
+    -
+      value: Clip
+      label: Clip
+    -
+      value: Collection
+      label: Collection
+    -
+      value: 'Courseware Class'
+      label: 'Courseware Class'
+    -
+      value: 'Courseware Module'
+      label: 'Courseware Module'
+    -
+      value: 'Descriptive Audio'
+      label: 'Descriptive Audio'
+    -
+      value: Diagram
+      label: Diagram
+    -
+      value: Drawing
+      label: Drawing
+    -
+      value: 'Drill and Practice'
+      label: 'Drill and Practice'
+    -
+      value: 'Electronic Academic Poster'
+      label: 'Electronic Academic Poster'
+    -
+      value: Episode
+      label: Episode
+    -
+      value: 'Full Version'
+      label: 'Full Version'
+    -
+      value: Game
+      label: Game
+    -
+      value: Graphic
+      label: Graphic
+    -
+      value: 'iPod Version'
+      label: 'iPod Version'
+    -
+      value: Issue
+      label: Issue
+    -
+      value: 'Kiosk Event'
+      label: 'Kiosk Event'
+    -
+      value: 'Lesson Plan'
+      label: 'Lesson Plan'
+    -
+      value: 'Linear Presentation'
+      label: 'Linear Presentation'
+    -
+      value: Lyrics
+      label: Lyrics
+    -
+      value: Manuscript
+      label: Manuscript
+    -
+      value: Map
+      label: Map
+    -
+      value: 'Model Building'
+      label: 'Model Building'
+    -
+      value: Model
+      label: Model
+    -
+      value: 'Multimedia Presentation'
+      label: 'Multimedia Presentation'
+    -
+      value: Music
+      label: Music
+    -
+      value: 'Nature or ambient sound'
+      label: 'Nature or ambient sound'
+    -
+      value: Other
+      label: Other
+    -
+      value: Package
+      label: Package
+    -
+      value: 'Packaging Version'
+      label: 'Packaging Version'
+    -
+      value: Periodical
+      label: Periodical
+    -
+      value: Photograph
+      label: Photograph
+    -
+      value: Picture
+      label: Picture
+    -
+      value: 'Pledge Version'
+      label: 'Pledge Version'
+    -
+      value: Postcard
+      label: Postcard
+    -
+      value: Poster
+      label: Poster
+    -
+      value: Program
+      label: Program
+    -
+      value: Project
+      label: Project
+    -
+      value: 'Published Version'
+      label: 'Published Version'
+    -
+      value: Quiz
+      label: Quiz
+    -
+      value: 'Reflection Activity'
+      label: 'Reflection Activity'
+    -
+      value: reTitle
+      label: reTitle
+    -
+      value: 'Role Play'
+      label: 'Role Play'
+    -
+      value: Scene
+      label: Scene
+    -
+      value: Score
+      label: Score
+    -
+      value: Segment
+      label: Segment
+    -
+      value: 'Selection or Excerpt'
+      label: 'Selection or Excerpt'
+    -
+      value: 'Self Assessment'
+      label: 'Self Assessment'
+    -
+      value: Series
+      label: Series
+    -
+      value: Shot
+      label: Shot
+    -
+      value: Simulation
+      label: Simulation
+    -
+      value: 'Slide Show'
+      label: 'Slide Show'
+    -
+      value: Song
+      label: Song
+    -
+      value: 'Study Guide'
+      label: 'Study Guide'
+    -
+      value: Syllabus
+      label: Syllabus
+    -
+      value: 'Teacher Guide'
+      label: 'Teacher Guide'
+    -
+      value: Test
+      label: Test
+    -
+      value: 'Traditional Academic Poster'
+      label: 'Traditional Academic Poster'
+    -
+      value: 'Transcript File'
+      label: 'Transcript File'
+    -
+      value: Voice
+      label: Voice
+    -
+      value: 'Web page/site'
+      label: 'Web page/site'
+    -
+      value: 'Web Version'
+      label: 'Web Version'
+    -
+      value: 'Working Title'
+      label: 'Working Title'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

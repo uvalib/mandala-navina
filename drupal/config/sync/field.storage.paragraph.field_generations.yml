@@ -1,0 +1,399 @@
+uuid: addc3e01-c54c-4e9f-9105-22ceeb586383
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_generations
+field_name: field_generations
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 'Artifact or Award'
+      label: 'Artifact or Award'
+    -
+      value: 'Artifact or Book'
+      label: 'Artifact or Book'
+    -
+      value: 'Artifact or Costume'
+      label: 'Artifact or Costume'
+    -
+      value: 'Artifact or Merchandise'
+      label: 'Artifact or Merchandise'
+    -
+      value: 'Artifact or Optical disk reader'
+      label: 'Artifact or Optical disk reader'
+    -
+      value: 'Artifact or SCSI Hard Drive'
+      label: 'Artifact or SCSI Hard Drive'
+    -
+      value: 'Artifact or Sy Quest drive'
+      label: 'Artifact or Sy Quest drive'
+    -
+      value: 'Audio or Air track'
+      label: 'Audio or Air track'
+    -
+      value: 'Audio or Audio dub'
+      label: 'Audio or Audio dub'
+    -
+      value: 'Audio or Audio master full mix'
+      label: 'Audio or Audio master full mix'
+    -
+      value: 'Audio or Master mix'
+      label: 'Audio or Master mix'
+    -
+      value: 'Audio or Mix element'
+      label: 'Audio or Mix element'
+    -
+      value: 'Audio or Music'
+      label: 'Audio or Music'
+    -
+      value: 'Audio or Narration'
+      label: 'Audio or Narration'
+    -
+      value: 'Audio or Optical track'
+      label: 'Audio or Optical track'
+    -
+      value: 'Audio or Original recording'
+      label: 'Audio or Original recording'
+    -
+      value: 'Audio or Radio program Dub'
+      label: 'Audio or Radio program Dub'
+    -
+      value: 'Audio or Radio program Master'
+      label: 'Audio or Radio program Master'
+    -
+      value: 'Audio or Sound effects'
+      label: 'Audio or Sound effects'
+    -
+      value: 'Audio or Transcription dub'
+      label: 'Audio or Transcription dub'
+    -
+      value: 'Container or Backup computer files'
+      label: 'Container or Backup computer files'
+    -
+      value: 'Container or Sy Quest Install Disks'
+      label: 'Container or Sy Quest Install Disks'
+    -
+      value: 'Moving image or Air print'
+      label: 'Moving image or Air print'
+    -
+      value: 'Moving image or Answer print'
+      label: 'Moving image or Answer print'
+    -
+      value: 'Moving image or Backup master'
+      label: 'Moving image or Backup master'
+    -
+      value: 'Moving image or BW internegative'
+      label: 'Moving image or BW internegative'
+    -
+      value: 'Moving image or BW kinescope negative'
+      label: 'Moving image or BW kinescope negative'
+    -
+      value: 'Moving image or BW workprint'
+      label: 'Moving image or BW workprint'
+    -
+      value: 'Moving image or Clip reel'
+      label: 'Moving image or Clip reel'
+    -
+      value: 'Moving image or Color edited workprint'
+      label: 'Moving image or Color edited workprint'
+    -
+      value: 'Moving image or Color internegative CRI'
+      label: 'Moving image or Color internegative CRI'
+    -
+      value: 'Moving image or Color master'
+      label: 'Moving image or Color master'
+    -
+      value: 'Moving image or Color workprint'
+      label: 'Moving image or Color workprint'
+    -
+      value: 'Moving image or Distribution dub'
+      label: 'Moving image or Distribution dub'
+    -
+      value: 'Moving image or Doc only dub'
+      label: 'Moving image or Doc only dub'
+    -
+      value: 'Moving image or Doc only master'
+      label: 'Moving image or Doc only master'
+    -
+      value: 'Moving image or Graphics animation'
+      label: 'Moving image or Graphics animation'
+    -
+      value: 'Moving image or Green Label Master'
+      label: 'Moving image or Green Label Master'
+    -
+      value: 'Moving image or Incomplete master'
+      label: 'Moving image or Incomplete master'
+    -
+      value: 'Moving image or International master'
+      label: 'Moving image or International master'
+    -
+      value: 'Moving image or Interpositive'
+      label: 'Moving image or Interpositive'
+    -
+      value: 'Moving image or ISO reel'
+      label: 'Moving image or ISO reel'
+    -
+      value: 'Moving image or Line reel'
+      label: 'Moving image or Line reel'
+    -
+      value: 'Moving image or Master'
+      label: 'Moving image or Master'
+    -
+      value: 'Moving image or Mixed magnetic track'
+      label: 'Moving image or Mixed magnetic track'
+    -
+      value: 'Moving image or News tape'
+      label: 'Moving image or News tape'
+    -
+      value: 'Moving image or Open Close'
+      label: 'Moving image or Open Close'
+    -
+      value: 'Moving image or Orig BW a and b negative'
+      label: 'Moving image or Orig BW a and b negative'
+    -
+      value: 'Moving image or Orig BW negative'
+      label: 'Moving image or Orig BW negative'
+    -
+      value: 'Moving image or Orig color a and b negative'
+      label: 'Moving image or Orig color a and b negative'
+    -
+      value: 'Moving image or Orig color a and b reversal'
+      label: 'Moving image or Orig color a and b reversal'
+    -
+      value: 'Moving image or Orig color negative'
+      label: 'Moving image or Orig color negative'
+    -
+      value: 'Moving image or Original'
+      label: 'Moving image or Original'
+    -
+      value: 'Moving image or Original footage'
+      label: 'Moving image or Original footage'
+    -
+      value: 'Moving image or PBS backup'
+      label: 'Moving image or PBS backup'
+    -
+      value: 'Moving image or PBS dub'
+      label: 'Moving image or PBS dub'
+    -
+      value: 'Moving image or PBS master'
+      label: 'Moving image or PBS master'
+    -
+      value: 'Moving image or Preservation master'
+      label: 'Moving image or Preservation master'
+    -
+      value: 'Moving image or Promo'
+      label: 'Moving image or Promo'
+    -
+      value: 'Moving image or Protection master'
+      label: 'Moving image or Protection master'
+    -
+      value: 'Moving image or Release print'
+      label: 'Moving image or Release print'
+    -
+      value: 'Moving image or Screening tapee'
+      label: 'Moving image or Screening tapee'
+    -
+      value: 'Moving image or Stock footage'
+      label: 'Moving image or Stock footage'
+    -
+      value: 'Moving image or Submaster'
+      label: 'Moving image or Submaster'
+    -
+      value: 'Moving image or Sync pix and sound'
+      label: 'Moving image or Sync pix and sound'
+    -
+      value: 'Moving image or Tease'
+      label: 'Moving image or Tease'
+    -
+      value: 'Moving image or Viewing copy'
+      label: 'Moving image or Viewing copy'
+    -
+      value: 'Moving image or Work print'
+      label: 'Moving image or Work print'
+    -
+      value: 'Static image or Autochrome'
+      label: 'Static image or Autochrome'
+    -
+      value: 'Static image or Caricature'
+      label: 'Static image or Caricature'
+    -
+      value: 'Static image or Carte de viste'
+      label: 'Static image or Carte de viste'
+    -
+      value: 'Static image or Color print'
+      label: 'Static image or Color print'
+    -
+      value: 'Static image or Contact sheet'
+      label: 'Static image or Contact sheet'
+    -
+      value: 'Static image or Daguerrotype'
+      label: 'Static image or Daguerrotype'
+    -
+      value: 'Static image or Digital file'
+      label: 'Static image or Digital file'
+    -
+      value: 'Static image or Drawing'
+      label: 'Static image or Drawing'
+    -
+      value: 'Static image or Engraving'
+      label: 'Static image or Engraving'
+    -
+      value: 'Static image or Glass negative'
+      label: 'Static image or Glass negative'
+    -
+      value: 'Static image or Glass slide'
+      label: 'Static image or Glass slide'
+    -
+      value: 'Static image or Illustration'
+      label: 'Static image or Illustration'
+    -
+      value: 'Static image or Lithograph'
+      label: 'Static image or Lithograph'
+    -
+      value: 'Static image or Map'
+      label: 'Static image or Map'
+    -
+      value: 'Static image or Nitrate negative'
+      label: 'Static image or Nitrate negative'
+    -
+      value: 'Static image or Other see note'
+      label: 'Static image or Other see note'
+    -
+      value: 'Static image or Painting'
+      label: 'Static image or Painting'
+    -
+      value: 'Static image or Photo research file'
+      label: 'Static image or Photo research file'
+    -
+      value: 'Static image or Photocopy'
+      label: 'Static image or Photocopy'
+    -
+      value: 'Static image or Photograph'
+      label: 'Static image or Photograph'
+    -
+      value: 'Static image or Postcard'
+      label: 'Static image or Postcard'
+    -
+      value: 'Static image or Print'
+      label: 'Static image or Print'
+    -
+      value: 'Static image or Slide'
+      label: 'Static image or Slide'
+    -
+      value: 'Static image or Stereoview'
+      label: 'Static image or Stereoview'
+    -
+      value: 'Static image or Still'
+      label: 'Static image or Still'
+    -
+      value: 'Static image or Transparency'
+      label: 'Static image or Transparency'
+    -
+      value: 'Static image or Woodcut'
+      label: 'Static image or Woodcut'
+    -
+      value: 'Text or Accounting statements'
+      label: 'Text or Accounting statements'
+    -
+      value: 'Text or Budget file'
+      label: 'Text or Budget file'
+    -
+      value: 'Text or Caption file'
+      label: 'Text or Caption file'
+    -
+      value: 'Text or Contracts'
+      label: 'Text or Contracts'
+    -
+      value: 'Text or Correspondence'
+      label: 'Text or Correspondence'
+    -
+      value: 'Text or Credit list'
+      label: 'Text or Credit list'
+    -
+      value: 'Text or Crew list'
+      label: 'Text or Crew list'
+    -
+      value: 'Text or Cue sheet'
+      label: 'Text or Cue sheet'
+    -
+      value: 'Text or Documentation'
+      label: 'Text or Documentation'
+    -
+      value: 'Text or EDL'
+      label: 'Text or EDL'
+    -
+      value: 'Text or Educational Material'
+      label: 'Text or Educational Material'
+    -
+      value: 'Text or Invoices Receipts'
+      label: 'Text or Invoices Receipts'
+    -
+      value: 'Text or Letter'
+      label: 'Text or Letter'
+    -
+      value: 'Text or Logs'
+      label: 'Text or Logs'
+    -
+      value: 'Text or Lower thirds list'
+      label: 'Text or Lower thirds list'
+    -
+      value: 'Text or Manuscript'
+      label: 'Text or Manuscript'
+    -
+      value: 'Text or Meeting notes'
+      label: 'Text or Meeting notes'
+    -
+      value: 'Text or Newspaper article'
+      label: 'Text or Newspaper article'
+    -
+      value: 'Text or Press clippings'
+      label: 'Text or Press clippings'
+    -
+      value: 'Text or Press kits'
+      label: 'Text or Press kits'
+    -
+      value: 'Text or Press releases'
+      label: 'Text or Press releases'
+    -
+      value: 'Text or Production notes'
+      label: 'Text or Production notes'
+    -
+      value: 'Text or Promotional material'
+      label: 'Text or Promotional material'
+    -
+      value: 'Text or Proposals'
+      label: 'Text or Proposals'
+    -
+      value: 'Text or Releases'
+      label: 'Text or Releases'
+    -
+      value: 'Text or Reports'
+      label: 'Text or Reports'
+    -
+      value: 'Text or Research material'
+      label: 'Text or Research material'
+    -
+      value: 'Text or Scripts'
+      label: 'Text or Scripts'
+    -
+      value: 'Text or Transcript'
+      label: 'Text or Transcript'
+    -
+      value: 'Text or Transcript interview'
+      label: 'Text or Transcript interview'
+    -
+      value: 'Text or Transcript program'
+      label: 'Text or Transcript program'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

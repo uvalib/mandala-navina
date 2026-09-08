@@ -1,0 +1,10 @@
+uuid: dac28401-7f84-4215-85c3-8d9b60f8ad5f
+langcode: en
+status: true
+dependencies: {  }
+id: av_pbcore_publisher
+label: 'AV PBCore Publisher'
+icon_uuid: null
+icon_default: null
+description: null
+behavior_plugins: {  }

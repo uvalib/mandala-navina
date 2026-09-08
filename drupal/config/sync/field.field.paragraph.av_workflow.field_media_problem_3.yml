@@ -1,0 +1,21 @@
+uuid: 761da53e-e89b-49f4-81e9-8d2fe75701a9
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_media_problem_3
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_media_problem_3
+field_name: field_media_problem_3
+entity_type: paragraph
+bundle: av_workflow
+label: 'Media problem 3'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

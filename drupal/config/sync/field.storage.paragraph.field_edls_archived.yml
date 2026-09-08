@@ -1,0 +1,30 @@
+uuid: b9140112-66e4-4962-97e9-7e198a94c37b
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_edls_archived
+field_name: field_edls_archived
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 'Not Reviewed'
+      label: 'Not Reviewed'
+    -
+      value: 'Yes'
+      label: 'Yes'
+    -
+      value: 'No'
+      label: 'No'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,36 @@
+uuid: 62f026ad-a396-4afd-81d0-31594cf5ec55
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_sponser_role
+field_name: field_sponser_role
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: corporate
+      label: 'Corporate Donor'
+    -
+      value: individual
+      label: 'Individual Donor'
+    -
+      value: gov
+      label: 'Government Grant'
+    -
+      value: ngo
+      label: 'NGO Grant'
+    -
+      value: other
+      label: Other
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

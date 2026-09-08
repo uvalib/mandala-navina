@@ -1,0 +1,27 @@
+uuid: ad942378-c3bf-4090-8992-3bb4e4e7e2b2
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_transcript_workflow_notes
+    - paragraphs.paragraphs_type.av_workflow
+    - paragraphs.paragraphs_type.av_workflow_note
+  module:
+    - entity_reference_revisions
+id: paragraph.av_workflow.field_transcript_workflow_notes
+field_name: field_transcript_workflow_notes
+entity_type: paragraph
+bundle: av_workflow
+label: 'Transcript workflow notes'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_workflow_note: av_workflow_note
+    negate: 0
+field_type: entity_reference_revisions

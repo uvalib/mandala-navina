@@ -1,0 +1,21 @@
+uuid: b3249ce3-a601-4c0b-afcf-1976da6fa6c0
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_trans_proofed_lang_3
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_trans_proofed_lang_3
+field_name: field_trans_proofed_lang_3
+entity_type: paragraph
+bundle: av_workflow
+label: 'Trans proofed lang 3'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

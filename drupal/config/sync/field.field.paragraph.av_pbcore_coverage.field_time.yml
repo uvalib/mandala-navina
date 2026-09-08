@@ -1,0 +1,19 @@
+uuid: 70e6c08b-a4f6-4b5d-85ab-b6701ccdf7ce
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_time
+    - paragraphs.paragraphs_type.av_pbcore_coverage
+id: paragraph.av_pbcore_coverage.field_time
+field_name: field_time
+entity_type: paragraph
+bundle: av_pbcore_coverage
+label: Time
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

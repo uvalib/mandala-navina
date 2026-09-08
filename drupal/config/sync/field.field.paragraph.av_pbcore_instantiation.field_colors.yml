@@ -1,0 +1,21 @@
+uuid: f553e148-8801-4e9b-b9d6-714c1b57866e
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_colors
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - options
+id: paragraph.av_pbcore_instantiation.field_colors
+field_name: field_colors
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: Colors
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

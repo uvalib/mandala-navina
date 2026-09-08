@@ -1,0 +1,22 @@
+uuid: 618fd800-24c7-49fc-bc0a-2601497a4e45
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_extension
+    - paragraphs.paragraphs_type.av_pbcore_extension
+  module:
+    - text
+id: paragraph.av_pbcore_extension.field_extension
+field_name: field_extension
+entity_type: paragraph
+bundle: av_pbcore_extension
+label: Extension
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

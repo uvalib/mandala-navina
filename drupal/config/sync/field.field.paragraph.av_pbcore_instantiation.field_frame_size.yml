@@ -1,0 +1,19 @@
+uuid: 830c0117-e0ad-4e9a-bdac-3d3a922e0cb7
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_frame_size
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+id: paragraph.av_pbcore_instantiation.field_frame_size
+field_name: field_frame_size
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Frame size'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

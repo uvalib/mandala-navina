@@ -1,0 +1,21 @@
+uuid: 22c57e42-b3ee-4ca6-aae3-702d687e2075
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_timecode_too_infrequent
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_timecode_too_infrequent
+field_name: field_timecode_too_infrequent
+entity_type: paragraph
+bundle: av_workflow
+label: 'Timecode too infrequent'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

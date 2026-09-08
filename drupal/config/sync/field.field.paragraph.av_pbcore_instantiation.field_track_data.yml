@@ -1,0 +1,19 @@
+uuid: 60394956-af8d-4e9d-8230-83f12c30e7ba
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_track_data
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+id: paragraph.av_pbcore_instantiation.field_track_data
+field_name: field_track_data
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Track data'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

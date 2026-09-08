@@ -1,0 +1,21 @@
+uuid: 74a56410-989d-4195-8c6b-8302d28254c0
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_relation_identifier
+    - paragraphs.paragraphs_type.av_pbcore_relation
+id: paragraph.av_pbcore_relation.field_relation_identifier
+field_name: field_relation_identifier
+entity_type: paragraph
+bundle: av_pbcore_relation
+label: 'Relation identifier'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:node'
+  handler_settings: {  }
+field_type: entity_reference

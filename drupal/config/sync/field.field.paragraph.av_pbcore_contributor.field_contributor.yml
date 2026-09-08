@@ -1,0 +1,19 @@
+uuid: 0449b947-c908-47fb-9e3b-00303ef1bb3f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_contributor
+    - paragraphs.paragraphs_type.av_pbcore_contributor
+id: paragraph.av_pbcore_contributor.field_contributor
+field_name: field_contributor
+entity_type: paragraph
+bundle: av_pbcore_contributor
+label: Contributor
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

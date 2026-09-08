@@ -1,0 +1,19 @@
+uuid: c13631e9-3781-49ce-835a-b21f92fe056f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_start_time
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+id: paragraph.av_pbcore_instantiation.field_start_time
+field_name: field_start_time
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Start time'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -1,0 +1,21 @@
+uuid: 8989bd9c-4be7-4002-8578-df89a734af79
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_publisher_rome
+    - paragraphs.paragraphs_type.av_pbcore_publisher
+  module:
+    - options
+id: paragraph.av_pbcore_publisher.field_publisher_rome
+field_name: field_publisher_rome
+entity_type: paragraph
+bundle: av_pbcore_publisher
+label: 'Publisher rome'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

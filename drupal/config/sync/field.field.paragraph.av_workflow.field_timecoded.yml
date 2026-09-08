@@ -1,0 +1,21 @@
+uuid: 444eb513-bc17-4e75-a2b8-645025069735
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_timecoded
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_timecoded
+field_name: field_timecoded
+entity_type: paragraph
+bundle: av_workflow
+label: Timecoded
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

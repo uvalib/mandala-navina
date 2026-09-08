@@ -1,0 +1,30 @@
+uuid: 659e5081-c30a-4f33-a9a6-3c4ba3b71e0d
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_media_problem_3
+field_name: field_media_problem_3
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 'Not Reviewed'
+      label: 'Not Reviewed'
+    -
+      value: 'Yes'
+      label: 'Yes'
+    -
+      value: 'No'
+      label: 'No'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

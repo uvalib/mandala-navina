@@ -1,0 +1,23 @@
+uuid: dc09f595-4554-4085-bbab-8b3eb05feb9d
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_tid
+    - paragraphs.paragraphs_type.av_kmap_annotation
+id: paragraph.av_kmap_annotation.field_tid
+field_name: field_tid
+entity_type: paragraph
+bundle: av_kmap_annotation
+label: Tid
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer
