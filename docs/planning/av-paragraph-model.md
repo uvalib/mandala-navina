@@ -46,7 +46,9 @@ node (audio | video)                    ← AV4's job; bundles do not exist yet
 
 The three note collections carry the same four fields — author, date, importance, and a
 body. The only difference is the body's *name*: `field_catalog_workflow_notes` calls it
-`field_description`, the other two call it `field_workflow_note`. Three near-identical
+`field_description`, the other two call it `field_workflow_note`. That the *content* is
+genuinely the same kind of thing was confirmed against the production data, not assumed —
+see [Field naming](#field-naming-keep-d7s-names-with-three-exceptions) below. Three near-identical
 4-field types that can drift apart independently is precisely the failure mode
 [AV2](av-content-type-decision.md) found in D7's two AV bundles, and the same "one shared
 definition" reasoning applies. Consolidating the *type* costs nothing, because the three
@@ -68,15 +70,49 @@ contain. Paragraph types are shared across both node bundles for free.
 Secondary reasons: Paragraphs preserve D7's grouped editing affordance, and ADR 008's
 floor is faithful migration, which flattening is not.
 
-## Field naming: keep D7's names, with exactly two forced exceptions
+## Field naming: keep D7's names, with three exceptions
 
 **Rule: D11 field names are D7's field names verbatim**, so the AV4 migration mapping is
-1:1 and needs no lookup table. Two exceptions, both forced rather than chosen:
+1:1 and needs no lookup table. Three exceptions:
 
 | D7 name | D11 name | Why |
 |---|---|---|
-| `field_language` | **`field_pbcore_language`** | Hard collision. `field_language` already exists on the `paragraph` entity type from Images, as a **`shanti_kmaps_fields_default`** field (cardinality -1). D7 AV's is a `list_text`. Field storage is per *entity type*, so one name cannot carry two types — the rename is unavoidable. |
+| `field_language` | **`field_pbcore_language`** | **Forced — type collision.** `field_language` already exists on the `paragraph` entity type from Images, as a **`shanti_kmaps_fields_default`** field (cardinality -1). D7 AV's is a `list_text`. Field storage is per *entity type*, so one name cannot carry two types — the rename is unavoidable. |
 | `kmap_id` | **`field_kmap_id`** | The only D7 sub-field without a `field_` prefix. |
+| `field_description` **(on `field_catalog_workflow_notes` only)** | **`field_workflow_note`** | **Semantic, and evidence-backed — see below.** Applies *only* to the catalog-note body; `av_pbcore_description` keeps `field_description` and reuses Images' storage. |
+
+### Why the catalog-note body is renamed (checked against the data, 2026-09-08)
+
+Consolidating the three note collections into one type means the type has one body field,
+and the catalog stream's body had a different D7 name. The merge was originally justified
+on structure alone — identical author/date/importance fields — which was **inference, not
+evidence**. Checked afterwards against the production dump, and the evidence is stronger
+than the inference was:
+
+`field_description` in D7 is **not** exclusive to catalog notes. It is attached to **two**
+field_collection bundles that mean different things:
+
+| Bundle carrying `field_description` | Rows | Content | Median length |
+|---|---|---|---|
+| `field_pbcore_description` | 15,669 | Public descriptive metadata — HTML, multilingual | 197 |
+| `field_catalog_workflow_notes` | 2,049 | Internal cataloguing/QA notes | 88 |
+
+Real catalog-note values read *"Needs an English description. Needs a referenced place
+name. Needs Tibetan description and caption"* — the same register as `field_workflow_note`
+values like *"Needs title slates in Tibetan and Chinese"* (median 47). D7 also treats the
+two differently downstream: `mb_metadata` strips the whole `field_workflow` group from the
+Solr index as internal state, while PBCore descriptions are public content.
+
+**So `field_description` is a D7 modeling accident — one field name carrying two unrelated
+meanings.** Keeping it on the note type would have put *three* unrelated meanings on a
+single `paragraph` storage: Images' `image_descriptions`, AV's public PBCore description,
+and AV's internal QA notes. The rename separates them and puts the catalog note body with
+the other two note streams, where it belongs.
+
+**AV4 consequence:** the migration must map `field_catalog_workflow_notes.field_description`
+→ `av_workflow_note.field_workflow_note`. This is the one place the otherwise-1:1 field
+mapping does not hold, and it is easy to miss because the source field name still exists in
+D11 (on `av_pbcore_description`) meaning something else entirely.
 
 Deliberately **not** renamed: `field_sponser_role` keeps D7's typo. Fixing it would be a
 judgment call, and the value of "D7 name verbatim" as a single mechanical rule outweighs
