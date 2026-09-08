@@ -106,13 +106,23 @@ class D7AvFieldCollection extends SqlBase {
     // paragraph to the same node twice; across all 17 collections that is
     // 147,836 raw rows against 125,101 real items.
     //
-    // WHY `en` WINS. `und` is D7's LANGUAGE_NONE — what a field carries before
-    // it is made translatable. These fields started non-translatable, so every
-    // value was `und`; translation was switched on later and subsequent edits
-    // wrote `en` rows, leaving `und` as a stale legacy layer. Confirmed against
-    // the data: of the 1,732 hosts carrying both languages, 1,694 (97.8%) have
-    // an `en` list that fully covers their `und` list. So where an item has an
-    // `en` row, that row's delta is the current, authoritative position.
+    // WHY `en` WINS. `und` is D7's LANGUAGE_NONE. Per Yuji (2026-09-08), it was
+    // written here by an earlier conversion to language-specific storage: rather
+    // than assume the pre-existing language-agnostic data was English, that
+    // conversion labelled it `und` — "unknown", not "none". Later edits under
+    // the language-aware setup wrote `en` rows on top, leaving `und` as the
+    // older layer. So where an item has an `en` row, that row's delta is the
+    // current, authoritative position.
+    //
+    // That caution was justified, and the data still shows it: only ~42% of the
+    // `und`-layer title items carry English as their CONTENT language (2,937 of
+    // 6,950 — the rest are Tibetan 1,766, Chinese 1,144, Dzongkha 86, and 1,017
+    // with none recorded). Defaulting them to `eng` would have mislabelled
+    // roughly 3,900 items.
+    //
+    // Confirmed against the data: of the 1,732 hosts carrying both languages on
+    // field_pbcore_title, 1,694 (97.8%) have an `en` list that fully covers
+    // their `und` list.
     //
     // BUT `und` CANNOT SIMPLY BE DROPPED. 6,958 items exist only in `und`, and
     // even on hosts that DO have `en` rows there are `und`-only items that `en`
