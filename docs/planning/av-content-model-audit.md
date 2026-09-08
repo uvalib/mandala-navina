@@ -31,9 +31,12 @@ metadata/workflow layer (`mediabase`), an externally-hosted-media integration (c
 
 AV nodes are plain Drupal 7 nodes of bundle `audio` or `video`, defined by a Features
 export (`mediabase/features/audio_video`) that is a sub-component of the `mediabase`
-module family, not `mediabase.module` itself. The two bundles are near-identical — they
-differ only in which single field holds the media reference (`field_audio` vs.
-`field_video`); every other field is shared.
+module family, not `mediabase.module` itself. The two bundles are near-identical, but **not quite as identical as this audit
+originally stated.** ⚠ **Corrected 2026-09-08 (AV2):** they differ in *two* places,
+not one — the media reference (`field_audio` vs. `field_video`) **and
+`field_thumbnail_image`, which exists on `audio` only** and is used on 68% of audio
+nodes. The remaining 29 fields are shared. See the
+[AV2 scope note](av-content-type-decision.md) for the full instance-level diff.
 
 **The `mediabase` module family** (all under `modules/custom/mediabase/`) is a set of
 cooperating submodules, none of which owns a bare DB table or custom entity the way the
@@ -63,7 +66,7 @@ materially different (and lower-risk) starting point than Images had.
 ```
 audio | video (node)
 ├── field_audio | field_video (req, card 1)     → field_kaltura_entryid (scalar Kaltura entry-id string)
-├── field_thumbnail_image                        → image
+├── field_thumbnail_image (audio only)           → image
 ├── field_pbcore_title (req, -1)                 → field_collection (title / title_type / language)
 ├── field_pbcore_description (-1)                 → field_collection
 ├── field_pbcore_creator / _contributor / _coverage
@@ -103,7 +106,7 @@ that timing data against the node via `apachesolr`.
 |---|---|---|---|---|
 | `field_audio` (audio only) | `field_kaltura_entryid` | 1 | **yes** | cardinality hard-locked to 1 by the field module itself |
 | `field_video` (video only) | `field_kaltura_entryid` | 1 | **yes** | same |
-| `field_thumbnail_image` | image | 1 | no | poster/thumb |
+| `field_thumbnail_image` (**audio only**) | image | 1 | no | poster/thumb. ⚠ **Corrected 2026-09-08:** this field has an instance on `audio` only — not on `video`, and not shared. It is actively used: 2,844 of 4,187 audio nodes (68%) carry one; video has zero rows. Kaltura generates a poster frame for video; audio has no frame, so editors upload cover art. See [AV2 scope note](av-content-type-decision.md) |
 | title | node title | — | — | **hidden field**; auto-set from `field_pbcore_title[0]` by `mb_metadata_validate_title()` |
 
 ### PBCore descriptive metadata (all `field_collection`, embedded)
@@ -274,6 +277,12 @@ Field API value table — applies here too.
   value; 17 missing despite the field being required at the form level — a small
   cleanup population for any pre-migration remediation.
 - `field_audio_entryid`: 4,186 of 4,187 audio nodes (99.98%) have a value; 1 missing.
+  **Characterised 2026-09-08 (Sprint 3 AV2):** those 18 media-less nodes (17 video,
+  1 audio) are **all published**, and their titles are predominantly obvious test
+  content — "test", "Transcript Test 2", "Nangma Song (Test)", "Cheeseburger",
+  "New Audio", and one of the form "Testing_<firstname>" — alongside a handful of real-looking presentation
+  titles. They will migrate as asset pages with a player and no media unless given a
+  disposition; tracked as Sprint 3 **AV14**.
 - `field_pbcore_title` (required, -1 cardinality): 11,583 of 11,583 nodes (100%) have
   at least one title — 0 missing, matching Images' clean-required-field pattern.
 - `group_content_access` (required OG Visibility): 11,583 of 11,583 (100%) filled — no
@@ -361,8 +370,15 @@ validated against the real 2026-09-01 production dump** (see
 
 ## What this audit does NOT establish (still open)
 
-1. **Whether `audio` and `video` collapse to one D11 content type** with a media-kind
-   field, or stay as two types for parity with D7. Not decided here.
+1. ~~**Whether `audio` and `video` collapse to one D11 content type** with a media-kind
+   field, or stay as two types for parity with D7.~~ **RESOLVED (2026-09-08, Sprint 3
+   AV2).** They **stay as two content types**, built from a single shared field
+   definition so they cannot drift the way D7's did. Decided against the real dump:
+   29 of the fields are shared, the two exclusive-to-`audio` fields include
+   `field_thumbnail_image` (a genuine functional difference, not drift), and
+   [ADR 016](../adr/016-public-url-structure-single-host.md) clause 3 already keys the
+   URL grammar on the D11 content type. See the
+   [AV2 scope note](av-content-type-decision.md).
 2. **The D11 target model for the PBCore/workflow field_collections** — almost certainly
    Paragraphs given the structural fit noted above, but that is a recommendation for a
    future modeling decision, not a decision made by this audit (per ADR 010's caveat that
@@ -400,6 +416,18 @@ validated against the real 2026-09-01 production dump** (see
    Kaltura entry's actual type), but the "is this corruption or a real data shape"
    question is now answered. See [Spike 7](../spikes/spike-07-kaltura-av-integration.md)
    for the full code-level finding.
+
+   **Evidence added 2026-09-08 (Sprint 3 AV2, same dump):** the root cause is now
+   confirmed by data as well as by code. All 68 nodes were created in **2014**, all by
+   **uid 1**, and **every one is titled with a `.jpg` filename** — they are Kaltura
+   `IMAGE` entries pulled through the batch importer, exactly as the code reading
+   predicted. They carry **no `field_video`, no `field_audio` and no thumbnail**: the
+   only field instance on the `MISSING_TYPE` bundle is `og_group_ref`, so the media
+   reference was silently dropped at save time. `node_type` has **no `MISSING_TYPE`
+   row** — it was never a content type. They are empty shells with no Kaltura linkage,
+   which makes "repair to a real bundle" impossible (there is no entry ID to repair
+   *to*) and points squarely at exclude. Disposition still formally owed by Sprint 3
+   AV5.
 
 ## Recommended next step
 

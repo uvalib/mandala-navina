@@ -1,8 +1,12 @@
 # Sprint 3: AV core implementation (`audio`/`video`, Kaltura, access, collections)
 
-**Status:** ○ Planned — not started. Blocked on [Spike 7](../spikes/spike-07-kaltura-av-integration.md)
-(Kaltura, ◐ Partial — started 2026-09-04, module landscape + a live D11 prototype
-done, upload/ingest and a real migration source plugin still open).
+**Status:** ◐ **In progress — started 2026-09-08.** AV2 decided (see the
+[AV2 scope note](../planning/av-content-type-decision.md)); AV3 and AV4 unblocked.
+**No longer blocked on [Spike 7](../spikes/spike-07-kaltura-av-integration.md)** — the
+spike's remaining open items (upload/ingest, a real migration source plugin) were
+absorbed into this sprint's own backlog as AV10–AV12 and AV4, and its packaging work
+(`drupal/kaltura_media` 1.0.4 + two patches) already landed inert on `main`, so this
+sprint starts from a working base rather than waiting on the spike to close.
 **Phase:** [Roadmap](../roadmap.md) Phase 3 (AV) — reordered ahead of strict "last"
 sequencing by [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md).
 **Lead:** Yuji Shinozaki, per ADR 018.
@@ -54,10 +58,10 @@ Inherited from [ADR 008](../adr/008-mvp-migrate-not-improve.md) /
 | | Task | Depends on | Status |
 |---|---|---|---|
 | AV1 | Spike 7 — Kaltura module landscape survey, playback prototype, upload/ingest assessment, partner/credential re-provisioning confirmation | — | ◐ (module survey + live playback prototype done 2026-09-04; upload/ingest + migration source plugin open) |
-| AV2 | Content-type decision: one bundle with a media-kind field, or `audio`/`video` kept as two — scope note (ADR-010-style) | AV content-model audit (done) | ○ |
+| AV2 | Content-type decision: one bundle with a media-kind field, or `audio`/`video` kept as two — scope note (ADR-010-style) | AV content-model audit (done) | ✅ **Done 2026-09-08** — **two content types, built from one shared field definition**; see the [AV2 scope note](../planning/av-content-type-decision.md) |
 | AV3 | PBCore/workflow `field_collection` → Paragraphs modeling decision + build | AV2 | ○ |
 | AV4 | Migrate API source plugins for `audio`/`video` nodes; collection membership sourced from `og_membership`; exclude old corrupted fields; `field_transcript` migrated inertly | AV1–AV3 | ○ |
-| AV5 | 68 `MISSING_TYPE` node disposition — root cause confirmed (Kaltura entries whose `mediaType` doesn't map to VIDEO/AUDIO, imported anyway with an invalid bundle string); decide exclude vs. repair-to-real-type | — (can run in parallel with AV1–AV4) | ○ |
+| AV5 | 68 `MISSING_TYPE` node disposition — root cause confirmed (Kaltura entries whose `mediaType` doesn't map to VIDEO/AUDIO, imported anyway with an invalid bundle string); decide exclude vs. repair-to-real-type | — (can run in parallel with AV1–AV4) | ○ — **evidence gathered 2026-09-08 (AV2 side-effect), decision still owed.** All 68 created in 2014 by uid 1, **every title is a `.jpg` filename**, and they carry **no `field_video`/`field_audio`/thumbnail** (the bundle's only field instance is `og_group_ref`); `node_type` has no `MISSING_TYPE` row. Repair-to-real-type is **not available** — there is no entry ID to repair to — so the decision is exclude vs. exclude-and-record |
 | AV6 | KMaps field wiring (reuse Images pattern, already proven) | AV4 | ○ |
 | AV7 | OG → D11 Group access mapping, including `group_access_uva_member` and `mb_collection_admin` | AV4 | ○ |
 | AV8 | Solr/kmassets sync wiring for the AV bundle(s) | AV4, AV6 | ○ |
@@ -65,6 +69,7 @@ Inherited from [ADR 008](../adr/008-mvp-migrate-not-improve.md) /
 | AV10 | **Kaltura configuration layer** — config-driven, extensible, covering the full element set inventoried below (players/`uiconf_id`, uploader widget ui_conf, delivery, player + thumbnail dimensions, rotate/stretch), selectable **per view mode** via formatter settings. Must carry the known values and accept new ones as config, no code change | AV1 | ○ |
 | AV11 | **Kaltura Session (KS) minting service** — server-side, using the official `kaltura/api-client-library` PHP SDK; short-TTL, upload-scoped KS handed to the browser. Secrets delivered at deploy time via the established ccrypt/`container_0.env.secret` pattern (see below), **never** in `config/sync` | AV1 | ○ |
 | AV12 | **Browser-direct chunked upload widget** — file selected on the node form uploads straight to Kaltura (`uploadToken.add` → chunked `uploadToken.upload` → `media.add`), never through PHP/the ALB; resulting `entryId` written into the `kaltura_media` field on submit. Pause/resume and a progress UI, matching D7's behaviour | AV10, AV11 | ○ |
+| AV14 | **18 media-less AV node disposition** — 17 `video` + 1 `audio` nodes have no Kaltura entry ID at all (documented in the audit's data profile as a required-field gap, but never given an owner). All published; titles are predominantly test content. Decide exclude vs. migrate-as-is vs. unpublish, alongside AV5 | — (can run in parallel with AV1–AV4) | ○ |
 | AV13 | Migrate D7's **per-view-mode player configuration** (`entry_widget` in each `field_config_instance` display) into AV10's registry + formatter settings — not a single site-wide default | AV10, AV4 | ○ |
 
 ## Design note: uploads and multiple players (decided 2026-09-04, Yuji)
