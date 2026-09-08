@@ -3,12 +3,17 @@
 **Date:** 2026-09-08
 **Driver:** Yuji Shinozaki (with Claude Code)
 **Outcome:** Sprint 3 (AV core) moved from ○ Planned to ◐ In progress. **Four backlog
-items closed** — AV2, AV3, AV5 and a new AV14 — across three PRs
-([#189](https://github.com/uvalib/mandala-navina/pull/189) merged,
-[#190](https://github.com/uvalib/mandala-navina/pull/190),
-[#191](https://github.com/uvalib/mandala-navina/pull/191)). The local development
-database was reconciled with dev-0, which exposed four real defects in
-`scripts/update-db-from-remote.sh`. **AV4 preparation is underway.**
+items closed** — AV2, AV3, AV5 and a new AV14 — and **AV4 half-built**. The local
+development database was reconciled with dev-0, which exposed four real defects in
+`scripts/update-db-from-remote.sh`.
+
+| PR | State | |
+|---|---|---|
+| [#189](https://github.com/uvalib/mandala-navina/pull/189) | merged | AV2 / AV5 / AV14 |
+| [#190](https://github.com/uvalib/mandala-navina/pull/190) | merged | `update-db-from-remote.sh` fix + CLAUDE.md startup ritual |
+| [#191](https://github.com/uvalib/mandala-navina/pull/191) | merged | AV3 — 15 paragraph types |
+| [#192](https://github.com/uvalib/mandala-navina/pull/192) | this log | |
+| [#193](https://github.com/uvalib/mandala-navina/pull/193) | **open (draft)** | AV4 part 1 — bundles, source plugin, 17 paragraph migrations |
 
 > **This log is hand-written and abridged, not produced by `scripts/save-session-log.py`.**
 > The session handled real user PII (1,543 migrated user records) and quoted D7 node
@@ -215,7 +220,7 @@ paragraph reference fields), so the node rate may come in below 243/min.
 migration re-processes every source row regardless of the migrate map. At ~4h AV fits in a
 single window; Images' 19h could not.
 
-## 9. AV4 preparation — in progress at session end
+## 9. AV4 — half built (PR #193, open as a draft)
 
 **Decision: the first AV migration run is LOCAL.** dev-0 cannot run it without work only
 Yuji can do — its `MIGRATE_SOURCE_DATABASE=mandala_d7_images` points at the Images source,
@@ -223,24 +228,83 @@ Yuji can do — its `MIGRATE_SOURCE_DATABASE=mandala_d7_images` points at the Im
 (blocked by this session's auto-mode classifier) plus a `terraform-infrastructure` env
 change and a deploy. Local is also where migration *development* belongs.
 
-Done so far:
+**Built and verified:**
 
-- `settings.php` wired with a **separate `migrate_av` connection key** (rather than
-  repointing `migrate`) so the Images and AV D7 sources coexist and every migration names
-  its source explicitly. The env-driven block gained `MIGRATE_AV_DATABASE`, so wiring dev-0
-  later is a pure env change, no settings edit.
-- `scripts/load-d7-source.sh` parameterised to take a target DB name (defaults to
-  `d7_images`, so existing usage is unchanged).
-- The D7 AV dump is loading locally as `d7_av`.
+- The D7 AV dump is loaded locally as `d7_av`, matching the source exactly (7,396 video ·
+  4,187 audio · 125,528 field_collection items · 11,672 memberships).
+- **`audio`/`video` node bundles** — 2 types, 29 new field storages, 63 instances. Per AV2
+  the 30 shared fields come from **one definition** applied to both; only
+  `field_audio`/`field_thumbnail_image` and `field_video` are bundle-specific.
+  `field_og_collection_ref` is deliberately not a node field — membership migrates as Group
+  relationships, as Images did. ADR 017 identity fields included, both bundles carrying
+  `field_legacy_site = audio-video`.
+- `kaltura_media` enabled (field type `kaltura`).
+- **`D7AvFieldCollection`** — one parameterised source plugin serving all 17 paragraph
+  migrations. Images' plugins do not apply: its satellites were separate nodes referenced by
+  inline entity form, while a field_collection item is embedded in its host.
+- **All 17 migrations registered, every total matching an independent SQL prediction to the
+  row** — 125,101 across the group. A 20-row live import produced correct paragraphs and
+  rolled back cleanly, twice.
 
-Still to do for AV4: create the `audio`/`video` bundles with their fields from one shared
-definition, attach the 13 paragraph reference fields, enable `kaltura_media` (installed but
-not enabled; its field type is `kaltura`), and write the migration YAMLs.
+**Still needed before anything can run:** the `d7_av_audio`/`d7_av_video` node migrations,
+AV collections → Groups, collection membership from `og_membership`, and `url_alias`.
+Paragraphs are the bulk of the runtime but importing them before the nodes exist would
+leave 125,101 orphans, so the node migration must land first.
+
+### The two silent failures this caught
+
+Both would have produced plausible-looking wrong data, and neither would have announced
+itself.
+
+**1. Language fan-out — 22,735 duplicate paragraphs.** D7 stores the host field per
+language, so the same field_collection item is frequently linked twice, once under `und`
+and once under `en`. On `field_pbcore_title`: 20,799 link rows for 18,647 real items, 2,083
+of them at *different deltas*. Across all 17 collections that is **147,836 raw join rows
+against 125,101 real items**. A naive join attaches each duplicate's paragraph to the same
+node twice.
+
+**2. Ordering — ambiguity cut 41×, on Yuji's domain knowledge.** My first rule was
+`MIN(delta)`, which deduplicates correctly but orders badly. Yuji supplied the history:
+`und` is D7's `LANGUAGE_NONE`, and it was **written here by an earlier conversion to
+language-specific storage** which declined to assume the pre-existing language-agnostic
+data was English, labelling it "unknown" instead. Later edits wrote `en` rows on top, so
+`en` is the authoritative layer.
+
+Confirmed before changing anything: of the 1,732 hosts carrying both languages, **1,694
+(97.8%) have an `en` list that fully covers their `und` list**. But `und` cannot simply be
+dropped — 6,958 items exist only there, plus `und`-only items on hosts that *do* have `en`
+(44 on titles, but **790 on descriptions, 746 on publishers, 533 on contributors**). So the
+rule is a union with `en`-preferred ordering, not a language filter:
+
+| Rule | Items preserved | Hosts with ambiguous order |
+|---|---:|---:|
+| `MIN(delta)` | 18,647 | **1,739** |
+| `en`-preferred union | 18,647 | **42** |
+
+That conversion's caution still holds up: only ~42% of `und`-layer title items carry
+English as their *content* language (2,937 of 6,950; the rest Tibetan 1,766, Chinese 1,144,
+Dzongkha 86, and 1,017 unrecorded). Defaulting them to `eng` would have mislabelled roughly
+3,900 items.
+
+> ⚠ **Two different "languages" live in this data and only one is the artifact.** The
+> storage-layer `und` is the D7 mistake, and it dies at the migration boundary — D11
+> entities take the site default, so everything migrates as `en` (verified against the
+> already-migrated Images corpus: 166,386 paragraphs and 111,340 nodes, all `en`). The
+> `field_language` sub-field inside PBCore titles and descriptions is something else
+> entirely: it records what language the **text** is in — English 8,315 · Dzongkha 2,121 ·
+> Tibetan 2,108 · Chinese 1,541 · Russian 23. That is real multilingual content and **must
+> not be collapsed to English** by a later well-meaning cleanup.
+
+### Open decision carried forward
+
+The 42 remaining ordering ties still need a tiebreak. `(delta, item_id)` is deterministic
+but arbitrary; a cataloguing convention would be better input than anything derived from
+the data. Belongs with the node migration.
 
 ## Corrections made this session
 
-Recorded because both were the same shape — asserting something without checking when the
-check was cheap:
+Recorded because all three were the same shape — asserting something without checking when
+the check was cheap, or presenting inference as settled:
 
 1. Reported the 18 media-less AV nodes as "not in any doc yet." They **were** in the
    audit's data profile as a required-field gap. What was new was only their character and
@@ -248,10 +312,22 @@ check was cheap:
 2. Justified the catalog-note body rename on structure alone and documented it as a
    footnote, while the same doc claimed there were only "two forced exceptions." The
    conclusion held up, but the reasoning was inference presented as settled.
+3. Committed `MIN(delta)` describing it as making the ordering choice "deterministic."
+   Deterministic it was, but not *good* — it left 1,739 hosts with an ambiguous paragraph
+   order, and I had not measured that before claiming it. The measurement only happened
+   because Yuji asked what delta meant. His account of the `und` layer then produced a rule
+   with 42 ambiguous hosts instead. **Domain knowledge beat data analysis here**, and the
+   analysis had looked complete from the inside.
 
 ## Follow-ups
 
-- **AV4** — the migration. Everything above lands here.
+- **AV4** — finish it: node migrations, collections → Groups, membership, `url_alias`.
+  PR #193 is open as a draft and holds the first half. **Do not run the paragraph
+  migrations until the node migration exists** — 125,101 orphans otherwise.
+- **The 42 ordering ties** — need a tiebreak rule. Ask AV staff about cataloguing
+  convention before inventing one; `(delta, item_id)` is the fallback.
+- **`field_relation_identifier`** — carried from AV3: narrow it to the `audio`/`video`
+  bundles now that they exist, and handle the intra-AV reference with a second pass.
 - **`config-export-drift-hand-edited-yaml`** — now has concrete evidence; belongs on the
   next group agenda.
 - **The 30.1% undescribed figure** — belongs in the audit's data profile, not buried here.
