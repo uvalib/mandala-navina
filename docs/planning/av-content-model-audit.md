@@ -282,7 +282,11 @@ Field API value table — applies here too.
   content — "test", "Transcript Test 2", "Nangma Song (Test)", "Cheeseburger",
   "New Audio", and one of the form "Testing_<firstname>" — alongside a handful of real-looking presentation
   titles. They will migrate as asset pages with a player and no media unless given a
-  disposition; tracked as Sprint 3 **AV14**.
+  disposition. **DECIDED 2026-09-08 (Sprint 3 AV14): migrate as-is, published**, with
+  the nid list handed to AV staff as a pre-cutover cleanup item — they are not empty
+  shells (all 18 have a PBCore title, 17 have workflow data, and they span 15 published
+  collections, only 7 of them scratch). See the
+  [AV5/AV14 disposition note](av-anomalous-node-dispositions.md).
 - `field_pbcore_title` (required, -1 cardinality): 11,583 of 11,583 nodes (100%) have
   at least one title — 0 missing, matching Images' clean-required-field pattern.
 - `group_content_access` (required OG Visibility): 11,583 of 11,583 (100%) filled — no
@@ -426,8 +430,12 @@ validated against the real 2026-09-01 production dump** (see
    reference was silently dropped at save time. `node_type` has **no `MISSING_TYPE`
    row** — it was never a content type. They are empty shells with no Kaltura linkage,
    which makes "repair to a real bundle" impossible (there is no entry ID to repair
-   *to*) and points squarely at exclude. Disposition still formally owed by Sprint 3
-   AV5.
+   *to*) and points squarely at exclude. **DISPOSITION DECIDED 2026-09-08 (Sprint 3
+   AV5): exclude all 68.** All of them sit in one collection — "Admin: On Kaltura Not
+   in Mediabase" (nid 2503), a staff triage bucket — which survives the exclusion
+   because it also holds 285 real audio/video nodes. nid list and full rationale in the
+   [AV5/AV14 disposition note](av-anomalous-node-dispositions.md). This open question is
+   now closed.
 
 ## Recommended next step
 

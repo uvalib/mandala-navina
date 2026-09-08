@@ -1,7 +1,8 @@
 # Sprint 3: AV core implementation (`audio`/`video`, Kaltura, access, collections)
 
-**Status:** ◐ **In progress — started 2026-09-08.** AV2 decided (see the
-[AV2 scope note](../planning/av-content-type-decision.md)); AV3 and AV4 unblocked.
+**Status:** ◐ **In progress — started 2026-09-08.** AV2, AV5 and AV14 decided (see the
+[AV2 scope note](../planning/av-content-type-decision.md) and the
+[AV5/AV14 disposition note](../planning/av-anomalous-node-dispositions.md)); AV3 and AV4 unblocked.
 **No longer blocked on [Spike 7](../spikes/spike-07-kaltura-av-integration.md)** — the
 spike's remaining open items (upload/ingest, a real migration source plugin) were
 absorbed into this sprint's own backlog as AV10–AV12 and AV4, and its packaging work
@@ -61,7 +62,7 @@ Inherited from [ADR 008](../adr/008-mvp-migrate-not-improve.md) /
 | AV2 | Content-type decision: one bundle with a media-kind field, or `audio`/`video` kept as two — scope note (ADR-010-style) | AV content-model audit (done) | ✅ **Done 2026-09-08** — **two content types, built from one shared field definition**; see the [AV2 scope note](../planning/av-content-type-decision.md) |
 | AV3 | PBCore/workflow `field_collection` → Paragraphs modeling decision + build | AV2 | ○ |
 | AV4 | Migrate API source plugins for `audio`/`video` nodes; collection membership sourced from `og_membership`; exclude old corrupted fields; `field_transcript` migrated inertly | AV1–AV3 | ○ |
-| AV5 | 68 `MISSING_TYPE` node disposition — root cause confirmed (Kaltura entries whose `mediaType` doesn't map to VIDEO/AUDIO, imported anyway with an invalid bundle string); decide exclude vs. repair-to-real-type | — (can run in parallel with AV1–AV4) | ○ — **evidence gathered 2026-09-08 (AV2 side-effect), decision still owed.** All 68 created in 2014 by uid 1, **every title is a `.jpg` filename**, and they carry **no `field_video`/`field_audio`/thumbnail** (the bundle's only field instance is `og_group_ref`); `node_type` has no `MISSING_TYPE` row. Repair-to-real-type is **not available** — there is no entry ID to repair to — so the decision is exclude vs. exclude-and-record |
+| AV5 | 68 `MISSING_TYPE` node disposition | — (can run in parallel with AV1–AV4) | ✅ **Done 2026-09-08 — EXCLUDE all 68.** Repair-to-real-type proved unavailable: the bundle's only field instance is `og_group_ref`, so the Kaltura entry ID was dropped at save time and there is nothing to repair from; `node_type` has no `MISSING_TYPE` row. All 68 are 2014/uid 1, titled with `.jpg` filenames, hold zero field data, and sit in the single admin triage collection "Admin: On Kaltura Not in Mediabase" (`2503`) — which survives regardless, holding 285 real AV nodes. nid list + rationale in the [AV5/AV14 disposition note](../planning/av-anomalous-node-dispositions.md) |
 | AV6 | KMaps field wiring (reuse Images pattern, already proven) | AV4 | ○ |
 | AV7 | OG → D11 Group access mapping, including `group_access_uva_member` and `mb_collection_admin` | AV4 | ○ |
 | AV8 | Solr/kmassets sync wiring for the AV bundle(s) | AV4, AV6 | ○ |
@@ -69,7 +70,7 @@ Inherited from [ADR 008](../adr/008-mvp-migrate-not-improve.md) /
 | AV10 | **Kaltura configuration layer** — config-driven, extensible, covering the full element set inventoried below (players/`uiconf_id`, uploader widget ui_conf, delivery, player + thumbnail dimensions, rotate/stretch), selectable **per view mode** via formatter settings. Must carry the known values and accept new ones as config, no code change | AV1 | ○ |
 | AV11 | **Kaltura Session (KS) minting service** — server-side, using the official `kaltura/api-client-library` PHP SDK; short-TTL, upload-scoped KS handed to the browser. Secrets delivered at deploy time via the established ccrypt/`container_0.env.secret` pattern (see below), **never** in `config/sync` | AV1 | ○ |
 | AV12 | **Browser-direct chunked upload widget** — file selected on the node form uploads straight to Kaltura (`uploadToken.add` → chunked `uploadToken.upload` → `media.add`), never through PHP/the ALB; resulting `entryId` written into the `kaltura_media` field on submit. Pause/resume and a progress UI, matching D7's behaviour | AV10, AV11 | ○ |
-| AV14 | **18 media-less AV node disposition** — 17 `video` + 1 `audio` nodes have no Kaltura entry ID at all (documented in the audit's data profile as a required-field gap, but never given an owner). All published; titles are predominantly test content. Decide exclude vs. migrate-as-is vs. unpublish, alongside AV5 | — (can run in parallel with AV1–AV4) | ○ |
+| AV14 | **18 media-less AV node disposition** — 17 `video` + 1 `audio` with no Kaltura entry ID | — (can run in parallel with AV1–AV4) | ✅ **Done 2026-09-08 — MIGRATE AS-IS, hand staff the list.** Not empty shells: all 18 have a PBCore title, 17 have workflow data, and they span 15 published collections of which only 7 are scratch. Migrating published reproduces D7's current behaviour (ADR 008 floor); the nid list goes to AV staff as pre-cutover cleanup. ⚠ **AV4 note:** the media field is required in D7, so these nodes will be uneditable in the D11 node form until fixed. List in the [AV5/AV14 disposition note](../planning/av-anomalous-node-dispositions.md) |
 | AV13 | Migrate D7's **per-view-mode player configuration** (`entry_widget` in each `field_config_instance` display) into AV10's registry + formatter settings — not a single site-wide default | AV10, AV4 | ○ |
 
 ## Design note: uploads and multiple players (decided 2026-09-04, Yuji)
@@ -175,7 +176,8 @@ than ship a silently broken uploader.
 - [ ] Collection membership matches D7 exactly (sourced from `og_membership`, verified against D7 group/membership counts — 11,587 node memberships + 85 subcollection→collection memberships)
 - [ ] AV's two custom OG access realms are mapped and enforced in D11 (verified with a real UVA-member-only test and a real collection-admin test, not just the baseline OG pattern Images used)
 - [ ] KMaps tagging fields are wired and indexed in kmassets/Solr for AV content
-- [ ] Old corrupted fields are excluded from migration; the 68 `MISSING_TYPE` nodes are triaged with a documented disposition (not silently dropped or silently included)
+- [ ] Old corrupted fields are excluded from migration; the 68 `MISSING_TYPE` nodes are triaged with a documented disposition (not silently dropped or silently included) — **disposition decided 2026-09-08 (exclude), [documented here](../planning/av-anomalous-node-dispositions.md); the criterion closes when AV4's source query actually implements it**
+- [ ] The 18 AV nodes with no Kaltura entry migrate as-is and the cleanup list has been delivered to AV staff (AV14)
 - [ ] Collection/gallery UI renders AV content using the shared `shanti-thumbnail` component
 - [ ] `field_transcript` is present and downloadable on migrated nodes but not processed — confirmed no broken links, no attempted TCU/XSLT handling
 - [ ] **A user can upload a media file from the D11 node form and it lands in Kaltura** — verified end to end with a real file against the real partner account, including a large enough file to exercise chunking, with the resulting `entryId` stored on the node and the media playable afterwards
