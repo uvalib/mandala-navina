@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies: {  }
+id: mandala_av
+label: 'Mandala AV (Sprint 3)'
+description: 'D7 AV (mediabase) → D11 audio/video nodes and AV paragraphs.'
+source_type: 'Drupal 7 AV site'
+shared_configuration:
+  source:
+    key: migrate_av

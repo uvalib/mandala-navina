@@ -1,0 +1,27 @@
+uuid: 00a24ff5-df16-4745-aff4-0b9728d70c11
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_pbcore_title
+    - node.type.video
+    - paragraphs.paragraphs_type.av_pbcore_title
+  module:
+    - entity_reference_revisions
+id: node.video.field_pbcore_title
+field_name: field_pbcore_title
+entity_type: node
+bundle: video
+label: 'PBCore title'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_pbcore_title: av_pbcore_title
+    negate: 0
+field_type: entity_reference_revisions

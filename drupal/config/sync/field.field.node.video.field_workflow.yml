@@ -1,0 +1,27 @@
+uuid: 1bf8bcd7-b853-40f8-8d81-df6cfba6c706
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_workflow
+    - node.type.video
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - entity_reference_revisions
+id: node.video.field_workflow
+field_name: field_workflow
+entity_type: node
+bundle: video
+label: Workflow
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_workflow: av_workflow
+    negate: 0
+field_type: entity_reference_revisions

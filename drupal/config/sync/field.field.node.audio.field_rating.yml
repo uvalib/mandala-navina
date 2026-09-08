@@ -1,0 +1,23 @@
+uuid: 5ce9b76a-9dfe-4584-8a6a-e5562366ce83
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_rating
+    - node.type.audio
+id: node.audio.field_rating
+field_name: field_rating
+entity_type: node
+bundle: audio
+label: Rating
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

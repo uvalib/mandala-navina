@@ -1,0 +1,25 @@
+id: d7_av_pbcore_extension
+migration_group: mandala_av
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+label: 'AV: field_pbcore_extension field_collection → av_pbcore_extension paragraph'
+source:
+  plugin: d7_av_field_collection
+  key: migrate_av
+  field_name: field_pbcore_extension
+  sub_fields:
+    - field_extension
+    - field_extension_authority
+process:
+  field_extension/value: field_extension
+  field_extension/format:
+    plugin: default_value
+    default_value: basic_html
+  field_extension_authority: field_extension_authority
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: av_pbcore_extension
+migration_dependencies:
+  required: {  }

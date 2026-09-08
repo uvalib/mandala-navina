@@ -1,0 +1,27 @@
+uuid: 2a4ca25a-a9d3-454e-a930-32e3afc96260
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_pbcore_creator
+    - node.type.audio
+    - paragraphs.paragraphs_type.av_pbcore_creator
+  module:
+    - entity_reference_revisions
+id: node.audio.field_pbcore_creator
+field_name: field_pbcore_creator
+entity_type: node
+bundle: audio
+label: 'PBCore creator'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_pbcore_creator: av_pbcore_creator
+    negate: 0
+field_type: entity_reference_revisions

@@ -1,0 +1,21 @@
+uuid: 895a0d21-9490-4842-b8ad-94bd7f28f99a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_group_content_access
+    - node.type.video
+  module:
+    - options
+id: node.video.field_group_content_access
+field_name: field_group_content_access
+entity_type: node
+bundle: video
+label: 'Group content access'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_integer

@@ -1,0 +1,23 @@
+uuid: 6e5120b3-765f-4b36-9dee-a99fbac221b1
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_language_kmap
+    - node.type.audio
+  module:
+    - shanti_kmaps_fields
+id: node.audio.field_language_kmap
+field_name: field_language_kmap
+entity_type: node
+bundle: audio
+label: 'Language (KMaps)'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: subjects
+  search_root_kmapid: null
+field_type: shanti_kmaps_fields_default

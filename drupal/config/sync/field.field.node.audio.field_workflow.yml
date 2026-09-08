@@ -1,0 +1,27 @@
+uuid: e3d6c739-0b0f-4c05-b80d-8c65374407fd
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_workflow
+    - node.type.audio
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - entity_reference_revisions
+id: node.audio.field_workflow
+field_name: field_workflow
+entity_type: node
+bundle: audio
+label: Workflow
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_workflow: av_workflow
+    negate: 0
+field_type: entity_reference_revisions

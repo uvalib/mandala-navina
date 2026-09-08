@@ -1,0 +1,19 @@
+uuid: 6dcc32c2-9464-437e-8dde-d3d833dbe246
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_year_published
+    - node.type.audio
+id: node.audio.field_year_published
+field_name: field_year_published
+entity_type: node
+bundle: audio
+label: 'Year published'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

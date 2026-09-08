@@ -1,0 +1,27 @@
+uuid: 4af985a1-dfd2-4cf3-91be-7c8732d767e6
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_transcript
+    - node.type.video
+  module:
+    - file
+id: node.video.field_transcript
+field_name: field_transcript
+entity_type: node
+bundle: video
+label: Transcript
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:file'
+  handler_settings: {  }
+  file_directory: '[date:custom:Y]-[date:custom:m]'
+  file_extensions: txt
+  max_filesize: ''
+  description_field: false
+field_type: file

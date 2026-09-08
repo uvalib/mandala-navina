@@ -1,0 +1,22 @@
+uuid: 7255a35f-641d-4b39-a7fb-3d0f1c10a352
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_pbcore_rights_summary
+    - node.type.audio
+  module:
+    - text
+id: node.audio.field_pbcore_rights_summary
+field_name: field_pbcore_rights_summary
+entity_type: node
+bundle: audio
+label: 'Rights summary'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

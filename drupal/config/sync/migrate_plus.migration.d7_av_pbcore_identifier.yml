@@ -1,0 +1,22 @@
+id: d7_av_pbcore_identifier
+migration_group: mandala_av
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+label: 'AV: field_pbcore_identifier field_collection → av_pbcore_identifier paragraph'
+source:
+  plugin: d7_av_field_collection
+  key: migrate_av
+  field_name: field_pbcore_identifier
+  sub_fields:
+    - field_identifier
+    - field_identifier_source
+process:
+  field_identifier: field_identifier
+  field_identifier_source: field_identifier_source
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: av_pbcore_identifier
+migration_dependencies:
+  required: {  }

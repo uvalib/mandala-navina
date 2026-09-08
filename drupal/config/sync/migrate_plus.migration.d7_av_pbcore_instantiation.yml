@@ -1,0 +1,80 @@
+id: d7_av_pbcore_instantiation
+migration_group: mandala_av
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+label: 'AV: field_pbcore_instantiation field_collection → av_pbcore_instantiation paragraph'
+source:
+  plugin: d7_av_field_collection
+  key: migrate_av
+  field_name: field_pbcore_instantiation
+  sub_fields:
+    - field_alternate_modes
+    - field_aspect_ratio
+    - field_bit_depth
+    - field_channel_conf
+    - field_colors
+    - field_data_rate
+    - field_date_created
+    - field_date_issued
+    - field_digital_format
+    - field_duration
+    - field_encoding_scheme
+    - field_file_size
+    - field_format_standard
+    - field_frame_rate
+    - field_frame_size
+    - field_generations
+    - field_language
+    - field_media_type
+    - field_pbcore_annotation
+    - field_pbcore_date_available
+    - field_pbcore_format_id
+    - field_physical_format
+    - field_sampling_rate
+    - field_start_time
+    - field_track_data
+process:
+  field_alternate_modes: field_alternate_modes
+  field_aspect_ratio: field_aspect_ratio
+  field_bit_depth: field_bit_depth
+  field_channel_conf: field_channel_conf
+  field_colors: field_colors
+  field_data_rate: field_data_rate
+  field_date_created: field_date_created
+  field_date_issued: field_date_issued
+  field_digital_format: field_digital_format
+  field_duration: field_duration
+  field_encoding_scheme: field_encoding_scheme
+  field_file_size: field_file_size
+  field_format_standard: field_format_standard
+  field_frame_rate: field_frame_rate
+  field_frame_size: field_frame_size
+  field_generations: field_generations
+  field_pbcore_language: field_language
+  field_media_type: field_media_type
+  field_pbcore_annotation/value: field_pbcore_annotation
+  field_pbcore_annotation/format:
+    plugin: default_value
+    default_value: basic_html
+  field_pbcore_date_available: field_pbcore_date_available
+  # nested collection -> av_pbcore_format_id; resolved by the child migration's map
+  field_pbcore_format_id:
+    plugin: sub_process
+    source: field_pbcore_format_id
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: d7_av_pbcore_format_id
+        source: value
+  field_physical_format: field_physical_format
+  field_sampling_rate: field_sampling_rate
+  field_start_time: field_start_time
+  field_track_data: field_track_data
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: av_pbcore_instantiation
+migration_dependencies:
+  required:
+    - d7_av_pbcore_format_id

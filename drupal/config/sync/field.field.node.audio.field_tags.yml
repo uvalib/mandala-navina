@@ -1,0 +1,24 @@
+uuid: 77567ed8-7cb0-496f-929d-e54fae63dbbc
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_tags
+    - node.type.audio
+    - taxonomy.vocabulary.tags
+id: node.audio.field_tags
+field_name: field_tags
+entity_type: node
+bundle: audio
+label: Tags
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:taxonomy_term'
+  handler_settings:
+    target_bundles:
+      tags: tags
+field_type: entity_reference

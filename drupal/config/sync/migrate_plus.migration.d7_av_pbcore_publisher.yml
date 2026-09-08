@@ -1,0 +1,22 @@
+id: d7_av_pbcore_publisher
+migration_group: mandala_av
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+label: 'AV: field_pbcore_publisher field_collection → av_pbcore_publisher paragraph'
+source:
+  plugin: d7_av_field_collection
+  key: migrate_av
+  field_name: field_pbcore_publisher
+  sub_fields:
+    - field_publisher
+    - field_publisher_rome
+process:
+  field_publisher: field_publisher
+  field_publisher_rome: field_publisher_rome
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: av_pbcore_publisher
+migration_dependencies:
+  required: {  }

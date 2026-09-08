@@ -1,0 +1,27 @@
+uuid: 02bc9c3d-f038-4cfc-a955-bf06e269f9d2
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_pbcore_sponsor
+    - node.type.video
+    - paragraphs.paragraphs_type.av_pbcore_sponsor
+  module:
+    - entity_reference_revisions
+id: node.video.field_pbcore_sponsor
+field_name: field_pbcore_sponsor
+entity_type: node
+bundle: video
+label: 'PBCore sponsor'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_pbcore_sponsor: av_pbcore_sponsor
+    negate: 0
+field_type: entity_reference_revisions

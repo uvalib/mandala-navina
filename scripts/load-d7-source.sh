@@ -12,7 +12,10 @@
 #     downgrade is exactly what the MySQL 8.4 switch removes — do not re-add it.)
 #   - the `db` user needs an explicit GRANT on the new database
 #
-# Usage: ./scripts/load-d7-source.sh <path-to-dump.sql.gz>
+# Usage: ./scripts/load-d7-source.sh <path-to-dump.sql.gz> [target-db]
+#        target-db defaults to d7_images (the Sprint 1 Images source).
+#        Use d7_av for the Sprint 3 AV source, which settings.php wires as the
+#        separate 'migrate_av' connection key.
 #
 # MANUAL PREREQUISITE — the dump is NOT in the repo (*.sql.gz is gitignored;
 # it is ~70MB of production data). Obtain it out-of-band (shared drive / S3)
@@ -21,8 +24,8 @@
 
 set -e
 
-DUMP_FILE="${1:?Usage: ./scripts/load-d7-source.sh <path-to-dump.sql.gz>}"
-SOURCE_DB="d7_images"
+DUMP_FILE="${1:?Usage: ./scripts/load-d7-source.sh <path-to-dump.sql.gz> [target-db]}"
+SOURCE_DB="${2:-d7_images}"
 
 if [ ! -f "$DUMP_FILE" ]; then
   echo "ERROR: dump not found: $DUMP_FILE" >&2

@@ -1,0 +1,27 @@
+uuid: 427cdf54-ef51-4922-986a-4319f800d07d
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_kmap_annotation
+    - node.type.audio
+    - paragraphs.paragraphs_type.av_kmap_annotation
+  module:
+    - entity_reference_revisions
+id: node.audio.field_kmap_annotation
+field_name: field_kmap_annotation
+entity_type: node
+bundle: audio
+label: 'KMaps annotation'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_kmap_annotation: av_kmap_annotation
+    negate: 0
+field_type: entity_reference_revisions

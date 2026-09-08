@@ -1,0 +1,22 @@
+id: d7_av_pbcore_contributor
+migration_group: mandala_av
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+label: 'AV: field_pbcore_contributor field_collection → av_pbcore_contributor paragraph'
+source:
+  plugin: d7_av_field_collection
+  key: migrate_av
+  field_name: field_pbcore_contributor
+  sub_fields:
+    - field_contributor
+    - field_contributor_role
+process:
+  field_contributor: field_contributor
+  field_contributor_role: field_contributor_role
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: av_pbcore_contributor
+migration_dependencies:
+  required: {  }

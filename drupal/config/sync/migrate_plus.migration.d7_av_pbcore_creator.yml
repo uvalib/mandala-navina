@@ -1,0 +1,22 @@
+id: d7_av_pbcore_creator
+migration_group: mandala_av
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+label: 'AV: field_pbcore_creator field_collection → av_pbcore_creator paragraph'
+source:
+  plugin: d7_av_field_collection
+  key: migrate_av
+  field_name: field_pbcore_creator
+  sub_fields:
+    - field_creator
+    - field_creator_role
+process:
+  field_creator: field_creator
+  field_creator_role: field_creator_role
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: av_pbcore_creator
+migration_dependencies:
+  required: {  }

@@ -1,0 +1,27 @@
+uuid: 34bce1b1-0018-487b-a476-686f525717e4
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_pbcore_extension
+    - node.type.audio
+    - paragraphs.paragraphs_type.av_pbcore_extension
+  module:
+    - entity_reference_revisions
+id: node.audio.field_pbcore_extension
+field_name: field_pbcore_extension
+entity_type: node
+bundle: audio
+label: 'PBCore extension'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_pbcore_extension: av_pbcore_extension
+    negate: 0
+field_type: entity_reference_revisions

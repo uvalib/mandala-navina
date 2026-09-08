@@ -32,6 +32,7 @@ module:
   help: 0
   history: 0
   image: 0
+  kaltura_media: 0
   language: 0
   link: 0
   mandala_group_inheritance: 0
@@ -40,6 +41,7 @@ module:
   mandala_node_api: 0
   mandala_saml_oauth: 0
   mandala_solr_visibility: 0
+  media: 0
   menu_link_content: 0
   menu_ui: 0
   migrate: 0

@@ -1,0 +1,23 @@
+uuid: 50f653e3-2497-43cd-a8a9-fe3e2e9109fd
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_location
+    - node.type.audio
+  module:
+    - shanti_kmaps_fields
+id: node.audio.field_location
+field_name: field_location
+entity_type: node
+bundle: audio
+label: Location
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: subjects
+  search_root_kmapid: null
+field_type: shanti_kmaps_fields_default

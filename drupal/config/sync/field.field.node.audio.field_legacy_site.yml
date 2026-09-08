@@ -1,0 +1,21 @@
+uuid: 841c37e0-940a-4053-b253-09549ee4115d
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_legacy_site
+    - node.type.audio
+  module:
+    - options
+id: node.audio.field_legacy_site
+field_name: field_legacy_site
+entity_type: node
+bundle: audio
+label: 'Legacy D7 site'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

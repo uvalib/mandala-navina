@@ -1,0 +1,23 @@
+uuid: 7fddb61f-8347-49a3-b808-80341ef16af2
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_legacy_nid
+    - node.type.video
+id: node.video.field_legacy_nid
+field_name: field_legacy_nid
+entity_type: node
+bundle: video
+label: 'Legacy D7 nid'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

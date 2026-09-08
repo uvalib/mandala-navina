@@ -1,0 +1,27 @@
+uuid: e9d55333-c030-4c16-a5b1-531912ace0b0
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_pbcore_identifier
+    - node.type.audio
+    - paragraphs.paragraphs_type.av_pbcore_identifier
+  module:
+    - entity_reference_revisions
+id: node.audio.field_pbcore_identifier
+field_name: field_pbcore_identifier
+entity_type: node
+bundle: audio
+label: 'PBCore identifier'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_pbcore_identifier: av_pbcore_identifier
+    negate: 0
+field_type: entity_reference_revisions

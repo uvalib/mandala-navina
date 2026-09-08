@@ -1,0 +1,20 @@
+id: d7_av_pbcore_coverage
+migration_group: mandala_av
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+label: 'AV: field_pbcore_coverage field_collection → av_pbcore_coverage paragraph'
+source:
+  plugin: d7_av_field_collection
+  key: migrate_av
+  field_name: field_pbcore_coverage
+  sub_fields:
+    - field_time
+process:
+  field_time: field_time
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: av_pbcore_coverage
+migration_dependencies:
+  required: {  }

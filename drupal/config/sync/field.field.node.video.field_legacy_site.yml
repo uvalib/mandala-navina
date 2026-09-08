@@ -1,0 +1,21 @@
+uuid: ebff29d7-083c-473a-bf19-ff12432f8a52
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_legacy_site
+    - node.type.video
+  module:
+    - options
+id: node.video.field_legacy_site
+field_name: field_legacy_site
+entity_type: node
+bundle: video
+label: 'Legacy D7 site'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string
