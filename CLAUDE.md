@@ -16,6 +16,12 @@ At the start of every session, before doing any work:
    2. `docs/spikes/README.md` — spike status; read the doc for any spike being continued or referenced
    3. `docs/deferred/README.md` — known gaps and deferred work
    4. `docs/session-logs/` — scan for the most recent log in particular; it may be an agenda or handoff (e.g. drafted by one driver for another to pick up) with open decisions or context not yet reflected elsewhere
+3. **Check the local database against dev-0**, and check that config is in sync. dev-0 is the canonical shared state; a local DB that has quietly drifted from it produces work that passes locally and fails for everyone else. Three checks, cheap enough to run every time:
+   1. `ddev drush config:status` — must say *"No differences between DB and sync directory."* Anything else means your local DB is behind (or ahead of) the committed config.
+   2. Compare local content/identity counts against dev-0 — nodes by type, `users_field_data`, `groups`, `authmap`, and the `*-group_membership` relationship counts. A local DB with no real users cannot exercise access or permissions meaningfully, and that is easy to miss.
+   3. Confirm `drupal/config/sync` is current **on GitHub**, not just locally — it is the shared contract, and it must be committed and pushed, not sitting dirty in someone's working tree.
+
+   If any of these drift, run `./scripts/update-db-from-remote.sh dev` to rebase the local DB onto dev-0 (it dumps, imports, then reasserts committed config on top). **This is destructive** — it replaces the local DB, so take a `ddev snapshot` first if you have local-only test content worth keeping. Skip this whole step only when doing migration *development*, where the local DB is deliberately scratch (see the script's header).
 
 This ensures all team members' Claude instances start from the same shared context regardless of who drove the previous session.
 

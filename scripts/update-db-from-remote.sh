@@ -20,19 +20,22 @@ set -e
 
 ENVIRONMENT="${1:-dev}"
 
-# Per-environment remote host + container. Hostnames must resolve on the VPN
-# (adjust to your ~/.ssh/config aliases or the internal DNS names if different).
+# Per-environment remote host + container. The default is the internal DNS name,
+# which resolves for anyone on the VPN without needing a ~/.ssh/config alias --
+# alias names are per-developer (mandala-dev is one person's, not everyone's), so
+# they cannot be the default. Override with REMOTE_HOST if you prefer your alias:
+#   REMOTE_HOST=mandala-dev ./scripts/update-db-from-remote.sh dev
 case "$ENVIRONMENT" in
   dev)
-    REMOTE_HOST="mandala-dev"
+    REMOTE_HOST="${REMOTE_HOST:-mandala-drupal-dev-0.internal.lib.virginia.edu}"
     CONTAINER="mandala-drupal-0"
     ;;
   staging)
-    REMOTE_HOST="mandala-staging"
+    REMOTE_HOST="${REMOTE_HOST:-mandala-drupal-dev-1.internal.lib.virginia.edu}"
     CONTAINER="mandala-drupal-0"
     ;;
   production)
-    REMOTE_HOST="mandala-production"
+    REMOTE_HOST="${REMOTE_HOST:-mandala-drupal-0.internal.lib.virginia.edu}"
     CONTAINER="mandala-drupal-0"
     ;;
   *)
@@ -41,24 +44,57 @@ case "$ENVIRONMENT" in
     ;;
 esac
 
-# drush lives inside the app container on the remote host (the deploy proved the
-# `docker exec <container> <drupal_home>/vendor/bin/drush` path). DRUPAL_HOME is
-# overridable in case the image layout changes.
-DRUPAL_HOME="${DRUPAL_HOME:-/opt/drupal/app}"
-REMOTE_DRUSH="docker exec ${CONTAINER} ${DRUPAL_HOME}/vendor/bin/drush"
+# drush lives inside the app container on the remote host. The Drupal root is
+# /opt/drupal/app/drupal (NOT /opt/drupal/app -- /var/www/html -> /opt/drupal/web
+# is a different stub tree), so drush is at
+# /opt/drupal/app/drupal/vendor/bin/drush. DRUPAL_HOME is overridable in case the
+# image layout changes.
+DRUPAL_HOME="${DRUPAL_HOME:-/opt/drupal/app/drupal}"
+
+# Docker needs sudo on these hosts: personal computing-id logins are not in the
+# docker group (passwordless sudo is granted instead). sudo is harmless for an
+# account that IS in the group, so it is the safe default. Override if needed.
+DOCKER_CMD="${DOCKER_CMD:-sudo docker}"
+
+# mariadb-dump verifies the RDS server certificate against the container's CA
+# bundle, which does not carry the RDS CA -- it fails with "TLS/SSL error:
+# self-signed certificate in certificate chain". Drupal's own PDO connection is
+# unaffected, so this only bites the dump path. The connection stays encrypted;
+# only chain verification is skipped.
+DUMP_OPTS="${DUMP_OPTS:---no-tablespaces --ssl-verify-server-cert=0}"
+
+REMOTE_DRUSH="${DOCKER_CMD} exec ${CONTAINER} ${DRUPAL_HOME}/vendor/bin/drush"
 
 mkdir -p drupal/dumps
 DUMP_FILE="drupal/dumps/${ENVIRONMENT}-$(date +%Y%m%d-%H%M%S).sql.gz"
 
 echo "Dumping ${ENVIRONMENT} DB from ${REMOTE_HOST} (direct over VPN, no bastion)..."
-ssh "$REMOTE_HOST" "$REMOTE_DRUSH sql:dump --gzip --extra-dump=--no-tablespaces" > "$DUMP_FILE"
+ssh "$REMOTE_HOST" "$REMOTE_DRUSH sql:dump --gzip --extra-dump='${DUMP_OPTS}'" > "$DUMP_FILE"
 
+# Validate the artifact, NOT the exit code. drush's SQL commands are wrappers
+# around mysqldump and have historically reported success while writing nothing;
+# a non-empty check is not enough either, because a failed dump still leaves a
+# short file (a TLS failure produced a 20-byte file that passed `-s` and would
+# have been imported over the local DB). Check that the gzip stream is intact
+# AND that mysqldump wrote its completion trailer, which it only does on a clean
+# finish -- that is what catches truncation.
 if [ ! -s "$DUMP_FILE" ]; then
-  echo "ERROR: dump is empty — check VPN connectivity, the SSH host alias, and the container name." >&2
+  echo "ERROR: dump is empty — check VPN connectivity, the remote host, and the container name." >&2
   rm -f "$DUMP_FILE"
   exit 1
 fi
-echo "Wrote $DUMP_FILE ($(du -h "$DUMP_FILE" | cut -f1))."
+if ! gzip -t "$DUMP_FILE" 2>/dev/null; then
+  echo "ERROR: dump is not a valid gzip stream (truncated or an error message, not a dump)." >&2
+  echo "       First bytes:" >&2; head -c 200 "$DUMP_FILE" >&2; echo >&2
+  rm -f "$DUMP_FILE"
+  exit 1
+fi
+if ! gzip -cd "$DUMP_FILE" | tail -5 | grep -q "Dump completed"; then
+  echo "ERROR: dump has no '-- Dump completed' trailer — it is truncated. Refusing to import." >&2
+  rm -f "$DUMP_FILE"
+  exit 1
+fi
+echo "Wrote $DUMP_FILE ($(du -h "$DUMP_FILE" | cut -f1)) — gzip intact, dump complete."
 
 echo "Importing into local DDEV..."
 ddev import-db --file="$DUMP_FILE"
