@@ -96,28 +96,46 @@ class D7AvFieldCollection extends SqlBase {
       $query->condition('l.bundle', $bundles, 'IN');
     }
 
-    // ONE ROW PER ITEM. D7 stores the host field per language, so the same
-    // field_collection item is frequently linked twice — once under `und` and
-    // once under `en`. Measured on `field_pbcore_title` in the 2026-09-01 dump:
-    // 20,799 link rows for 18,647 distinct items, with 2,083 items linked at
-    // *different deltas* under the two languages.
+    // ONE ROW PER ITEM, ORDERED BY THE `en` LAYER.
     //
-    // Neither language can simply be preferred: 6,958 items exist only in
-    // `und` and 9,537 only in `en`, so filtering to one would silently drop
-    // thousands of items. Grouping is safe because **no item is ever linked to
-    // more than one host node** (verified: 0 items with >1 distinct entity_id) —
-    // every duplicate is the same host at a different delta, so only the
-    // position is ambiguous, never the ownership. MIN(delta) makes that choice
-    // deterministic.
+    // D7 stores the host field per language, so the same field_collection item
+    // is frequently linked twice — once under `und` and once under `en`.
+    // Measured on `field_pbcore_title` in the 2026-09-01 dump: 20,799 link rows
+    // for 18,647 distinct items, with 2,083 items linked at *different deltas*
+    // under the two languages. Without deduplication each of those attaches its
+    // paragraph to the same node twice; across all 17 collections that is
+    // 147,836 raw rows against 125,101 real items.
     //
-    // Without this, the 2,083 affected items would each attach their paragraph
-    // to the same node twice.
+    // WHY `en` WINS. `und` is D7's LANGUAGE_NONE — what a field carries before
+    // it is made translatable. These fields started non-translatable, so every
+    // value was `und`; translation was switched on later and subsequent edits
+    // wrote `en` rows, leaving `und` as a stale legacy layer. Confirmed against
+    // the data: of the 1,732 hosts carrying both languages, 1,694 (97.8%) have
+    // an `en` list that fully covers their `und` list. So where an item has an
+    // `en` row, that row's delta is the current, authoritative position.
+    //
+    // BUT `und` CANNOT SIMPLY BE DROPPED. 6,958 items exist only in `und`, and
+    // even on hosts that DO have `en` rows there are `und`-only items that `en`
+    // never picked up — 44 on titles, but 790 on descriptions, 746 on
+    // publishers and 533 on contributors. Dropping `und` would silently lose
+    // them. So this is a UNION of items with `en`-preferred ordering, not a
+    // language filter.
+    //
+    // The improvement is large and was measured, not assumed. On
+    // `field_pbcore_title`, ordering is ambiguous (two items resolving to the
+    // same delta on one host) for **42** hosts under this rule, against **1,739**
+    // under a plain MIN(delta) — with the identical 18,647 items preserved
+    // either way.
+    //
+    // Grouping is safe because no item is ever linked to more than one host
+    // node (verified: 0 items with >1 distinct entity_id) — only the position
+    // was ever ambiguous, never the ownership.
     $query->groupBy('fci.item_id');
     $query->groupBy('fci.revision_id');
     $query->groupBy('l.entity_id');
     $query->groupBy('l.entity_type');
     $query->groupBy('l.bundle');
-    $query->addExpression('MIN(l.delta)', 'delta');
+    $query->addExpression("COALESCE(MIN(CASE WHEN l.language = 'en' THEN l.delta END), MIN(l.delta))", 'delta');
 
     return $query->orderBy('fci.item_id');
   }
