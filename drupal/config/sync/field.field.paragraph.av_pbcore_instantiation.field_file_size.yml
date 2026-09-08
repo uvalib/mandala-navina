@@ -1,0 +1,19 @@
+uuid: ff4d5427-b8ab-4a5b-bb2a-66f5bb81e67a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_file_size
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+id: paragraph.av_pbcore_instantiation.field_file_size
+field_name: field_file_size
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'File size'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

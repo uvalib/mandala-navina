@@ -1,0 +1,21 @@
+uuid: 84ee520b-fccb-4a6c-822e-2a71363a8bd0
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_media_type
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - options
+id: paragraph.av_pbcore_instantiation.field_media_type
+field_name: field_media_type
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Media type'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

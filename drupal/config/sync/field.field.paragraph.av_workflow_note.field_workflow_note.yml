@@ -1,0 +1,22 @@
+uuid: 40f26a4f-7828-4593-839a-1fd36404fafa
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_workflow_note
+    - paragraphs.paragraphs_type.av_workflow_note
+  module:
+    - text
+id: paragraph.av_workflow_note.field_workflow_note
+field_name: field_workflow_note
+entity_type: paragraph
+bundle: av_workflow_note
+label: 'Workflow note'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

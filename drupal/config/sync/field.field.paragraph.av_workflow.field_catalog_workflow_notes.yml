@@ -1,0 +1,27 @@
+uuid: 8ab0604a-56d6-471c-a1cb-0ac172abc756
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_catalog_workflow_notes
+    - paragraphs.paragraphs_type.av_workflow
+    - paragraphs.paragraphs_type.av_workflow_note
+  module:
+    - entity_reference_revisions
+id: paragraph.av_workflow.field_catalog_workflow_notes
+field_name: field_catalog_workflow_notes
+entity_type: paragraph
+bundle: av_workflow
+label: 'Catalog workflow notes'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_workflow_note: av_workflow_note
+    negate: 0
+field_type: entity_reference_revisions

@@ -1,0 +1,21 @@
+uuid: 2715e45f-5a35-4bb0-b39b-d90e69b10e2a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_workflow_note_date
+    - paragraphs.paragraphs_type.av_workflow_note
+  module:
+    - datetime
+id: paragraph.av_workflow_note.field_workflow_note_date
+field_name: field_workflow_note_date
+entity_type: paragraph
+bundle: av_workflow_note
+label: 'Workflow note date'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

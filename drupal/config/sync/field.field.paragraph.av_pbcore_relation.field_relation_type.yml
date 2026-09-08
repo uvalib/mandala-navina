@@ -1,0 +1,21 @@
+uuid: 332075b0-43fd-4eeb-b1e1-14c02d974e8e
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_relation_type
+    - paragraphs.paragraphs_type.av_pbcore_relation
+  module:
+    - options
+id: paragraph.av_pbcore_relation.field_relation_type
+field_name: field_relation_type
+entity_type: paragraph
+bundle: av_pbcore_relation
+label: 'Relation type'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

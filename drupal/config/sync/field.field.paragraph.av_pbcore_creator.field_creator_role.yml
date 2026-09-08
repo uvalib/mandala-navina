@@ -1,0 +1,21 @@
+uuid: 8f16d23a-d87c-4432-9499-85e9b313b965
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_creator_role
+    - paragraphs.paragraphs_type.av_pbcore_creator
+  module:
+    - options
+id: paragraph.av_pbcore_creator.field_creator_role
+field_name: field_creator_role
+entity_type: paragraph
+bundle: av_pbcore_creator
+label: 'Creator role'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

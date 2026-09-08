@@ -1,0 +1,20 @@
+uuid: 9b5c8444-db0e-4520-ba6d-f6c94fdbbb65
+langcode: en
+status: true
+dependencies:
+  module:
+    - entity_reference_revisions
+    - paragraphs
+id: paragraph.field_pbcore_format_id
+field_name: field_pbcore_format_id
+entity_type: paragraph
+type: entity_reference_revisions
+settings:
+  target_type: paragraph
+module: entity_reference_revisions
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

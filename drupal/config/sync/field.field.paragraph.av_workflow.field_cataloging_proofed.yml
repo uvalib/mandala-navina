@@ -1,0 +1,21 @@
+uuid: 8ff5756c-2576-42be-8cc1-9cef93e2e6fd
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_cataloging_proofed
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_cataloging_proofed
+field_name: field_cataloging_proofed
+entity_type: paragraph
+bundle: av_workflow
+label: 'Cataloging proofed'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

@@ -1,0 +1,10 @@
+uuid: 28a50c07-05ab-4c8b-a231-8ac4c7f2c3b1
+langcode: en
+status: true
+dependencies: {  }
+id: av_pbcore_instantiation
+label: 'AV PBCore Instantiation'
+icon_uuid: null
+icon_default: null
+description: null
+behavior_plugins: {  }

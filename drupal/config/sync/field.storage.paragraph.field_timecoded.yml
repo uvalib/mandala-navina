@@ -1,0 +1,33 @@
+uuid: a5d37b08-1ef1-4da7-910b-e3c9b15eb257
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_timecoded
+field_name: field_timecoded
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 'Not Reviewed'
+      label: 'Not Reviewed'
+    -
+      value: 'Yes'
+      label: 'Yes'
+    -
+      value: 'No'
+      label: 'No'
+    -
+      value: Problem
+      label: Problem
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

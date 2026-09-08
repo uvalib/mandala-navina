@@ -1,0 +1,19 @@
+uuid: cdbacacd-7f52-468f-afd6-0c273ee2b081
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_identifier
+    - paragraphs.paragraphs_type.av_pbcore_identifier
+id: paragraph.av_pbcore_identifier.field_identifier
+field_name: field_identifier
+entity_type: paragraph
+bundle: av_pbcore_identifier
+label: Identifier
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

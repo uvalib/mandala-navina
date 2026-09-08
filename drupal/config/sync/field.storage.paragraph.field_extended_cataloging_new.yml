@@ -1,0 +1,33 @@
+uuid: 9d29fd82-e64a-42a7-84e5-950924ebed65
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_extended_cataloging_new
+field_name: field_extended_cataloging_new
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 'Not Reviewed'
+      label: 'Not Reviewed'
+    -
+      value: 'Yes'
+      label: 'Yes'
+    -
+      value: Problem
+      label: Problem
+    -
+      value: 'No'
+      label: 'No'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

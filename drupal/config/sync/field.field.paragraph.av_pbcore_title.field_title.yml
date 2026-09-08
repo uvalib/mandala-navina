@@ -1,0 +1,19 @@
+uuid: cfea7b9e-777b-4b42-95cc-0956bbe0ec1f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_title
+    - paragraphs.paragraphs_type.av_pbcore_title
+id: paragraph.av_pbcore_title.field_title
+field_name: field_title
+entity_type: paragraph
+bundle: av_pbcore_title
+label: Title
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

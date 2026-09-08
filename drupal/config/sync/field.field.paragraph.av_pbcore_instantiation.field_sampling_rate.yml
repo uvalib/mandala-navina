@@ -1,0 +1,21 @@
+uuid: ded50d72-5c97-4b52-98f9-c50e5348f0e3
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_sampling_rate
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - options
+id: paragraph.av_pbcore_instantiation.field_sampling_rate
+field_name: field_sampling_rate
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Sampling rate'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

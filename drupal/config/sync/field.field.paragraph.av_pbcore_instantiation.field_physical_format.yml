@@ -1,0 +1,21 @@
+uuid: 755df37d-e54f-4f88-ba07-161e81570d4a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_physical_format
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - options
+id: paragraph.av_pbcore_instantiation.field_physical_format
+field_name: field_physical_format
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Physical format'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

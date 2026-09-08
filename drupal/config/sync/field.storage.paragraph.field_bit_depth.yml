@@ -1,0 +1,42 @@
+uuid: e5d2926d-a639-43b0-b9bf-393f53668997
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_bit_depth
+field_name: field_bit_depth
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: '8 bit'
+      label: '8 bit'
+    -
+      value: '10 bit'
+      label: '10 bit'
+    -
+      value: '16 bit'
+      label: '16 bit'
+    -
+      value: '20 bit'
+      label: '20 bit'
+    -
+      value: '24 bit'
+      label: '24 bit'
+    -
+      value: '32 bit'
+      label: '32 bit'
+    -
+      value: Other
+      label: Other
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

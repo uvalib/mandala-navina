@@ -1,8 +1,10 @@
 # Sprint 3: AV core implementation (`audio`/`video`, Kaltura, access, collections)
 
-**Status:** ◐ **In progress — started 2026-09-08.** AV2, AV5 and AV14 decided (see the
-[AV2 scope note](../planning/av-content-type-decision.md) and the
-[AV5/AV14 disposition note](../planning/av-anomalous-node-dispositions.md)); AV3 and AV4 unblocked.
+**Status:** ◐ **In progress — started 2026-09-08.** AV2, AV3, AV5 and AV14 done (see the
+[AV2 scope note](../planning/av-content-type-decision.md), the
+[AV3 paragraph model](../planning/av-paragraph-model.md) and the
+[AV5/AV14 disposition note](../planning/av-anomalous-node-dispositions.md)); **AV4 is the next gate** — it
+creates the `audio`/`video` bundles, attaches the paragraph fields, and writes the migration.
 **No longer blocked on [Spike 7](../spikes/spike-07-kaltura-av-integration.md)** — the
 spike's remaining open items (upload/ingest, a real migration source plugin) were
 absorbed into this sprint's own backlog as AV10–AV12 and AV4, and its packaging work
@@ -60,7 +62,7 @@ Inherited from [ADR 008](../adr/008-mvp-migrate-not-improve.md) /
 |---|---|---|---|
 | AV1 | Spike 7 — Kaltura module landscape survey, playback prototype, upload/ingest assessment, partner/credential re-provisioning confirmation | — | ◐ (module survey + live playback prototype done 2026-09-04; upload/ingest + migration source plugin open) |
 | AV2 | Content-type decision: one bundle with a media-kind field, or `audio`/`video` kept as two — scope note (ADR-010-style) | AV content-model audit (done) | ✅ **Done 2026-09-08** — **two content types, built from one shared field definition**; see the [AV2 scope note](../planning/av-content-type-decision.md) |
-| AV3 | PBCore/workflow `field_collection` → Paragraphs modeling decision + build | AV2 | ○ |
+| AV3 | PBCore/workflow `field_collection` → Paragraphs modeling decision + build | AV2 | ✅ **Done 2026-09-08 — 15 paragraph types built and exported.** 1:1 with D7's field_collections except the three structurally-identical note collections, consolidated into one `av_workflow_note` referenced by three fields. 84 new field storages, 87 instances, 186 config files. Nesting verified live through both levels. See the [AV3 paragraph model](../planning/av-paragraph-model.md) |
 | AV4 | Migrate API source plugins for `audio`/`video` nodes; collection membership sourced from `og_membership`; exclude old corrupted fields; `field_transcript` migrated inertly | AV1–AV3 | ○ |
 | AV5 | 68 `MISSING_TYPE` node disposition | — (can run in parallel with AV1–AV4) | ✅ **Done 2026-09-08 — EXCLUDE all 68.** Repair-to-real-type proved unavailable: the bundle's only field instance is `og_group_ref`, so the Kaltura entry ID was dropped at save time and there is nothing to repair from; `node_type` has no `MISSING_TYPE` row. All 68 are 2014/uid 1, titled with `.jpg` filenames, hold zero field data, and sit in the single admin triage collection "Admin: On Kaltura Not in Mediabase" (`2503`) — which survives regardless, holding 285 real AV nodes. nid list + rationale in the [AV5/AV14 disposition note](../planning/av-anomalous-node-dispositions.md) |
 | AV6 | KMaps field wiring (reuse Images pattern, already proven) | AV4 | ○ |

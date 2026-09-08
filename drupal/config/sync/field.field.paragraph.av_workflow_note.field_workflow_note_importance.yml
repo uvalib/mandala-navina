@@ -1,0 +1,21 @@
+uuid: 10893923-c936-4738-87a7-ed3f3c067933
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_workflow_note_importance
+    - paragraphs.paragraphs_type.av_workflow_note
+  module:
+    - options
+id: paragraph.av_workflow_note.field_workflow_note_importance
+field_name: field_workflow_note_importance
+entity_type: paragraph
+bundle: av_workflow_note
+label: 'Workflow note importance'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

@@ -1,0 +1,21 @@
+uuid: a9bf70a4-8a46-4906-bab7-c634194a5f4d
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_contributor_role
+    - paragraphs.paragraphs_type.av_pbcore_contributor
+  module:
+    - options
+id: paragraph.av_pbcore_contributor.field_contributor_role
+field_name: field_contributor_role
+entity_type: paragraph
+bundle: av_pbcore_contributor
+label: 'Contributor role'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

@@ -1,0 +1,90 @@
+uuid: c7a4fb2b-1ca0-4ddd-ad25-ee3a26d05857
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_creator_role
+field_name: field_creator_role
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: Animator
+      label: Animator
+    -
+      value: Artist
+      label: Artist
+    -
+      value: 'Associate Producer'
+      label: 'Associate Producer'
+    -
+      value: Cinematographer
+      label: Cinematographer
+    -
+      value: Composer
+      label: Composer
+    -
+      value: 'Co Producer'
+      label: 'Co Producer'
+    -
+      value: Creator
+      label: Creator
+    -
+      value: Director
+      label: Director
+    -
+      value: Editor
+      label: Editor
+    -
+      value: Essayist
+      label: Essayist
+    -
+      value: 'Executive Producer'
+      label: 'Executive Producer'
+    -
+      value: Host
+      label: Host
+    -
+      value: Illustrator
+      label: Illustrator
+    -
+      value: Interviewer
+      label: Interviewer
+    -
+      value: Moderator
+      label: Moderator
+    -
+      value: Photographer
+      label: Photographer
+    -
+      value: Producer
+      label: Producer
+    -
+      value: 'Production Unit'
+      label: 'Production Unit'
+    -
+      value: Reporter
+      label: Reporter
+    -
+      value: Speaker
+      label: Speaker
+    -
+      value: Transcriber
+      label: Transcriber
+    -
+      value: Writer
+      label: Writer
+    -
+      value: Other
+      label: Other
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

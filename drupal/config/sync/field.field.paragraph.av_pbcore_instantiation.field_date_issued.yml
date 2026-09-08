@@ -1,0 +1,21 @@
+uuid: 54e9dfb7-17cf-4832-85f0-5dfb616021c6
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_date_issued
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - datetime
+id: paragraph.av_pbcore_instantiation.field_date_issued
+field_name: field_date_issued
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Date issued'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

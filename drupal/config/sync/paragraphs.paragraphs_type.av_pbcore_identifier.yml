@@ -1,0 +1,10 @@
+uuid: 7ecc8e70-7875-4812-a925-84cb64de89f9
+langcode: en
+status: true
+dependencies: {  }
+id: av_pbcore_identifier
+label: 'AV PBCore Identifier'
+icon_uuid: null
+icon_default: null
+description: null
+behavior_plugins: {  }

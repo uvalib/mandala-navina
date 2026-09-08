@@ -1,0 +1,21 @@
+uuid: 81827d4f-5df1-4186-8f02-f6c59c5086ea
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_masters_archived
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_masters_archived
+field_name: field_masters_archived
+entity_type: paragraph
+bundle: av_workflow
+label: 'Masters archived'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

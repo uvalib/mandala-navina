@@ -1,0 +1,10 @@
+uuid: 24bd837b-fe84-4c17-93bd-aa3833e26463
+langcode: en
+status: true
+dependencies: {  }
+id: av_pbcore_creator
+label: 'AV PBCore Creator'
+icon_uuid: null
+icon_default: null
+description: null
+behavior_plugins: {  }

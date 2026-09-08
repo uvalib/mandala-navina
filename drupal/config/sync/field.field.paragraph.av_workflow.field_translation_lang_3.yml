@@ -1,0 +1,21 @@
+uuid: 9d87e54f-5bb7-446d-8c7c-768ed6fd95b3
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_translation_lang_3
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_translation_lang_3
+field_name: field_translation_lang_3
+entity_type: paragraph
+bundle: av_workflow
+label: 'Translation lang 3'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

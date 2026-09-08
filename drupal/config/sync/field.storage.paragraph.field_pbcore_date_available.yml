@@ -1,0 +1,20 @@
+uuid: 1cf9ad85-31e5-4df2-aef6-c245ccc36b7f
+langcode: en
+status: true
+dependencies:
+  module:
+    - datetime
+    - paragraphs
+id: paragraph.field_pbcore_date_available
+field_name: field_pbcore_date_available
+entity_type: paragraph
+type: datetime
+settings:
+  datetime_type: datetime
+module: datetime
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

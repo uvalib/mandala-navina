@@ -1,0 +1,21 @@
+uuid: 9f39f66d-c898-4d70-8fdc-98ce87f6d731
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_sponser_role
+    - paragraphs.paragraphs_type.av_pbcore_sponsor
+  module:
+    - options
+id: paragraph.av_pbcore_sponsor.field_sponser_role
+field_name: field_sponser_role
+entity_type: paragraph
+bundle: av_pbcore_sponsor
+label: 'Sponser role'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

@@ -1,0 +1,42 @@
+uuid: e388f69f-3497-4b29-8d0a-f3b845082ed2
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_sampling_rate
+field_name: field_sampling_rate
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: '11 kHz'
+      label: '11 kHz'
+    -
+      value: '22_050 kHz'
+      label: '22_050 kHz'
+    -
+      value: '32 kHz'
+      label: '32 kHz'
+    -
+      value: '44_1 kHz'
+      label: '44_1 kHz'
+    -
+      value: '48 kHz'
+      label: '48 kHz'
+    -
+      value: '96 kHz'
+      label: '96 kHz'
+    -
+      value: Other
+      label: Other
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,22 @@
+uuid: f839e3c6-a974-47c1-bb9a-23afa25e1c59
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_annot_note
+    - paragraphs.paragraphs_type.av_kmap_annotation
+  module:
+    - text
+id: paragraph.av_kmap_annotation.field_annot_note
+field_name: field_annot_note
+entity_type: paragraph
+bundle: av_kmap_annotation
+label: 'Annot note'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

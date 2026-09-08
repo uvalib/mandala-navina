@@ -1,0 +1,22 @@
+uuid: c5cabbbe-435e-4e30-97f7-b35b7756ed07
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_pbcore_annotation
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - text
+id: paragraph.av_pbcore_instantiation.field_pbcore_annotation
+field_name: field_pbcore_annotation
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Pbcore annotation'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

@@ -1,0 +1,36 @@
+uuid: 68f13d56-601f-4988-b137-b8d18c813aae
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_publisher_rome
+field_name: field_publisher_rome
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 'Copyright Holder'
+      label: 'Copyright Holder'
+    -
+      value: Distributor
+      label: Distributor
+    -
+      value: Presenter
+      label: Presenter
+    -
+      value: Publisher
+      label: Publisher
+    -
+      value: 'Release Agent'
+      label: 'Release Agent'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

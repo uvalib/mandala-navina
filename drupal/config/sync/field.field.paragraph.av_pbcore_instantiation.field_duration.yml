@@ -1,0 +1,19 @@
+uuid: 553c93c8-0bc1-4330-a5c7-95daca43acf7
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_duration
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+id: paragraph.av_pbcore_instantiation.field_duration
+field_name: field_duration
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: Duration
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

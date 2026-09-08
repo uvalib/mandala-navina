@@ -1,0 +1,33 @@
+uuid: 1d039daa-514a-4934-9a7e-953f52bb4310
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_annot_format
+field_name: field_annot_format
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: first_last
+      label: 'First and last'
+    -
+      value: last
+      label: Last
+    -
+      value: last_plus_parent
+      label: 'Last plus parent'
+    -
+      value: full
+      label: Full
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

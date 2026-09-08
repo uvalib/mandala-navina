@@ -1,0 +1,10 @@
+uuid: 8077a6fe-6a98-42b6-af73-e26d22b65f91
+langcode: en
+status: true
+dependencies: {  }
+id: av_pbcore_extension
+label: 'AV PBCore Extension'
+icon_uuid: null
+icon_default: null
+description: null
+behavior_plugins: {  }

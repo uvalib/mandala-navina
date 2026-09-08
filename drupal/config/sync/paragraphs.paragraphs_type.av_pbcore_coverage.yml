@@ -1,0 +1,10 @@
+uuid: fd09b534-f873-4870-a3df-67e6373b69bf
+langcode: en
+status: true
+dependencies: {  }
+id: av_pbcore_coverage
+label: 'AV PBCore Coverage'
+icon_uuid: null
+icon_default: null
+description: null
+behavior_plugins: {  }

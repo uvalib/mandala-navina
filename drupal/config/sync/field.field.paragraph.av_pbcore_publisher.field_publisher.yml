@@ -1,0 +1,19 @@
+uuid: 6b7dc176-8abe-46a6-a2b0-dd6c3d8ab1bd
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_publisher
+    - paragraphs.paragraphs_type.av_pbcore_publisher
+id: paragraph.av_pbcore_publisher.field_publisher
+field_name: field_publisher
+entity_type: paragraph
+bundle: av_pbcore_publisher
+label: Publisher
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

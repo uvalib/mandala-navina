@@ -1,0 +1,22 @@
+uuid: f0a854bb-3b3c-4ddd-929b-3354b896c202
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_description
+    - paragraphs.paragraphs_type.av_pbcore_description
+  module:
+    - text
+id: paragraph.av_pbcore_description.field_description
+field_name: field_description
+entity_type: paragraph
+bundle: av_pbcore_description
+label: Description
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

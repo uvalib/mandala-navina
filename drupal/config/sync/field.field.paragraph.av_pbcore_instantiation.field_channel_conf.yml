@@ -1,0 +1,19 @@
+uuid: 7ce940d5-2964-44ec-9749-a3a638bcecb5
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_channel_conf
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+id: paragraph.av_pbcore_instantiation.field_channel_conf
+field_name: field_channel_conf
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Channel conf'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

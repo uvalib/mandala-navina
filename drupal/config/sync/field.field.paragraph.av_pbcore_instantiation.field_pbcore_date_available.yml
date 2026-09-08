@@ -1,0 +1,21 @@
+uuid: 0589fc62-6cd1-48c9-b7fc-5421bbecc7c5
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_pbcore_date_available
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - datetime
+id: paragraph.av_pbcore_instantiation.field_pbcore_date_available
+field_name: field_pbcore_date_available
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Pbcore date available'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

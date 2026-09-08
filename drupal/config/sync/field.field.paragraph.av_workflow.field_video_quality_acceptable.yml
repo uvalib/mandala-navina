@@ -1,0 +1,21 @@
+uuid: 16d3e74e-fd09-41bc-806a-f98ecc74a475
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_video_quality_acceptable
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_video_quality_acceptable
+field_name: field_video_quality_acceptable
+entity_type: paragraph
+bundle: av_workflow
+label: 'Video quality acceptable'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

@@ -1,0 +1,19 @@
+uuid: 880322ff-a1c5-46ae-bfdf-2d0b26f7a2ab
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_annot_numeric_label
+    - paragraphs.paragraphs_type.av_kmap_annotation
+id: paragraph.av_kmap_annotation.field_annot_numeric_label
+field_name: field_annot_numeric_label
+entity_type: paragraph
+bundle: av_kmap_annotation
+label: 'Annot numeric label'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -1,0 +1,426 @@
+uuid: feced888-6e69-40f5-bc4f-433cd6cd3aa5
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_contributor_role
+field_name: field_contributor_role
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: Actor
+      label: Actor
+    -
+      value: Advisor
+      label: Advisor
+    -
+      value: Anchor
+      label: Anchor
+    -
+      value: Animator
+      label: Animator
+    -
+      value: Arranger
+      label: Arranger
+    -
+      value: Artist
+      label: Artist
+    -
+      value: 'Assistant Cameraman'
+      label: 'Assistant Cameraman'
+    -
+      value: 'Assistant Director'
+      label: 'Assistant Director'
+    -
+      value: 'Assistant Editor'
+      label: 'Assistant Editor'
+    -
+      value: 'Assistant Producer - Film'
+      label: 'Assistant Producer - Film'
+    -
+      value: 'Assistant Researcher'
+      label: 'Assistant Researcher'
+    -
+      value: 'Assistant Stage Manager'
+      label: 'Assistant Stage Manager'
+    -
+      value: 'Assistant to the Producer'
+      label: 'Assistant to the Producer'
+    -
+      value: 'Assistant Unit Manager'
+      label: 'Assistant Unit Manager'
+    -
+      value: 'Associate Director'
+      label: 'Associate Director'
+    -
+      value: 'Associate Producer'
+      label: 'Associate Producer'
+    -
+      value: Audio
+      label: Audio
+    -
+      value: 'Audio Assistant'
+      label: 'Audio Assistant'
+    -
+      value: 'Audio Editor'
+      label: 'Audio Editor'
+    -
+      value: 'Audio Engineer'
+      label: 'Audio Engineer'
+    -
+      value: 'Audio Mixer'
+      label: 'Audio Mixer'
+    -
+      value: Author
+      label: Author
+    -
+      value: 'Boom Operator'
+      label: 'Boom Operator'
+    -
+      value: 'Camera Assistant'
+      label: 'Camera Assistant'
+    -
+      value: Cameraperson
+      label: Cameraperson
+    -
+      value: Casting
+      label: Casting
+    -
+      value: 'Chief Camera - Segment'
+      label: 'Chief Camera - Segment'
+    -
+      value: Cinematographer
+      label: Cinematographer
+    -
+      value: 'Commentary Editor'
+      label: 'Commentary Editor'
+    -
+      value: Commentator
+      label: Commentator
+    -
+      value: 'Community Coordinator'
+      label: 'Community Coordinator'
+    -
+      value: Composer
+      label: Composer
+    -
+      value: Concept
+      label: Concept
+    -
+      value: Conductor
+      label: Conductor
+    -
+      value: Contributor
+      label: Contributor
+    -
+      value: Co-Producer
+      label: Co-Producer
+    -
+      value: Crane
+      label: Crane
+    -
+      value: Dancer
+      label: Dancer
+    -
+      value: Director
+      label: Director
+    -
+      value: 'Director - Artistic'
+      label: 'Director - Artistic'
+    -
+      value: 'Director - Dance'
+      label: 'Director - Dance'
+    -
+      value: 'Director - Doc Material'
+      label: 'Director - Doc Material'
+    -
+      value: 'Director - Segment'
+      label: 'Director - Segment'
+    -
+      value: 'Edit Programmer'
+      label: 'Edit Programmer'
+    -
+      value: Editor
+      label: Editor
+    -
+      value: 'Editor - graphics'
+      label: 'Editor - graphics'
+    -
+      value: 'Editor - Segment'
+      label: 'Editor - Segment'
+    -
+      value: Engineer
+      label: Engineer
+    -
+      value: Essayist
+      label: Essayist
+    -
+      value: 'Executive Producer'
+      label: 'Executive Producer'
+    -
+      value: Facilitator
+      label: Facilitator
+    -
+      value: 'Fashion Consultant'
+      label: 'Fashion Consultant'
+    -
+      value: 'Film Editor'
+      label: 'Film Editor'
+    -
+      value: 'Film Sound'
+      label: 'Film Sound'
+    -
+      value: Filmmaker
+      label: Filmmaker
+    -
+      value: 'Floor Manager'
+      label: 'Floor Manager'
+    -
+      value: Funder
+      label: Funder
+    -
+      value: Gaffer
+      label: Gaffer
+    -
+      value: 'Graphic Designer'
+      label: 'Graphic Designer'
+    -
+      value: Graphics
+      label: Graphics
+    -
+      value: Guest
+      label: Guest
+    -
+      value: Host
+      label: Host
+    -
+      value: Illustrator
+      label: Illustrator
+    -
+      value: Instrumentalist
+      label: Instrumentalist
+    -
+      value: Intern
+      label: Intern
+    -
+      value: Interpreter
+      label: Interpreter
+    -
+      value: Interviewee
+      label: Interviewee
+    -
+      value: Interviewer
+      label: Interviewer
+    -
+      value: Lecturer
+      label: Lecturer
+    -
+      value: Lighting
+      label: Lighting
+    -
+      value: 'Lighting Assistant'
+      label: 'Lighting Assistant'
+    -
+      value: 'Lighting Director'
+      label: 'Lighting Director'
+    -
+      value: Make-Up
+      label: Make-Up
+    -
+      value: 'Mobile Unit Supervisor'
+      label: 'Mobile Unit Supervisor'
+    -
+      value: Moderator
+      label: Moderator
+    -
+      value: 'Music Assistant'
+      label: 'Music Assistant'
+    -
+      value: 'Music Coordinator'
+      label: 'Music Coordinator'
+    -
+      value: 'Music Director'
+      label: 'Music Director'
+    -
+      value: 'Musical Staging'
+      label: 'Musical Staging'
+    -
+      value: Musician
+      label: Musician
+    -
+      value: Narrator
+      label: Narrator
+    -
+      value: 'News Director'
+      label: 'News Director'
+    -
+      value: Panelist
+      label: Panelist
+    -
+      value: Performer
+      label: Performer
+    -
+      value: 'Performing Group'
+      label: 'Performing Group'
+    -
+      value: Photographer
+      label: Photographer
+    -
+      value: 'Post-prod Audio'
+      label: 'Post-prod Audio'
+    -
+      value: 'Post-prod Supervisor'
+      label: 'Post-prod Supervisor'
+    -
+      value: Producer
+      label: Producer
+    -
+      value: 'Producer - Segment'
+      label: 'Producer - Segment'
+    -
+      value: 'Production Assistant'
+      label: 'Production Assistant'
+    -
+      value: 'Production Manager'
+      label: 'Production Manager'
+    -
+      value: 'Production Personnel'
+      label: 'Production Personnel'
+    -
+      value: 'Production Secretary'
+      label: 'Production Secretary'
+    -
+      value: 'Production Unit'
+      label: 'Production Unit'
+    -
+      value: 'Project Director'
+      label: 'Project Director'
+    -
+      value: Publicist
+      label: Publicist
+    -
+      value: Reader
+      label: Reader
+    -
+      value: 'Recording engineer'
+      label: 'Recording engineer'
+    -
+      value: Recordist
+      label: Recordist
+    -
+      value: Reporter
+      label: Reporter
+    -
+      value: Researcher
+      label: Researcher
+    -
+      value: 'Scenic Design'
+      label: 'Scenic Design'
+    -
+      value: 'Senior Editor'
+      label: 'Senior Editor'
+    -
+      value: 'Senior Researcher'
+      label: 'Senior Researcher'
+    -
+      value: Sound
+      label: Sound
+    -
+      value: 'Sound Mixer'
+      label: 'Sound Mixer'
+    -
+      value: Speaker
+      label: Speaker
+    -
+      value: 'Staff Volunteer'
+      label: 'Staff Volunteer'
+    -
+      value: 'Stage Manager'
+      label: 'Stage Manager'
+    -
+      value: 'Still Photography'
+      label: 'Still Photography'
+    -
+      value: 'Studio Technician'
+      label: 'Studio Technician'
+    -
+      value: Subject
+      label: Subject
+    -
+      value: Switcher
+      label: Switcher
+    -
+      value: Synthesis
+      label: Synthesis
+    -
+      value: 'Synthesis Musician'
+      label: 'Synthesis Musician'
+    -
+      value: 'Talent Coordinator'
+      label: 'Talent Coordinator'
+    -
+      value: 'Technical Consultant'
+      label: 'Technical Consultant'
+    -
+      value: 'Technical Director'
+      label: 'Technical Director'
+    -
+      value: 'Technical Production'
+      label: 'Technical Production'
+    -
+      value: 'Theme Music'
+      label: 'Theme Music'
+    -
+      value: Titlist
+      label: Titlist
+    -
+      value: Translator
+      label: Translator
+    -
+      value: Transcriber
+      label: Transcriber
+    -
+      value: 'Unit Manager'
+      label: 'Unit Manager'
+    -
+      value: Video
+      label: Video
+    -
+      value: 'Videotape Assembly'
+      label: 'Videotape Assembly'
+    -
+      value: 'Videotape Editor'
+      label: 'Videotape Editor'
+    -
+      value: 'Videotape Engineer'
+      label: 'Videotape Engineer'
+    -
+      value: 'Videotape Recordist'
+      label: 'Videotape Recordist'
+    -
+      value: 'Vidifont Operator'
+      label: 'Vidifont Operator'
+    -
+      value: Vocalist
+      label: Vocalist
+    -
+      value: 'VTR Recordist'
+      label: 'VTR Recordist'
+    -
+      value: Wardrobe
+      label: Wardrobe
+    -
+      value: Writer
+      label: Writer
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

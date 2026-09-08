@@ -1,0 +1,21 @@
+uuid: 58365ecd-0139-4e63-b277-1a2a7af7ef17
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_place_data_present
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_place_data_present
+field_name: field_place_data_present
+entity_type: paragraph
+bundle: av_workflow
+label: 'Place data present'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

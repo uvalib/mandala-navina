@@ -1,0 +1,19 @@
+uuid: 3f016b02-f76f-466f-8197-b499cd5cebe2
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_workflow_note_author
+    - paragraphs.paragraphs_type.av_workflow_note
+id: paragraph.av_workflow_note.field_workflow_note_author
+field_name: field_workflow_note_author
+entity_type: paragraph
+bundle: av_workflow_note
+label: 'Workflow note author'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

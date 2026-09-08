@@ -1,0 +1,21 @@
+uuid: dc882d2f-c775-4acd-bb61-3f7d1011e345
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_edls_archived
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_edls_archived
+field_name: field_edls_archived
+entity_type: paragraph
+bundle: av_workflow
+label: 'Edls archived'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

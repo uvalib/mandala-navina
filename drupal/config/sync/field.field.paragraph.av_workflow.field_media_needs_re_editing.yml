@@ -1,0 +1,21 @@
+uuid: 664d8896-20f6-4368-925a-305d24ff06f9
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_media_needs_re_editing
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_media_needs_re_editing
+field_name: field_media_needs_re_editing
+entity_type: paragraph
+bundle: av_workflow
+label: 'Media needs re editing'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

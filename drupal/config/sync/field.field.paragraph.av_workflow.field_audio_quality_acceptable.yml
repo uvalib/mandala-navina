@@ -1,0 +1,21 @@
+uuid: 96cd5be3-1345-40cb-a566-1d2009f2a411
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_audio_quality_acceptable
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_audio_quality_acceptable
+field_name: field_audio_quality_acceptable
+entity_type: paragraph
+bundle: av_workflow
+label: 'Audio quality acceptable'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

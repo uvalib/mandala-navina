@@ -1,0 +1,19 @@
+uuid: 50ddce07-efd2-4bb1-a296-6c0582fc1fa7
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_format_id_source
+    - paragraphs.paragraphs_type.av_pbcore_format_id
+id: paragraph.av_pbcore_format_id.field_format_id_source
+field_name: field_format_id_source
+entity_type: paragraph
+bundle: av_pbcore_format_id
+label: 'Format id source'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

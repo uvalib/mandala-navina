@@ -1,0 +1,21 @@
+uuid: 91499179-0e0e-4cf1-ac1c-821d9fa8a1fe
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_title_type
+    - paragraphs.paragraphs_type.av_pbcore_title
+  module:
+    - options
+id: paragraph.av_pbcore_title.field_title_type
+field_name: field_title_type
+entity_type: paragraph
+bundle: av_pbcore_title
+label: 'Title type'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

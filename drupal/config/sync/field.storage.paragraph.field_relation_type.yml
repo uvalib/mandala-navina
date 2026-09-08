@@ -1,0 +1,57 @@
+uuid: 69392442-318f-4e0f-b406-28d455df0b18
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_relation_type
+field_name: field_relation_type
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 'Has Format'
+      label: 'Has Format'
+    -
+      value: 'Is Format Of'
+      label: 'Is Format Of'
+    -
+      value: 'Has Part'
+      label: 'Has Part'
+    -
+      value: 'Is Part Of'
+      label: 'Is Part Of'
+    -
+      value: 'Has Version'
+      label: 'Has Version'
+    -
+      value: 'Is Version Of'
+      label: 'Is Version Of'
+    -
+      value: References
+      label: References
+    -
+      value: 'Is Referenced By'
+      label: 'Is Referenced By'
+    -
+      value: Replaces
+      label: Replaces
+    -
+      value: 'Is Replaced By'
+      label: 'Is Replaced By'
+    -
+      value: Requires
+      label: Requires
+    -
+      value: 'Is Required By'
+      label: 'Is Required By'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

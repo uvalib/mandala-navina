@@ -1,0 +1,19 @@
+uuid: 81b052a5-0090-4209-9e78-a3eadc73909c
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_sponsor_name
+    - paragraphs.paragraphs_type.av_pbcore_sponsor
+id: paragraph.av_pbcore_sponsor.field_sponsor_name
+field_name: field_sponsor_name
+entity_type: paragraph
+bundle: av_pbcore_sponsor
+label: 'Sponsor name'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

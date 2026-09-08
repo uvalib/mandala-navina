@@ -1,0 +1,21 @@
+uuid: 8693b3c8-1e65-4d3d-9991-8641141d0fdc
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_date_created
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+  module:
+    - datetime
+id: paragraph.av_pbcore_instantiation.field_date_created
+field_name: field_date_created
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Date created'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

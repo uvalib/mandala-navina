@@ -139,6 +139,14 @@ One embedded field_collection with ~25 sub-fields: `field_alternate_modes`,
 `field_pbcore_format_id`, `field_physical_format`, `field_sampling_rate`,
 `field_start_time`, `field_track_data`.
 
+⚠ **Clarified 2026-09-08 (AV3):** `field_pbcore_format_id` in that list is **not a
+scalar sub-field — it is itself a nested `field_collection`** (2,252 live items) with
+its own `field_format_id` / `field_format_id_source`. AV's field_collection nesting is
+therefore exactly two levels deep in two places: this one, and `field_workflow`'s three
+note collections. Also vestigial and excluded from the D11 model:
+**`field_pbcore_genre`** — 1 item, and **no live field instance on any bundle**.
+See the [AV3 paragraph model](av-paragraph-model.md).
+
 ### Cataloging/media workflow (`field_workflow`, card 1, admin-only)
 Sub-fields: `field_basic_cataloging`, `field_cataloging_proofed`,
 `field_extended_cataloging_new`, `field_media_needs_re_editing`,
@@ -149,7 +157,12 @@ Sub-fields: `field_basic_cataloging`, `field_cataloging_proofed`,
 `field_trans_proofed_lang_1/2/3`, `field_translation_input_lang_1/2`,
 `field_translation_lang_3`, `field_translation_language_1/2`,
 `field_transcript_workflow_notes` (nested field_collection),
-`field_catalog_workflow_notes` (nested field_collection). `mb_metadata` explicitly
+`field_catalog_workflow_notes` (nested field_collection), and — ⚠ **added 2026-09-08
+(AV3), missing from this audit's original list** — **`field_workflow_notes`**, a
+**third** nested field_collection with 1,945 live items. All three are structurally
+identical (author / date / importance / body); the only difference is that
+`field_catalog_workflow_notes` names its body `field_description` while the other two
+use `field_workflow_note`. `mb_metadata` explicitly
 strips this whole group plus `field_transcript*` from the Solr index — internal state,
 not public content.
 
@@ -383,11 +396,12 @@ validated against the real 2026-09-01 production dump** (see
    [ADR 016](../adr/016-public-url-structure-single-host.md) clause 3 already keys the
    URL grammar on the D11 content type. See the
    [AV2 scope note](av-content-type-decision.md).
-2. **The D11 target model for the PBCore/workflow field_collections** — almost certainly
-   Paragraphs given the structural fit noted above, but that is a recommendation for a
-   future modeling decision, not a decision made by this audit (per ADR 010's caveat that
-   each site's remodeling choice is judged on its own merits, with no precedent set by
-   Images' choice).
+2. ~~**The D11 target model for the PBCore/workflow field_collections.**~~ **RESOLVED
+   (2026-09-08, Sprint 3 AV3): Paragraphs, 15 types, built.** 1:1 with D7's
+   field_collections except the three structurally-identical note collections, which
+   consolidate into a single `av_workflow_note` type referenced by three separate fields
+   — preserving all three streams while defining the shape once. See the
+   [AV3 paragraph model](av-paragraph-model.md).
 3. **Kaltura hosting/re-provisioning strategy for D11** — whether D11 points at the same
    Kaltura account/partner ID, and whether `METADATA_PROFILE_ID`/`MB_MAIN_PLAYER_ID` are
    still valid, is unconfirmed. Overlaps Spike 7 (○ Pending), not resolved here.

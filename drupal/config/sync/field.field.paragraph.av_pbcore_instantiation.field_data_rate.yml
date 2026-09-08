@@ -1,0 +1,19 @@
+uuid: f2bb2cfc-ead3-4b65-92ad-1c4fdb5f0ce5
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_data_rate
+    - paragraphs.paragraphs_type.av_pbcore_instantiation
+id: paragraph.av_pbcore_instantiation.field_data_rate
+field_name: field_data_rate
+entity_type: paragraph
+bundle: av_pbcore_instantiation
+label: 'Data rate'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

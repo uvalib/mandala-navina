@@ -1,0 +1,51 @@
+uuid: 22dba5e7-201d-42ff-abd3-3a7fd33d8fef
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_colors
+field_name: field_colors
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 'B and W with color sequences'
+      label: 'B and W with color sequences'
+    -
+      value: 'B and W with grayscale sequences'
+      label: 'B and W with grayscale sequences'
+    -
+      value: 'B and W'
+      label: 'B and W'
+    -
+      value: 'Color with B and W sequences'
+      label: 'Color with B and W sequences'
+    -
+      value: 'Color with grayscale sequences'
+      label: 'Color with grayscale sequences'
+    -
+      value: Color
+      label: Color
+    -
+      value: 'Grayscale with B and W sequences'
+      label: 'Grayscale with B and W sequences'
+    -
+      value: 'Grayscale with color sequences'
+      label: 'Grayscale with color sequences'
+    -
+      value: Grayscale
+      label: Grayscale
+    -
+      value: Other
+      label: Other
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

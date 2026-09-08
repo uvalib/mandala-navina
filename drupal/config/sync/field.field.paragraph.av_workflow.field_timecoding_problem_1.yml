@@ -1,0 +1,21 @@
+uuid: da1f99a9-6ea9-4178-bcaa-2864b5052776
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_timecoding_problem_1
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_timecoding_problem_1
+field_name: field_timecoding_problem_1
+entity_type: paragraph
+bundle: av_workflow
+label: 'Timecoding problem 1'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string
