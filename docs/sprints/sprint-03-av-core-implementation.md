@@ -1,15 +1,17 @@
 # Sprint 3: AV core implementation (`audio`/`video`, Kaltura, access, collections)
 
-**Status:** ◐ **In progress — started 2026-09-08.** AV2, AV3, AV5 and AV14 done (see the
-[AV2 scope note](../planning/av-content-type-decision.md), the
-[AV3 paragraph model](../planning/av-paragraph-model.md) and the
-[AV5/AV14 disposition note](../planning/av-anomalous-node-dispositions.md)); **AV4 is the next gate** — it
-creates the `audio`/`video` bundles, attaches the paragraph fields, and writes the migration.
+**Status:** ◐ **In progress — started 2026-09-08.** AV2, AV3, AV4, AV5 and AV14 done
+(see the [AV2 scope note](../planning/av-content-type-decision.md), the
+[AV3 paragraph model](../planning/av-paragraph-model.md), the
+[AV4 migration notes](../planning/av-node-migration-notes.md) and the
+[AV5/AV14 disposition note](../planning/av-anomalous-node-dispositions.md)); the full AV
+corpus migrates and is verified locally (PR #193, ready for review). **AV6–AV9 are the
+next gate** — KMaps wiring, Group access mapping, Solr/kmassets sync, and UI, all
+unblocked now that AV4 is complete.
 **No longer blocked on [Spike 7](../spikes/spike-07-kaltura-av-integration.md)** — the
-spike's remaining open items (upload/ingest, a real migration source plugin) were
-absorbed into this sprint's own backlog as AV10–AV12 and AV4, and its packaging work
-(`drupal/kaltura_media` 1.0.4 + two patches) already landed inert on `main`, so this
-sprint starts from a working base rather than waiting on the spike to close.
+spike's migration-source-plugin item is satisfied by AV4; its remaining open item
+(upload/ingest) lives in AV10–AV12, and its packaging work
+(`drupal/kaltura_media` 1.0.4 + two patches) already landed inert on `main`.
 **Phase:** [Roadmap](../roadmap.md) Phase 3 (AV) — reordered ahead of strict "last"
 sequencing by [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md).
 **Lead:** Yuji Shinozaki, per ADR 018.
@@ -63,7 +65,7 @@ Inherited from [ADR 008](../adr/008-mvp-migrate-not-improve.md) /
 | AV1 | Spike 7 — Kaltura module landscape survey, playback prototype, upload/ingest assessment, partner/credential re-provisioning confirmation | — | ◐ (module survey + live playback prototype done 2026-09-04; upload/ingest + migration source plugin open) |
 | AV2 | Content-type decision: one bundle with a media-kind field, or `audio`/`video` kept as two — scope note (ADR-010-style) | AV content-model audit (done) | ✅ **Done 2026-09-08** — **two content types, built from one shared field definition**; see the [AV2 scope note](../planning/av-content-type-decision.md) |
 | AV3 | PBCore/workflow `field_collection` → Paragraphs modeling decision + build | AV2 | ✅ **Done 2026-09-08 — 15 paragraph types built and exported.** 1:1 with D7's field_collections except the three structurally-identical note collections, consolidated into one `av_workflow_note` referenced by three fields. 84 new field storages, 87 instances, 186 config files. Nesting verified live through both levels. See the [AV3 paragraph model](../planning/av-paragraph-model.md) |
-| AV4 | Migrate API source plugins for `audio`/`video` nodes; collection membership sourced from `og_membership`; exclude old corrupted fields; `field_transcript` migrated inertly | AV1–AV3 | ◐ **Built 2026-09-09; first full local run in progress.** 10 new migrations (group now 27), 3 source plugins and a shared `AvLanguageLayerTrait`; every registered total matched an independent SQL prediction. Three findings worth reading before AV6–AV8: a **cardinality-1 language-layer conflict** on `field_pbcore_instantiation` (667 hosts) that neither `en`- nor `und`-preference resolves without data loss; **`uid: uid` maps nothing** in core's `d7_node` source (it is `node_uid`), which also root-caused the open [`entity:group --update` deferred note](../deferred/migrate-entity-group-update-mode-nulls-uid.md); and all 111,340 migrated **Images nodes are owned by Anonymous** ([deferred](../deferred/images-node-authorship-not-migrated.md)). Full detail in the [AV4 migration notes](../planning/av-node-migration-notes.md) |
+| AV4 | Migrate API source plugins for `audio`/`video` nodes; collection membership sourced from `og_membership`; exclude old corrupted fields; `field_transcript` migrated inertly | AV1–AV3 | ✅ **Done 2026-09-09 — complete, verified end-to-end locally, PR #193 ready for review.** 10 new migrations (group now 27): audio/video nodes, collections/subcollections as Groups, node + user memberships, URL aliases. `scripts/verify-av-migration.sh` checks 24 counts against the D7 source directly; **all 24 match**. Four bugs found and fixed, two silently losing data (a fetch-mode bug and a `sub_process` shape bug that created 6,814 paragraphs referenced by nothing). The **cardinality-1 language-layer conflict** on `field_pbcore_instantiation` (667 hosts) resolved exactly — measured that one item always strictly contains the other, so no data is lost either way; the wider `und`/`en` split confirmed a **data artifact** (stale content-type language flag), not a schema problem. **`uid: uid` maps nothing** in core's `d7_node` source (it is `node_uid`) — fixed here and in the pre-existing `d7_images_collections`/`subcollections`, root-causing the open [`entity:group --update` deferred note](../deferred/migrate-entity-group-update-mode-nulls-uid.md); all 111,340 migrated **Images nodes are owned by Anonymous** is a separate, larger, still-open [deferred issue](../deferred/images-node-authorship-not-migrated.md). Local run timings are DDEV-only and do not revise the dev-0 estimate (~3h34m, band 3.5–5h) — see the notes' runtime section. Full detail in the [AV4 migration notes](../planning/av-node-migration-notes.md) |
 | AV5 | 68 `MISSING_TYPE` node disposition | — (can run in parallel with AV1–AV4) | ✅ **Done 2026-09-08 — EXCLUDE all 68.** Repair-to-real-type proved unavailable: the bundle's only field instance is `og_group_ref`, so the Kaltura entry ID was dropped at save time and there is nothing to repair from; `node_type` has no `MISSING_TYPE` row. All 68 are 2014/uid 1, titled with `.jpg` filenames, hold zero field data, and sit in the single admin triage collection "Admin: On Kaltura Not in Mediabase" (`2503`) — which survives regardless, holding 285 real AV nodes. nid list + rationale in the [AV5/AV14 disposition note](../planning/av-anomalous-node-dispositions.md) |
 | AV6 | KMaps field wiring (reuse Images pattern, already proven) | AV4 | ○ |
 | AV7 | OG → D11 Group access mapping, including `group_access_uva_member` and `mb_collection_admin` | AV4 | ○ |
