@@ -1,0 +1,27 @@
+uuid: 0160dea6-3732-4f63-a35f-70a7160aa5c7
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_pbcore_sponsor
+    - node.type.audio
+    - paragraphs.paragraphs_type.av_pbcore_sponsor
+  module:
+    - entity_reference_revisions
+id: node.audio.field_pbcore_sponsor
+field_name: field_pbcore_sponsor
+entity_type: node
+bundle: audio
+label: 'PBCore sponsor'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_pbcore_sponsor: av_pbcore_sponsor
+    negate: 0
+field_type: entity_reference_revisions

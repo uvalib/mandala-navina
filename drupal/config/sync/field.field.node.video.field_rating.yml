@@ -1,0 +1,23 @@
+uuid: 87d69058-73d4-41c7-b5dc-69c55e1017eb
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_rating
+    - node.type.video
+id: node.video.field_rating
+field_name: field_rating
+entity_type: node
+bundle: video
+label: Rating
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

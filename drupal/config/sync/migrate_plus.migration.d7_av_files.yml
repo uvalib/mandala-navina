@@ -1,0 +1,72 @@
+uuid: c6b87550-a98a-4306-a2ed-406ea001048f
+langcode: en
+status: true
+dependencies: {  }
+id: d7_av_files
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+migration_group: mandala_av
+label: 'AV: D7 managed files referenced by AV fields → D11 file entities'
+# 8,292 files / ~2.9 GB, fetched one at a time over HTTP from the live D7 AV
+# site by `file_copy`. Scoped to the three fields that actually reference them:
+#
+#   field_transcript               5,379 files    82 MB
+#   field_thumbnail_image          2,843 files  2,598 MB   <- the bulk
+#   field_general_featured_image      70 files    94 MB
+#
+# The thumbnail figure is not a mistake: audio nodes have no Kaltura-generated
+# poster frame, so editors upload cover art, and it is stored at full camera
+# resolution (largest single file 10.7 MB). This is the migration's slowest
+# non-node segment; budget 30-90 minutes, latency-bound rather than
+# bandwidth-bound.
+#
+# ⚠ `field_transcript` migrates as an INERT file field -- present and
+# downloadable, never parsed. Any processing of its contents is Sprint 4
+# (Spike 11). See docs/sprints/sprint-04-av-transcripts.md.
+source:
+  plugin: d7_av_file
+  key: migrate_av
+  scheme: public
+  source_base_url: 'https://av.mandala.library.virginia.edu'
+  reference_fields:
+    - field_transcript
+    - field_thumbnail_image
+    - field_general_featured_image
+  constants:
+    # Core's d7_file source strips this prefix off the computed `filepath`.
+    # AV's file_public_path is already Drupal-root-relative, so there is
+    # nothing to strip -- but the key must exist or the parent errors.
+    source_base_path: ''
+process:
+  fid: fid
+  # Files are attributed to uid 1, matching the convention
+  # d7_images_collection_featured_image already set. D7 file ownership is not
+  # carried over: file uid is not user-visible anywhere in Mandala, and the
+  # Images migration established the precedent. (This is NOT a coverage
+  # problem -- the user migration imported all 1,542 shared-DB users with zero
+  # failures; see d7_av_user_memberships for the one genuinely dangling uid.)
+  uid:
+    plugin: default_value
+    default_value: 1
+  filename: filename
+  filemime: filemime
+  status:
+    plugin: default_value
+    default_value: 1
+  timestamp: timestamp
+  uri:
+    plugin: file_copy
+    source:
+      - source_url
+      - uri
+destination:
+  plugin: 'entity:file'
+idMap: {  }
+migration_dependencies:
+  required: {  }
+include: null

@@ -21,6 +21,7 @@ nav:
   - "AV2 Scope Note: audio/video content types": av-content-type-decision.md
   - "AV5/AV14: Anomalous AV Node Dispositions": av-anomalous-node-dispositions.md
   - "AV3: Paragraph Model for PBCore/Workflow": av-paragraph-model.md
+  - "AV4: Node/Group/Membership/Alias Migrations": av-node-migration-notes.md
   - "Sources: Content Model Audit": sources-content-model-audit.md
   - "Texts: Content Model Audit": texts-content-model-audit.md
   - "AV/Sources/Texts: Migration Complexity Comparison": av-sources-texts-migration-complexity-comparison.md

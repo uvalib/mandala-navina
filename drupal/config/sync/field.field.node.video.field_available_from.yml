@@ -1,0 +1,21 @@
+uuid: a520e9c6-8d48-425a-a34e-f60ef9f5d3be
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_available_from
+    - node.type.video
+  module:
+    - datetime
+id: node.video.field_available_from
+field_name: field_available_from
+entity_type: node
+bundle: video
+label: 'Available from'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

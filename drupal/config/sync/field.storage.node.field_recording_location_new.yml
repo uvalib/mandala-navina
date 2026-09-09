@@ -1,0 +1,19 @@
+uuid: 2f86a553-e1fa-4f6e-84e1-18e22b1c7e9c
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - shanti_kmaps_fields
+id: node.field_recording_location_new
+field_name: field_recording_location_new
+entity_type: node
+type: shanti_kmaps_fields_default
+settings: {  }
+module: shanti_kmaps_fields
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

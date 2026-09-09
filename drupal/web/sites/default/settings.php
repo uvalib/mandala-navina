@@ -138,9 +138,17 @@ if (($envDbName = getenv('MYSQL_DATABASE')) !== false && $envDbName !== '') {
 //                               real user data lives ONLY here, never in a
 //                               per-site DB. The user migration must point at
 //                               this key, not 'migrate'.
+//   MIGRATE_AV_DATABASE      -> 'migrate_av' key: the D7 AV (mediabase) content
+//                               DB. Kept as its OWN key rather than reusing
+//                               'migrate' so the Images and AV sources can be
+//                               configured side by side — a site's migrations
+//                               name their source key explicitly, so there is
+//                               never an ambiguous "which D7 database is this
+//                               reading?" (Sprint 3 AV4).
 $mandala_migrate_sources = [
   'migrate'       => getenv('MIGRATE_SOURCE_DATABASE'),
   'migrate_users' => getenv('MIGRATE_USERS_DATABASE'),
+  'migrate_av'    => getenv('MIGRATE_AV_DATABASE'),
 ];
 foreach ($mandala_migrate_sources as $mandala_migrate_key => $mandala_migrate_db) {
   if ($mandala_migrate_db === false || $mandala_migrate_db === '') {
@@ -1091,6 +1099,22 @@ if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev
     'driver'   => 'mysql',
     'prefix'   => '',
   ];
+  // Migrate API source DB connection for AV (Sprint 3 AV4) — the secondary
+  // 'd7_av' database. Separate key from 'migrate' so the Images and AV D7
+  // sources coexist and each migration names its source explicitly. Load with:
+  //   ./scripts/load-d7-source.sh mandala-prod-av-db_2026-09-01.sql.gz d7_av
+  // Harmless if the target DB does not exist; Drupal only opens it when a
+  // migration actually runs.
+  $databases['migrate_av']['default'] = [
+    'database' => 'd7_av',
+    'username' => 'db',
+    'password' => 'db',
+    'host'     => 'db',
+    'port'     => 3306,
+    'driver'   => 'mysql',
+    'prefix'   => '',
+  ];
+
   // NOTE: no DDEV `migrate_users` connection — the shared user DB is PII and
   // is NOT replicated to laptops. The user migration runs on the dev server;
   // its `migrate_users` connection is defined in the env-driven block above.

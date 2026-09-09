@@ -1,0 +1,23 @@
+uuid: 34d04d36-4726-4783-9a94-a7f1de595a69
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_kmap_terms
+    - node.type.audio
+  module:
+    - shanti_kmaps_fields
+id: node.audio.field_kmap_terms
+field_name: field_kmap_terms
+entity_type: node
+bundle: audio
+label: 'KMaps terms'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: subjects
+  search_root_kmapid: null
+field_type: shanti_kmaps_fields_default

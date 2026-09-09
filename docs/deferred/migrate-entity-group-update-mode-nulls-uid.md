@@ -39,6 +39,47 @@ suspect the `entity:group` migrate destination plugin's update path isn't correc
 loading/re-hydrating the existing entity's base fields before re-processing, but this
 wasn't root-caused further — out of scope for what this session actually needed.
 
+## ROOT CAUSE FOUND — 2026-09-09 (Sprint 3 AV4)
+
+**`uid: uid` was never a valid mapping.** Core's `d7_node` migrate source does not
+expose a `uid` source field at all. `Node::query()` selects the author only under
+an alias — `$query->addField('n', 'uid', 'node_uid')` — so the raw source row is:
+
+```
+$ (raw source query for d7_images_collections, idmap bypassed)
+keys: nid,type,language,status,created,changed,comment,promote,sticky,tnid,
+      translate,vid,title,log,timestamp,node_uid,revision_uid
+  nid=41  uid=NULL  node_uid='22'
+```
+
+and `drush migrate:fields-source d7_images_collections` agrees — it lists
+`node_uid` and `revision_uid`, and no `uid`.
+
+So the observation above — *"`uid` comes back empty even though `uid: uid` is a
+trivial 1:1 source-field copy"* — is exactly right, and the reason is that it was
+never a copy of anything. On a fresh insert the destination falls back to an
+entity default; on `--update`, where the Group destination re-inserts, there is
+no value to supply and MySQL rejects the NULL. **That is the whole "Column 'uid'
+cannot be null" error.**
+
+Note what this means for the 174 Group entities already on dev-0: they carry
+correct D7 uids (gid 1 ← d7 nid 41 → uid 22, matching the source), but they did
+**not** get them from this mapping. They were set out of band.
+
+**Fixed 2026-09-09:** `d7_images_collections.yml` and
+`d7_images_subcollections.yml` now map `uid: node_uid`, with the reasoning in the
+config comments. The AV migrations use `node_uid` throughout and were verified
+against the source before running.
+
+**What is still open** is narrower than it was: whether `entity:group`'s
+`--update` path re-inserts rather than updating is a separate question from the
+NULL, and worth confirming now that a valid uid is actually supplied. It may
+simply have been this bug wearing a different hat.
+
+See also [images-node-authorship-not-migrated.md](images-node-authorship-not-migrated.md),
+which records the related and larger finding that `d7_images_shanti_image` has no
+`uid` mapping at all, leaving all 111,340 migrated Images nodes owned by Anonymous.
+
 ## What was done instead (not a fix, a workaround for this session's real goal)
 
 Backfilled the two new fields directly via the Entity API (`drush php:eval`, load each

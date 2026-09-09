@@ -93,5 +93,6 @@ nav:
   - "OG collection_ref storage empty — use og_membership": og-collection-ref-storage-empty-use-og-membership.md
   - "Hand-edited config YAML drifts from what Drupal computes (needs a team decision)": config-export-drift-hand-edited-yaml.md
   - "migrate:import --update nulls uid on entity:group rows": migrate-entity-group-update-mode-nulls-uid.md
+  - "Images node authorship not migrated (all uid 0)": images-node-authorship-not-migrated.md
   - "15 collection featured images missing on production (404)": collection-featured-images-missing-on-production.md
   - "dev-0 files/styles/ directory was root-owned (fixed live)": dev0-image-styles-directory-root-owned.md

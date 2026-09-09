@@ -1,0 +1,21 @@
+uuid: 6e167ec3-1aa0-4d1f-97eb-36d54c7817cf
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_available_from
+    - node.type.audio
+  module:
+    - datetime
+id: node.audio.field_available_from
+field_name: field_available_from
+entity_type: node
+bundle: audio
+label: 'Available from'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

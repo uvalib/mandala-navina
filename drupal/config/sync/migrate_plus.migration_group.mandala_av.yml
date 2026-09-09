@@ -1,0 +1,12 @@
+uuid: e0c04400-6db5-4608-8885-692adc8cecd4
+langcode: en
+status: true
+dependencies: {  }
+id: mandala_av
+label: 'Mandala AV (Sprint 3)'
+description: 'D7 AV (mediabase) → D11 audio/video nodes and AV paragraphs.'
+source_type: 'Drupal 7 AV site'
+module: null
+shared_configuration:
+  source:
+    key: migrate_av

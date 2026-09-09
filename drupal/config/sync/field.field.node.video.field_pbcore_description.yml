@@ -1,0 +1,27 @@
+uuid: 15ef9c3e-4ac4-4fb9-a573-478ca10d6f2a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_pbcore_description
+    - node.type.video
+    - paragraphs.paragraphs_type.av_pbcore_description
+  module:
+    - entity_reference_revisions
+id: node.video.field_pbcore_description
+field_name: field_pbcore_description
+entity_type: node
+bundle: video
+label: 'PBCore description'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_pbcore_description: av_pbcore_description
+    negate: 0
+field_type: entity_reference_revisions

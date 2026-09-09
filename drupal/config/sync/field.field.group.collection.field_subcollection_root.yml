@@ -1,0 +1,23 @@
+uuid: c37e7ecf-ae5f-4318-84d3-a91d0c01910b
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.group.field_subcollection_root
+    - group.type.collection
+  module:
+    - shanti_kmaps_fields
+id: group.collection.field_subcollection_root
+field_name: field_subcollection_root
+entity_type: group
+bundle: collection
+label: Subcollection
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: subjects
+  search_root_kmapid: null
+field_type: shanti_kmaps_fields_default

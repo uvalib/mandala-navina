@@ -1,0 +1,18 @@
+uuid: 1fde9cfb-57b6-4d5e-90a0-ea350889adab
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.collection
+    - node.type.audio
+  module:
+    - gnode
+    - node
+id: collection-group_node-audio
+group_type: collection
+content_plugin: 'group_node:audio'
+plugin_config:
+  group_cardinality: 0
+  entity_cardinality: 1
+  use_creation_wizard: false
+

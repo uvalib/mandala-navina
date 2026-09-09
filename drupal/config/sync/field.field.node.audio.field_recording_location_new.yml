@@ -1,0 +1,23 @@
+uuid: ef161ca0-b7ee-461a-acd6-18eccb84f7f1
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_recording_location_new
+    - node.type.audio
+  module:
+    - shanti_kmaps_fields
+id: node.audio.field_recording_location_new
+field_name: field_recording_location_new
+entity_type: node
+bundle: audio
+label: 'Recording location'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: subjects
+  search_root_kmapid: null
+field_type: shanti_kmaps_fields_default

@@ -1,0 +1,27 @@
+uuid: 75d200ea-a868-4c97-9e2b-eabb1696b244
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_pbcore_relation
+    - node.type.audio
+    - paragraphs.paragraphs_type.av_pbcore_relation
+  module:
+    - entity_reference_revisions
+id: node.audio.field_pbcore_relation
+field_name: field_pbcore_relation
+entity_type: node
+bundle: audio
+label: 'PBCore relation'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      av_pbcore_relation: av_pbcore_relation
+    negate: 0
+field_type: entity_reference_revisions

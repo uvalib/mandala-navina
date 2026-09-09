@@ -1,0 +1,23 @@
+uuid: bf46b4ff-8996-4dde-83a0-eec457afebf3
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_kmap_terms
+    - node.type.video
+  module:
+    - shanti_kmaps_fields
+id: node.video.field_kmap_terms
+field_name: field_kmap_terms
+entity_type: node
+bundle: video
+label: 'KMaps terms'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: subjects
+  search_root_kmapid: null
+field_type: shanti_kmaps_fields_default

@@ -1,0 +1,453 @@
+uuid: ca3d1403-1ef8-4cdf-83f9-4c7433b1f936
+langcode: en
+status: true
+dependencies: {  }
+id: d7_av_video
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+migration_group: mandala_av
+label: 'AV: D7 video nodes -> D11 video nodes (field_collections as paragraphs)'
+# 7,396 video nodes. d7_av_audio is identical apart from the media field
+# and field_thumbnail_image -- exactly the difference AV2 measured between the
+# two bundles, and nothing else. The two files are written out in full rather
+# than factored: migration config is read far more often than it is edited, and
+# Drupal's config exporter would flatten any YAML anchors anyway.
+#
+# WARNING: 17 video nodes have no Kaltura entry ID (and 1 audio node does too).
+# They migrate published, as-is, per AV14 -- see d7_av_audio for the detail.
+#
+# field_tags is labelled "Tags Old" and hidden on this bundle in D7 while live
+# as "Tags" on audio. That divergence migrates as-is (AV2): harmonising it is
+# an improvement, not a migration.
+source:
+  plugin: d7_av_node
+  key: migrate_av
+  node_type: video
+  constants:
+    # Site-level Kaltura identity, read from D7's `variable` table
+    # (kaltura_partner_id = 381832, kaltura_server_url = //www.kaltura.com) and
+    # mb_kaltura's MB_MAIN_PLAYER_ID = 24762821 -- the uiconf_id the live D7
+    # node-view embed actually uses (confirmed in Spike 6).
+    #
+    # These are CONFIGURATION, written per item only because kaltura_media
+    # stores them per item and its formatter reads them from there. AV10 builds
+    # the real configuration layer and AV13 migrates D7's per-view-mode player
+    # settings into it; at that point these three stop being the source of
+    # truth. Do not treat them as content.
+    kaltura_partner_id: '381832'
+    kaltura_uiconf_id: '24762821'
+    kaltura_domain: 'www.kaltura.com'
+process:
+  title: title
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+  # Real D7 author uid. Verified 2026-09-09: all 614 distinct audio/video author
+  # uids exist in D11, so no row falls back to anonymous.
+  # NOTE: d7_images_shanti_image does NOT map uid, which is why all 111,340
+  # migrated Images nodes are owned by Anonymous. That is a Sprint 1 fidelity
+  # gap, not a convention to copy.
+  uid: node_uid
+  field_legacy_nid: nid
+  field_legacy_site:
+    plugin: default_value
+    default_value: audio-video
+
+  # --- Kaltura media ---
+  field_video/entry_id: field_video/0/entryid
+  field_video/partner_id: constants/kaltura_partner_id
+  field_video/uiconf_id: constants/kaltura_uiconf_id
+  field_video/domain: constants/kaltura_domain
+
+  # --- Scalars ---
+  field_copyright_owner: field_copyright_owner/0/value
+  field_group_content_access: group_content_access/0/value
+  field_license: field_license/0/value
+  field_year_published: field_year_published/0/value
+  # D7 stores this with a NULL text format on all 2,340 rows (plain text);
+  # D11's field is text_long and needs one.
+  field_pbcore_rights_summary/value: field_pbcore_rights_summary/0/value
+  field_pbcore_rights_summary/format:
+    plugin: default_value
+    default_value: basic_html
+  # D7 fivestar, stored on a 0-100 scale. Two rows in the whole corpus, both 20.
+  # Migrated raw rather than rescaled -- rescaling would be a judgement about
+  # what the number means, and no D11 UI reads it yet.
+  field_rating: field_rating/0/rating
+  # D7 datetime (Y-m-d H:i:s), max delta 0. D7's field is a RANGE
+  # (value/value2), D11's is a single datetime: 9 of the 595 rows carry a
+  # value2 that differs from value, and those end dates are NOT carried.
+  field_available_from:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_available_from/0/value
+    -
+      plugin: format_date
+      from_format: 'Y-m-d H:i:s'
+      to_format: 'Y-m-d\TH:i:s'
+
+  # --- Files (migrated by d7_av_files; inert, never parsed) ---
+  field_transcript/target_id:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_transcript/0/fid
+    -
+      plugin: migration_lookup
+      migration: d7_av_files
+      no_stub: true
+  field_transcript/display: field_transcript/0/display
+  field_transcript/description: field_transcript/0/description
+
+  # --- Taxonomy ---
+  field_tags:
+    plugin: sub_process
+    source: field_tags
+    process:
+      target_id:
+        plugin: migration_lookup
+        migration: d7_av_tags
+        source: tid
+        no_stub: true
+
+  # --- KMaps (6 fields; the sub_process shape Images proved in Sprint 1) ---
+  field_kmap_terms:
+    plugin: sub_process
+    source: field_kmap_terms
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+  field_language_kmap:
+    plugin: sub_process
+    source: field_language_kmap
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+  field_location:
+    plugin: sub_process
+    source: field_location
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+  field_recording_location_new:
+    plugin: sub_process
+    source: field_recording_location_new
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+  field_subcollection_new:
+    plugin: sub_process
+    source: field_subcollection_new
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+  field_subject:
+    plugin: sub_process
+    source: field_subject
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+
+  # --- Paragraphs (13 field_collection fields) ---
+  # Each *_items property is an ORDERED list of field_collection item_ids built
+  # by D7AvNode using the same en-preferred, archived-excluded rule
+  # D7AvFieldCollection uses to decide which items become paragraphs. The
+  # paragraph migrations are keyed on item_id alone -- unlike Images, whose
+  # satellites were keyed on (nid, delta).
+  field_kmap_annotation:
+    plugin: sub_process
+    source: field_kmap_annotation_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_kmap_annotation
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_pbcore_contributor:
+    plugin: sub_process
+    source: field_pbcore_contributor_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_pbcore_contributor
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_pbcore_coverage:
+    plugin: sub_process
+    source: field_pbcore_coverage_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_pbcore_coverage
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_pbcore_creator:
+    plugin: sub_process
+    source: field_pbcore_creator_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_pbcore_creator
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_pbcore_description:
+    plugin: sub_process
+    source: field_pbcore_description_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_pbcore_description
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_pbcore_extension:
+    plugin: sub_process
+    source: field_pbcore_extension_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_pbcore_extension
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_pbcore_identifier:
+    plugin: sub_process
+    source: field_pbcore_identifier_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_pbcore_identifier
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_pbcore_instantiation:
+    plugin: sub_process
+    source: field_pbcore_instantiation_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_pbcore_instantiation
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_pbcore_publisher:
+    plugin: sub_process
+    source: field_pbcore_publisher_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_pbcore_publisher
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_pbcore_relation:
+    plugin: sub_process
+    source: field_pbcore_relation_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_pbcore_relation
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_pbcore_sponsor:
+    plugin: sub_process
+    source: field_pbcore_sponsor_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_pbcore_sponsor
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_pbcore_title:
+    plugin: sub_process
+    source: field_pbcore_title_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_pbcore_title
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+  field_workflow:
+    plugin: sub_process
+    source: field_workflow_items
+    process:
+      _para:
+        plugin: migration_lookup
+        migration: d7_av_workflow
+        source: item_id
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
+destination:
+  plugin: 'entity:node'
+  default_bundle: video
+idMap: {  }
+migration_dependencies:
+  required:
+    - d7_av_tags
+    - d7_av_files
+    - d7_av_kmap_annotation
+    - d7_av_pbcore_contributor
+    - d7_av_pbcore_coverage
+    - d7_av_pbcore_creator
+    - d7_av_pbcore_description
+    - d7_av_pbcore_extension
+    - d7_av_pbcore_identifier
+    - d7_av_pbcore_instantiation
+    - d7_av_pbcore_publisher
+    - d7_av_pbcore_relation
+    - d7_av_pbcore_sponsor
+    - d7_av_pbcore_title
+    - d7_av_workflow
+include: null

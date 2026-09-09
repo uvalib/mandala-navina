@@ -1,0 +1,32 @@
+uuid: 61eadf6c-5d58-436c-9249-d180706ec00e
+langcode: en
+status: true
+dependencies: {  }
+id: d7_av_pbcore_format_id
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+migration_group: mandala_av
+label: 'AV: field_pbcore_format_id field_collection → av_pbcore_format_id paragraph'
+source:
+  plugin: d7_av_field_collection
+  key: migrate_av
+  field_name: field_pbcore_format_id
+  sub_fields:
+    - field_format_id
+    - field_format_id_source
+  host_entity_type: field_collection_item
+process:
+  field_format_id: field_format_id
+  field_format_id_source: field_format_id_source
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: av_pbcore_format_id
+idMap: {  }
+migration_dependencies:
+  required: {  }
+include: null

@@ -1,0 +1,23 @@
+uuid: 83aa615b-31c6-4c1d-b843-d84803d21fcf
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_legacy_nid
+    - node.type.audio
+id: node.audio.field_legacy_nid
+field_name: field_legacy_nid
+entity_type: node
+bundle: audio
+label: 'Legacy D7 nid'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

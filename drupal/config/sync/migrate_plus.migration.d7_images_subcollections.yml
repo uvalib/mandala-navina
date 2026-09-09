@@ -25,7 +25,15 @@ process:
   # uid=0, so Group's uid=0-on-insert bug never actually applies to this data
   # - the prior blanket default_value:1 workaround discarded real ownership
   # for no reason). See docs/deferred/d7-shared-user-database.md.
-  uid: uid
+  #
+  # ⚠ CORRECTED 2026-09-09 (Sprint 3 AV4): this said `uid: uid`, which resolves
+  # to NOTHING. The d7_node source exposes the author as `node_uid` -- there is
+  # no `uid` source field at all (`drush migrate:fields-source
+  # d7_images_collections` lists node_uid and revision_uid, and core's
+  # Node::query() adds `n.uid` only under that alias). dev-0's 171 groups do
+  # carry correct D7 uids today, so this has not bitten; it would have, silently,
+  # the next time these two migrations were re-run.
+  uid: node_uid
   field_group_access: group_access/0/value
   field_legacy_nid: nid
   field_legacy_site:

@@ -1,0 +1,36 @@
+uuid: 66b15fb3-2b5e-422a-b670-ca213225a47b
+langcode: en
+status: true
+dependencies: {  }
+id: d7_av_pbcore_relation
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+migration_group: mandala_av
+label: 'AV: field_pbcore_relation field_collection → av_pbcore_relation paragraph'
+source:
+  plugin: d7_av_field_collection
+  key: migrate_av
+  field_name: field_pbcore_relation
+  sub_fields:
+    - field_relation_identifier
+    - field_relation_type
+process:
+  field_relation_identifier:
+    plugin: migration_lookup
+    migration:
+      - d7_av_audio
+      - d7_av_video
+    source: field_relation_identifier
+  field_relation_type: field_relation_type
+destination:
+  plugin: 'entity_reference_revisions:paragraph'
+  default_bundle: av_pbcore_relation
+idMap: {  }
+migration_dependencies:
+  required: {  }
+include: null

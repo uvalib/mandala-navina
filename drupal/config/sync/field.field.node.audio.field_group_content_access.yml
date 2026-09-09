@@ -1,0 +1,21 @@
+uuid: 756103ba-a73b-4346-ac86-58df09f8f786
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_group_content_access
+    - node.type.audio
+  module:
+    - options
+id: node.audio.field_group_content_access
+field_name: field_group_content_access
+entity_type: node
+bundle: audio
+label: 'Group content access'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_integer

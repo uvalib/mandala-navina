@@ -1,0 +1,23 @@
+uuid: 21559ae1-aff0-43d4-aca1-18c229da409a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_recording_location_new
+    - node.type.video
+  module:
+    - shanti_kmaps_fields
+id: node.video.field_recording_location_new
+field_name: field_recording_location_new
+entity_type: node
+bundle: video
+label: 'Recording location'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: subjects
+  search_root_kmapid: null
+field_type: shanti_kmaps_fields_default
