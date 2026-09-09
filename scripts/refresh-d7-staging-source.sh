@@ -57,6 +57,15 @@
 #   AV=mandalaavlibvirg  Sources=mandalasourcesli  Texts=mandalatextslibv
 #   Visuals=mandalavisualsli  Home=mandalalibvirgin
 #
+# `mandala_sites` (the production DB user) lacks the PROCESS privilege, which
+# mysqldump 8.0's default run needs to inspect tablespace metadata even
+# though tablespaces are irrelevant to a normal application dump; without
+# `--no-tablespaces` it fails immediately with "Access denied ... PROCESS
+# privilege(s) ... when trying to dump tablespaces" before writing a single
+# row. Found 2026-09-09 on the first-ever run of this script against a real
+# pair (AV) -- the verified 2026-07-17 Images/shared load used different,
+# manual tmpdir-based commands and never exercised this path.
+#
 # Requires: docker, ssh access to the production node as your personal
 # computing-id user (~/.ssh/id_rsa; NOT the terraform-infra .pem, NOT `centos`
 # — see reference-mandala-node-access memory), and the `staging` aws-vault
@@ -111,10 +120,28 @@ for pair in "${PAIRS[@]}"; do
     mysql -h "$STAGING_DB_HOST" -u "$STAGING_DB_USER" -e \
       "CREATE DATABASE IF NOT EXISTS $TGT_DB CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
 
+  # Skip cache_* tables -- pure Drupal runtime cache, rebuilt on demand, never
+  # read by any migrate source plugin. Measured on the AV site (2026-09-09):
+  # 25 cache_* tables total 2.19 GB against a 3.45 GB database -- 64% of the
+  # whole dump, with `cache_form` alone at 1.86 GB. Every site DB pays this
+  # cost identically; skipping it is a straight win with zero downside. The
+  # table LIST is queried from the SOURCE per DB (not hardcoded) so a site with
+  # an unusual cache table still gets skipped correctly.
+  echo "    Discovering cache_* tables to skip..."
+  CACHE_TABLES="$(MYSQL_PWD="$PROD_PW" docker run --rm -e MYSQL_PWD mysql:8.0 \
+    mysql -h "$PROD_DB_HOST" -u "$PROD_DB_USER" --connect-timeout=8 -N -e \
+      "SELECT table_name FROM information_schema.tables WHERE table_schema='$SRC_DB' AND table_name LIKE 'cache%'")"
+  IGNORE_FLAGS=()
+  for t in $CACHE_TABLES; do
+    IGNORE_FLAGS+=(--ignore-table="${SRC_DB}.${t}")
+  done
+  echo "    Skipping ${#IGNORE_FLAGS[@]} cache_* table(s)."
+
   echo "    Streaming dump -> load (no dump file touches disk)..."
   MYSQL_PWD="$PROD_PW" docker run --rm -e MYSQL_PWD mysql:8.0 \
     mysqldump -h "$PROD_DB_HOST" -u "$PROD_DB_USER" --single-transaction --quick \
-      --routines --triggers --set-gtid-purged=OFF "$SRC_DB" \
+      --routines --triggers --set-gtid-purged=OFF --no-tablespaces \
+      "${IGNORE_FLAGS[@]}" "$SRC_DB" \
   | MYSQL_PWD="$STAGING_PW" docker run --rm -i -e MYSQL_PWD mysql:8.0 \
     mysql -h "$STAGING_DB_HOST" -u "$STAGING_DB_USER" "$TGT_DB"
 
