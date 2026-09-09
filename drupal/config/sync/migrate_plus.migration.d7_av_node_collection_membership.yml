@@ -1,0 +1,69 @@
+uuid: d494d970-3d6d-4719-a54b-80b75aa6d681
+langcode: en
+status: true
+dependencies: {  }
+id: d7_av_node_collection_membership
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+migration_group: mandala_av
+label: 'AV: OG audio/video → collection memberships → group_node relationships'
+# 11,518 memberships (7,333 video + 4,185 audio). Every AV node belongs to
+# exactly one collection or subcollection -- verified, zero nodes carry more
+# than one field_og_collection_ref row -- so no node fans out here.
+#
+# 65 of the 11,583 AV nodes have no membership at all and simply migrate
+# without one; that is a property of the source, not a gap.
+#
+# `member_types` is what implements the AV5 disposition: the 68 MISSING_TYPE
+# nodes hold 68 og_membership rows, and scoping the SOURCE to audio/video
+# excludes them here rather than letting them fail a migration_lookup
+# downstream. The triage collection they sit in ("Admin: On Kaltura Not in
+# Mediabase") survives regardless -- it holds 285 real AV nodes.
+#
+# The single `source` node (1 row) is excluded on the same basis: `source` is
+# not an AV bundle and has no D11 destination in this sprint.
+source:
+  plugin: d7_image_group_membership
+  key: migrate_av
+  member_types:
+    - audio
+    - video
+  constants:
+    group_node_prefix: 'group_node:'
+process:
+  gid:
+    plugin: migration_lookup
+    migration:
+      - d7_av_collections
+      - d7_av_subcollections
+    source: gid
+    no_stub: true
+  entity_id:
+    plugin: migration_lookup
+    migration:
+      - d7_av_audio
+      - d7_av_video
+    source: etid
+    no_stub: true
+  # The relation plugin must name the member's bundle, and audio and video are
+  # two bundles (AV2), so this is derived per row rather than defaulted.
+  plugin_id:
+    plugin: concat
+    source:
+      - constants/group_node_prefix
+      - member_type
+destination:
+  plugin: mandala_group_relationship
+idMap: {  }
+migration_dependencies:
+  required:
+    - d7_av_collections
+    - d7_av_subcollections
+    - d7_av_audio
+    - d7_av_video
+include: null

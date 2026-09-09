@@ -1,0 +1,85 @@
+uuid: 2a3b6405-5b13-410f-91e4-2b70f612c197
+langcode: en
+status: true
+dependencies: {  }
+id: d7_av_collections
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+migration_group: mandala_av
+label: 'AV: D7 collection nodes → Group entities (collection bundle)'
+# 152 collections. Same shape as d7_images_collections -- the `collection`
+# Group bundle is shared across sites and told apart by field_legacy_site
+# (ADR 017), so AV collections and Images collections coexist in one bundle
+# with colliding D7 nids and no ambiguity.
+#
+# EXCLUDED D7 FIELDS, deliberately:
+#   group_group, og_roles_permissions, og_user_inheritance,
+#   og_user_permission_inheritance -- OG mechanics superseded by the Group
+#     module; Images excluded them on the same grounds.
+#   field_rss_feed -- zero collections have it set to 1. Vestigial.
+source:
+  plugin: d7_node
+  key: migrate_av
+  node_type: collection
+process:
+  label: title
+  status: status
+  created: created
+  changed: changed
+  # Real D7 creator uid, identity-mapped 1:1 by the user migration. Verified
+  # 2026-09-09: all 87 distinct collection/subcollection author uids exist in
+  # D11, so no row falls back to anonymous.
+  uid: node_uid
+  field_group_access: group_access/0/value
+  field_legacy_nid: nid
+  field_legacy_site:
+    plugin: default_value
+    default_value: audio-video
+  field_overview/value: body/0/value
+  field_overview/summary: body/0/summary
+  # D7's 'filtered_html' has no D11 equivalent; same convention as the Images
+  # collection migration and every formatted-text field in the AV migrations.
+  field_overview/format:
+    plugin: default_value
+    default_value: basic_html
+  # AV-only: the KMaps subject root(s) a collection browses its subcollections
+  # under. 60 rows across the 152 collections, all in the `subjects` domain.
+  # Images collections have no equivalent field and simply leave it empty.
+  field_subcollection_root:
+    plugin: sub_process
+    source: field_subcollection_root
+    process:
+      id: id
+      header: header
+      domain: domain
+      path: path
+      defids: defids
+      raw:
+        plugin: concat
+        delimiter: '|'
+        source:
+          - id
+          - header
+          - domain
+          - path
+          - defids
+  field_featured_image/target_id:
+    - plugin: skip_on_empty
+      method: process
+      source: field_general_featured_image/0/fid
+    - plugin: migration_lookup
+      migration: d7_av_files
+      source: field_general_featured_image/0/fid
+destination:
+  plugin: 'entity:group'
+  default_bundle: collection
+idMap: {  }
+migration_dependencies:
+  optional:
+    - d7_av_files
+include: null

@@ -1,0 +1,62 @@
+uuid: 018ec2ae-96b9-43af-a4d2-f125674f4c01
+langcode: en
+status: true
+dependencies: {  }
+id: d7_av_subcollections
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+migration_group: mandala_av
+label: 'AV: D7 subcollection nodes → Group entities (subcollection bundle)'
+# 85 subcollections, each with exactly one parent collection (verified: zero
+# subcollections carry more than one field_og_parent_collection_ref row), so
+# the parent lookup below can never be ambiguous.
+#
+# `field_subcollection_root` is a collection-only field in D7 and is not
+# migrated here; see d7_av_collections.
+source:
+  plugin: d7_image_subcollection
+  key: migrate_av
+  node_type: subcollection
+process:
+  label: title
+  status: status
+  created: created
+  changed: changed
+  uid: node_uid
+  field_group_access: group_access/0/value
+  field_legacy_nid: nid
+  field_legacy_site:
+    plugin: default_value
+    default_value: audio-video
+  field_parent_collection/target_id:
+    plugin: migration_lookup
+    migration: d7_av_collections
+    source: parent_collection_nid
+    no_stub: true
+  field_overview/value: body/0/value
+  field_overview/summary: body/0/summary
+  field_overview/format:
+    plugin: default_value
+    default_value: basic_html
+  field_featured_image/target_id:
+    - plugin: skip_on_empty
+      method: process
+      source: field_general_featured_image/0/fid
+    - plugin: migration_lookup
+      migration: d7_av_files
+      source: field_general_featured_image/0/fid
+destination:
+  plugin: 'entity:group'
+  default_bundle: subcollection
+idMap: {  }
+migration_dependencies:
+  required:
+    - d7_av_collections
+  optional:
+    - d7_av_files
+include: null

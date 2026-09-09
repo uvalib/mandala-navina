@@ -1,9 +1,16 @@
+uuid: 63a64831-e5a9-41df-8c8f-a5e071a4a33b
+langcode: en
+status: true
+dependencies: {  }
 id: d7_av_pbcore_description
-migration_group: mandala_av
+class: null
+field_plugin_method: null
+cck_plugin_method: null
 migration_tags:
   - 'Drupal 7'
   - 'Mandala AV'
   - 'Sprint 3 AV4'
+migration_group: mandala_av
 label: 'AV: field_pbcore_description field_collection → av_pbcore_description paragraph'
 source:
   plugin: d7_av_field_collection
@@ -23,5 +30,7 @@ process:
 destination:
   plugin: 'entity_reference_revisions:paragraph'
   default_bundle: av_pbcore_description
+idMap: {  }
 migration_dependencies:
   required: {  }
+include: null

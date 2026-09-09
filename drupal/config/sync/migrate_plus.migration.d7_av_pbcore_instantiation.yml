@@ -1,9 +1,16 @@
+uuid: 020be0ea-4201-44f8-be90-d28dff1c5545
+langcode: en
+status: true
+dependencies: {  }
 id: d7_av_pbcore_instantiation
-migration_group: mandala_av
+class: null
+field_plugin_method: null
+cck_plugin_method: null
 migration_tags:
   - 'Drupal 7'
   - 'Mandala AV'
   - 'Sprint 3 AV4'
+migration_group: mandala_av
 label: 'AV: field_pbcore_instantiation field_collection → av_pbcore_instantiation paragraph'
 source:
   plugin: d7_av_field_collection
@@ -64,10 +71,20 @@ process:
     plugin: sub_process
     source: field_pbcore_format_id
     process:
-      target_id:
+      # entity_reference_revisions needs BOTH ids. migration_lookup on a
+      # paragraph destination returns [id, revision_id], so mapping it
+      # straight onto target_id assigns the whole pair to one column.
+      _para:
         plugin: migration_lookup
         migration: d7_av_pbcore_format_id
         source: value
+        no_stub: true
+      _skip:
+        plugin: skip_on_empty
+        method: row
+        source: '@_para'
+      target_id: '@_para/0'
+      target_revision_id: '@_para/1'
   field_physical_format: field_physical_format
   field_sampling_rate: field_sampling_rate
   field_start_time: field_start_time
@@ -75,6 +92,8 @@ process:
 destination:
   plugin: 'entity_reference_revisions:paragraph'
   default_bundle: av_pbcore_instantiation
+idMap: {  }
 migration_dependencies:
   required:
     - d7_av_pbcore_format_id
+include: null

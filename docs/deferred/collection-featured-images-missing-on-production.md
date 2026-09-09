@@ -71,3 +71,20 @@ name, not real production content — may not need a real image at all.
   quick human confirmation they're genuinely test data before writing them off.
 - No action needed for D11/D111 functionality either way — the default-thumbnail
   fallback already covers this gracefully.
+
+## AV shows the same pattern — 1 file, 2026-09-09 (Sprint 3 AV4)
+
+The AV file migration (`d7_av_files`, 8,292 files) hit exactly one 404 on the live
+D7 AV site, and it is the same shape as the 15 above:
+
+| fid | uri | referenced by |
+|---|---|---|
+| 9788 | `public://photo.jpg` | AV collection nid **4686** — "Landscape" |
+
+`file_managed` has the row; the binary is gone from the server. Consequence is
+identical and equally cosmetic: that one AV collection falls back to the default
+thumbnail. Every other AV file transferred, verified byte-for-byte including
+non-ASCII names.
+
+Worth noting the ratio: Images lost 15, AV loses 1 out of 8,292. Whatever caused
+this is not AV-specific and not getting worse.

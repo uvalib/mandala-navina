@@ -1,0 +1,42 @@
+uuid: cf7ba531-f788-4b39-b936-09ca064b8c02
+langcode: en
+status: true
+dependencies: {  }
+id: d7_av_tags
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+migration_group: mandala_av
+label: 'AV: D7 `tags` vocabulary terms → D11 taxonomy terms'
+# 1,489 terms, entirely flat -- zero rows in taxonomy_term_hierarchy carry a
+# non-zero parent -- so there is no `parent` process and no second pass.
+# 1,460 of them are actually referenced by field_tags on an AV node; the other
+# 29 migrate too, because an unused term is still a term an editor created and
+# dropping them would be a content decision, not a migration one.
+#
+# ⚠ `field_tags` is labelled "Tags Old" and hidden on the D7 video bundle while
+# live as "Tags" on audio (AV2). That divergence migrates as-is; harmonising it
+# is an improvement, not a migration. See the AV2 content-type decision note.
+source:
+  plugin: d7_taxonomy_term
+  key: migrate_av
+  bundle: tags
+process:
+  name: name
+  description/value: description
+  description/format:
+    plugin: default_value
+    source: format
+    default_value: basic_html
+  weight: weight
+destination:
+  plugin: 'entity:taxonomy_term'
+  default_bundle: tags
+idMap: {  }
+migration_dependencies:
+  required: {  }
+include: null

@@ -1,0 +1,59 @@
+uuid: 1b275084-c0d0-4fee-96b4-3fd11a5f1d82
+langcode: en
+status: true
+dependencies: {  }
+id: d7_av_user_memberships
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 3 AV4'
+migration_group: mandala_av
+label: 'AV: OG user memberships → Group membership relationships'
+# 1,235 (user, group) pairs, collapsed from 1,237 og_membership rows: AV records
+# user memberships under BOTH `og_group_ref` (1,207) and OG's user-side
+# `og_user_node` (30), and two pairs appear in both. D11 Group treats a
+# membership as unique per (group, user), so the source plugin groups on
+# (gid, etid) and keys the map on the lowest og_membership id.
+#
+# ⚠ ONE dangling uid. Of the 688 uids holding AV memberships, uid 7471 has no
+# D11 user -- it is an account deleted from D7 at some point, with the OG rows
+# left behind. It costs 2 memberships:
+#   og_membership 57286 -> collection 24616 "University of Flourishing"
+#   og_membership 57321 -> subcollection 41916 "Enhanced Cognition: ..."
+# This is NOT a user-migration gap: the user migration imported all 1,542
+# shared-DB users with zero failures (verified on dev-0 2026-09-09,
+# migrate_map_d7_users = 1,542 rows all status 0). The `entity_exists` guard
+# below skips those two rows rather than letting the destination plugin throw.
+source:
+  plugin: d7_image_user_group_membership
+  key: migrate_av
+process:
+  gid:
+    plugin: migration_lookup
+    migration:
+      - d7_av_collections
+      - d7_av_subcollections
+    source: gid
+    no_stub: true
+  entity_id:
+    -
+      plugin: entity_exists
+      source: etid
+      entity_type: user
+    -
+      plugin: skip_on_empty
+      method: row
+  plugin_id:
+    plugin: default_value
+    default_value: group_membership
+destination:
+  plugin: mandala_group_relationship
+idMap: {  }
+migration_dependencies:
+  required:
+    - d7_av_collections
+    - d7_av_subcollections
+include: null
