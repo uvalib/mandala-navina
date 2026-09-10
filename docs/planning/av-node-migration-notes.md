@@ -417,7 +417,88 @@ effects are unrelated and neither cancels the other.
 
 ---
 
-## 7. Open questions
+## 7. The real dev-0 run (2026-09-09/10) — complete, verified, and the actual numbers
+
+The migration ran live on dev-0 the same night this doc's local run was
+written up. **Started 2026-09-09T19:52:31Z, finished 2026-09-10T00:57:20Z —
+5h04m49s, 27/27 stages, zero `FAILED STAGES`.** One row failure throughout
+the entire run: the already-known `photo.jpg` 404 on `d7_av_files` (§5).
+Verified afterward directly against dev-0's own database (not just locally):
+**all 24 checks in `scripts/verify-av-migration.sh` match the D7 source
+exactly**, run via `drush php:script` rather than `drush sql:query` — the
+latter fails outright against this RDS instance with *"TLS/SSL error:
+self-signed certificate in certificate chain"* even for a query against
+dev-0's own database, a pre-existing defect unrelated to this migration;
+`\Drupal::database()` (what `migrate:import` and `php:script` use) is
+unaffected.
+
+This lands at the very top of the 3.5–5h band the 2026-09-08 session
+projected, essentially exactly on target — the projection held up.
+
+### Full dev-0 timing table
+
+Sum of the 27 stage durations (18,289s) equals the measured wall-clock total
+exactly, so there was effectively no idle time between stages.
+
+| Stage | Rows | Duration | Rate/min |
+|---|---:|---:|---:|
+| `d7_av_tags` | 1,489 | 66s | 1,354 |
+| `d7_av_files` | 8,292 | 297s (4m57s) | 1,675 |
+| `d7_av_pbcore_format_id` | 2,252 | 104s | 1,299 |
+| `d7_av_catalog_workflow_notes` | 2,053 | 109s | 1,130 |
+| `d7_av_transcript_workflow_notes` | 565 | 31s | 1,094 |
+| `d7_av_workflow_notes` | 1,944 | 101s | 1,155 |
+| `d7_av_pbcore_instantiation` | 5,297 | 507s (8m27s) | 627 |
+| `d7_av_workflow` | 10,647 | 1,489s (24m49s) | 429 |
+| `d7_av_kmap_annotation` | 2,428 | 121s | 1,204 |
+| `d7_av_pbcore_contributor` | 17,350 | 736s (12m16s) | 1,415 |
+| `d7_av_pbcore_coverage` | 2,569 | 103s | 1,497 |
+| `d7_av_pbcore_creator` | 20,713 | 889s (14m49s) | 1,398 |
+| `d7_av_pbcore_description` | 17,435 | 801s (13m21s) | 1,306 |
+| `d7_av_pbcore_extension` | 2,692 | 116s | 1,392 |
+| `d7_av_pbcore_identifier` | 3,375 | 141s | 1,436 |
+| `d7_av_pbcore_publisher` | 7,549 | 329s (5m29s) | 1,377 |
+| `d7_av_pbcore_relation` | 6,117 | 359s (5m59s) | 1,022 |
+| `d7_av_pbcore_sponsor` | 2,801 | 119s | 1,413 |
+| `d7_av_pbcore_title` | 18,647 | 868s (14m28s) | 1,289 |
+| **`d7_av_audio`** | **4,187** | **2,470s (41m10s)** | **102** |
+| **`d7_av_video`** | **7,396** | **4,817s (1h20m17s)** | **92** |
+| `d7_av_collections` | 152 | 26s | 351 |
+| `d7_av_subcollections` | 85 | 17s | 300 |
+| `d7_av_node_collection_membership` | 11,517 | 2,975s (49m35s) | 232 |
+| `d7_av_user_memberships` | 1,235 | 141s | 526 |
+| `d7_av_url_alias` | 11,900 | 544s (9m4s) | 1,313 |
+| `d7_av_collection_url_alias` | 247 | 13s | 1,140 |
+| **total** | **170,934** | **18,289s (5h04m49s)** | |
+
+**The node-rate uncertainty flagged on 2026-09-08 is resolved, and the local
+DDEV comparison in §6 above was right to warn against trusting local
+numbers.** Real dev-0 node rates — **102/min (`audio`) and 92/min
+(`video`)** — are roughly **6× slower** than DDEV's 620/509/min, and even
+slower than `d7_av_workflow`'s 429/min (the richest, slowest paragraph type).
+That's the expected direction once you count relational work per row: a node
+does 13 paragraph `migration_lookup`s, 6 KMaps `sub_process` fields, 2 file
+lookups, and a tags lookup — more round trips to RDS than any single
+paragraph type touches, and DDEV's in-container MySQL hides that cost
+entirely. `d7_av_node_collection_membership` (232/min) shows the same
+pattern at a smaller scale — its custom `mandala_group_relationship`
+destination does a real Group API relationship creation per row, not just a
+field write.
+
+**Practical consequence for the next site (Sources, Texts, Visuals):** budget
+node-heavy migrations at dev-0 rates in the **~90–230/min** range once
+relational lookups are involved, not the simple-field rates paragraphs and
+aliases get (1,000–1,700/min held steady across almost every non-node,
+non-membership stage). The file stage, expected to be the least
+transferable number in §6, actually landed close to its local figure this
+time (297s dev-0 vs 676s local) — mutagen's overhead on the local side and
+RDS's network latency on the dev-0 side apparently offset each other for
+this particular payload; still not a number to extrapolate from for a
+differently-shaped file set.
+
+---
+
+## 8. Open questions
 
 - **The 42 ordering ties.** Carried from 2026-09-08. Two items on one host still
   resolving to the same delta; `item_id` is the documented fallback, not a
