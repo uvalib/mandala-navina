@@ -1,10 +1,18 @@
-# AV4 migration running live on dev-0 — how to check on it, and what NOT to do
+# AV4 migration on dev-0 — ✅ RESOLVED 2026-09-10, kept as the operational record
 
 **Area:** migration / AV4 / dev-0 operations
 **Raised during:** Session 2026-09-09 (AV4 completion and dev-0 launch)
-**Priority:** High while the migration is in flight — this note exists specifically so the next session doesn't need the full transcript to pick this up safely.
+**Resolved:** 2026-09-10 — the migration finished clean (5h04m49s, 27/27
+stages, 0 failed) and was re-verified directly against dev-0 (24/24 checks
+match the D7 source). Full statistics:
+[`docs/planning/av-node-migration-notes.md` §7](../planning/av-node-migration-notes.md).
+PRs #194 and #195, held open specifically because of the hazard below, are
+both merged.
+**Kept, not deleted** — the hazard this note describes (a routine merge
+killing a long-running dev-0 process) is general and will recur for any
+future long job on dev-0, not just this one.
 
-## ⚠ DO NOT MERGE PR #194 (OR PUSH ANYTHING TO `main`) UNTIL THE MIGRATION IS CONFIRMED DONE
+## ⚠ THE GENERAL HAZARD (for the NEXT long job on dev-0 — this instance is resolved)
 
 **Merging any PR to `mandala-navina`'s `main` branch triggers the
 `uva-mandala-drupal-codepipeline` CodePipeline** (Source → Build → Deploy).
@@ -78,3 +86,25 @@ normal merge workflow instead of an external schedule. Nothing in
 CodePipeline, GitHub, or Drupal itself would warn about this; the only
 defense is know-how, which is why it's written down here rather than left in
 a Claude Code session transcript that ends when the session does.
+
+## What actually happened (2026-09-10)
+
+Verified via `drush php:script` (see below for why not `sql:query`) directly
+against dev-0's database. All 24 checks in `scripts/verify-av-migration.sh`
+matched the D7 source exactly — the same clean result the local DDEV run
+produced. Real stage-by-stage dev-0 timings, including the two previously-
+unmeasured node migration rates, are in
+[`docs/planning/av-node-migration-notes.md` §7](../planning/av-node-migration-notes.md).
+
+**One more defect found while verifying:** `drush sql:query` fails against
+this RDS instance with *"TLS/SSL error: self-signed certificate in
+certificate chain"* — for ANY query, including one against dev-0's own
+database, unrelated to AV4. `\Drupal::database()` (used internally by
+`migrate:import` and by `drush php:script`) is unaffected, which is why the
+migration itself never hit this. Verification had to go through
+`php:script` for this reason; a future `verify-av-migration.sh`-equivalent
+for dev-0 should do the same, not attempt `sql:query`.
+
+Deferred: `drush kmassets:index-all && drush kmassets:audit` has **not** been
+run yet (2026-09-10, out of time) — the AV content is migrated but not yet
+in the Solr index. Do this first when picking back up.
