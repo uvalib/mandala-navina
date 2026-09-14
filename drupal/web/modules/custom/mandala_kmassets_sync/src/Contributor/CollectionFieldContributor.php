@@ -115,12 +115,30 @@ class CollectionFieldContributor implements KmassetDocContributorInterface {
    * Per docs/deferred/kmassets-uid-identity-across-migration.md, the D7
    * nid belongs in a separate uid_legacy_s-style field (not implemented
    * here for collections; that decision was scoped to image docs), never
-   * embedded in the primary uid. Sprint 1 only covers Images collections,
-   * so "images" is hardcoded rather than derived from bundle config the
-   * way node service/asset_type is.
+   * embedded in the primary uid.
+   *
+   * The {service} half was hardcoded to "images" through Sprint 1 (the only
+   * site with migrated collections at the time) -- found stale 2026-09-14
+   * while wiring AV8: `collection` and `subcollection` are shared Group
+   * bundles across sites (ADR 017), so a video/audio node in an AV
+   * collection was getting `collection_uid_s: images-11-{gid}`, a real
+   * collection but tagged with the wrong site -- this field is consumed by
+   * ADR 014's proxy fq, so the value is security-adjacent, not cosmetic.
+   *
+   * `field_legacy_site` already carries exactly the right token per site
+   * (`images`, `audio-video`, verified live against both bundles) and is set
+   * on every migrated collection/subcollection, images and AV alike -- so it
+   * IS the kmassets service value, not a separate mapping to maintain.
+   * Defaults to `images` only for a group somehow missing the field, matching
+   * the prior hardcoded behavior rather than silently emitting a malformed
+   * uid.
    */
   protected function groupKmassetUid(GroupInterface $group): string {
-    return 'images-11-' . $group->id();
+    $service = 'images';
+    if ($group->hasField('field_legacy_site') && !$group->get('field_legacy_site')->isEmpty()) {
+      $service = $group->get('field_legacy_site')->value;
+    }
+    return $service . '-11-' . $group->id();
   }
 
 }

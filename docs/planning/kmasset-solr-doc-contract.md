@@ -93,6 +93,88 @@ Oct 2022) and confirmed by the team.
 
 The proxy and its visibility enforcement are the subject of **Sprint 1 Step 1b**.
 
+### 2.1 The concrete hosts behind each box (traced live, 2026-09-14)
+
+The diagram above is deliberately generic. Concretely, on staging:
+
+```
+mandala-index-dev.internal.lib.virginia.edu          <- public DNS, resolves to
+  a real internet-routable AWS ALB CNAME
+    v
+uva-alb-uvaonly-staging (public ALB, IP-allowlisted   <- gates by source IP looking
+  to UVA network egress -- "uvaonly" in the name)        like it's on UVA's network,
+    v                                                     NOT a private-subnet-only address
+target group alb-mandala-drupal-staging-idx-0, :8765
+    v
+dev-0 (uva-mandala-drupal-staging-0) -- the
+  mandala-solr-proxy-0 container, listening on 8765
+    v (internal, VPC-only DNS -- dev-0 can resolve it, a laptop cannot)
+mandala-solr-replica-staging.private.staging:8080     <- the actual REPLICA core
+```
+
+Two consequences worth stating plainly, both found the hard way while manually
+verifying an AV4 kmassets write:
+
+- **The "dev read" endpoint is not a separate replica environment** — it's the
+  *same* proxy/replica pair staging always had, reached over the public
+  internet via an IP-gated ALB rather than the internal network. There is no
+  independent "dev" Solr replica.
+- **This path replicates on Solr's own schedule and is separately visibility-
+  filtered** (§9) — a doc that exists on the master can be invisible here for
+  two unrelated reasons (replication hasn't caught up yet, or the doc is
+  private and this path only ever serves `visibility_i:1` to anonymous
+  requests) and the two are easy to conflate. Check which one you're looking
+  at before concluding a write failed: query the master directly (§2.2) to
+  rule out "not written," then check `visibility_i` before assuming a
+  replication problem.
+
+### 2.2 A documented EXCEPTION to invariant 2: ops/audit tooling reads the master
+
+**`drush kmassets:audit` (and `kmassets:index`'s own read helpers) query the
+master directly** — `KmassetDirectSink::select()` builds its URL from the same
+`solr_master_url` config the writes use, not the proxy. This is a deliberate
+departure from invariant 2 above, confirmed 2026-09-14: `KmassetAuditor`'s own
+docblock calls it "a staging/ops validation tool, not a hot path," and reading
+the master gives it two things the proxy path cannot — no replication lag
+between a write and the audit checking it, and no visibility filtering hiding
+private content from the audit's own accounting. Going through the proxy
+instead would make every private node look "missing" from an audit that ran
+moments after indexing it.
+
+**Practical consequence:** the audit's own report is authoritative on its own
+terms and needs no cross-check against the public read path. If you want to
+manually spot-check a specific doc yourself, query the master the same way
+(reachable from dev-0 or DDEV, not from a laptop directly) — querying
+`mandala-index-dev` instead will systematically hide private content and can
+lag a live write by an unmeasured amount, regardless of whether the write
+itself was correct.
+
+**⚠ Reading the master is reliable here only because of how THIS write path
+commits — it is not a general property of the master.** Verified against the
+master's own `solrconfig.xml` (2026-09-14):
+
+```xml
+<autoCommit>
+  <maxTime>${solr.autoCommit.maxTime:60000}</maxTime>
+  <openSearcher>false</openSearcher>
+</autoCommit>
+<!-- autoSoftCommit is commented out entirely -->
+```
+
+The master's own periodic background commit (every 60s) **never opens a new
+searcher**, and there is no soft-commit fallback either — so for a write that
+relied on that timer alone, the master's own `/select` could stay stale
+**indefinitely**, while the replica would still catch up on its next
+replication pull (a replica opens its own searcher on every pull, regardless
+of how the source commit was made). `KmassetDirectSink::masterUpdateUrl()`
+avoids this by sending an *explicit* `/update?commit=true` per document —
+Solr's default for an explicit, client-requested commit is `openSearcher=true`
+independent of the `<autoCommit>` block, which only governs Solr's own
+internally-triggered commits. That is why reading the master back immediately
+after a kmassets write is safe: it is a property of this specific write path's
+explicit-commit behavior, not a guarantee that would hold for some other
+writer to this same core, or if this sink's commit parameter ever changed.
+
 ---
 
 ## 3. The D11 write transport (WORKING MODEL — Dave coordination ongoing)
