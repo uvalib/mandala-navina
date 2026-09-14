@@ -135,6 +135,20 @@ If that matters for planning a future large migration, add a cheap periodic
 sampler (cron logging row-count + timestamp every few minutes) *before*
 starting it — reconstructing this after the fact is not possible.
 
+## Update 2026-09-14: still not fixed at the image level, ~3 weeks after being scheduled
+
+Checked directly on dev-0 before running `kmassets:index-all` for AV8:
+`sudo docker exec mandala-drupal-0 php -r 'echo ini_get("memory_limit") . PHP_EOL;'`
+→ **`128M`**. Recommendation 1 above (persist the CLI `memory_limit` in the
+image) was scheduled 2026-08-27 for "the next meeting with Than + Xiaoming";
+as of today that meeting either hasn't happened or didn't land the change —
+either way, the fix is still per-invocation only, three weeks later. Applied
+the same `php -d memory_limit=1024M vendor/bin/drush.php` workaround
+proactively for this run rather than waiting to hit the crash a fourth time.
+This status line should stay SCHEDULED (not re-opened as a new issue) until
+the image itself changes — re-hitting this same landmine is not new
+information at this point, just confirmation it's still open.
+
 ## Related## Related
 
 - [migrate:import --group aborts on partial failure](migrate-group-import-aborts-on-partial-failure.md)
