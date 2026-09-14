@@ -149,6 +149,32 @@ manually spot-check a specific doc yourself, query the master the same way
 lag a live write by an unmeasured amount, regardless of whether the write
 itself was correct.
 
+**⚠ Reading the master is reliable here only because of how THIS write path
+commits — it is not a general property of the master.** Verified against the
+master's own `solrconfig.xml` (2026-09-14):
+
+```xml
+<autoCommit>
+  <maxTime>${solr.autoCommit.maxTime:60000}</maxTime>
+  <openSearcher>false</openSearcher>
+</autoCommit>
+<!-- autoSoftCommit is commented out entirely -->
+```
+
+The master's own periodic background commit (every 60s) **never opens a new
+searcher**, and there is no soft-commit fallback either — so for a write that
+relied on that timer alone, the master's own `/select` could stay stale
+**indefinitely**, while the replica would still catch up on its next
+replication pull (a replica opens its own searcher on every pull, regardless
+of how the source commit was made). `KmassetDirectSink::masterUpdateUrl()`
+avoids this by sending an *explicit* `/update?commit=true` per document —
+Solr's default for an explicit, client-requested commit is `openSearcher=true`
+independent of the `<autoCommit>` block, which only governs Solr's own
+internally-triggered commits. That is why reading the master back immediately
+after a kmassets write is safe: it is a property of this specific write path's
+explicit-commit behavior, not a guarantee that would hold for some other
+writer to this same core, or if this sink's commit parameter ever changed.
+
 ---
 
 ## 3. The D11 write transport (WORKING MODEL — Dave coordination ongoing)
