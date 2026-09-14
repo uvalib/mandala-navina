@@ -14,5 +14,9 @@ global_role: anonymous
 group_type: collection
 permissions:
   - 'view group'
+  - 'view group_node:audio entity'
+  - 'view group_node:audio relationship'
   - 'view group_node:shanti_image entity'
   - 'view group_node:shanti_image relationship'
+  - 'view group_node:video entity'
+  - 'view group_node:video relationship'
