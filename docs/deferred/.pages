@@ -97,3 +97,6 @@ nav:
   - "Images node authorship not migrated (all uid 0)": images-node-authorship-not-migrated.md
   - "15 collection featured images missing on production (404)": collection-featured-images-missing-on-production.md
   - "dev-0 files/styles/ directory was root-owned (fixed live)": dev0-image-styles-directory-root-owned.md
+  - "config:export not scoped, strips comments": config-export-not-scoped-strips-comments.md
+  - "CodePipeline webhook + manual trigger duplicates deploy": codepipeline-webhook-plus-manual-trigger-duplicates-deploy.md
+  - "Images title_sort_s possible silent truncation": images-title-sort-s-possible-silent-truncation.md
