@@ -13,11 +13,21 @@ scope: insider
 global_role: authenticated
 group_type: subcollection
 permissions:
+  - 'create group_node:audio relationship'
   - 'create group_node:shanti_image relationship'
+  - 'create group_node:video relationship'
+  - 'delete own group_node:audio relationship'
   - 'delete own group_node:shanti_image relationship'
+  - 'delete own group_node:video relationship'
   - 'leave group'
+  - 'update own group_node:audio relationship'
   - 'update own group_node:shanti_image relationship'
+  - 'update own group_node:video relationship'
   - 'view group'
   - 'view group_membership relationship'
+  - 'view group_node:audio entity'
+  - 'view group_node:audio relationship'
   - 'view group_node:shanti_image entity'
   - 'view group_node:shanti_image relationship'
+  - 'view group_node:video entity'
+  - 'view group_node:video relationship'
