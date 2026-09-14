@@ -10,3 +10,36 @@ bundles:
     url_html: 'https://images.mandala.library.virginia.edu/image/__NID__'
     url_ajax: 'https://images.mandala.library.virginia.edu/api/ajax/__NID__'
     url_json: 'https://images.mandala.library.virginia.edu/api/json/__NID__'
+  # AV8 (Sprint 3), 2026-09-14. `service`/`asset_type` are NOT invented -- they
+  # are read directly off the ~8,579 real production kmassets docs the legacy
+  # mediabase pipeline already indexes for AV (queried live against
+  # mandala-index-dev): both are `audio-video`, a single shared facet value
+  # for both D11 bundles. This matches ADR 016 decision 3 exactly ("the Solr
+  # asset_type facet is a single audio-video value... do not align" it with
+  # the two-bundle URL grammar) and ADR 017's kmassets service vocabulary.
+  # Getting this wrong would fragment the asset_type facet against 8,579
+  # already-live documents, so it is matched, not guessed.
+  #
+  # url_html/url_ajax/url_json below are placeholders in EXACTLY the same
+  # sense shanti_image's already are -- ADR 016 (status: Proposed, 3 open
+  # items) found the Images entry's URLs "known wrong" (legacy host, D11 nid
+  # substituted into a route that actually takes a slug) and left them as an
+  # accepted placeholder rather than block indexing on it ("not blocking...
+  # known-wrong URLs, no worse than what's already indexed"). These mirror
+  # that same treatment for consistency, using the values queried live off
+  # the legacy mediabase docs above (av.mandala.library.virginia.edu,
+  # singular /audio|video/{slug}, services/node/ajax/{nid}) rather than
+  # inventing a new pattern -- fixing this for real is ADR 016 open item 2
+  # (which path is canonical) and is not this sprint item's call to make.
+  audio:
+    service: audio-video
+    asset_type: audio-video
+    url_html: 'https://av.mandala.library.virginia.edu/audio/__NID__'
+    url_ajax: 'https://av.mandala.library.virginia.edu/services/node/ajax/__NID__'
+    url_json: 'https://av.mandala.library.virginia.edu/api/json/__NID__'
+  video:
+    service: audio-video
+    asset_type: audio-video
+    url_html: 'https://av.mandala.library.virginia.edu/video/__NID__'
+    url_ajax: 'https://av.mandala.library.virginia.edu/services/node/ajax/__NID__'
+    url_json: 'https://av.mandala.library.virginia.edu/api/json/__NID__'
