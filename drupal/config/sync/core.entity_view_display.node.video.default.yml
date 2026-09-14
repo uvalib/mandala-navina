@@ -1,0 +1,120 @@
+uuid: da1f14cd-8507-4dce-b05b-4be2e5e1cfb5
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.video.field_available_from
+    - field.field.node.video.field_copyright_owner
+    - field.field.node.video.field_group_content_access
+    - field.field.node.video.field_kmap_annotation
+    - field.field.node.video.field_kmap_terms
+    - field.field.node.video.field_language_kmap
+    - field.field.node.video.field_legacy_nid
+    - field.field.node.video.field_legacy_site
+    - field.field.node.video.field_license
+    - field.field.node.video.field_location
+    - field.field.node.video.field_pbcore_contributor
+    - field.field.node.video.field_pbcore_coverage
+    - field.field.node.video.field_pbcore_creator
+    - field.field.node.video.field_pbcore_description
+    - field.field.node.video.field_pbcore_extension
+    - field.field.node.video.field_pbcore_identifier
+    - field.field.node.video.field_pbcore_instantiation
+    - field.field.node.video.field_pbcore_publisher
+    - field.field.node.video.field_pbcore_relation
+    - field.field.node.video.field_pbcore_rights_summary
+    - field.field.node.video.field_pbcore_sponsor
+    - field.field.node.video.field_pbcore_title
+    - field.field.node.video.field_rating
+    - field.field.node.video.field_recording_location_new
+    - field.field.node.video.field_subcollection_new
+    - field.field.node.video.field_subject
+    - field.field.node.video.field_tags
+    - field.field.node.video.field_transcript
+    - field.field.node.video.field_video
+    - field.field.node.video.field_workflow
+    - field.field.node.video.field_year_published
+    - node.type.video
+  module:
+    - shanti_kmaps_fields
+    - user
+id: node.video.default
+targetEntityType: node
+bundle: video
+mode: default
+content:
+  field_kmap_terms:
+    type: kmap_popover_formatter
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 101
+    region: content
+  field_language_kmap:
+    type: kmap_popover_formatter
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 102
+    region: content
+  field_location:
+    type: kmap_popover_formatter
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 103
+    region: content
+  field_recording_location_new:
+    type: kmap_popover_formatter
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 104
+    region: content
+  field_subcollection_new:
+    type: kmap_popover_formatter
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 106
+    region: content
+  field_subject:
+    type: kmap_popover_formatter
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 105
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  field_available_from: true
+  field_copyright_owner: true
+  field_group_content_access: true
+  field_kmap_annotation: true
+  field_legacy_nid: true
+  field_legacy_site: true
+  field_license: true
+  field_pbcore_contributor: true
+  field_pbcore_coverage: true
+  field_pbcore_creator: true
+  field_pbcore_description: true
+  field_pbcore_extension: true
+  field_pbcore_identifier: true
+  field_pbcore_instantiation: true
+  field_pbcore_publisher: true
+  field_pbcore_relation: true
+  field_pbcore_rights_summary: true
+  field_pbcore_sponsor: true
+  field_pbcore_title: true
+  field_rating: true
+  field_tags: true
+  field_transcript: true
+  field_video: true
+  field_workflow: true
+  field_year_published: true
+  langcode: true
+  search_api_excerpt: true

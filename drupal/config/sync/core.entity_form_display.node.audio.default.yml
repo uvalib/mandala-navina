@@ -1,0 +1,155 @@
+uuid: a45eeac7-a931-4ba0-94a4-477d52387528
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.audio.field_audio
+    - field.field.node.audio.field_available_from
+    - field.field.node.audio.field_copyright_owner
+    - field.field.node.audio.field_group_content_access
+    - field.field.node.audio.field_kmap_annotation
+    - field.field.node.audio.field_kmap_terms
+    - field.field.node.audio.field_language_kmap
+    - field.field.node.audio.field_legacy_nid
+    - field.field.node.audio.field_legacy_site
+    - field.field.node.audio.field_license
+    - field.field.node.audio.field_location
+    - field.field.node.audio.field_pbcore_contributor
+    - field.field.node.audio.field_pbcore_coverage
+    - field.field.node.audio.field_pbcore_creator
+    - field.field.node.audio.field_pbcore_description
+    - field.field.node.audio.field_pbcore_extension
+    - field.field.node.audio.field_pbcore_identifier
+    - field.field.node.audio.field_pbcore_instantiation
+    - field.field.node.audio.field_pbcore_publisher
+    - field.field.node.audio.field_pbcore_relation
+    - field.field.node.audio.field_pbcore_rights_summary
+    - field.field.node.audio.field_pbcore_sponsor
+    - field.field.node.audio.field_pbcore_title
+    - field.field.node.audio.field_rating
+    - field.field.node.audio.field_recording_location_new
+    - field.field.node.audio.field_subcollection_new
+    - field.field.node.audio.field_subject
+    - field.field.node.audio.field_tags
+    - field.field.node.audio.field_thumbnail_image
+    - field.field.node.audio.field_transcript
+    - field.field.node.audio.field_workflow
+    - field.field.node.audio.field_year_published
+    - node.type.audio
+  module:
+    - path
+    - shanti_kmaps_fields
+id: node.audio.default
+targetEntityType: node
+bundle: audio
+mode: default
+content:
+  created:
+    type: datetime_timestamp
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_kmap_terms:
+    type: kmap_tree_picker
+    weight: 121
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_language_kmap:
+    type: kmap_tree_picker
+    weight: 122
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_location:
+    type: kmap_tree_picker
+    weight: 123
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_recording_location_new:
+    type: kmap_tree_picker
+    weight: 124
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_subcollection_new:
+    type: kmap_tree_picker
+    weight: 126
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_subject:
+    type: kmap_tree_picker
+    weight: 125
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  langcode:
+    type: language_select
+    weight: 2
+    region: content
+    settings:
+      include_locked: true
+    third_party_settings: {  }
+  path:
+    type: path
+    weight: 30
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  status:
+    type: boolean_checkbox
+    weight: 120
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  title:
+    type: string_textfield
+    weight: -5
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 5
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  field_audio: true
+  field_available_from: true
+  field_copyright_owner: true
+  field_group_content_access: true
+  field_kmap_annotation: true
+  field_legacy_nid: true
+  field_legacy_site: true
+  field_license: true
+  field_pbcore_contributor: true
+  field_pbcore_coverage: true
+  field_pbcore_creator: true
+  field_pbcore_description: true
+  field_pbcore_extension: true
+  field_pbcore_identifier: true
+  field_pbcore_instantiation: true
+  field_pbcore_publisher: true
+  field_pbcore_relation: true
+  field_pbcore_rights_summary: true
+  field_pbcore_sponsor: true
+  field_pbcore_title: true
+  field_rating: true
+  field_tags: true
+  field_thumbnail_image: true
+  field_transcript: true
+  field_workflow: true
+  field_year_published: true
+  promote: true
+  sticky: true
