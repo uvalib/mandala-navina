@@ -109,8 +109,31 @@ class KmassetAuditor {
       }
     }
 
+    // Found 2026-09-14 while running the AV8 backfill: `audio` and `video`
+    // share one kmassets `service` value (`audio-video`, ADR 016 decision 3),
+    // so a uid alone can't tell which bundle produced it. Auditing a single
+    // bundle whose service is shared by another bundle must still treat that
+    // sibling's published nodes as legitimate for the orphan pass below --
+    // otherwise every one of the sibling's docs looks orphaned (its uid isn't
+    // in $publishedUids, which above was only populated from the requested
+    // bundle). With --fix this isn't just a false report, it's a real
+    // `deleteByQuery` against every sibling doc. Loaded here, not folded into
+    // Pass A, so checked_nodes/missing/stale stay scoped to what was actually
+    // asked for -- only the orphan safety net widens.
+    $servicesInScope = array_unique(array_values($bundles));
+    foreach ($this->bundlesToAudit('') as $siblingBundle => $siblingService) {
+      if (isset($bundles[$siblingBundle]) || !in_array($siblingService, $servicesInScope, TRUE)) {
+        continue;
+      }
+      foreach ($this->publishedNodeBatches($siblingBundle, $batchSize) as $nodes) {
+        foreach ($nodes as $node) {
+          $publishedUids[$siblingService . '-11-' . $node->id()] = (int) $node->id();
+        }
+      }
+    }
+
     // Pass B — Solr → Drupal: orphaned. One cursor sweep per distinct service.
-    foreach (array_unique(array_values($bundles)) as $service) {
+    foreach ($servicesInScope as $service) {
       foreach ($this->solrUidCursor($service) as $uid) {
         $report['checked_docs']++;
         if (!isset($publishedUids[$uid])) {

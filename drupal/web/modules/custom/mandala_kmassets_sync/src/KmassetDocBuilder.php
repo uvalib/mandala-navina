@@ -257,8 +257,27 @@ class KmassetDocBuilder {
    */
   protected function normalize(array &$doc, NodeInterface $node): void {
     // title_sort_s — from the (possibly contributor-updated) title.
+    //
+    // Found broken 2026-09-14 while wiring AV8: trim()'s charlist argument is
+    // byte-oriented, not character-aware. The curly quotes below are
+    // multi-byte UTF-8 (e.g. "\u{201C}" is E2 80 9C), so passing them to
+    // trim() silently adds the raw bytes 0x80/0x98/0x99/0x9C/0x9D to the
+    // strip set -- and 0x80-0xBF is the entire UTF-8 continuation-byte range.
+    // Any title ending in a multi-byte character whose last byte falls in
+    // that set (e.g. Cyrillic "\u{440}" = D1 80, CJK "\u{5C40}" = E5 B1 80)
+    // gets that trailing byte silently stripped, leaving a truncated,
+    // invalid UTF-8 string -- which then fails json_encode() outright for
+    // some titles, and silently corrupts title_sort_s (no crash, just wrong)
+    // for others. Never surfaced on shanti_image because English titles
+    // essentially never end in a colliding byte. preg_replace with the /u
+    // modifier is character-aware, not byte-aware, so it can't split a
+    // multi-byte sequence.
     $title = is_array($doc['title'] ?? NULL) ? ($doc['title'][0] ?? '') : ($doc['title'] ?? '');
-    $doc['title_sort_s'] = trim(strip_tags((string) $title), "'\"“”‘’()-: []");
+    $doc['title_sort_s'] = preg_replace(
+      '/^[\'"“”‘’()\-: \[\]]+|[\'"“”‘’()\-: \[\]]+$/u',
+      '',
+      strip_tags((string) $title),
+    );
 
     // creator_sort_s — derive when no contributor set it.
     if (empty($doc['creator_sort_s'])) {
