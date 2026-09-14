@@ -1,15 +1,15 @@
 # Sprint 3: AV core implementation (`audio`/`video`, Kaltura, access, collections)
 
-**Status:** ◐ **In progress — started 2026-09-08.** AV2, AV3, AV4, AV5 and AV14 done
+**Status:** ◐ **In progress — started 2026-09-08.** AV2, AV3, AV4, AV5, AV8 and AV14 done
 (see the [AV2 scope note](../planning/av-content-type-decision.md), the
 [AV3 paragraph model](../planning/av-paragraph-model.md), the
 [AV4 migration notes](../planning/av-node-migration-notes.md) and the
 [AV5/AV14 disposition note](../planning/av-anomalous-node-dispositions.md)); the full AV
-corpus migrates and is verified locally (PR #193, ready for review). **AV6–AV9 are the
-next gate** — KMaps wiring, Group access mapping, Solr/kmassets sync, and UI, all
-unblocked now that AV4 is complete. AV4's live dev-0 run finished 2026-09-10
-(5h04m49s, 24/24 checks verified); `kmassets:index-all`/`kmassets:audit` on the
-new content is the one thing still outstanding before AV8 needs the index current.
+corpus migrates and is verified locally (PR #193, ready for review). **AV6, AV7, AV9 are
+the next gate** — KMaps wiring, Group access mapping, and UI, all unblocked now that AV4
+is complete. AV4's live dev-0 run finished 2026-09-10 (5h04m49s, 24/24 checks verified);
+AV8's live `kmassets:index-all`/`kmassets:audit` run finished 2026-09-14, index fully in
+sync (0 missing/orphaned/stale across all 122,921 published nodes).
 **No longer blocked on [Spike 7](../spikes/spike-07-kaltura-av-integration.md)** — the
 spike's migration-source-plugin item is satisfied by AV4; its remaining open item
 (upload/ingest) lives in AV10–AV12, and its packaging work
@@ -71,7 +71,7 @@ Inherited from [ADR 008](../adr/008-mvp-migrate-not-improve.md) /
 | AV5 | 68 `MISSING_TYPE` node disposition | — (can run in parallel with AV1–AV4) | ✅ **Done 2026-09-08 — EXCLUDE all 68.** Repair-to-real-type proved unavailable: the bundle's only field instance is `og_group_ref`, so the Kaltura entry ID was dropped at save time and there is nothing to repair from; `node_type` has no `MISSING_TYPE` row. All 68 are 2014/uid 1, titled with `.jpg` filenames, hold zero field data, and sit in the single admin triage collection "Admin: On Kaltura Not in Mediabase" (`2503`) — which survives regardless, holding 285 real AV nodes. nid list + rationale in the [AV5/AV14 disposition note](../planning/av-anomalous-node-dispositions.md) |
 | AV6 | KMaps field wiring (reuse Images pattern, already proven) | AV4 | ○ |
 | AV7 | OG → D11 Group access mapping, including `group_access_uva_member` and `mb_collection_admin` | AV4 | ○ |
-| AV8 | Solr/kmassets sync wiring for the AV bundle(s) | AV4, AV6 | ○ |
+| AV8 | Solr/kmassets sync wiring for the AV bundle(s) | AV4, AV6 | ✅ **Done 2026-09-14** — `audio`/`video` bundles wired into `mandala_kmassets_sync.settings` (both `service`/`asset_type: audio-video`, matched live against the ~8,579 real legacy-mediabase kmassets docs already indexed, not invented — see ADR 016 decision 3). `kmassets:index-all` run live on dev-0, scoped per-bundle (not the bare command, which would have needlessly re-indexed all 111,339 `shanti_image` docs): **4,187/4,187 audio, 7,391/7,395 video** on the first pass, ~830–890 nodes/min combined (~13–14 min total). Full unscoped `kmassets:audit --check-stale` across all 122,921 published nodes: **0 missing, 0 orphaned, 0 stale.** Surfaced (and fixed, PR #199) two pre-existing bugs never exercised by Images' all-English, single-service data: (1) `KmassetDocBuilder`'s `title_sort_s` used a byte-oriented `trim()` charlist that corrupted any title ending in a colliding UTF-8 continuation byte — crashed 4 real video nodes outright (Cyrillic/Chinese titles), likely silently truncated others; fixed with a Unicode-aware `preg_replace`. (2) `KmassetAuditor`'s orphan pass was unsafe to scope to a single bundle when it shares a `service` with another (`audio`/`video` both use `audio-video`) — `kmassets:audit audio --fix` would have deleted all of `video`'s docs as false orphans, and vice versa; fixed by widening the orphan-safety set to sibling bundles. Also fixed, in the same PR, a stale `groupKmassetUid()` bug hardcoding `images-` for every collection regardless of site — security-adjacent since it feeds ADR 014's proxy `fq`. Full writeup: [session log](../session-logs/2026-09-14-av8-kmassets-sync-and-two-bugs-found.md) |
 | AV9 | UI: Kaltura player field formatter; collection-content gallery variant of `shanti-thumbnail` (generalizing Sprint 2 B5) | AV1, AV4, Sprint 2 B5 (done) | ○ |
 | AV10 | **Kaltura configuration layer** — config-driven, extensible, covering the full element set inventoried below (players/`uiconf_id`, uploader widget ui_conf, delivery, player + thumbnail dimensions, rotate/stretch), selectable **per view mode** via formatter settings. Must carry the known values and accept new ones as config, no code change | AV1 | ○ |
 | AV11 | **Kaltura Session (KS) minting service** — server-side, using the official `kaltura/api-client-library` PHP SDK; short-TTL, upload-scoped KS handed to the browser. Secrets delivered at deploy time via the established ccrypt/`container_0.env.secret` pattern (see below), **never** in `config/sync` | AV1 | ○ |
