@@ -53,6 +53,31 @@ weighed against each other:
 No option has been picked; this needs the group's input on how much CI investment is worth it
 for how often this actually recurs.
 
+## Update 2026-09-15: recurred, with a real deploy failure this time
+
+Hand-edited `core.entity_view_display.node.video.default.yml` (AV9, PR #209) to add a
+`field_video` component, inserting it before `field_kmap_terms` in the `content:` mapping.
+Same root cause as PR #177: Drupal sorts `content` alphabetically by field name on save;
+`field_video` belongs after `field_subject`. This time the guard didn't just flag a
+pre-existing drift found later — it **failed dev-0's actual deploy pipeline** (Deploy stage:
+FAILED, "verify configuration import left no drift"), because the broken commit had already
+merged and the webhook auto-deployed it.
+
+This is the second real recurrence of exactly this failure mode, and notably: it happened
+*immediately after* documenting a related-but-distinct config/sync risk
+([[feedback-config-export-not-scoped]]) in the very same session — general awareness that
+"config/sync is fragile" did not prevent the specific mistake. Fixed by reading the actual
+active config back out of Drupal after import (not another hand-edit) and writing its exact
+canonical serialization to the sync file — see [[feedback-never-hand-edit-config-structure]]
+for the full writeup and the concrete "how to apply" rule (never hand-edit config *structure*,
+only scalar values; always verify with `drush config:status` before pushing).
+
+Given this has now caused two real deploy incidents, option 2 (a CI check running `cim` +
+`config:status` on every PR touching `config/sync`) is worth re-raising with the group with
+more urgency than "no option chosen yet" implies — it would have caught both incidents before
+merge, not just after.
+
 ## Related
 
 - [Deploy never imports config/sync (the guard's origin)](deploy-never-imports-config-sync.md)
+- [config:export not scoped, strips comments](config-export-not-scoped-strips-comments.md) — the sibling risk found the day before this recurrence
