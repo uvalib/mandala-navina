@@ -1,9 +1,25 @@
 # AV10: Kaltura configuration layer — scope note
 
-**Status:** Scoping, 2026-09-14. Not yet built.
+**Status:** Implementation scoped, 2026-09-15. Not yet built.
 **Depends on:** AV1 (Spike 7 — module survey, playback prototype).
 **Blocks:** AV9 (player formatter needs this to render from), AV12 (upload widget needs the uploader config), AV13 (migrates D7's real values into this layer's registry).
 **Relates to:** [Sprint 3](../sprints/sprint-03-av-core-implementation.md)'s "Design note: uploads and multiple players" section, which this note supersedes with a concrete architecture — read that first for the *why* (multiple players, D7's real element set, the security note on credentials).
+
+> **Revised 2026-09-15.** The original (2026-09-14) version of this note proposed a
+> `kaltura_player_config` **config entity**. Reconsidered once implementation cost was
+> actually weighed, not just the abstract shape: this codebase has **zero custom config
+> entity types** today — every other structured setting (including
+> `mandala_kmassets_sync.settings`, solving the identical "named, reusable, addable via
+> config" shape) is a plain config object, no entity CRUD, no admin UI. A config entity
+> means building an entity class, list builder, add/edit forms, routing, and permissions
+> from scratch for presets that, per this project's own existing pattern, were never going
+> to get a live admin UI anyway. Replaced with a single `mandala_kaltura.settings` config
+> object holding a keyed `presets` array — same requirements met (named, reusable, addable
+> without code — a new preset is a new YAML key), a fraction of the cost. **Confirmed with
+> Yuji: this is engineering-owned, config-only, no write UI needed** — adding a preset means
+> editing YAML and running `config:import`, exactly like every other setting in this
+> project. The "Proposed architecture" and "Secrets" sections below reflect this revision;
+> the problem statement and D7 element set above them are unchanged.
 
 ## What already exists (don't re-derive it)
 
@@ -25,60 +41,67 @@ The sprint's own design note already established the real requirement precisely:
 4. **New elements/players must be addable as config, no code change** — an explicit requirement, not a nice-to-have.
 5. **Site-level constants and credentials are a separate concern** from per-player config: `kaltura_partner_id`/`kaltura_subp_id`/`kaltura_server_url` are site-wide facts; `kaltura_admin_secret`/`kaltura_secret` are credentials that must never reach `config/sync` or the browser (D7 stores them in cleartext — do not replicate that).
 
-## Proposed architecture
+## Proposed architecture (revised 2026-09-15)
 
-**A new config entity type**, `kaltura_player_config` (working name — bikeshed later), living in a new custom module (`mandala_kaltura` or similar, TBD at build time). Modeled on Drupal's own `image_style` pattern: a named, reusable, exportable config entity, listable/selectable from a formatter's settings form — because that's exactly this problem shape (multiple named presets, selected per-context, must be addable without code).
-
-Proposed schema (fields drawn directly from the D7 element set the sprint doc already inventoried, not invented):
+**A single config object**, `mandala_kaltura.settings`, in a new custom module `mandala_kaltura` (depends on `kaltura_media`). Site-level constants as top-level keys; named player configurations as a keyed `presets` map — same "named, reusable, addable without code" shape as the rejected config-entity version, at the cost of one YAML file instead of an entity type's worth of scaffolding.
 
 ```yaml
-# config/sync/mandala_kaltura.player_config.<machine_name>.yml (example shape)
-id: default
-label: 'Default player'
-uiconf_id: '31832371'
-custom_cw: '4396241'        # uploader Contribution-Wizard ui_conf — used by AV12, not AV9
-delivery: HTTP               # deliberate choice, not a blind RTMP port — see sprint doc
-player_height: 425
-player_width: 880
-thumbsize_height: 45
-thumbsize_width: 80
-rotate: 0
-stretch: null
-custom_player: ''
+# config/sync/mandala_kaltura.settings.yml
+partner_id: '381832'
+subp_id: '38183200'
+server_url: '//www.kaltura.com'
+presets:
+  default:
+    uiconf_id: '31832371'
+    custom_cw: '4396241'        # uploader Contribution-Wizard ui_conf — used by AV12, not AV9
+    delivery: HTTP               # deliberate choice, not a blind RTMP port — see sprint doc
+    player_height: 425
+    player_width: 880
+    thumbsize_height: 45
+    thumbsize_width: 80
+    rotate: 0
+    stretch: null
+    custom_player: ''
 ```
 
-**Site-level constants** (`partner_id`, `subp_id`, `server_url`) do NOT belong in this config entity — they're one value each, site-wide, not per-player. These go in a plain `mandala_kaltura.settings` config object (config, not secret — matches `KALTURA_PARTNER_ID`/`KALTURA_SUBP_ID`/`KALTURA_SERVER_URL`'s designation as non-secret in the sprint doc's split table), sourced from environment at deploy time the same way `mandala_kmassets_sync.settings.solr_master_url` already is — i.e. read via `settings.php`'s `$config[]` override pattern from env vars, not typed into `config/sync` directly, so per-environment values (dev/staging/prod partner IDs, if they ever differ) don't require a config-sync diff.
+`partner_id`/`subp_id`/`server_url` are **not secret** — checked directly against `settings.php`'s actual pattern: `mandala_kmassets_sync.settings.solr_master_url` (a comparable non-secret internal value) is simply committed straight into `config/sync`, no env-var/`settings.php` override plumbing at all. Same here — these three constants are typed directly into the config object, versioned normally.
 
-**Selection**: the field formatter (AV9's job to build) gets a formatter setting — "Player configuration" — a `<select>` populated from `kaltura_player_config` entities, stored per view mode via the normal `core.entity_view_display.*.yml` `third_party_settings`/formatter `settings` mechanism Drupal already provides for exactly this purpose. No new selection mechanism needed — this is what view-mode-scoped formatter settings are *for*.
+**Write path: engineering-owned, config-only, confirmed with Yuji 2026-09-15.** Adding or changing a preset means editing `mandala_kaltura.settings.yml` and running `config:import` — no admin form, no UI. If AV staff self-service ever becomes a requirement, that's a scope change to revisit then, not something to build speculatively now.
 
-**What AV10 does NOT need to build**: the actual embed/render logic. That stays AV9's job — AV10 only needs to produce the resolved settings; AV9's formatter reads the selected `kaltura_player_config`, merges it with `mandala_kaltura.settings`' site constants, and passes the result to (an extended version of) the existing `kaltura-player.html.twig` embed.
+**Read path — the only code AV10 needs to ship**: a small service, `mandala_kaltura.resolver` (`KalturaConfigResolver`), with one real method — given a preset id, return that preset merged with the top-level site constants (`partner_id`/`subp_id`/`server_url`) as one flat array. This is the entire surface AV9's formatter consumes.
+
+**Selection**: AV9's formatter gets a settings-form dropdown — "Player configuration" — populated from `array_keys($resolver->getPresetIds())`, stored per view mode via the normal `core.entity_view_display.*.yml` formatter `settings` mechanism Drupal already provides. No new selection mechanism needed.
+
+**What AV10 does NOT need to build**: the actual embed/render logic (AV9's job — it calls the resolver, passes the result to an extended `kaltura-player.html.twig`), and no config entity CRUD of any kind.
 
 ## Secrets (AV11's actual consumer, scoped here since the pattern must exist before AV11 can use it)
 
-Follow the established `container_0.env.{managed,secret}` split exactly — this is a decided, non-negotiable convention (see [[reference-deploy-secret-ccrypt-pattern]]), confirmed live in `terraform-infrastructure/mandala/drupal/staging/ansible/`:
+Only the credential pair needs the deploy-time secret pattern — **not** `partner_id`/`subp_id`/`server_url` (see above, these are plain committed config). Follow the established `container_0.env.{managed,secret}` split exactly — this is a decided, non-negotiable convention (see [[reference-deploy-secret-ccrypt-pattern]]), confirmed live in `terraform-infrastructure/mandala/drupal/staging/ansible/`:
 
 | Var | File | Notes |
 |---|---|---|
-| `KALTURA_PARTNER_ID` | `.env.managed` | `381832` today |
-| `KALTURA_SUBP_ID` | `.env.managed` | `38183200` |
-| `KALTURA_SERVER_URL` | `.env.managed` | `//www.kaltura.com` |
-| `KALTURA_ADMIN_SECRET` | `.env.secret` → committed only as `.env.secret.cpt` | AV11 consumes this to mint a KS server-side; never reaches the browser |
-| `KALTURA_SECRET` | `.env.secret` → `.cpt` | |
+| `KALTURA_ADMIN_SECRET` | `.env.secret` → committed only as `.env.secret.cpt` | AV11 consumes this **directly via `getenv()`** to mint a KS server-side — never through Drupal config, never reaches the browser |
+| `KALTURA_SECRET` | `.env.secret` → `.cpt` | Same treatment |
 
-Add the two secret vars to `deploy_backend.yml`'s `required_env_vars` list (currently 11 entries, e.g. `MYSQL_HOST`, `SIMPLESAML_SECRET_SALT`) — by the playbook's own established "split by failure mode" logic, a missing Kaltura secret should fail the deploy loudly, not ship a silently-broken uploader. **This terraform-infrastructure change is a real prerequisite for AV11**, not AV10 itself, but the config-layer split above is what makes it a clean two-line addition instead of a redesign later.
+Add both to `deploy_backend.yml`'s `required_env_vars` list (currently 11 entries, e.g. `MYSQL_HOST`, `SIMPLESAML_SECRET_SALT`) — by the playbook's own established "split by failure mode" logic, a missing Kaltura secret should fail the deploy loudly, not ship a silently-broken uploader. **This terraform-infrastructure change is a real prerequisite for AV11**, not AV10 itself, but the design above is what makes it a clean two-line addition instead of a redesign later.
 
 ## Relationship to AV11/AV12/AV13
 
-- **AV11** (KS minting) consumes `mandala_kaltura.settings` (partner_id) + the two secret env vars. Independent of the player-config entity type above — AV11 doesn't need to know about named player presets, just the account-level credentials.
-- **AV12** (upload widget) consumes a player config's `custom_cw` (uploader ui_conf) — this is why `custom_cw` lives on the SAME config entity as the player settings rather than a separate registry: D7 keeps them paired per context, and AV12 will want "the same context's" uploader config, not a global one.
-- **AV13** (migrate D7's real per-view-mode values) is a data-population task against this registry, not a design task — the exact values are already in the sprint doc's table, keyed by D7 view mode (`default` vs the instance/widget settings), and just need mapping onto named `kaltura_player_config` entities once this schema exists. A reasonable first cut: three presets — `default` (`31832371`), `node_embed` (`24762821`, matching the live node-view embed Spike 6 found), and whatever the React app's `31832371` hardcode actually corresponds to once checked against which view mode serves that surface.
+- **AV11** (KS minting) consumes `partner_id` (via the resolver, or directly from config) + the two secret env vars directly via `getenv()`. Independent of the presets map above — AV11 doesn't need to know about named player presets, just the account-level credentials.
+- **AV12** (upload widget) consumes a preset's `custom_cw` (uploader ui_conf) — this is why `custom_cw` lives on the SAME preset as the player settings rather than a separate registry: D7 keeps them paired per context, and AV12 will want "the same context's" uploader config, not a global one.
+- **AV13** (migrate D7's real per-view-mode values) is a data-population task against this registry, not a design task — the exact values are already in the sprint doc's table, keyed by D7 view mode (`default` vs the instance/widget settings), and just need mapping onto named presets under `mandala_kaltura.settings.presets` once this schema exists. A reasonable first cut: three presets — `default` (`31832371`), `node_embed` (`24762821`, matching the live node-view embed Spike 6 found), and whatever the React app's `31832371` hardcode actually corresponds to once checked against which view mode serves that surface.
 
 ## Open questions (need a decision before or during build, not blocking the scoping itself)
 
-1. **Exact config entity ID/module name** — cosmetic, pick at build time.
+1. **Exact module/service naming** — cosmetic, pick at build time.
 2. **Does `delivery`/`stretch`/`rotate` actually change the embed's JS parameters in a way worth modeling now**, or are `rotate`/`stretch` (both `0`/`NULL` in every real D7 row per the sprint table) effectively unused and safe to carry as inert config for parity without wiring real behavior yet? Recommend: model the field, don't build logic for it, until a real non-zero value is found in D7 data — avoids speculative work.
-3. **Where does the "3rd+ player, added as config only" acceptance-criterion proof happen** — this note's schema supports it structurally (any new `kaltura_player_config` entity is immediately selectable), but the actual acceptance test (sprint doc: "a fourth added *as config only* to prove new players need no code change") is AV9/AV13's verification step, not something AV10 itself needs to demonstrate ahead of time.
+3. **Where does the "3rd+ player, added as config only" acceptance-criterion proof happen** — this note's schema supports it structurally (any new key under `presets` is immediately selectable), but the actual acceptance test (sprint doc: "a fourth added *as config only* to prove new players need no code change") is AV9/AV13's verification step, not something AV10 itself needs to demonstrate ahead of time.
 
-## Why a config entity, not formatter-only settings
+## Why a plain config object, not a config entity or formatter-only settings
 
-Considered and rejected: storing everything as per-view-mode formatter `third_party_settings` directly, with no separate entity type. Rejected because it fails requirement 4 above (reusable, named, addable without code) — formatter settings are per-(bundle, view mode), not a shared named registry, so the same "default" player config would need to be hand-typed identically into every view mode/bundle combination that uses it, and there'd be no single place to audit "what players exist" the way `image_style` gives you for image styles today. The config-entity approach costs one extra module and a settings-form dropdown; the formatter-settings-only approach costs silent duplication and drift the first time someone updates one context's player ID and forgets the other three.
+Two alternatives considered and rejected, for opposite reasons:
+
+- **Formatter-only settings** (`third_party_settings` on each view display, no shared registry) — fails the "reusable, named, addable without code" requirement: the same "default" player config would need hand-typing into every view mode/bundle combination that uses it, with no single place to audit "what players exist."
+- **A `kaltura_player_config` config entity** (this note's original 2026-09-14 proposal) — satisfies the requirement, but at real, unnecessary cost: this would be the first custom config entity type in the codebase (entity class, list builder, forms, routing, permissions), for a write path (a live admin UI) that isn't actually wanted — **D7 never had a self-service UI for this either** (per ADR 008/MVP-migrate-not-improve, matching the floor D7 already set, not adding a new capability beyond it), and Yuji confirmed 2026-09-15 this stays engineering-owned.
+
+The chosen shape — one config object, a `presets` map, a read-only resolver service — sits exactly between the two: a shared, named, auditable registry (what formatter-only settings lack) built with zero new entity scaffolding (what the config-entity version didn't need to spend).
