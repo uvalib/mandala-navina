@@ -44,14 +44,6 @@ targetEntityType: node
 bundle: video
 mode: default
 content:
-  field_video:
-    type: mandala_kaltura_configured
-    label: hidden
-    settings:
-      preset: default
-    third_party_settings: {  }
-    weight: 0
-    region: content
   field_kmap_terms:
     type: kmap_popover_formatter
     label: hidden
@@ -93,6 +85,14 @@ content:
     settings: {  }
     third_party_settings: {  }
     weight: 105
+    region: content
+  field_video:
+    type: mandala_kaltura_configured
+    label: hidden
+    settings:
+      preset: default
+    third_party_settings: {  }
+    weight: 0
     region: content
   links:
     settings: {  }
