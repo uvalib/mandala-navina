@@ -1,0 +1,7 @@
+name: 'Mandala Kaltura Configuration'
+type: module
+description: 'Named, reusable Kaltura player/uploader configuration presets (Sprint 3 AV10) — site-level constants plus a keyed preset registry that field formatters (AV9) and the upload widget (AV12) resolve from. Config-only, engineering-owned; no admin UI by design.'
+package: Mandala
+core_version_requirement: ^11
+dependencies:
+  - kaltura_media:kaltura_media

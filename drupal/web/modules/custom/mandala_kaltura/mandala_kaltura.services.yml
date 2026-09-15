@@ -1,0 +1,5 @@
+services:
+  mandala_kaltura.resolver:
+    class: Drupal\mandala_kaltura\KalturaConfigResolver
+    arguments:
+      - '@config.factory'
