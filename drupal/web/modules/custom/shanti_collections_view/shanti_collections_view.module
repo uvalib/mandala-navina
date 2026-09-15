@@ -11,6 +11,7 @@
  */
 
 use Drupal\group\Entity\GroupInterface;
+use Drupal\node\NodeInterface;
 
 /**
  * Implements hook_views_data().
@@ -65,6 +66,20 @@ function shanti_collections_view_theme($existing, $type, $theme, $path) {
     'group__subcollection__full' => [
       'base hook' => 'group',
       'template' => 'group--subcollection--full',
+    ],
+    // AV9's gallery card: explicit registration for the same reason as the
+    // group suggestions above -- don't rely on node.module's
+    // node__{bundle}__{view_mode} suggestion being auto-discovered purely
+    // from file naming/location (the lesson this codebase already hit
+    // twice on shanti_grid_view's grid_details override and
+    // shanti_images_carousel's node--shanti-image.html.twig).
+    'node__audio__teaser' => [
+      'base hook' => 'node',
+      'template' => 'node--audio--teaser',
+    ],
+    'node__video__teaser' => [
+      'base hook' => 'node',
+      'template' => 'node--video--teaser',
     ],
   ];
 }
@@ -170,11 +185,24 @@ function _shanti_collections_view_preprocess_full(array &$variables, GroupInterf
 
   // The collection's own content -- for shanti_image (Images), the same
   // masonry gallery /gallery uses (B3), filtered to this collection + its
-  // subcollections via the collection_membership Views argument. Other
-  // content types get their own gallery variant once they migrate (see the
-  // B5 planning subsection) -- not built yet, so this is the one and only
-  // content-view option for now.
+  // subcollections via the collection_membership Views argument.
   $variables['content_gallery'] = views_embed_view('collection_gallery', 'embed_1', (string) $group->id());
+
+  // AV9's gallery variant (Sprint 3): audio/video content, same
+  // collection_membership scoping, rendered as shanti-thumbnail cards
+  // (node--audio--teaser/node--video--teaser) rather than the Images-only
+  // masonry style, since AV nodes carry no IIIF dimensions for it to lay
+  // out against. Always embedded, like the Images gallery above -- the
+  // view's own empty text covers the "no AV content in this collection"
+  // case, so this doesn't need its own pre-check. Uses the '#type' => 'view'
+  // render element rather than views_embed_view(), which is deprecated as
+  // of Drupal 11.4.
+  $variables['content_gallery_av'] = [
+    '#type' => 'view',
+    '#name' => 'collection_gallery_av',
+    '#display_id' => 'embed_1',
+    '#arguments' => [(string) $group->id()],
+  ];
 }
 
 function _shanti_collections_view_is_private(GroupInterface $group): bool {
@@ -188,6 +216,36 @@ function _shanti_collections_view_item_count(GroupInterface $group): int {
     ->condition('plugin_id', 'group_membership', '<>')
     ->count()
     ->execute();
+}
+
+/**
+ * Implements hook_preprocess_node().
+ *
+ * Builds the shanti-thumbnail card variables for the AV9 gallery card
+ * (`audio`/`video` nodes in 'teaser' view mode, the view mode
+ * `views.view.collection_gallery_av`'s `entity:node` row renders). Mirrors
+ * _shanti_collections_view_preprocess_teaser() for groups above, but the
+ * image comes from AV10/AV9's Kaltura thumbnail URL rather than a
+ * `field_featured_image`.
+ */
+function shanti_collections_view_preprocess_node(array &$variables): void {
+  $node = $variables['node'];
+  if (!$node instanceof NodeInterface || $variables['view_mode'] !== 'teaser' || !in_array($node->bundle(), ['audio', 'video'], TRUE)) {
+    return;
+  }
+
+  $variables['thumbnail_badge'] = ucfirst($node->bundle());
+  $variables['thumbnail_meta'] = [
+    \Drupal::service('date.formatter')->format($node->getCreatedTime(), 'custom', 'F Y'),
+  ];
+
+  $fieldName = 'field_' . $node->bundle();
+  if ($node->hasField($fieldName) && !$node->get($fieldName)->isEmpty()) {
+    $entryId = $node->get($fieldName)->first()->entry_id;
+    if ($entryId) {
+      $variables['thumbnail_default_image_url'] = \Drupal::service('mandala_kaltura.resolver')->thumbnailUrl($entryId);
+    }
+  }
 }
 
 function _shanti_collections_view_parent_link(GroupInterface $group): ?array {
