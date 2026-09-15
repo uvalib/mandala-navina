@@ -36,6 +36,7 @@ module:
   language: 0
   link: 0
   mandala_group_inheritance: 0
+  mandala_kaltura: 0
   mandala_kmassets_sync: 0
   mandala_migrations: 0
   mandala_node_api: 0
