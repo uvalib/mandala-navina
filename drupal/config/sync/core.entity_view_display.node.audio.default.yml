@@ -37,6 +37,7 @@ dependencies:
     - field.field.node.audio.field_year_published
     - node.type.audio
   module:
+    - mandala_kaltura
     - shanti_kmaps_fields
     - user
 id: node.audio.default
@@ -44,6 +45,14 @@ targetEntityType: node
 bundle: audio
 mode: default
 content:
+  field_audio:
+    type: mandala_kaltura_configured
+    label: hidden
+    settings:
+      preset: default
+    third_party_settings: {  }
+    weight: 0
+    region: content
   field_kmap_terms:
     type: kmap_popover_formatter
     label: hidden
@@ -92,7 +101,6 @@ content:
     weight: 100
     region: content
 hidden:
-  field_audio: true
   field_available_from: true
   field_copyright_owner: true
   field_group_content_access: true

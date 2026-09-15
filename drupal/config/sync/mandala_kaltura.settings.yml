@@ -1,0 +1,36 @@
+# Site-level constants are the real, live production values (Sprint 3 design
+# note, `variable` table dump) — not secret, committed directly like every
+# other non-secret value in config/sync (see the AV10 scope note's "Secrets"
+# section for why partner_id/subp_id/server_url don't need settings.php
+# env-var plumbing the way the credential pair does).
+partner_id: '381832'
+subp_id: '38183200'
+server_url: '//www.kaltura.com'
+
+# Only one preset seeded here, deliberately: the values AV4's migration
+# already wrote onto every AV node (kaltura_uiconf_id constant in
+# migrate_plus.migration.d7_av_{audio,video}.yml), which is what today's
+# baseline kaltura_default formatter actually renders with, live, right now
+# -- a known-working value, not a guess. AV10's job is the schema and the
+# resolver; reconciling this against D7's full per-view-mode table (which
+# has at least two more distinct uiconf_ids in real use, 31832371 and 48501,
+# tied to specific view-mode/instance-setting combinations that need
+# checking against D7's actual field_config_instance data, not assumed) is
+# AV13's job. Do not treat this single preset as the finished mapping.
+#
+# This file, config/sync/mandala_kaltura.settings.yml, is the live,
+# versioned value that governs the running site -- edit THIS one (then
+# config:import) to change a preset. config/install/'s copy is only the
+# starting default a fresh site install falls back to.
+presets:
+  default:
+    uiconf_id: '24762821'
+    custom_cw: ''
+    delivery: HTTP
+    player_height: 425
+    player_width: 880
+    thumbsize_height: 45
+    thumbsize_width: 80
+    rotate: 0
+    stretch: null
+    custom_player: ''
