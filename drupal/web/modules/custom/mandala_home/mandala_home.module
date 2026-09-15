@@ -1,0 +1,17 @@
+<?php
+
+/**
+ * @file
+ * Site-wide Mandala home page -- see HomeController's docblock.
+ */
+
+/**
+ * Implements hook_theme().
+ */
+function mandala_home_theme($existing, $type, $theme, $path) {
+  return [
+    'mandala_home' => [
+      'variables' => [],
+    ],
+  ];
+}

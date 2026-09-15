@@ -5,6 +5,7 @@
  */
 
 .view-id-collections .view-content,
+.view-id-av_gallery .view-content,
 .shanti-thumbnail-grid {
   display: flex;
   flex-wrap: wrap;

@@ -100,3 +100,4 @@ nav:
   - "config:export not scoped, strips comments": config-export-not-scoped-strips-comments.md
   - "CodePipeline webhook + manual trigger duplicates deploy": codepipeline-webhook-plus-manual-trigger-duplicates-deploy.md
   - "Images title_sort_s possible silent truncation": images-title-sort-s-possible-silent-truncation.md
+  - "Mandala home page: real customizable-content system": mandala-home-customizable-content-system.md

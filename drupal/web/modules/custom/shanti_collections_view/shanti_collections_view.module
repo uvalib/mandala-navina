@@ -12,6 +12,7 @@
 
 use Drupal\group\Entity\GroupInterface;
 use Drupal\node\NodeInterface;
+use Drupal\views\ViewExecutable;
 
 /**
  * Implements hook_views_data().
@@ -245,6 +246,22 @@ function shanti_collections_view_preprocess_node(array &$variables): void {
     if ($entryId) {
       $variables['thumbnail_default_image_url'] = \Drupal::service('mandala_kaltura.resolver')->thumbnailUrl($entryId);
     }
+  }
+}
+
+/**
+ * Implements hook_preprocess_views_view().
+ *
+ * The site-wide `av_gallery` page (AV9's landing-page counterpart to
+ * image_gallery) renders shanti-thumbnail cards via a plain Views page
+ * display, not through any shanti_collections_view template -- so unlike
+ * the collection-page templates (which attach this explicitly), it needs
+ * its own attach point for the shared card CSS.
+ */
+function shanti_collections_view_preprocess_views_view(array &$variables): void {
+  $view = $variables['view'];
+  if ($view instanceof ViewExecutable && $view->id() === 'av_gallery') {
+    $variables['#attached']['library'][] = 'shanti_collections_view/thumbnail-grid';
   }
 }
 
