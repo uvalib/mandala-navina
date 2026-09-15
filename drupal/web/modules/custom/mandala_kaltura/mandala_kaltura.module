@@ -1,0 +1,39 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for Mandala Kaltura Configuration.
+ */
+
+/**
+ * Implements hook_theme().
+ *
+ * A second, separate theme hook from kaltura_media's own 'kaltura_player' --
+ * not an override -- because the embed shape here is deliberately faithful
+ * to D7's real production behavior (field_kaltura_build_embed(),
+ * mandala-drupal's field_kaltura.module), not the contrib module's minimal
+ * default. Confirmed by reading that code directly (Sprint 3 AV9/AV10,
+ * 2026-09-15): D7's actual kWidget.embed() call only ever passes
+ * targetId/wid/uiconf_id/entry_id; player_height/player_width size the
+ * *outer* responsive CSS container, never the player's own JS config;
+ * delivery/rotate/stretch/thumbsize_* are not wired to anything in the real
+ * embed at all. This template matches that exactly -- see the AV10 scope
+ * note's "open question 2" for the full trace.
+ */
+function mandala_kaltura_theme() {
+  return [
+    'mandala_kaltura_player' => [
+      'variables' => [
+        'html_id' => '',
+        'partner_id' => '',
+        'subp_id' => '',
+        'server_url' => '//www.kaltura.com',
+        'uiconf_id' => '',
+        'entry_id' => '',
+        'width' => NULL,
+        'height' => NULL,
+      ],
+      'template' => 'mandala-kaltura-player',
+    ],
+  ];
+}

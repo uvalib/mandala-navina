@@ -1,0 +1,23 @@
+{#
+Faithful to D7's real production embed (field_kaltura_build_embed() +
+field_kaltura_embed_player.tpl.php, mandala-drupal's field_kaltura.module) --
+confirmed by reading that code directly, not guessed. The responsive
+container (percentage-padding aspect-ratio trick) only appears when both
+width and height are known; kWidget.embed() gets exactly the four keys D7's
+own embed ever passed.
+#}
+<div{% if width %} style="width: 100%; max-width: {{ width }}px; display: inline-block; position: relative;"{% endif %}>
+  {% if width and height %}
+    <div style="margin-top: {{ (100 * height / width)|round(4) }}%;"></div>
+  {% endif %}
+  <div id="{{ html_id }}"{% if width and height %} style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;"{% endif %}></div>
+</div>
+<script src="{{ server_url }}/p/{{ partner_id }}/sp/{{ subp_id }}/embedIframeJs/uiconf_id/{{ uiconf_id }}/partner_id/{{ partner_id }}"></script>
+<script>
+kWidget.embed({
+  'targetId': '{{ html_id }}',
+  'wid': '_{{ partner_id }}',
+  'uiconf_id': '{{ uiconf_id }}',
+  'entry_id': '{{ entry_id }}'
+});
+</script>

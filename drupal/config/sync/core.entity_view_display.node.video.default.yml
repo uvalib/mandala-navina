@@ -36,6 +36,7 @@ dependencies:
     - field.field.node.video.field_year_published
     - node.type.video
   module:
+    - mandala_kaltura
     - shanti_kmaps_fields
     - user
 id: node.video.default
@@ -43,6 +44,14 @@ targetEntityType: node
 bundle: video
 mode: default
 content:
+  field_video:
+    type: mandala_kaltura_configured
+    label: hidden
+    settings:
+      preset: default
+    third_party_settings: {  }
+    weight: 0
+    region: content
   field_kmap_terms:
     type: kmap_popover_formatter
     label: hidden
@@ -113,7 +122,6 @@ hidden:
   field_rating: true
   field_tags: true
   field_transcript: true
-  field_video: true
   field_workflow: true
   field_year_published: true
   langcode: true
