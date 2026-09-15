@@ -1,0 +1,5 @@
+name: 'Mandala Home'
+type: module
+description: 'The site-wide Mandala home page ("/") -- currently a deliberate placeholder linking to the Images and Audio-Video landing pages. See docs/deferred/mandala-home-customizable-content-system.md for what the real curated content (hero carousel, feature panels) needs once designed.'
+package: Mandala
+core_version_requirement: ^10 || ^11

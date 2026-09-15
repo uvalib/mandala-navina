@@ -137,14 +137,23 @@ class SiblingCarouselService {
    * (shanti_images.inc:239-243).
    *
    * Public -- also used by shanti_collections_view's collection-content
-   * gallery (B5), which needs the full unwindowed list for a Views
-   * contextual filter, not just B2's ±N carousel window.
+   * galleries (B5's Images-only masonry and AV9's shanti-thumbnail variant),
+   * which need the full unwindowed list for a Views contextual filter, not
+   * just B2's ±N carousel window.
+   *
+   * @param string[] $pluginIds
+   *   The `group_node:*` content-enabler plugin ids to search. Defaults to
+   *   `shanti_image` alone -- B2's sibling carousel (getSiblingWindow())
+   *   relies on that exact scope (a carousel of an image's siblings must
+   *   stay within the same bundle, or the position/windowing math mixes
+   *   unrelated content types together), so this default preserves its
+   *   behavior unchanged. AV9's gallery passes `audio`/`video` explicitly.
    *
    * @return int[]
    *   Ordered node ids.
    */
-  public function getCollectionMemberNids(GroupInterface $collection): array {
-    $cid = self::CACHE_PREFIX . $collection->id();
+  public function getCollectionMemberNids(GroupInterface $collection, array $pluginIds = ['group_node:shanti_image']): array {
+    $cid = self::CACHE_PREFIX . $collection->id() . ':' . implode(',', $pluginIds);
     if ($cached = $this->cache->get($cid)) {
       return $cached->data;
     }
@@ -168,8 +177,10 @@ class SiblingCarouselService {
     // over loaded entities, for the same reason.
     $nids = [];
     foreach ([$collection, ...array_values($subcollections)] as $group) {
-      foreach ($relStorage->loadByGroup($group, 'group_node:shanti_image') as $relationship) {
-        $nids[(int) $relationship->getEntityId()] = TRUE;
+      foreach ($pluginIds as $pluginId) {
+        foreach ($relStorage->loadByGroup($group, $pluginId) as $relationship) {
+          $nids[(int) $relationship->getEntityId()] = TRUE;
+        }
       }
     }
     $nids = array_keys($nids);
@@ -187,7 +198,7 @@ class SiblingCarouselService {
     $tags = array_merge(...[
       $collection->getCacheTags(),
       ...$subcollectionTags,
-      ['node_list:shanti_image'],
+      array_map(static fn ($pluginId) => 'node_list:' . substr((string) $pluginId, strlen('group_node:')), $pluginIds),
     ]);
     $this->cache->set($cid, $nids, time() + self::CACHE_TTL, $tags);
 

@@ -7,3 +7,4 @@ dependencies:
   - drupal:views
   - group:group
   - shanti_images_carousel:shanti_images_carousel
+  - mandala_kaltura:mandala_kaltura

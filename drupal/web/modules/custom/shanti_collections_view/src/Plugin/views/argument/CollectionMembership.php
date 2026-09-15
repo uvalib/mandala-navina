@@ -49,6 +49,20 @@ class CollectionMembership extends ArgumentPluginBase implements ContainerFactor
   }
 
   /**
+   * Every `group_node:*` content-enabler plugin a collection/subcollection
+   * can have members under. Kept as an explicit list, matching this
+   * codebase's existing convention of enumerating bundles rather than
+   * discovering them dynamically (e.g. each Views type filter, each
+   * migration definition) -- extend this when a new bundle's content plugin
+   * is installed on `collection`/`subcollection` (Texts, Sources).
+   */
+  const CONTENT_PLUGIN_IDS = [
+    'group_node:shanti_image',
+    'group_node:audio',
+    'group_node:video',
+  ];
+
+  /**
    * {@inheritdoc}
    */
   public function query($group_by = FALSE) {
@@ -56,12 +70,19 @@ class CollectionMembership extends ArgumentPluginBase implements ContainerFactor
     $baseField = $this->view->storage->get('base_field');
 
     $collection = $this->collectionMembershipEntityTypeManager->getStorage('group')->load($this->argument);
-    $nids = $collection ? $this->siblingCarousel->getCollectionMemberNids($collection) : [];
+    $nids = $collection ? $this->siblingCarousel->getCollectionMemberNids($collection, self::CONTENT_PLUGIN_IDS) : [];
 
     if (!$nids) {
       // No members (or an invalid group id) -- force an empty result set
-      // rather than an unfiltered one.
-      $this->query->addWhere(0, '1 = 0');
+      // rather than an unfiltered one. addWhereExpression() is required
+      // here, not addWhere(): addWhere()'s $field parameter is a column
+      // name to build "$field = :placeholder" against, not a raw SQL
+      // condition -- passing a literal expression string to it mangles into
+      // a malformed, uncached-query-breaking clause (confirmed live: a
+      // collection with zero members of any migrated bundle 500's with
+      // "Unknown column '10' in 'where clause'"). addWhereExpression() is
+      // the correct API for a raw snippet like this.
+      $this->query->addWhereExpression(0, '1 = 0');
       return;
     }
 

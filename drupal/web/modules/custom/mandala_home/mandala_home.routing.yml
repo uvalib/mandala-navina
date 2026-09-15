@@ -1,0 +1,7 @@
+mandala_home.home:
+  path: '/home'
+  defaults:
+    _controller: '\Drupal\mandala_home\Controller\HomeController::content'
+    _title: 'Mandala'
+  requirements:
+    _access: 'TRUE'

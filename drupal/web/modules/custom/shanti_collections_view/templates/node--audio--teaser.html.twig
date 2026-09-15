@@ -1,0 +1,21 @@
+{#
+/**
+ * @file
+ * Audio node, 'teaser' view mode -- the card shown in a collection's
+ * Audio & Video gallery. Renders the shared shanti-thumbnail component (see
+ * that file's docblock); variables come from
+ * shanti_collections_view_preprocess_node().
+ */
+#}
+{% include '@shanti_collections_view/shanti-thumbnail.html.twig' with {
+  url: url,
+  thumbnail: content.field_thumbnail_image,
+  default_image_url: thumbnail_default_image_url,
+  icon: 'audio',
+  title: label,
+  badge: thumbnail_badge,
+  meta: thumbnail_meta,
+  footer_title: null,
+  footer_url: null,
+  extra_class: 'audio',
+} only %}

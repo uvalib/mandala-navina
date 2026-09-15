@@ -57,6 +57,33 @@ class KalturaConfigResolver {
     ];
   }
 
+  /**
+   * Builds a thumbnail image URL for a Kaltura entry.
+   *
+   * Ports D7's real `_kaltura_thumbnail_base_url()` -- a predictable
+   * per-entry URL built from the same site constants every preset already
+   * carries (not a per-preset value; D7's thumbnail helper never varied by
+   * view mode either). AV9's gallery card passes this straight to
+   * `shanti-thumbnail`'s `default_image_url` slot: a plain `<img src>`
+   * fallback, no image style, no local file, no Media entity required.
+   *
+   * @param string $entryId
+   *   The Kaltura entry id (the field's `entry_id` property value).
+   *
+   * @return string
+   *   The thumbnail URL.
+   */
+  public function thumbnailUrl(string $entryId): string {
+    $settings = $this->settings();
+    return sprintf(
+      '%s/p/%s/sp/%s/thumbnail/entry_id/%s',
+      $settings->get('server_url'),
+      $settings->get('partner_id'),
+      $settings->get('subp_id'),
+      $entryId,
+    );
+  }
+
   protected function settings(): ImmutableConfig {
     return $this->configFactory->get('mandala_kaltura.settings');
   }

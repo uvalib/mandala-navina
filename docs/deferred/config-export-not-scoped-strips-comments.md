@@ -30,3 +30,17 @@ No damage occurred here — caught by `git status`/`git diff` before committing,
 
 - [[config-export-drift-hand-edited-yaml.md]] — the mirror-image risk (not exporting, hand-editing instead)
 - Session log: `docs/session-logs/2026-09-14-*` (AV6/AV10 close-out)
+
+## Fourth recurrence, 2026-09-15 (AV9 gallery-thumbnail session)
+
+Same shape again: building `node.audio.teaser`/`node.video.teaser` view displays via a
+small PHP script, then `drush config:export -y` touched ~20 unrelated files (migration
+definitions, `mandala_kaltura.settings`, `group.relationship_type.*`), stripping their
+comments. Caught and reverted the same way as before (`git status`/`git diff`, keep only
+the intended new files). Switched to a **narrower workaround** worth adding to the
+recommendation above: rather than a full `config:export -y` followed by a revert-and-diff
+pass, write back only the single changed config object via
+`\Drupal::service('config.storage.sync')->write($name, \Drupal::service('config.storage')->read($name))`
+in a `drush php:eval` — this never touches any file but the one that actually changed, so
+there's no revert step needed at all. Doesn't replace the CI-check recommendation (option
+2 above) but is a cheaper per-session mitigation than "export everything, then clean up."

@@ -1,0 +1,84 @@
+uuid: 38479f98-f3a3-44de-98c6-cd8ba99f2c3f
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.video.field_available_from
+    - field.field.node.video.field_copyright_owner
+    - field.field.node.video.field_group_content_access
+    - field.field.node.video.field_kmap_annotation
+    - field.field.node.video.field_kmap_terms
+    - field.field.node.video.field_language_kmap
+    - field.field.node.video.field_legacy_nid
+    - field.field.node.video.field_legacy_site
+    - field.field.node.video.field_license
+    - field.field.node.video.field_location
+    - field.field.node.video.field_pbcore_contributor
+    - field.field.node.video.field_pbcore_coverage
+    - field.field.node.video.field_pbcore_creator
+    - field.field.node.video.field_pbcore_description
+    - field.field.node.video.field_pbcore_extension
+    - field.field.node.video.field_pbcore_identifier
+    - field.field.node.video.field_pbcore_instantiation
+    - field.field.node.video.field_pbcore_publisher
+    - field.field.node.video.field_pbcore_relation
+    - field.field.node.video.field_pbcore_rights_summary
+    - field.field.node.video.field_pbcore_sponsor
+    - field.field.node.video.field_pbcore_title
+    - field.field.node.video.field_rating
+    - field.field.node.video.field_recording_location_new
+    - field.field.node.video.field_subcollection_new
+    - field.field.node.video.field_subject
+    - field.field.node.video.field_tags
+    - field.field.node.video.field_transcript
+    - field.field.node.video.field_video
+    - field.field.node.video.field_workflow
+    - field.field.node.video.field_year_published
+    - node.type.video
+  module:
+    - user
+id: node.video.teaser
+targetEntityType: node
+bundle: video
+mode: teaser
+content:
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  field_available_from: true
+  field_copyright_owner: true
+  field_group_content_access: true
+  field_kmap_annotation: true
+  field_kmap_terms: true
+  field_language_kmap: true
+  field_legacy_nid: true
+  field_legacy_site: true
+  field_license: true
+  field_location: true
+  field_pbcore_contributor: true
+  field_pbcore_coverage: true
+  field_pbcore_creator: true
+  field_pbcore_description: true
+  field_pbcore_extension: true
+  field_pbcore_identifier: true
+  field_pbcore_instantiation: true
+  field_pbcore_publisher: true
+  field_pbcore_relation: true
+  field_pbcore_rights_summary: true
+  field_pbcore_sponsor: true
+  field_pbcore_title: true
+  field_rating: true
+  field_recording_location_new: true
+  field_subcollection_new: true
+  field_subject: true
+  field_tags: true
+  field_transcript: true
+  field_video: true
+  field_workflow: true
+  field_year_published: true
+  langcode: true
+  search_api_excerpt: true

@@ -1,18 +1,20 @@
-uuid: 5ef24ade-f010-47bc-8295-6a8419a97798
+uuid: 7c2e9a41-5d8b-4f16-9a2c-6e3d0b8f14a7
 langcode: en
 status: true
 dependencies:
   config:
-    - node.type.shanti_image
+    - node.type.audio
+    - node.type.video
   module:
     - better_exposed_filters
     - node
+    - shanti_collections_view
     - shanti_grid_view
     - user
-id: image_gallery
-label: 'Image gallery'
+id: collection_gallery_av
+label: 'Collection gallery (Audio/Video)'
 module: views
-description: 'Masonry grid of shanti_image nodes -- D11 port of the D7 all_image_gallery view (shanti_grid_view). See docs/planning/b3-masonry-gallery-production-reference.md.'
+description: "AV9's gallery variant of the shanti-thumbnail card component (Sprint 3): audio/video nodes scoped to one collection + its subcollections -- embedded on a collection's own page (shanti_collections_view) alongside the Images-only masonry collection_gallery. Rendered as node--audio--teaser/node--video--teaser cards, not the shanti_grid_view masonry style, since AV content carries no IIIF dimensions for it to lay out against. See docs/sprints/sprint-03-av-core-implementation.md (AV9)."
 tag: ''
 base_table: node_field_data
 base_field: nid
@@ -23,14 +25,14 @@ display:
     display_plugin: default
     position: 0
     display_options:
-      title: Images
+      title: 'Audio & Video'
       fields: {  }
       pager:
         type: shanti_pager
         options:
           offset: 0
           pagination_heading_level: h4
-          items_per_page: 80
+          items_per_page: 24
           total_pages: 0
           id: 0
           tags:
@@ -113,7 +115,7 @@ display:
           plugin_id: text_custom
           label: ''
           empty: true
-          content: 'No images found.'
+          content: 'No audio or video found in this collection.'
           tokenize: false
       sorts:
         created:
@@ -147,7 +149,17 @@ display:
             label: Title
             field_identifier: title
           exposed: true
-      arguments: {  }
+      arguments:
+        collection_id:
+          id: collection_id
+          table: node_field_data
+          field: collection_membership
+          relationship: none
+          group_type: group
+          admin_label: 'Collection membership'
+          plugin_id: collection_membership
+          default_action: default
+          title_enable: false
       filters:
         title:
           id: title
@@ -177,7 +189,7 @@ display:
             multiple: false
             remember_roles:
               authenticated: authenticated
-            placeholder: 'Search images…'
+            placeholder: 'Search audio and video…'
           is_grouped: false
           group_info:
             label: ''
@@ -202,7 +214,8 @@ display:
           plugin_id: bundle
           operator: in
           value:
-            shanti_image: shanti_image
+            audio: audio
+            video: video
           group: 1
           exposed: false
           expose:
@@ -245,17 +258,16 @@ display:
             operator_limit_selection: false
             operator_list: {  }
       style:
-        type: shanti_grid_view
+        type: default
         options:
           grouping: {  }
-          iiif_id_field: field_iiif_id
-          width_field: field_iiif_width
-          height_field: field_iiif_height
-          rotation_field: field_image_rotation
-          thumbnail_height: 250
+          row_class: ''
+          default_row_class: false
       row:
-        type: fields
-        options: {  }
+        type: 'entity:node'
+        options:
+          relationship: none
+          view_mode: teaser
       query:
         type: views_query
         options:
@@ -289,14 +301,13 @@ display:
         - 'user.node_grants:view'
         - user.permissions
       tags: {  }
-  page_1:
-    id: page_1
-    display_title: Page
-    display_plugin: page
+  embed_1:
+    id: embed_1
+    display_title: Embed
+    display_plugin: embed
     position: 1
     display_options:
       display_extenders: {  }
-      path: images
     cache_metadata:
       max-age: -1
       contexts:
