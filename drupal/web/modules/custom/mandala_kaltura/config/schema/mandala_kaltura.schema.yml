@@ -1,0 +1,51 @@
+mandala_kaltura.settings:
+  type: config_object
+  label: 'Mandala Kaltura configuration'
+  mapping:
+    partner_id:
+      type: string
+      label: 'Kaltura partner ID (site-wide, not secret)'
+    subp_id:
+      type: string
+      label: 'Kaltura sub-partner ID (site-wide, not secret)'
+    server_url:
+      type: string
+      label: 'Kaltura server URL (site-wide, not secret)'
+    presets:
+      type: sequence
+      label: 'Named player/uploader configuration presets'
+      sequence:
+        type: mapping
+        label: 'Preset'
+        mapping:
+          uiconf_id:
+            type: string
+            label: 'Player ui_conf ID (entry_widget)'
+          custom_cw:
+            type: string
+            label: 'Uploader Contribution-Wizard ui_conf ID (consumed by AV12, not the player)'
+          delivery:
+            type: string
+            label: 'Delivery method (e.g. HTTP) — deliberate choice per preset, never a blind RTMP port'
+          player_height:
+            type: integer
+            label: 'Player height (px)'
+          player_width:
+            type: integer
+            label: 'Player width (px)'
+          thumbsize_height:
+            type: integer
+            label: 'Thumbnail height (px)'
+          thumbsize_width:
+            type: integer
+            label: 'Thumbnail width (px)'
+          rotate:
+            type: integer
+            label: 'Rotation degrees (0 in every known D7 row today — carried for parity, not yet acted on)'
+          stretch:
+            type: string
+            label: 'Stretch mode (NULL in every known D7 row today — carried for parity, not yet acted on)'
+            nullable: true
+          custom_player:
+            type: string
+            label: 'Custom player override slot (unused in D7 production)'
