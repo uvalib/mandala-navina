@@ -29,7 +29,8 @@
  * - shanti_site: whether this is the umbrella Mandala brand vs. a
  *   standalone site identity.
  * - mandala_home: URL of the Mandala umbrella home.
- * - banner_class, icon_class: banner styling hooks.
+ * - shanti_site_class: per-asset-type banner identity (see
+ *   shanti_sarvaka_preprocess_page()); icon_class remains unported.
  * - offcanvas_trigger_sb, bsclass_sb1, bsclass_sb2: offcanvas sidebar
  *   toggling classes (wired up with A3's JS behaviors).
  * - user_menu_links: rendered drilldown user/account menu markup.
@@ -167,22 +168,23 @@
         admin-placed banner content, all delivered as blocks placed into
         `banner` (Page Title, Breadcrumb, Local Tasks, Local Actions -- see
         A7's block placement) rather than as bare template variables.
-        page-title.html.twig carries the D7 "Explore" prefix + icon markup
-        -- confirmed against real production (including 404 pages, not
-        just the front page): EVERY page banner is gold (#ad8a28) and
-        reads "Explore {title}" with a shanticon-photos icon, not just the
-        front page. Gold/icon are hardcoded here as the current site-wide
-        default since Images is the only real asset type live yet --
-        revisit once a second asset type needs its own accent (this is
-        the same per-site-vs-per-theme tension flagged in A8).
+        page-title.html.twig carries the D7 "Explore" prefix + icon markup.
+
+        `shanti_site_class` (set by shanti_sarvaka_preprocess_page(), which
+        replaces the A7/A8 Images-only hardcode now that AV is live too --
+        see _shanti_sarvaka_current_asset_site()) drives the banner color
+        via shanti-sarvaka.css's `.titlearea.images`/`.titlearea.audio-video`
+        rules.
 
         The front page has no real node/page title (Page Title block
         renders nothing there), so D7 fell back to a per-subtheme
         "default_title" setting ("Images" for this site) -- hardcoded
-        here the same way, for the same reason.
+        here the same way, for the same reason (the front page isn't a
+        node, so _shanti_sarvaka_current_asset_site() can't resolve a
+        bundle for it either).
       #}
       <section class="row" role="banner">
-        <div class="titlearea banner {{ banner_class|default('') }}">
+        <div class="titlearea banner {{ shanti_site_class|default('images') }}">
           {% if is_front %}
             <h1 class="page-title">
               <span class="icon shanticon-photos"></span>

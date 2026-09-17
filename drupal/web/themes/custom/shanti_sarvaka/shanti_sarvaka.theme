@@ -18,6 +18,36 @@
  */
 
 use Drupal\Core\Url;
+use Drupal\node\NodeInterface;
+
+/**
+ * Per-asset-type title-bar identity: CSS class, page-title icon, and
+ * whether the "Explore" prefix shows.
+ *
+ * Ports D7's per-site theme settings (shanti_sarvaka_site_body_tag et al --
+ * one value per separate D7 site install) as a per-node-bundle lookup
+ * instead, now that D11 is one site (ADR 005) covering what D7 split across
+ * five installs. Images was hardcoded as the sole default in an earlier
+ * pass (A7/A8), explicitly flagged there for revisiting once a second asset
+ * type went live -- confirmed live against real AV production pages that
+ * it differs from Images in exactly three ways: banner color (#2ea3ac vs
+ * #ad8a28), the page-title icon (shanticon-audio-video vs shanticon-photos),
+ * and the "Explore" prefix (AV's real title bar has none at all -- checked
+ * two live AV pages, neither showed it). Falls back to Images' identity for
+ * every other bundle (Sources/Texts/etc. aren't live yet), matching current
+ * behavior unchanged for anything that isn't audio/video.
+ */
+function _shanti_sarvaka_current_asset_site(): array {
+  $images = ['class' => 'images', 'icon' => 'shanticon-photos', 'prefix' => TRUE, 'label' => 'Images'];
+  $node = \Drupal::routeMatch()->getParameter('node');
+  if (!$node instanceof NodeInterface) {
+    return $images;
+  }
+  return match ($node->bundle()) {
+    'audio', 'video' => ['class' => 'audio-video', 'icon' => 'shanticon-audio-video', 'prefix' => FALSE, 'label' => 'Audio-Video'],
+    default => $images,
+  };
+}
 
 /**
  * Implements hook_theme().
@@ -71,6 +101,32 @@ function shanti_sarvaka_preprocess_breadcrumb(array &$variables): void {
   }
 
   $variables['breadcrumb'] = $breadcrumb;
+}
+
+/**
+ * Implements hook_preprocess_page().
+ *
+ * Supplies the per-asset-type banner class page.html.twig reads via
+ * `shanti_site_class|default('images')`. See
+ * _shanti_sarvaka_current_asset_site() for the source of truth.
+ */
+function shanti_sarvaka_preprocess_page(array &$variables): void {
+  $variables['shanti_site_class'] = _shanti_sarvaka_current_asset_site()['class'];
+}
+
+/**
+ * Implements hook_preprocess_page_title().
+ *
+ * Supplies the per-asset-type icon and "Explore" prefix toggle that
+ * page-title.html.twig reads. Same source of truth as
+ * hook_preprocess_page() above -- the Page Title block renders via its own
+ * theme hook, not page.html.twig's variables, so this can't just reuse the
+ * page preprocess's values.
+ */
+function shanti_sarvaka_preprocess_page_title(array &$variables): void {
+  $site = _shanti_sarvaka_current_asset_site();
+  $variables['shanti_site_icon'] = $site['icon'];
+  $variables['shanti_site_prefix'] = $site['prefix'];
 }
 
 /**

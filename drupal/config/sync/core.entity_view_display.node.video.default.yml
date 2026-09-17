@@ -49,20 +49,6 @@ content:
     third_party_settings: {  }
     weight: 90
     region: content
-  field_kmap_terms:
-    type: kmap_popover_formatter
-    label: hidden
-    settings: {  }
-    third_party_settings: {  }
-    weight: 101
-    region: content
-  field_language_kmap:
-    type: kmap_popover_formatter
-    label: hidden
-    settings: {  }
-    third_party_settings: {  }
-    weight: 102
-    region: content
   field_location:
     type: kmap_popover_formatter
     label: hidden
@@ -70,26 +56,12 @@ content:
     third_party_settings: {  }
     weight: 103
     region: content
-  field_recording_location_new:
-    type: kmap_popover_formatter
-    label: hidden
-    settings: {  }
-    third_party_settings: {  }
-    weight: 104
-    region: content
   field_subcollection_new:
     type: kmap_popover_formatter
     label: hidden
     settings: {  }
     third_party_settings: {  }
     weight: 106
-    region: content
-  field_subject:
-    type: kmap_popover_formatter
-    label: hidden
-    settings: {  }
-    third_party_settings: {  }
-    weight: 105
     region: content
   field_video:
     type: mandala_kaltura_configured
@@ -109,6 +81,8 @@ hidden:
   field_copyright_owner: true
   field_group_content_access: true
   field_kmap_annotation: true
+  field_kmap_terms: true
+  field_language_kmap: true
   field_legacy_nid: true
   field_legacy_site: true
   field_license: true
@@ -125,6 +99,8 @@ hidden:
   field_pbcore_sponsor: true
   field_pbcore_title: true
   field_rating: true
+  field_recording_location_new: true
+  field_subject: true
   field_tags: true
   field_transcript: true
   field_workflow: true

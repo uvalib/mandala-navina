@@ -1,58 +1,92 @@
 {#
 /**
  * @file
- * AV15's technical-metadata presentation -- a "Video Overview" glimpse
- * (creator + description) plus a Details/People/Rights & Licensing/
- * Availability & Access/Technical Metadata accordion, shaped after the
- * real live production page (av.mandala.library.virginia.edu's Field
- * Group accordion), not Images' Sprint 2 B2 modal. Demo-priority: shape
- * and a glimpse of real data, not pixel-for-pixel fidelity -- see the
- * .module file's docblock for what's deliberately simplified.
+ * AV15's technical-metadata presentation -- an "Audio Overview"/"Video
+ * Overview" glimpse (date + creator + description, labelled by bundle) plus
+ * a Details/People/Rights & Licensing/
+ * Availability & Access/Technical Metadata accordion.
+ *
+ * Markup deliberately reuses shanti_sarvaka's own ported D7 classes
+ * (.panel-group/.panel-heading/.accordion-toggle/.glyphicon/.field-label,
+ * the shanticon icon font) rather than Bootstrap 5's .accordion component --
+ * that CSS is already loaded site-wide (shanti_sarvaka/global-styling) and
+ * was carried over from D7 verbatim, so reusing it here gets the real
+ * production look for free instead of approximating it in new CSS. Only
+ * `data-bs-toggle`/`data-bs-target`/`data-bs-parent` are BS5 (not D7's BS3
+ * `data-toggle`/`data-target`/`data-parent`) -- the site's JS is BS5's, and
+ * it drives the `.collapsed`/`.show` classes the ported CSS keys off of
+ * regardless of which markup era the rest of the classes come from.
+ *
+ * Demo-priority: shape and a glimpse of real data, not pixel-for-pixel
+ * fidelity -- see the .module file's docblock for what's deliberately
+ * simplified (no "Related Audio-Video" tab, no duration, no collection
+ * link, no truncate/"Show more").
  */
 #}
-{% macro item_list(items) %}
+{#
+  Plain, purpose-built row markup -- NOT Drupal's field/field__items/
+  field__item template structure. That was tried first (borrowing it to get
+  bootstrap5's ported .field--label-inline float-into-two-columns CSS for
+  free) and produced exactly the confusing over-nesting it looks like:
+  every single label/value pair got a 3-level field/field__items/field__item
+  wrapper it didn't need (that split exists in Drupal core to hold a field's
+  *multiple* values, and every row here only ever holds one), and the KMaps
+  fields (item.render, a real embedded Drupal field render array) then
+  stacked a SECOND, genuine copy of that same structure inside the first.
+  This macro owns its own two classes (.av-detail-label/.av-detail-value,
+  styled in this module's own CSS) and only lets item.render's structure be
+  whatever Drupal actually produces for it -- not also wrapped again.
+#}
+{% macro item_rows(items) %}
   {% import _self as self %}
-  <ul class="mandala-av-technical-list">
-    {% for item in items %}
-      <li>
-        {% if item.label %}<span class="field-label">{{ item.label }}:</span>{% endif %}
+  {% for item in items %}
+    <div class="av-detail-row{{ item.nested ? ' av-detail-row--nested' : '' }}">
+      {% if item.label %}<div class="av-detail-label">{{ item.label }}:</div>{% endif %}
+      <div class="av-detail-value">
         {% if item.nested %}
-          {% for instance in item.nested %}{{ self.item_list(instance.items) }}{% endfor %}
+          {% for instance in item.nested %}{{ self.item_rows(instance.items) }}{% endfor %}
+        {% elseif item.render %}
+          {{ item.render }}
         {% elseif item.markup %}
           {{ item.markup }}
         {% elseif item.url %}
           <a href="{{ item.url }}">{{ item.value }}</a>
         {% else %}
-          {{ item.value }}
+          <span class="av-detail-text">{{ item.value }}</span>
         {% endif %}
-      </li>
-    {% endfor %}
-  </ul>
+      </div>
+    </div>
+  {% endfor %}
 {% endmacro %}
 
 {% import _self as self %}
 
 {% if overview %}
   <div class="mandala-av-overview">
-    <h5>{{ 'Video Overview'|t }}</h5>
-    {% if overview.creators %}<p><strong>{{ 'Creators'|t }}:</strong> {{ overview.creators }}</p>{% endif %}
+    {% if overview.date %}
+      <div class="avdate"><span class="icon shanticon-calendar" title="Created"></span> {{ overview.date }}</div>
+    {% endif %}
+    <h5 class="video-overview-title">{{ overview.title }}</h5>
+    {% if overview.creators %}<p><strong>{{ 'Creators'|t|upper }}:</strong> <em>{{ overview.creators }}</em></p>{% endif %}
     {% if overview.description %}<p>{{ overview.description }}</p>{% endif %}
   </div>
 {% endif %}
 
 {% if panels or workflow %}
-  <div class="accordion mandala-av-technical-accordion" id="mandala-av-accordion-{{ node.id }}">
+  <div class="panel-group mandala-av-technical-accordion" id="mandala-av-accordion-{{ node.id }}">
     {% for key, panel in panels %}
-      <div class="accordion-item">
-        <h2 class="accordion-header">
-          <button class="accordion-button{% if not loop.first %} collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#mandala-av-panel-{{ node.id }}-{{ key }}">
-            {{ panel.label }}
-          </button>
-        </h2>
-        <div id="mandala-av-panel-{{ node.id }}-{{ key }}" class="accordion-collapse collapse{% if loop.first %} show{% endif %}" data-bs-parent="#mandala-av-accordion-{{ node.id }}">
-          <div class="accordion-body">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h6>
+            <a class="accordion-toggle{{ loop.first ? '' : ' collapsed' }}" href="#mandala-av-panel-{{ node.id }}-{{ key }}" data-bs-toggle="collapse" data-bs-target="#mandala-av-panel-{{ node.id }}-{{ key }}" data-bs-parent="#mandala-av-accordion-{{ node.id }}">
+              <span class="icon glyphicon glyphicon-plus"></span>{{ panel.label }}
+            </a>
+          </h6>
+        </div>
+        <div id="mandala-av-panel-{{ node.id }}-{{ key }}" class="panel-collapse collapse{{ loop.first ? ' show' : '' }}">
+          <div class="panel-body">
             {% if panel.items %}
-              {{ self.item_list(panel.items) }}
+              {{ self.item_rows(panel.items) }}
             {% else %}
               <p class="text-muted mb-0">{{ 'Not yet available.'|t }}</p>
             {% endif %}
@@ -61,15 +95,17 @@
       </div>
     {% endfor %}
     {% if workflow %}
-      <div class="accordion-item">
-        <h2 class="accordion-header">
-          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#mandala-av-panel-{{ node.id }}-workflow">
-            {{ workflow.label }}
-          </button>
-        </h2>
-        <div id="mandala-av-panel-{{ node.id }}-workflow" class="accordion-collapse collapse" data-bs-parent="#mandala-av-accordion-{{ node.id }}">
-          <div class="accordion-body">
-            {{ self.item_list(workflow.items) }}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h6>
+            <a class="accordion-toggle collapsed" href="#mandala-av-panel-{{ node.id }}-workflow" data-bs-toggle="collapse" data-bs-target="#mandala-av-panel-{{ node.id }}-workflow" data-bs-parent="#mandala-av-accordion-{{ node.id }}">
+              <span class="icon glyphicon glyphicon-plus"></span>{{ workflow.label }}
+            </a>
+          </h6>
+        </div>
+        <div id="mandala-av-panel-{{ node.id }}-workflow" class="panel-collapse collapse">
+          <div class="panel-body">
+            {{ self.item_rows(workflow.items) }}
           </div>
         </div>
       </div>

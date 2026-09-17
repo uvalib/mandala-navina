@@ -1,31 +1,111 @@
 /**
- * AV15's technical-metadata presentation -- list styling for the
- * Details/People/Rights & Licensing/Availability & Access/Technical
- * Metadata accordion panels (shape borrowed from Bootstrap's own
- * .accordion; this is just the item-list treatment within a panel body).
+ * AV15's technical-metadata presentation.
+ *
+ * The accordion panels (.panel-group/.panel-heading/.glyphicon) reuse
+ * shanti_sarvaka's own ported D7 CSS, which really is loaded site-wide --
+ * verified those selectors exist in shanti-main.css before relying on them.
+ *
+ * The row layout below (.av-detail-row/-label/-value) does NOT reuse
+ * Drupal's field/field__items/field__item template classes -- that was
+ * tried first (to get bootstrap5's ported .field--label-inline float CSS
+ * for free) and produced confusing, pointlessly deep markup: every row got
+ * a 3-level wrapper meant for a field's *multiple* values when every row
+ * here only ever holds one, and the embedded KMaps field renders (real
+ * Drupal field output) then stacked a second copy of that same structure
+ * inside the first. This is a plain flexbox row instead, two classes this
+ * module owns outright.
+ *
+ * The "Video Overview" block below has its own similar story: D7's classes
+ * for it (.video-overview-title, .avdate/.avinfo) were checked against
+ * shanti-main.css and confirmed absent -- grep for them returns nothing, so
+ * on first pass this block was rendering in unstyled default HTML (a real
+ * gap, not a scope choice). The rules below are hand-authored to match the
+ * live D7 computed styles captured directly from the page (font, size,
+ * weight, color, letter-spacing), using tokens (Open Sans, EB Garamond,
+ * #444) that the theme does load site-wide even though these specific
+ * selectors don't exist yet.
  */
 
 .mandala-av-overview {
   margin-top: 0.5rem;
 }
 
-.mandala-av-technical-list {
-  padding-left: 0;
-  list-style: none;
-}
-
-.mandala-av-technical-list .field-label {
+.mandala-av-overview .video-overview-title {
+  color: #444;
+  font-family: 'Open Sans', 'Segoe UI', Tahoma, sans-serif;
+  font-size: 0.85em;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0.6rem 0;
 }
 
-/* Some plain 'string' sub-fields (e.g. field_extension, PBCore's free-text
-   extension slot) genuinely hold large embedded multi-line dumps in real
-   D7 data -- preserve the newlines rather than collapsing them. */
-.mandala-av-technical-list > li {
+.mandala-av-overview .avdate {
+  color: #000;
+  font-family: 'EB Garamond', serif;
+  font-size: 1.03em;
+  margin-bottom: 0.5rem;
+}
+
+.mandala-av-overview .avdate .icon {
+  margin-right: 0.3rem;
+}
+
+/* Real bug, found live: the ported `.glyphicon { float: left; }` rule has
+   no block-formatting-context container around it in our simplified markup
+   (we don't reproduce Field Group's own accordion wrapper classes), so the
+   float isn't contained per-panel -- it escapes to the nearest ancestor
+   that IS a BFC root (shared across every panel), and each subsequent
+   panel's icon stacks further right of the last rather than sitting at its
+   own panel's left edge. Reproduced live (icons drifting ~40px right per
+   panel) and confirmed the fix empirically before adding it here:
+   containing the float per panel-heading fixes all of them at once. */
+.mandala-av-technical-accordion .panel-heading {
+  overflow: hidden;
+}
+
+/* One row per label/value pair -- a plain two-column flex layout, matching
+   D7's ~210-220px label gutter without borrowing Drupal's field template
+   structure to get there (see the file header for why that was worse). */
+.mandala-av-technical-accordion .av-detail-row {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.mandala-av-technical-accordion .av-detail-row:last-child {
+  border-bottom: none;
+}
+
+.mandala-av-technical-accordion .av-detail-label {
+  flex: 0 0 220px;
+  font-weight: 600;
+  color: #444;
+}
+
+.mandala-av-technical-accordion .av-detail-value {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+/* Some plain 'string' sub-fields genuinely hold large embedded multi-line
+   values in real D7 data (e.g. field_pbcore_annotation memos) -- preserve
+   the newlines rather than collapsing them. Scoped to .av-detail-text (the
+   plain-value case only), NOT the whole .av-detail-value container: that
+   container also holds item.render/item.markup (embedded Drupal field
+   renders, rich HTML), and pre-line on an ancestor of THOSE turns every
+   incidental newline in the source Twig templates' own indentation into a
+   visible blank line -- found live, that's what was actually causing the
+   "whacky layout"/oversized gaps around the KMaps tag fields, not anything
+   inherent to those fields. */
+.mandala-av-technical-accordion .av-detail-text {
   white-space: pre-line;
 }
 
-.mandala-av-technical-list .mandala-av-technical-list {
+/* Nested rows (e.g. av_pbcore_format_id's own sub-fields, inside an
+   instantiation) indent under their parent's label row instead of running
+   flush left at the same level. */
+.mandala-av-technical-accordion .av-detail-row--nested .av-detail-row {
   padding-left: 1.5rem;
-  list-style: disc;
 }
