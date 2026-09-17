@@ -15,10 +15,17 @@
  * groups, confirming the dump predates this accordion. Demo-priority build
  * (shape + a glimpse of real data), not pixel-for-pixel fidelity: no
  * "Related Audio-Video" tab, no jQuery UI accordion behavior (plain
- * Bootstrap 5 accordion instead), "Availability & Access" left as an empty
- * placeholder since its real field mapping couldn't be confirmed (empty on
- * the live example checked) and may belong to AV7 (Group access) rather
- * than AV15.
+ * Bootstrap 5 accordion instead).
+ *
+ * "Availability & Access" (wired up 2026-09-17, later the same session):
+ * originally left as an empty placeholder because the field checked on the
+ * first live example was empty. A second live example (a node with real
+ * `field_available_from` data) plus the D7 field_config themselves confirmed
+ * the mapping: `field_group_content_access` ("Visibility" on D7's live
+ * theme) and `field_available_from`, both node-level fields already migrated
+ * with real data. This panel only *displays* those two already-migrated
+ * values -- it does not resolve D7's "(group default)" fallback or implement
+ * any actual access realm, which stays AV7 (Group access) territory.
  *
  * Implemented as an extra field (pseudo-field) rather than a full node
  * template override -- AV9 already owns the rest of the default view
@@ -29,6 +36,7 @@ declare(strict_types=1);
 
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Render\Element;
 use Drupal\Core\Render\Markup;
 use Drupal\node\NodeInterface;
 use Drupal\paragraphs\ParagraphInterface;
@@ -46,11 +54,65 @@ use Drupal\paragraphs\ParagraphInterface;
  * it's access-gated, not part of any of these panels on the live site.
  */
 const MANDALA_AV_METADATA_PANELS = [
-  'details' => ['label' => 'Details', 'fields' => ['field_pbcore_coverage', 'field_pbcore_relation']],
+  // field_subject/field_recording_location_new/field_language_kmap/
+  // field_kmap_terms are node-level shanti_kmaps_fields_default fields, not
+  // PBCore paragraphs -- confirmed against a live example (D11 nid 126524)
+  // that their real values (Oral Traditions / Zangkar / Amdo Group / 6
+  // Tibetan terms) are EXACTLY D7's Details panel's Subject/Recording
+  // Location/Language/Terms rows. They were already migrated and already
+  // rendering on the page -- just as unlabeled fields below the whole
+  // accordion (core.entity_view_display.node.{audio,video}.default.yml,
+  // weight 101-105), not inside Details where D7 puts them. Moved here and
+  // hidden from that standalone spot (see UPDATE hook) to avoid showing
+  // each value twice. field_subcollection_new/field_location are NOT
+  // included: both empty on the checked example, and D7's "Collection:" row
+  // (checked separately) is actually the node's owning GROUP, not a plain
+  // field -- already shown in the page's own breadcrumb, same reasoning as
+  // the overview block's skipped collection link.
+  'details' => ['label' => 'Details', 'fields' => ['field_subject', 'field_recording_location_new', 'field_language_kmap', 'field_kmap_terms', 'field_pbcore_coverage', 'field_pbcore_relation']],
   'people' => ['label' => 'People', 'fields' => ['field_pbcore_creator', 'field_pbcore_contributor', 'field_pbcore_publisher', 'field_pbcore_sponsor']],
   'rights' => ['label' => 'Rights & Licensing', 'fields' => ['field_pbcore_rights_summary', 'field_copyright_owner', 'field_year_published']],
-  'availability' => ['label' => 'Availability & Access', 'fields' => []],
-  'technical' => ['label' => 'Technical Metadata', 'fields' => ['field_pbcore_identifier', 'field_pbcore_extension', 'field_pbcore_instantiation']],
+  // field_group_content_access/field_available_from are node-level fields
+  // already migrated with real data (11,583 and 595 rows respectively) --
+  // this panel was left empty only because nobody had wired them up yet, not
+  // because the mapping was unknown. D7's own "Availability & Access" shows
+  // exactly one of these per node (a per-node access override that most
+  // nodes don't have): confirmed live as "Visibility: Public (group
+  // default)". Resolving that "(group default)" fallback against the node's
+  // owning group is AV7 territory (real access enforcement); this panel only
+  // displays the raw migrated value, same as every other field here.
+  'availability' => ['label' => 'Availability & Access', 'fields' => ['field_group_content_access', 'field_available_from']],
+  // field_pbcore_extension deliberately excluded: confirmed against D7's own
+  // field_config_instance that its display formatter is 'hidden' (not just
+  // label-hidden, the whole field) on both audio and video -- verified live,
+  // it never appears on the production page. The field itself holds an
+  // arbitrary embedded PBCore "extension" blob (raw legacy catalog XML per
+  // avarch-entry.dtd), not a display value; rendering it here dumped a
+  // multi-KB unreadable XML blob into the panel, which is worse than the gap
+  // it was meant to fill.
+  'technical' => ['label' => 'Technical Metadata', 'fields' => ['field_legacy_nid', 'field_pbcore_identifier', 'field_pbcore_instantiation']],
+];
+
+/**
+ * Per-field label overrides where D11's own field label doesn't match D7's
+ * live display label.
+ */
+const MANDALA_AV_METADATA_LABEL_OVERRIDES = [
+  // D7's theme always shows the node's own (D7) nid under this fixed label,
+  // first in the Technical Metadata panel -- confirmed against two live
+  // examples (values 33126 and 27 both matched the node's own D7 nid
+  // exactly) and NOT sourced from field_pbcore_identifier, which stores
+  // unrelated external cross-catalog ids (e.g. "991 (thlib.org)").
+  'field_legacy_nid' => 'Shanti AV Id',
+  // D11's own field label is "Group content access"; D7's live theme labels
+  // the equivalent concept "Visibility".
+  'field_group_content_access' => 'Visibility',
+  // D11's own labels are "Language (KMaps)"/"KMaps terms" (disambiguating
+  // from other language/term fields elsewhere); D7's Details panel just
+  // says "Language"/"Terms". field_subject and field_recording_location_new
+  // need no override -- "Subject"/"Recording location" already match.
+  'field_language_kmap' => 'Language',
+  'field_kmap_terms' => 'Terms',
 ];
 
 /**
@@ -125,11 +187,15 @@ function mandala_av_metadata_node_view(array &$build, EntityInterface $node, Ent
 }
 
 /**
- * Builds the "Video Overview" block: creator names + description.
+ * Builds the "Video Overview" block: date + creator names + description.
  *
  * A glimpse of production's above-the-fold summary, not a full port --
- * production also shows date/duration/a collection link there, sourced
- * from fields AV9/AV16 already surface elsewhere on this page.
+ * production also shows a duration and a collection link there. Duration is
+ * deliberately excluded: verified against D7 that it is NOT backed by any
+ * migrated field (field_duration is empty on the checked examples) -- it's
+ * read live from the Kaltura entry itself, which is out of scope for a
+ * static metadata panel. The collection link is skipped as duplicative --
+ * AV9/AV16 already surface it in the page's own breadcrumb.
  */
 function _mandala_av_metadata_build_overview(NodeInterface $node): ?array {
   $creators = [];
@@ -152,7 +218,17 @@ function _mandala_av_metadata_build_overview(NodeInterface $node): ?array {
   if (!$creators && !$description) {
     return NULL;
   }
-  return ['creators' => implode(', ', $creators), 'description' => $description];
+  return [
+    // D7's "avdate" row: confirmed against a live example (node created
+    // 2019-04-02 16:40:17, displayed "02 Apr 2019") that this is the node's
+    // own creation timestamp, not any PBCore date field.
+    'date' => \Drupal::service('date.formatter')->format($node->getCreatedTime(), 'custom', 'd M Y'),
+    // D7 labels this "Audio Overview" vs "Video Overview" by bundle --
+    // confirmed against a real audio example, not just video.
+    'title' => $node->bundle() === 'audio' ? t('Audio Overview') : t('Video Overview'),
+    'creators' => implode(', ', $creators),
+    'description' => $description,
+  ];
 }
 
 /**
@@ -168,16 +244,52 @@ function _mandala_av_metadata_build_panels(NodeInterface $node): array {
       }
       $definition = $node->getFieldDefinition($field_name);
       $type = $definition->getType();
+      $label = MANDALA_AV_METADATA_LABEL_OVERRIDES[$field_name] ?? (string) $definition->getLabel();
 
-      if ($type === 'string') {
-        // field_copyright_owner / field_year_published -- plain node fields.
-        $items[] = ['label' => (string) $definition->getLabel(), 'value' => $node->get($field_name)->value];
+      if ($type === 'string' || $type === 'integer') {
+        // field_copyright_owner / field_year_published / field_legacy_nid --
+        // plain node fields.
+        $items[] = ['label' => $label, 'value' => (string) $node->get($field_name)->value];
+        continue;
+      }
+      if ($type === 'list_integer') {
+        // field_group_content_access -- render the allowed-value label, not
+        // the raw stored integer.
+        $allowed = $definition->getSetting('allowed_values');
+        $value = $node->get($field_name)->value;
+        $items[] = ['label' => $label, 'value' => $allowed[$value] ?? (string) $value];
+        continue;
+      }
+      if ($type === 'datetime') {
+        // field_available_from.
+        $item = $node->get($field_name)->first();
+        $items[] = ['label' => $label, 'value' => \Drupal::service('date.formatter')->format(strtotime($item->value), 'custom', 'j M Y')];
         continue;
       }
       if ($type === 'text_long') {
         // field_pbcore_rights_summary.
         $item = $node->get($field_name)->first();
-        $items[] = ['label' => (string) $definition->getLabel(), 'markup' => Markup::create(check_markup($item->value, $item->format ?: 'basic_html'))];
+        $items[] = ['label' => $label, 'markup' => Markup::create(check_markup($item->value, $item->format ?: 'basic_html'))];
+        continue;
+      }
+      if ($type === 'shanti_kmaps_fields_default') {
+        // field_subject/field_recording_location_new/field_language_kmap/
+        // field_kmap_terms -- reuse the field's own configured formatter
+        // (kmap_popover_formatter) rather than re-deriving term display
+        // from the field's raw KMaps properties, so this matches exactly
+        // what the field already renders elsewhere on the page.
+        //
+        // Kept as a live render array ('render'), NOT pre-rendered to a
+        // string with renderInIsolation() -- found live that isolation
+        // drops the formatter's #attached kmaps_popover JS library, so the
+        // popover content (normally hidden until hover) rendered fully
+        // expanded inline, one per term, several hundred px tall each.
+        // Embedding the render array lets it bubble through the page's own
+        // render pipeline like any other field, attachments included.
+        $build = $node->get($field_name)->view(['type' => 'kmap_popover_formatter', 'label' => 'hidden']);
+        if (!Element::isEmpty($build)) {
+          $items[] = ['label' => $label, 'render' => $build];
+        }
         continue;
       }
 
