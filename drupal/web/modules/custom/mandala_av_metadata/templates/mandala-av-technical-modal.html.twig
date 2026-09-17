@@ -1,0 +1,78 @@
+{#
+/**
+ * @file
+ * AV15's technical-metadata presentation -- a "Video Overview" glimpse
+ * (creator + description) plus a Details/People/Rights & Licensing/
+ * Availability & Access/Technical Metadata accordion, shaped after the
+ * real live production page (av.mandala.library.virginia.edu's Field
+ * Group accordion), not Images' Sprint 2 B2 modal. Demo-priority: shape
+ * and a glimpse of real data, not pixel-for-pixel fidelity -- see the
+ * .module file's docblock for what's deliberately simplified.
+ */
+#}
+{% macro item_list(items) %}
+  {% import _self as self %}
+  <ul class="mandala-av-technical-list">
+    {% for item in items %}
+      <li>
+        {% if item.label %}<span class="field-label">{{ item.label }}:</span>{% endif %}
+        {% if item.nested %}
+          {% for instance in item.nested %}{{ self.item_list(instance.items) }}{% endfor %}
+        {% elseif item.markup %}
+          {{ item.markup }}
+        {% elseif item.url %}
+          <a href="{{ item.url }}">{{ item.value }}</a>
+        {% else %}
+          {{ item.value }}
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endmacro %}
+
+{% import _self as self %}
+
+{% if overview %}
+  <div class="mandala-av-overview">
+    <h5>{{ 'Video Overview'|t }}</h5>
+    {% if overview.creators %}<p><strong>{{ 'Creators'|t }}:</strong> {{ overview.creators }}</p>{% endif %}
+    {% if overview.description %}<p>{{ overview.description }}</p>{% endif %}
+  </div>
+{% endif %}
+
+{% if panels or workflow %}
+  <div class="accordion mandala-av-technical-accordion" id="mandala-av-accordion-{{ node.id }}">
+    {% for key, panel in panels %}
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button{% if not loop.first %} collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#mandala-av-panel-{{ node.id }}-{{ key }}">
+            {{ panel.label }}
+          </button>
+        </h2>
+        <div id="mandala-av-panel-{{ node.id }}-{{ key }}" class="accordion-collapse collapse{% if loop.first %} show{% endif %}" data-bs-parent="#mandala-av-accordion-{{ node.id }}">
+          <div class="accordion-body">
+            {% if panel.items %}
+              {{ self.item_list(panel.items) }}
+            {% else %}
+              <p class="text-muted mb-0">{{ 'Not yet available.'|t }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    {% if workflow %}
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#mandala-av-panel-{{ node.id }}-workflow">
+            {{ workflow.label }}
+          </button>
+        </h2>
+        <div id="mandala-av-panel-{{ node.id }}-workflow" class="accordion-collapse collapse" data-bs-parent="#mandala-av-accordion-{{ node.id }}">
+          <div class="accordion-body">
+            {{ self.item_list(workflow.items) }}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endif %}

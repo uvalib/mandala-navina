@@ -1,0 +1,31 @@
+/**
+ * AV15's technical-metadata presentation -- list styling for the
+ * Details/People/Rights & Licensing/Availability & Access/Technical
+ * Metadata accordion panels (shape borrowed from Bootstrap's own
+ * .accordion; this is just the item-list treatment within a panel body).
+ */
+
+.mandala-av-overview {
+  margin-top: 0.5rem;
+}
+
+.mandala-av-technical-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.mandala-av-technical-list .field-label {
+  font-weight: 600;
+}
+
+/* Some plain 'string' sub-fields (e.g. field_extension, PBCore's free-text
+   extension slot) genuinely hold large embedded multi-line dumps in real
+   D7 data -- preserve the newlines rather than collapsing them. */
+.mandala-av-technical-list > li {
+  white-space: pre-line;
+}
+
+.mandala-av-technical-list .mandala-av-technical-list {
+  padding-left: 1.5rem;
+  list-style: disc;
+}

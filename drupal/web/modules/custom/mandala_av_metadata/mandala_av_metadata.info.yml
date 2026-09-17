@@ -1,0 +1,7 @@
+name: 'Mandala AV Metadata'
+type: module
+description: 'AV15: technical-metadata modal for audio/video nodes — PBCore paragraph data, the transcript file, and (access-gated) internal workflow/cataloguing data, all currently hidden in AV6/AV9''s display since neither claims them. Mirrors Sprint 2 B2''s Images precedent (shanti_images_carousel).'
+package: Mandala
+core_version_requirement: ^11
+dependencies:
+  - paragraphs:paragraphs
