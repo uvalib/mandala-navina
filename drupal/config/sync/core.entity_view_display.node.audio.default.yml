@@ -45,6 +45,11 @@ targetEntityType: node
 bundle: audio
 mode: default
 content:
+  av_technical_metadata:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 90
+    region: content
   field_audio:
     type: mandala_kaltura_configured
     label: hidden

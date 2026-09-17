@@ -1,0 +1,221 @@
+<?php
+
+/**
+ * @file
+ * AV15: technical-metadata modal for audio/video nodes.
+ *
+ * Mirrors Sprint 2 B2's Images precedent (shanti_images_carousel's
+ * node--shanti-image.html.twig): a trigger link + Bootstrap 5 modal for
+ * secondary/technical fields kept out of the main content flow. Implemented
+ * as an extra field (pseudo-field) rather than a full node template
+ * override -- AV9 already owns the rest of the default view mode's layout
+ * (player, KMaps fields) via display config, and there's nothing else here
+ * that needs a full-page layout rewrite the way Images' sibling carousel
+ * did.
+ *
+ * The PBCore fields below are all entity_reference_revisions (Paragraphs,
+ * per AV3's model) except field_pbcore_rights_summary (text_long) and
+ * field_transcript (a plain file field) -- rendering them means walking
+ * each paragraph's own field definitions, not just assigning a formatter to
+ * the parent field. Done generically (introspecting field definitions at
+ * runtime) rather than hand-listing ~85 sub-fields across 14 paragraph
+ * types, so it can't drift from AV3's config.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Render\Markup;
+use Drupal\node\NodeInterface;
+use Drupal\paragraphs\ParagraphInterface;
+
+/**
+ * The node fields this modal covers, node-field-name => kind.
+ *
+ * 'paragraph' fields are entity_reference_revisions, walked recursively.
+ * 'text' is field_pbcore_rights_summary (text_long, direct on the node).
+ * 'file' is field_transcript. 'workflow' is field_workflow -- same
+ * recursive paragraph walk as the others, but access-gated (see below).
+ *
+ * Order here is the order sections appear in the modal.
+ */
+const MANDALA_AV_METADATA_FIELDS = [
+  'field_pbcore_title' => 'paragraph',
+  'field_pbcore_description' => 'paragraph',
+  'field_pbcore_creator' => 'paragraph',
+  'field_pbcore_contributor' => 'paragraph',
+  'field_pbcore_publisher' => 'paragraph',
+  'field_pbcore_sponsor' => 'paragraph',
+  'field_pbcore_coverage' => 'paragraph',
+  'field_pbcore_relation' => 'paragraph',
+  'field_pbcore_identifier' => 'paragraph',
+  'field_pbcore_extension' => 'paragraph',
+  'field_pbcore_instantiation' => 'paragraph',
+  'field_pbcore_rights_summary' => 'text',
+  'field_transcript' => 'file',
+  'field_workflow' => 'workflow',
+];
+
+/**
+ * Implements hook_entity_extra_field_info().
+ */
+function mandala_av_metadata_entity_extra_field_info(): array {
+  $extra = [];
+  foreach (['audio', 'video'] as $bundle) {
+    $extra['node'][$bundle]['display']['av_technical_metadata'] = [
+      'label' => t('Technical metadata (AV15)'),
+      'description' => t('PBCore, transcript, and workflow metadata modal.'),
+      'weight' => 90,
+      'visible' => FALSE,
+    ];
+  }
+  return $extra;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function mandala_av_metadata_theme($existing, $type, $theme, $path): array {
+  return [
+    'mandala_av_technical_modal' => [
+      'variables' => [
+        'node' => NULL,
+        'groups' => [],
+      ],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view() for node.
+ */
+function mandala_av_metadata_node_view(array &$build, EntityInterface $node, EntityViewDisplayInterface $display, $view_mode): void {
+  if (!$node instanceof NodeInterface || !in_array($node->bundle(), ['audio', 'video'], TRUE)) {
+    return;
+  }
+  if (!$display->getComponent('av_technical_metadata')) {
+    return;
+  }
+
+  $groups = [];
+  $can_view_workflow = $node->access('update');
+
+  foreach (MANDALA_AV_METADATA_FIELDS as $field_name => $kind) {
+    if ($kind === 'workflow' && !$can_view_workflow) {
+      // D7 restricts field_workflow via field_permissions (CUSTOM type):
+      // confirmed against the real production role_permission table that
+      // anonymous/general-authenticated users have no "view field_workflow"
+      // grant at all -- only site admin / content admin / workflow editor
+      // roles do. D11 has no equivalent field-level permission wired yet,
+      // so this reuses node update access as the stand-in, same as Images'
+      // field_private_note gate.
+      continue;
+    }
+    if ($node->get($field_name)->isEmpty()) {
+      continue;
+    }
+
+    $label = (string) $node->getFieldDefinition($field_name)->getLabel();
+
+    if ($kind === 'text') {
+      $item = $node->get($field_name)->first();
+      $groups[] = [
+        'label' => $label,
+        'items' => [
+          ['label' => NULL, 'markup' => Markup::create(check_markup($item->value, $item->format ?: 'basic_html'))],
+        ],
+      ];
+      continue;
+    }
+
+    if ($kind === 'file') {
+      $file = $node->get($field_name)->entity;
+      if ($file) {
+        $groups[] = [
+          'label' => $label,
+          'items' => [
+            ['label' => NULL, 'url' => $file->createFileUrl(), 'value' => $file->getFilename()],
+          ],
+        ];
+      }
+      continue;
+    }
+
+    // 'paragraph' or 'workflow' -- both are entity_reference_revisions,
+    // walked the same way; only the access gate above differs.
+    $nested = [];
+    foreach ($node->get($field_name) as $item) {
+      if ($item->entity instanceof ParagraphInterface) {
+        $nested[] = ['items' => _mandala_av_metadata_render_paragraph($item->entity)];
+      }
+    }
+    if ($nested) {
+      $groups[] = ['label' => $label, 'instances' => $nested];
+    }
+  }
+
+  if (!$groups) {
+    return;
+  }
+
+  $build['av_technical_metadata'] = [
+    '#theme' => 'mandala_av_technical_modal',
+    '#node' => $node,
+    '#groups' => $groups,
+    '#attached' => ['library' => ['mandala_av_metadata/technical_modal']],
+  ];
+}
+
+/**
+ * Renders a single paragraph's own fields as a flat label/value list.
+ *
+ * Introspects field definitions rather than hand-listing them -- AV3's 14
+ * relevant paragraph types carry ~85 sub-fields between them, and two
+ * (av_pbcore_instantiation -> av_pbcore_format_id, av_workflow -> three
+ * separate av_workflow_note streams) nest a second paragraph type, handled
+ * here by recursion rather than as a special case.
+ *
+ * @return array
+ *   A list of ['label' => string, 'value'|'markup' => mixed] items, plus
+ *   ['label' => string, 'nested' => array] for a nested paragraph
+ *   reference field.
+ */
+function _mandala_av_metadata_render_paragraph(ParagraphInterface $paragraph): array {
+  $items = [];
+  foreach ($paragraph->getFieldDefinitions() as $field_name => $definition) {
+    if ($definition->getFieldStorageDefinition()->isBaseField()) {
+      continue;
+    }
+    if ($paragraph->get($field_name)->isEmpty()) {
+      continue;
+    }
+
+    $label = (string) $definition->getLabel();
+    $type = $definition->getType();
+
+    if ($type === 'entity_reference_revisions') {
+      $nested = [];
+      foreach ($paragraph->get($field_name) as $item) {
+        if ($item->entity instanceof ParagraphInterface) {
+          $nested[] = ['items' => _mandala_av_metadata_render_paragraph($item->entity)];
+        }
+      }
+      if ($nested) {
+        $items[] = ['label' => $label, 'nested' => $nested];
+      }
+      continue;
+    }
+
+    $values = [];
+    foreach ($paragraph->get($field_name) as $item) {
+      $values[] = match ($type) {
+        'datetime' => \Drupal::service('date.formatter')->format(strtotime($item->value), 'custom', 'j M Y'),
+        'text_long' => strip_tags($item->value),
+        default => (string) $item->value,
+      };
+    }
+    $items[] = ['label' => $label, 'value' => implode('; ', array_filter($values, 'strlen'))];
+  }
+  return $items;
+}

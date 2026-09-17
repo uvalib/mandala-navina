@@ -44,6 +44,11 @@ targetEntityType: node
 bundle: video
 mode: default
 content:
+  av_technical_metadata:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 90
+    region: content
   field_kmap_terms:
     type: kmap_popover_formatter
     label: hidden

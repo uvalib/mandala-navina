@@ -1,0 +1,69 @@
+{#
+/**
+ * @file
+ * AV15's technical-metadata modal -- trigger link + Bootstrap 5 modal,
+ * mirroring shanti_images_carousel's node--shanti-image.html.twig pattern
+ * (Sprint 2 B2). `groups` is built in mandala_av_metadata_node_view():
+ * each group is either a single-item leaf (PBCore rights summary, the
+ * transcript file) or a set of paragraph `instances` (everything else,
+ * since PBCore/workflow fields are unlimited-cardinality paragraph
+ * references) -- see that function's docblock for the exact shape.
+ */
+#}
+{% macro item_list(items) %}
+  {% import _self as self %}
+  <ul class="mandala-av-technical-list">
+    {% for item in items %}
+      <li>
+        {% if item.label %}<span class="field-label">{{ item.label }}:</span>{% endif %}
+        {% if item.nested %}
+          {{ self.instances(item.nested) }}
+        {% elseif item.markup %}
+          {{ item.markup }}
+        {% elseif item.url %}
+          <a href="{{ item.url }}">{{ item.value }}</a>
+        {% else %}
+          {{ item.value }}
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endmacro %}
+
+{% macro instances(instances) %}
+  {% import _self as self %}
+  {% for instance in instances %}
+    {% if instances|length > 1 %}<div class="mandala-av-technical-instance">{% endif %}
+    {{ self.item_list(instance.items) }}
+    {% if instances|length > 1 %}</div>{% if not loop.last %}<hr>{% endif %}{% endif %}
+  {% endfor %}
+{% endmacro %}
+
+{% import _self as self %}
+
+{% if groups %}
+  <p class="mandala-av-technical-trigger">
+    <a href="#" data-bs-toggle="modal" data-bs-target="#mandala-av-technical-modal-{{ node.id }}">{{ 'View Technical Metadata'|t }}</a>
+  </p>
+
+  <div class="modal fade" id="mandala-av-technical-modal-{{ node.id }}" tabindex="-1" aria-labelledby="mandala-av-technical-modal-label-{{ node.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title h5" id="mandala-av-technical-modal-label-{{ node.id }}">{{ 'Technical Details for'|t }} &ldquo;{{ node.label }}&rdquo;</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|t }}"></button>
+        </div>
+        <div class="modal-body">
+          {% for group in groups %}
+            <h6>{{ group.label }}</h6>
+            {% if group.instances %}
+              {{ self.instances(group.instances) }}
+            {% else %}
+              {{ self.item_list(group.items) }}
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}

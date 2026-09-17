@@ -1,0 +1,34 @@
+/**
+ * AV15's technical-metadata modal -- same list treatment as Images'
+ * Sprint 2 B2 precedent (shanti_images_carousel), plus a divider between
+ * repeated paragraph instances (unlimited-cardinality PBCore fields).
+ */
+
+.mandala-av-technical-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.mandala-av-technical-list .field-label {
+  font-weight: 600;
+}
+
+/* Some plain 'string' sub-fields (e.g. field_extension, PBCore's free-text
+   extension slot) genuinely hold large embedded multi-line dumps in real
+   D7 data -- preserve the newlines rather than collapsing them. */
+.mandala-av-technical-list > li {
+  white-space: pre-line;
+}
+
+.mandala-av-technical-list .mandala-av-technical-list {
+  padding-left: 1.5rem;
+  list-style: disc;
+}
+
+.mandala-av-technical-trigger {
+  margin-top: 0.5rem;
+}
+
+.mandala-av-technical-instance:not(:last-child) {
+  margin-bottom: 0.5rem;
+}

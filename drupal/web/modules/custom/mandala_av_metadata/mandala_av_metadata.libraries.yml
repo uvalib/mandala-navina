@@ -1,0 +1,4 @@
+technical_modal:
+  css:
+    theme:
+      css/mandala-av-technical-modal.css: {}
