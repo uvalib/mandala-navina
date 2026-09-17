@@ -1,13 +1,13 @@
 {#
 /**
  * @file
- * AV15's technical-metadata modal -- trigger link + Bootstrap 5 modal,
- * mirroring shanti_images_carousel's node--shanti-image.html.twig pattern
- * (Sprint 2 B2). `groups` is built in mandala_av_metadata_node_view():
- * each group is either a single-item leaf (PBCore rights summary, the
- * transcript file) or a set of paragraph `instances` (everything else,
- * since PBCore/workflow fields are unlimited-cardinality paragraph
- * references) -- see that function's docblock for the exact shape.
+ * AV15's technical-metadata presentation -- a "Video Overview" glimpse
+ * (creator + description) plus a Details/People/Rights & Licensing/
+ * Availability & Access/Technical Metadata accordion, shaped after the
+ * real live production page (av.mandala.library.virginia.edu's Field
+ * Group accordion), not Images' Sprint 2 B2 modal. Demo-priority: shape
+ * and a glimpse of real data, not pixel-for-pixel fidelity -- see the
+ * .module file's docblock for what's deliberately simplified.
  */
 #}
 {% macro item_list(items) %}
@@ -17,7 +17,7 @@
       <li>
         {% if item.label %}<span class="field-label">{{ item.label }}:</span>{% endif %}
         {% if item.nested %}
-          {{ self.instances(item.nested) }}
+          {% for instance in item.nested %}{{ self.item_list(instance.items) }}{% endfor %}
         {% elseif item.markup %}
           {{ item.markup }}
         {% elseif item.url %}
@@ -30,40 +30,49 @@
   </ul>
 {% endmacro %}
 
-{% macro instances(instances) %}
-  {% import _self as self %}
-  {% for instance in instances %}
-    {% if instances|length > 1 %}<div class="mandala-av-technical-instance">{% endif %}
-    {{ self.item_list(instance.items) }}
-    {% if instances|length > 1 %}</div>{% if not loop.last %}<hr>{% endif %}{% endif %}
-  {% endfor %}
-{% endmacro %}
-
 {% import _self as self %}
 
-{% if groups %}
-  <p class="mandala-av-technical-trigger">
-    <a href="#" data-bs-toggle="modal" data-bs-target="#mandala-av-technical-modal-{{ node.id }}">{{ 'View Technical Metadata'|t }}</a>
-  </p>
+{% if overview %}
+  <div class="mandala-av-overview">
+    <h5>{{ 'Video Overview'|t }}</h5>
+    {% if overview.creators %}<p><strong>{{ 'Creators'|t }}:</strong> {{ overview.creators }}</p>{% endif %}
+    {% if overview.description %}<p>{{ overview.description }}</p>{% endif %}
+  </div>
+{% endif %}
 
-  <div class="modal fade" id="mandala-av-technical-modal-{{ node.id }}" tabindex="-1" aria-labelledby="mandala-av-technical-modal-label-{{ node.id }}" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2 class="modal-title h5" id="mandala-av-technical-modal-label-{{ node.id }}">{{ 'Technical Details for'|t }} &ldquo;{{ node.label }}&rdquo;</h2>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|t }}"></button>
-        </div>
-        <div class="modal-body">
-          {% for group in groups %}
-            <h6>{{ group.label }}</h6>
-            {% if group.instances %}
-              {{ self.instances(group.instances) }}
+{% if panels or workflow %}
+  <div class="accordion mandala-av-technical-accordion" id="mandala-av-accordion-{{ node.id }}">
+    {% for key, panel in panels %}
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button{% if not loop.first %} collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#mandala-av-panel-{{ node.id }}-{{ key }}">
+            {{ panel.label }}
+          </button>
+        </h2>
+        <div id="mandala-av-panel-{{ node.id }}-{{ key }}" class="accordion-collapse collapse{% if loop.first %} show{% endif %}" data-bs-parent="#mandala-av-accordion-{{ node.id }}">
+          <div class="accordion-body">
+            {% if panel.items %}
+              {{ self.item_list(panel.items) }}
             {% else %}
-              {{ self.item_list(group.items) }}
+              <p class="text-muted mb-0">{{ 'Not yet available.'|t }}</p>
             {% endif %}
-          {% endfor %}
+          </div>
         </div>
       </div>
-    </div>
+    {% endfor %}
+    {% if workflow %}
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#mandala-av-panel-{{ node.id }}-workflow">
+            {{ workflow.label }}
+          </button>
+        </h2>
+        <div id="mandala-av-panel-{{ node.id }}-workflow" class="accordion-collapse collapse" data-bs-parent="#mandala-av-accordion-{{ node.id }}">
+          <div class="accordion-body">
+            {{ self.item_list(workflow.items) }}
+          </div>
+        </div>
+      </div>
+    {% endif %}
   </div>
 {% endif %}

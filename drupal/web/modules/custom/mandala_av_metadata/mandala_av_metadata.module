@@ -2,24 +2,27 @@
 
 /**
  * @file
- * AV15: technical-metadata modal for audio/video nodes.
+ * AV15: technical-metadata presentation for audio/video nodes.
  *
- * Mirrors Sprint 2 B2's Images precedent (shanti_images_carousel's
- * node--shanti-image.html.twig): a trigger link + Bootstrap 5 modal for
- * secondary/technical fields kept out of the main content flow. Implemented
- * as an extra field (pseudo-field) rather than a full node template
- * override -- AV9 already owns the rest of the default view mode's layout
- * (player, KMaps fields) via display config, and there's nothing else here
- * that needs a full-page layout rewrite the way Images' sibling carousel
- * did.
+ * Rebuilt 2026-09-17 to match the *real* live shape, not Images' Sprint 2
+ * B2 modal (the sprint doc's original precedent) -- the live AV site
+ * (av.mandala.library.virginia.edu, real D7 theme, not the React SPA) uses
+ * a Field Group "Details" accordion with named panels (Details, People,
+ * Rights & Licensing, Availability & Access, Technical Metadata), plus a
+ * "Video Overview" block (creator + description) above the fold. The exact
+ * field-to-panel mapping was pulled from the live DOM, not our local
+ * `d7_av` dump's `field_group` table -- that table only has edit-form
+ * groups, confirming the dump predates this accordion. Demo-priority build
+ * (shape + a glimpse of real data), not pixel-for-pixel fidelity: no
+ * "Related Audio-Video" tab, no jQuery UI accordion behavior (plain
+ * Bootstrap 5 accordion instead), "Availability & Access" left as an empty
+ * placeholder since its real field mapping couldn't be confirmed (empty on
+ * the live example checked) and may belong to AV7 (Group access) rather
+ * than AV15.
  *
- * The PBCore fields below are all entity_reference_revisions (Paragraphs,
- * per AV3's model) except field_pbcore_rights_summary (text_long) and
- * field_transcript (a plain file field) -- rendering them means walking
- * each paragraph's own field definitions, not just assigning a formatter to
- * the parent field. Done generically (introspecting field definitions at
- * runtime) rather than hand-listing ~85 sub-fields across 14 paragraph
- * types, so it can't drift from AV3's config.
+ * Implemented as an extra field (pseudo-field) rather than a full node
+ * template override -- AV9 already owns the rest of the default view
+ * mode's layout via display config.
  */
 
 declare(strict_types=1);
@@ -31,31 +34,34 @@ use Drupal\node\NodeInterface;
 use Drupal\paragraphs\ParagraphInterface;
 
 /**
- * The node fields this modal covers, node-field-name => kind.
+ * Accordion panel definitions, panel key => [label, node field names].
  *
- * 'paragraph' fields are entity_reference_revisions, walked recursively.
- * 'text' is field_pbcore_rights_summary (text_long, direct on the node).
- * 'file' is field_transcript. 'workflow' is field_workflow -- same
- * recursive paragraph walk as the others, but access-gated (see below).
- *
- * Order here is the order sections appear in the modal.
+ * Field-to-panel mapping confirmed against the live DOM at
+ * av.mandala.library.virginia.edu (checked 2026-09-17), not guessed.
+ * field_pbcore_title/description are deliberately absent -- production
+ * shows those above the fold (see MANDALA_AV_METADATA_OVERVIEW_FIELDS),
+ * not in the accordion. field_transcript is absent -- production feeds it
+ * to the transcript panel, not a raw file link (stubbed here, Sprint 4/
+ * Spike 11 territory). field_workflow is handled separately below since
+ * it's access-gated, not part of any of these panels on the live site.
  */
-const MANDALA_AV_METADATA_FIELDS = [
-  'field_pbcore_title' => 'paragraph',
-  'field_pbcore_description' => 'paragraph',
-  'field_pbcore_creator' => 'paragraph',
-  'field_pbcore_contributor' => 'paragraph',
-  'field_pbcore_publisher' => 'paragraph',
-  'field_pbcore_sponsor' => 'paragraph',
-  'field_pbcore_coverage' => 'paragraph',
-  'field_pbcore_relation' => 'paragraph',
-  'field_pbcore_identifier' => 'paragraph',
-  'field_pbcore_extension' => 'paragraph',
-  'field_pbcore_instantiation' => 'paragraph',
-  'field_pbcore_rights_summary' => 'text',
-  'field_transcript' => 'file',
-  'field_workflow' => 'workflow',
+const MANDALA_AV_METADATA_PANELS = [
+  'details' => ['label' => 'Details', 'fields' => ['field_pbcore_coverage', 'field_pbcore_relation']],
+  'people' => ['label' => 'People', 'fields' => ['field_pbcore_creator', 'field_pbcore_contributor', 'field_pbcore_publisher', 'field_pbcore_sponsor']],
+  'rights' => ['label' => 'Rights & Licensing', 'fields' => ['field_pbcore_rights_summary', 'field_copyright_owner', 'field_year_published']],
+  'availability' => ['label' => 'Availability & Access', 'fields' => []],
+  'technical' => ['label' => 'Technical Metadata', 'fields' => ['field_pbcore_identifier', 'field_pbcore_extension', 'field_pbcore_instantiation']],
 ];
+
+/**
+ * "People" panel fields: paired role+name rather than the generic
+ * one-row-per-subfield rendering -- production uses the role value itself
+ * as the row label ("Cinematographer", "Executive Producer"), name as the
+ * value. Each of these paragraph types has exactly one role field
+ * (name containing 'role', or 'rome' for field_publisher_rome's D7 typo)
+ * and one name field.
+ */
+const MANDALA_AV_METADATA_PEOPLE_FIELDS = ['field_pbcore_creator', 'field_pbcore_contributor', 'field_pbcore_publisher', 'field_pbcore_sponsor'];
 
 /**
  * Implements hook_entity_extra_field_info().
@@ -65,7 +71,7 @@ function mandala_av_metadata_entity_extra_field_info(): array {
   foreach (['audio', 'video'] as $bundle) {
     $extra['node'][$bundle]['display']['av_technical_metadata'] = [
       'label' => t('Technical metadata (AV15)'),
-      'description' => t('PBCore, transcript, and workflow metadata modal.'),
+      'description' => t('Video Overview block + Details/People/Rights/Technical accordion.'),
       'weight' => 90,
       'visible' => FALSE,
     ];
@@ -81,7 +87,9 @@ function mandala_av_metadata_theme($existing, $type, $theme, $path): array {
     'mandala_av_technical_modal' => [
       'variables' => [
         'node' => NULL,
-        'groups' => [],
+        'overview' => NULL,
+        'panels' => [],
+        'workflow' => NULL,
       ],
     ],
   ];
@@ -98,83 +106,158 @@ function mandala_av_metadata_node_view(array &$build, EntityInterface $node, Ent
     return;
   }
 
-  $groups = [];
-  $can_view_workflow = $node->access('update');
+  $overview = _mandala_av_metadata_build_overview($node);
+  $panels = _mandala_av_metadata_build_panels($node);
+  $workflow = _mandala_av_metadata_build_workflow($node);
 
-  foreach (MANDALA_AV_METADATA_FIELDS as $field_name => $kind) {
-    if ($kind === 'workflow' && !$can_view_workflow) {
-      // D7 restricts field_workflow via field_permissions (CUSTOM type):
-      // confirmed against the real production role_permission table that
-      // anonymous/general-authenticated users have no "view field_workflow"
-      // grant at all -- only site admin / content admin / workflow editor
-      // roles do. D11 has no equivalent field-level permission wired yet,
-      // so this reuses node update access as the stand-in, same as Images'
-      // field_private_note gate.
-      continue;
-    }
-    if ($node->get($field_name)->isEmpty()) {
-      continue;
-    }
-
-    $label = (string) $node->getFieldDefinition($field_name)->getLabel();
-
-    if ($kind === 'text') {
-      $item = $node->get($field_name)->first();
-      $groups[] = [
-        'label' => $label,
-        'items' => [
-          ['label' => NULL, 'markup' => Markup::create(check_markup($item->value, $item->format ?: 'basic_html'))],
-        ],
-      ];
-      continue;
-    }
-
-    if ($kind === 'file') {
-      $file = $node->get($field_name)->entity;
-      if ($file) {
-        $groups[] = [
-          'label' => $label,
-          'items' => [
-            ['label' => NULL, 'url' => $file->createFileUrl(), 'value' => $file->getFilename()],
-          ],
-        ];
-      }
-      continue;
-    }
-
-    // 'paragraph' or 'workflow' -- both are entity_reference_revisions,
-    // walked the same way; only the access gate above differs.
-    $nested = [];
-    foreach ($node->get($field_name) as $item) {
-      if ($item->entity instanceof ParagraphInterface) {
-        $nested[] = ['items' => _mandala_av_metadata_render_paragraph($item->entity)];
-      }
-    }
-    if ($nested) {
-      $groups[] = ['label' => $label, 'instances' => $nested];
-    }
-  }
-
-  if (!$groups) {
+  if (!$overview && !$panels && !$workflow) {
     return;
   }
 
   $build['av_technical_metadata'] = [
     '#theme' => 'mandala_av_technical_modal',
     '#node' => $node,
-    '#groups' => $groups,
+    '#overview' => $overview,
+    '#panels' => $panels,
+    '#workflow' => $workflow,
     '#attached' => ['library' => ['mandala_av_metadata/technical_modal']],
   ];
 }
 
 /**
+ * Builds the "Video Overview" block: creator names + description.
+ *
+ * A glimpse of production's above-the-fold summary, not a full port --
+ * production also shows date/duration/a collection link there, sourced
+ * from fields AV9/AV16 already surface elsewhere on this page.
+ */
+function _mandala_av_metadata_build_overview(NodeInterface $node): ?array {
+  $creators = [];
+  if (!$node->get('field_pbcore_creator')->isEmpty()) {
+    foreach ($node->get('field_pbcore_creator') as $item) {
+      if ($item->entity instanceof ParagraphInterface && !$item->entity->get('field_creator')->isEmpty()) {
+        $creators[] = $item->entity->get('field_creator')->value;
+      }
+    }
+  }
+
+  $description = NULL;
+  if (!$node->get('field_pbcore_description')->isEmpty()) {
+    $first = $node->get('field_pbcore_description')->first()->entity;
+    if ($first instanceof ParagraphInterface && !$first->get('field_description')->isEmpty()) {
+      $description = strip_tags($first->get('field_description')->value);
+    }
+  }
+
+  if (!$creators && !$description) {
+    return NULL;
+  }
+  return ['creators' => implode(', ', $creators), 'description' => $description];
+}
+
+/**
+ * Builds the 5 accordion panels per MANDALA_AV_METADATA_PANELS.
+ */
+function _mandala_av_metadata_build_panels(NodeInterface $node): array {
+  $panels = [];
+  foreach (MANDALA_AV_METADATA_PANELS as $key => $panel) {
+    $items = [];
+    foreach ($panel['fields'] as $field_name) {
+      if (!$node->hasField($field_name) || $node->get($field_name)->isEmpty()) {
+        continue;
+      }
+      $definition = $node->getFieldDefinition($field_name);
+      $type = $definition->getType();
+
+      if ($type === 'string') {
+        // field_copyright_owner / field_year_published -- plain node fields.
+        $items[] = ['label' => (string) $definition->getLabel(), 'value' => $node->get($field_name)->value];
+        continue;
+      }
+      if ($type === 'text_long') {
+        // field_pbcore_rights_summary.
+        $item = $node->get($field_name)->first();
+        $items[] = ['label' => (string) $definition->getLabel(), 'markup' => Markup::create(check_markup($item->value, $item->format ?: 'basic_html'))];
+        continue;
+      }
+
+      // entity_reference_revisions -- walk each paragraph.
+      foreach ($node->get($field_name) as $delta) {
+        if (!$delta->entity instanceof ParagraphInterface) {
+          continue;
+        }
+        if (in_array($field_name, MANDALA_AV_METADATA_PEOPLE_FIELDS, TRUE)) {
+          $person = _mandala_av_metadata_render_person($delta->entity);
+          if ($person) {
+            $items[] = $person;
+          }
+        }
+        else {
+          // Technical Metadata: production flattens instantiation's
+          // sub-fields directly into the panel rather than nesting them
+          // under an "Instantiation" heading -- matched here for shape.
+          array_push($items, ..._mandala_av_metadata_render_paragraph($delta->entity));
+        }
+      }
+    }
+    $panels[$key] = ['label' => $panel['label'], 'items' => $items];
+  }
+  return $panels;
+}
+
+/**
+ * Builds the (access-gated) workflow section.
+ *
+ * D7 restricts field_workflow via field_permissions (CUSTOM type):
+ * confirmed against the real production role_permission table that
+ * anonymous/general-authenticated users have no "view field_workflow"
+ * grant at all -- only site admin / content admin / workflow editor roles
+ * do (matches: it doesn't appear anywhere on the live page loaded
+ * anonymously either). D11 has no equivalent field-level permission wired
+ * yet, so this reuses node update access as the stand-in, same reasoning
+ * as Images' field_private_note gate.
+ */
+function _mandala_av_metadata_build_workflow(NodeInterface $node): ?array {
+  if (!$node->access('update') || $node->get('field_workflow')->isEmpty()) {
+    return NULL;
+  }
+  $paragraph = $node->get('field_workflow')->entity;
+  if (!$paragraph instanceof ParagraphInterface) {
+    return NULL;
+  }
+  return ['label' => (string) $node->getFieldDefinition('field_workflow')->getLabel(), 'items' => _mandala_av_metadata_render_paragraph($paragraph)];
+}
+
+/**
+ * Pairs a "People" paragraph's role field (the label) with its name field
+ * (the value) -- each of these 4 paragraph types has exactly one of each.
+ */
+function _mandala_av_metadata_render_person(ParagraphInterface $paragraph): ?array {
+  $role = NULL;
+  $name = NULL;
+  $nameLabel = NULL;
+  foreach ($paragraph->getFieldDefinitions() as $field_name => $definition) {
+    if ($definition->getFieldStorageDefinition()->isBaseField() || $paragraph->get($field_name)->isEmpty()) {
+      continue;
+    }
+    if (str_contains($field_name, 'role') || str_contains($field_name, 'rome')) {
+      $role = $paragraph->get($field_name)->value;
+    }
+    else {
+      $name = $paragraph->get($field_name)->value;
+      $nameLabel = (string) $definition->getLabel();
+    }
+  }
+  return $name === NULL ? NULL : ['label' => $role ?: $nameLabel, 'value' => $name];
+}
+
+/**
  * Renders a single paragraph's own fields as a flat label/value list.
  *
- * Introspects field definitions rather than hand-listing them -- AV3's 14
- * relevant paragraph types carry ~85 sub-fields between them, and two
- * (av_pbcore_instantiation -> av_pbcore_format_id, av_workflow -> three
- * separate av_workflow_note streams) nest a second paragraph type, handled
- * here by recursion rather than as a special case.
+ * Introspects field definitions rather than hand-listing them -- AV3's
+ * relevant paragraph types carry dozens of sub-fields between them, and
+ * av_pbcore_instantiation nests a second paragraph type
+ * (av_pbcore_format_id), handled here by recursion.
  *
  * @return array
  *   A list of ['label' => string, 'value'|'markup' => mixed] items, plus

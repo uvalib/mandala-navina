@@ -1,8 +1,13 @@
 /**
- * AV15's technical-metadata modal -- same list treatment as Images'
- * Sprint 2 B2 precedent (shanti_images_carousel), plus a divider between
- * repeated paragraph instances (unlimited-cardinality PBCore fields).
+ * AV15's technical-metadata presentation -- list styling for the
+ * Details/People/Rights & Licensing/Availability & Access/Technical
+ * Metadata accordion panels (shape borrowed from Bootstrap's own
+ * .accordion; this is just the item-list treatment within a panel body).
  */
+
+.mandala-av-overview {
+  margin-top: 0.5rem;
+}
 
 .mandala-av-technical-list {
   padding-left: 0;
@@ -23,12 +28,4 @@
 .mandala-av-technical-list .mandala-av-technical-list {
   padding-left: 1.5rem;
   list-style: disc;
-}
-
-.mandala-av-technical-trigger {
-  margin-top: 0.5rem;
-}
-
-.mandala-av-technical-instance:not(:last-child) {
-  margin-bottom: 0.5rem;
 }
