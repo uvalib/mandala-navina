@@ -101,3 +101,4 @@ nav:
   - "CodePipeline webhook + manual trigger duplicates deploy": codepipeline-webhook-plus-manual-trigger-duplicates-deploy.md
   - "Images title_sort_s possible silent truncation": images-title-sort-s-possible-silent-truncation.md
   - "Mandala home page: real customizable-content system": mandala-home-customizable-content-system.md
+  - "AV4: field_relation_identifier never migrated (empty across all 836 relation paragraphs)": av4-relation-identifier-not-migrated.md
