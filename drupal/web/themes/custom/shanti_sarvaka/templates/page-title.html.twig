@@ -9,19 +9,21 @@
  * - title_prefix / title_suffix: additional module-supplied output.
  * - title: The page title.
  *
- * Confirmed against real production (including 404 pages, not just the
- * front page): every page title is prefixed "Explore" and uses a
- * shanticon-photos icon. Both are hardcoded as the current site-wide
- * default since Images is the only real asset type live yet -- the icon
- * (and possibly the prefix text) should become per-asset-type once a
- * second one lands, same tension flagged in page.html.twig/A8.
+ * Confirmed against real production (Images, including 404 pages, not
+ * just the front page): every Images page title is prefixed "Explore" and
+ * uses a shanticon-photos icon. Confirmed AV differs on both counts --
+ * checked two live AV pages, neither has the "Explore" prefix, and the
+ * icon is shanticon-audio-video. shanti_sarvaka_preprocess_page_title()
+ * (see _shanti_sarvaka_current_asset_site()) supplies shanti_site_icon/
+ * shanti_site_prefix per the current node's bundle, defaulting to Images'
+ * originals for every bundle that isn't audio/video.
  */
 #}
 {{ title_prefix }}
 {% if title|render|striptags|trim %}
   <h1 class="page-title"{{ title_attributes }}>
-    <span class="icon shanticon-photos"></span>
-    <span class="page-title-text"><span class="pt-prefix">{{ 'Explore'|t }}</span> {{ title }}</span>
+    <span class="icon {{ shanti_site_icon|default('shanticon-photos') }}"></span>
+    <span class="page-title-text">{% if shanti_site_prefix|default(true) %}<span class="pt-prefix">{{ 'Explore'|t }}</span> {% endif %}{{ title }}</span>
   </h1>
 {% endif %}
 {{ title_suffix }}

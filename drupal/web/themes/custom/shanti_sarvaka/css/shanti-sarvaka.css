@@ -18,13 +18,23 @@
   margin-right: auto;
 }
 
-/* Images-site gold accent, confirmed from live production CSS
-   (#ad8a28), not shanti-main.css's own default (violet, #4d59ca).
-   Images is the only real asset type live yet -- revisit once a second
-   one needs its own accent color; see page.html.twig/page-title.html.twig
-   comments for the same open question. */
-.titlearea {
+/* Per-asset-type banner accent, keyed off shanti_site_class (see
+   shanti_sarvaka_preprocess_page() / _shanti_sarvaka_current_asset_site()).
+   D7 ran each asset type as its own site install with its own theme
+   settings; D11 is one site (ADR 005), so this is a class-based rule where
+   D7 had per-site CSS. Colors confirmed from live production CSS: Images
+   #ad8a28 (gold, the sole default until this pass -- shanti-main.css's own
+   default is violet, #4d59ca), Audio-Video #2ea3ac (teal). `.titlearea`
+   alone (no asset-type class, e.g. the front page) keeps the Images
+   default, matching current behavior unchanged. Sources/Texts aren't live
+   yet -- add their own rule here, not a new mechanism, when they land. */
+.titlearea,
+.titlearea.images {
   background-color: #ad8a28 !important;
+}
+
+.titlearea.audio-video {
+  background-color: #2ea3ac !important;
 }
 
 /* shanti-main.css's .pt-prefix visibility rule keys off D7's `.front`
