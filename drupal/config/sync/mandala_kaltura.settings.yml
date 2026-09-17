@@ -7,24 +7,34 @@ partner_id: '381832'
 subp_id: '38183200'
 server_url: '//www.kaltura.com'
 
-# Only one preset seeded here, deliberately: the values AV4's migration
-# already wrote onto every AV node (kaltura_uiconf_id constant in
-# migrate_plus.migration.d7_av_{audio,video}.yml), which is what today's
-# baseline kaltura_default formatter actually renders with, live, right now
-# -- a known-working value, not a guess. AV10's job is the schema and the
-# resolver; reconciling this against D7's full per-view-mode table (which
-# has at least two more distinct uiconf_ids in real use, 31832371 and 48501,
-# tied to specific view-mode/instance-setting combinations that need
-# checking against D7's actual field_config_instance data, not assumed) is
-# AV13's job. Do not treat this single preset as the finished mapping.
+# AV13 (2026-09-17): traced D7's real primary-playback uiconf_id two ways --
+# (1) the live React app (mandala-om/kmaps-app's AudioVideo.DrawPlayer(),
+# the only reachable code path; its sibling Draw() is dead, starts with a
+# bare `return;`) hardcodes uiConfId='31832371' for BOTH field_video and
+# field_audio, no per-bundle branch; (2) D7 Drupal's own field_video
+# instance display (field_config_instance) independently configures the
+# same 31832371 for its full/default view. Two independent confirmations,
+# no per-bundle split needed.
+#
+# 24762821 (this preset's value before this fix) is NOT primary playback --
+# it's MB_MAIN_PLAYER_ID, consumed only by mb_services_node_player(), a
+# separate share/embed-redirect endpoint. AV4's migration constant borrowed
+# it by mistake; AV9/AV10 shipped it live on dev-0 before this correction.
+#
+# delivery is HTTP, never RTMP -- confirmed dead even in D7's own embed
+# builder (field_kaltura_build_embed() only ever passes targetId/wid/
+# uiconf_id/entry_id to kWidget.embed()) and RTMP is off the table per
+# team decision regardless.
 #
 # This file, config/sync/mandala_kaltura.settings.yml, is the live,
 # versioned value that governs the running site -- edit THIS one (then
 # config:import) to change a preset. config/install/'s copy is only the
-# starting default a fresh site install falls back to.
+# starting default a fresh site install falls back to. Add more presets
+# under `presets` as new named entries -- nothing about this schema or
+# resolver limits it to one.
 presets:
   default:
-    uiconf_id: '24762821'
+    uiconf_id: '31832371'
     custom_cw: ''
     delivery: HTTP
     player_height: 425
