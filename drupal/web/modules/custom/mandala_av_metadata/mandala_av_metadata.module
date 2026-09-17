@@ -290,6 +290,23 @@ function _mandala_av_metadata_render_paragraph(ParagraphInterface $paragraph): a
       continue;
     }
 
+    if ($type === 'entity_reference') {
+      // field_relation_identifier only (a plain entity reference, unlike
+      // every other paragraph-to-paragraph link here) -- ->value doesn't
+      // exist on this item type, so it needs its own branch rather than
+      // silently falling through to the default case below.
+      $values = [];
+      foreach ($paragraph->get($field_name) as $item) {
+        if ($item->entity) {
+          $values[] = $item->entity->label();
+        }
+      }
+      if ($values) {
+        $items[] = ['label' => $label, 'value' => implode('; ', $values)];
+      }
+      continue;
+    }
+
     $values = [];
     foreach ($paragraph->get($field_name) as $item) {
       $values[] = match ($type) {
