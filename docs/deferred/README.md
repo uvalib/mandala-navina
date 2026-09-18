@@ -40,7 +40,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [reindeer-x-aws-credential-strategy.md](reindeer-x-aws-credential-strategy.md) | reindeer_x / infrastructure / IAM | Spike 8 | High |
 | [images-prod-packaging-monorepo-pass.md](images-prod-packaging-monorepo-pass.md) | deployment / packaging / CI | Sprint 1 (1a) | High |
 | [images-agent-name-paragraph-title-mapping.md](images-agent-name-paragraph-title-mapping.md) | migration / Images / paragraphs | Sprint 1 (1a) | Medium |
-| [iiif-cantaloupe-404-information-disclosure.md](iiif-cantaloupe-404-information-disclosure.md) | infrastructure / security / IIIF | Sprint 1 (1a.5) | Medium |
+| [iiif-cantaloupe-404-information-disclosure.md](iiif-cantaloupe-404-information-disclosure.md) | infrastructure / security / IIIF | Sprint 1 (1a.5); re-examined 2026-09-18 | **Low for the 10 broken images (nid 1-10, legacy S3 key layout -- confirmed test/dev data, not real content, so nothing user-facing is at stake); Medium for the original info-disclosure finding.** Not our codebase (Library DevOps/Cantaloupe); root cause understood and a concrete 10-node list exists if ever worth mentioning to them |
 | [iiif-prefix-alignment-mandala-vs-canonical.md](iiif-prefix-alignment-mandala-vs-canonical.md) | IIIF / configuration | Sprint 1 (1a.5) | Low |
 | [migrate-drupal-noise-site-specific-dump.md](migrate-drupal-noise-site-specific-dump.md) | migrate / DX | Sprint 1 (1a.6) | Low |
 | [kmaps-raw-format-rebuild-on-migration.md](kmaps-raw-format-rebuild-on-migration.md) | migration / KMaps | Sprint 1 (1a.7) | High |
