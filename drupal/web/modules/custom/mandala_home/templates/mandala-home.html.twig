@@ -5,14 +5,44 @@
  * curated content (hero carousel, feature panels) D7's home page carried is
  * deliberately not ported here yet
  * (docs/deferred/mandala-home-customizable-content-system.md); this just
- * links to the two landing pages that do exist.
+ * links to the two landing pages that do exist, plus (for demo purposes) a
+ * small hand-picked list of sample content under each showing off real
+ * fixes from this session's work.
  */
 #}
 <div class="mandala-home">
   <h1>{{ 'Mandala'|t }}</h1>
   <p>{{ 'Explore the Mandala Digital Library collections.'|t }}</p>
   <ul class="mandala-home-links">
-    <li><a href="{{ path('view.image_gallery.page_1') }}">{{ 'Images'|t }}</a></li>
-    <li><a href="{{ path('view.av_gallery.page_1') }}">{{ 'Audio & Video'|t }}</a></li>
+    <li>
+      <a href="{{ path('view.image_gallery.page_1') }}">{{ 'Images'|t }}</a>
+      {% if image_samples %}
+        <ul class="mandala-home-samples">
+          {% for sample in image_samples %}
+            <li><a href="{{ sample.url }}">{{ sample.label }}</a> &mdash; {{ sample.blurb }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </li>
+    <li>
+      <a href="{{ path('view.av_gallery.page_1') }}">{{ 'Audio & Video'|t }}</a>
+      {% if av_samples %}
+        <ul class="mandala-home-samples">
+          {% for sample in av_samples %}
+            <li><a href="{{ sample.url }}">{{ sample.label }}</a> &mdash; {{ sample.blurb }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </li>
+    {% if group_samples %}
+      <li>
+        {{ 'Collections'|t }}
+        <ul class="mandala-home-samples">
+          {% for sample in group_samples %}
+            <li><a href="{{ sample.url }}">{{ sample.label }}</a> &mdash; {{ sample.blurb }}</li>
+          {% endfor %}
+        </ul>
+      </li>
+    {% endif %}
   </ul>
 </div>

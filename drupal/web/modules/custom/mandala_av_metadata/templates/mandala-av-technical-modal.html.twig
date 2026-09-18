@@ -19,8 +19,8 @@
  *
  * Demo-priority: shape and a glimpse of real data, not pixel-for-pixel
  * fidelity -- see the .module file's docblock for what's deliberately
- * simplified (no "Related Audio-Video" tab, no duration, no collection
- * link, no truncate/"Show more").
+ * simplified (no "Related Audio-Video" tab, no truncate/"Show more" on the
+ * primary description).
  */
 #}
 {#
@@ -66,9 +66,23 @@
     {% if overview.date %}
       <div class="avdate"><span class="icon shanticon-calendar" title="Created"></span> {{ overview.date }}</div>
     {% endif %}
+    {% if overview.duration %}
+      <div class="avduration"><span class="icon shanticon-hourglass" title="Length"></span> {{ overview.duration }}</div>
+    {% endif %}
     <h5 class="video-overview-title">{{ overview.title }}</h5>
     {% if overview.creators %}<p><strong>{{ 'Creators'|t|upper }}:</strong> <em>{{ overview.creators }}</em></p>{% endif %}
     {% if overview.description %}<p>{{ overview.description }}</p>{% endif %}
+    {% if overview.translations %}
+      <details class="mandala-av-translations">
+        <summary>{{ 'Show All Languages'|t }}</summary>
+        {% for translation in overview.translations %}
+          <p class="mandala-av-translation">
+            {% if translation.language %}<strong>{{ translation.language }}:</strong>{% endif %}
+            {{ translation.text }}
+          </p>
+        {% endfor %}
+      </details>
+    {% endif %}
     {% if overview.collection %}
       <p class="mandala-av-collection"><span class="icon shanticon-collections"></span> <a href="{{ overview.collection.url }}">{{ overview.collection.label }}</a></p>
     {% endif %}

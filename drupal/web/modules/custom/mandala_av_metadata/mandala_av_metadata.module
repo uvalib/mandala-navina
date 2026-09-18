@@ -187,14 +187,36 @@ function mandala_av_metadata_node_view(array &$build, EntityInterface $node, Ent
 }
 
 /**
- * Builds the "Video Overview" block: date + creator names + description +
- * owning collection.
+ * Builds the "Video Overview" block: date + duration + creator names +
+ * description (+ collapsed translations) + owning collection.
  *
- * A glimpse of production's above-the-fold summary, not a full port --
- * production also shows a duration there, deliberately excluded: verified
- * against D7 that it is NOT backed by any migrated field (field_duration is
- * empty on the checked examples) -- it's read live from the Kaltura entry
- * itself, out of scope for a static metadata panel.
+ * A glimpse of production's above-the-fold summary, not a full port.
+ *
+ * Duration was first written off here as "read live from the Kaltura entry
+ * itself, out of scope" -- checked only against the PBCore instantiation
+ * paragraph's own `field_duration` sub-field, found empty on the examples
+ * checked. Wrong: D7 reads it from `node_kaltura.kaltura_duration`, its own
+ * local cache of the Kaltura entry's length (an int, seconds), not live and
+ * not from PBCore at all -- confirmed directly (D7 nid 33126: 194 ->
+ * "3 min 14 sec", exact match to the live page). A corpus-wide check found
+ * the two disagree often where both exist (`field_duration` is populated on
+ * barely 17% of AV hosts to begin with, and of those, 41% don't match
+ * `kaltura_duration` -- see av15-pbcore-duration-vs-kaltura-duration.md),
+ * so `kaltura_duration` (mirrored into `field_kaltura_duration`,
+ * `av:backfill-kaltura-duration`) is the only one actually shown on D7's own
+ * node page and the only one used here.
+ *
+ * Description: D7 shows one description inline (the first item) and hides
+ * the rest -- every other language/variant -- behind a "(Show All
+ * Languages)" toggle (`.showdesclang`), collapsed by default. `field_
+ * pbcore_description` is multi-valued and every other item was being
+ * silently discarded here (`->first()` only) until caught directly: the
+ * reference node alone carries 6 real items across English/Tibetan/Chinese
+ * (plus a 7th, empty paragraph -- a und-layer artifact of the same
+ * empty-item class as the instantiation-winner bug, filtered out here by
+ * requiring a non-empty field_description rather than backfilled, since
+ * unlike the single-valued instantiation field there's no "wrong winner" to
+ * correct: the real items are already all present, just unfiltered).
  *
  * The collection link (D7's `.avcollection`) was first skipped here as
  * "already in the page's own breadcrumb" -- that claim was never actually
@@ -215,13 +237,22 @@ function _mandala_av_metadata_build_overview(NodeInterface $node): ?array {
     }
   }
 
-  $description = NULL;
+  // All non-empty description items, in field order -- not just the first.
+  // The first becomes the inline "description"; the rest become the
+  // collapsed "translations" list (D7's hidden-by-default alt-language set).
+  $descriptions = [];
   if (!$node->get('field_pbcore_description')->isEmpty()) {
-    $first = $node->get('field_pbcore_description')->first()->entity;
-    if ($first instanceof ParagraphInterface && !$first->get('field_description')->isEmpty()) {
-      $description = strip_tags($first->get('field_description')->value);
+    foreach ($node->get('field_pbcore_description') as $item) {
+      if (!$item->entity instanceof ParagraphInterface || $item->entity->get('field_description')->isEmpty()) {
+        continue;
+      }
+      $descriptions[] = [
+        'text' => strip_tags($item->entity->get('field_description')->value),
+        'language' => $item->entity->get('field_pbcore_language')->isEmpty() ? NULL : $item->entity->get('field_pbcore_language')->value,
+      ];
     }
   }
+  $primaryDescription = $descriptions ? array_shift($descriptions) : NULL;
 
   $collection = NULL;
   $group = _mandala_av_metadata_owning_group($node);
@@ -229,21 +260,48 @@ function _mandala_av_metadata_build_overview(NodeInterface $node): ?array {
     $collection = ['label' => $group->label(), 'url' => $group->toUrl()->toString()];
   }
 
-  if (!$creators && !$description && !$collection) {
-    return NULL;
+  $duration = NULL;
+  if ($node->hasField('field_kaltura_duration') && !$node->get('field_kaltura_duration')->isEmpty()) {
+    $duration = _mandala_av_metadata_format_duration((int) $node->get('field_kaltura_duration')->value);
   }
+
+  // No early-return-if-all-empty guard: date and title are unconditionally
+  // available (node creation time, bundle name), so there's always
+  // something to show. A real bug, found live: the old guard suppressed
+  // the ENTIRE block -- including the date -- on any node with no
+  // creators/description/collection, 16 of them corpus-wide (verified via
+  // a full-corpus check, not a sample).
   return [
     // D7's "avdate" row: confirmed against a live example (node created
     // 2019-04-02 16:40:17, displayed "02 Apr 2019") that this is the node's
     // own creation timestamp, not any PBCore date field.
     'date' => \Drupal::service('date.formatter')->format($node->getCreatedTime(), 'custom', 'd M Y'),
+    'duration' => $duration,
     // D7 labels this "Audio Overview" vs "Video Overview" by bundle --
     // confirmed against a real audio example, not just video.
     'title' => $node->bundle() === 'audio' ? t('Audio Overview') : t('Video Overview'),
     'creators' => implode(', ', $creators),
-    'description' => $description,
+    'description' => $primaryDescription['text'] ?? NULL,
+    'translations' => $descriptions,
     'collection' => $collection,
   ];
+}
+
+/**
+ * Formats a duration in seconds as D7's "avduration" row does, e.g.
+ * "3 min 14 sec" (194s) or "1 hr 4 min 2 sec" (3842s, hours omitted when 0).
+ */
+function _mandala_av_metadata_format_duration(int $seconds): string {
+  $hours = intdiv($seconds, 3600);
+  $minutes = intdiv($seconds % 3600, 60);
+  $secs = $seconds % 60;
+  $parts = [];
+  if ($hours > 0) {
+    $parts[] = t('@n hr', ['@n' => $hours]);
+  }
+  $parts[] = t('@n min', ['@n' => $minutes]);
+  $parts[] = t('@n sec', ['@n' => $secs]);
+  return implode(' ', $parts);
 }
 
 /**

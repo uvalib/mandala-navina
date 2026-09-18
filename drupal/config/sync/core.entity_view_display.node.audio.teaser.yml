@@ -8,6 +8,7 @@ dependencies:
     - field.field.node.audio.field_available_from
     - field.field.node.audio.field_copyright_owner
     - field.field.node.audio.field_group_content_access
+    - field.field.node.audio.field_kaltura_duration
     - field.field.node.audio.field_kmap_annotation
     - field.field.node.audio.field_kmap_terms
     - field.field.node.audio.field_language_kmap
@@ -63,10 +64,12 @@ content:
     weight: 100
     region: content
 hidden:
+  av_technical_metadata: true
   field_audio: true
   field_available_from: true
   field_copyright_owner: true
   field_group_content_access: true
+  field_kaltura_duration: true
   field_kmap_annotation: true
   field_kmap_terms: true
   field_language_kmap: true

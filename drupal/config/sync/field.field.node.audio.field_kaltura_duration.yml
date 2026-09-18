@@ -1,0 +1,23 @@
+uuid: 57398de5-75bc-465f-80df-6b11e2aa5ad5
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_kaltura_duration
+    - node.type.audio
+id: node.audio.field_kaltura_duration
+field_name: field_kaltura_duration
+entity_type: node
+bundle: audio
+label: 'Kaltura duration (seconds)'
+description: 'Cached from D7 node_kaltura.kaltura_duration, joined by the Kaltura entry id -- not a PBCore field. Not shown directly; formatted into the Video/Audio Overview block by mandala_av_metadata.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: 0
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

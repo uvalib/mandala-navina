@@ -51,6 +51,34 @@
   margin-right: 0.3rem;
 }
 
+.mandala-av-overview .avduration {
+  color: #000;
+  font-family: 'EB Garamond', serif;
+  font-size: 1.03em;
+  margin-bottom: 0.5rem;
+}
+
+.mandala-av-overview .avduration .icon {
+  margin-right: 0.3rem;
+}
+
+/* Native <details>/<summary> -- collapsed by default with no extra JS,
+   matching D7's own .showdesclang toggle (hidden until the visitor asks for
+   it), just without reusing its hidden-class/langname-label plumbing. */
+.mandala-av-overview .mandala-av-translations {
+  margin: 0.5rem 0;
+}
+
+.mandala-av-overview .mandala-av-translations summary {
+  cursor: pointer;
+  color: #03038e;
+  font-weight: 600;
+}
+
+.mandala-av-overview .mandala-av-translation {
+  margin: 0.5rem 0 0;
+}
+
 /* The owning collection/subcollection link -- prominent by design (real
    size, real link color), not a footnote: confirmed live that D7 shows this
    plainly in the overview body, and D11's breadcrumb (just "Explore", no

@@ -103,7 +103,8 @@ nav:
   - "Mandala home page: real customizable-content system": mandala-home-customizable-content-system.md
   - "AV4: field_relation_identifier never migrated (empty across all 836 relation paragraphs)": av4-relation-identifier-not-migrated.md
   - "AV4: field_pbcore_instantiation picked the wrong D7 item on 307 hosts": av4-instantiation-wrong-winner.md
-  - "AV15: avduration/avuploader/avrating -- review with Than": av15-avinfo-abandoned-fields-review-with-than.md
+  - "AV15: avuploader/avrating -- review with Than (avduration resolved)": av15-avinfo-abandoned-fields-review-with-than.md
+  - "AV: PBCore field_duration vs Kaltura duration disagree 41% of the time": av15-pbcore-duration-vs-kaltura-duration.md
   - "AV4: field_pbcore_language ISO-639 conversion never done": av4-field-pbcore-language-iso639-conversion.md
   - "AV4: 42 paragraph-ordering ties -- unconfirmed tiebreak": av4-paragraph-ordering-ties.md
   - "AV4: 84 und/en content differences -- never reviewed": av4-84-und-en-content-differences.md
