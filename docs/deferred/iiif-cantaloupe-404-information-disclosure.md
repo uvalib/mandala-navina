@@ -79,12 +79,15 @@ Hummingbird image (nid 4) showed no image. Traced fully, not assumed:
   gap predates the D11 migration entirely; D11 didn't introduce it and
   couldn't fix it by itself even if it were worth fixing.
 
-**Not our codebase to fix** (Cantaloupe/S3 key delegate, Library DevOps
-territory, same as the info-disclosure half below), and now also not
-urgent -- no real content is affected. Worth a mention to DevOps opportunistically
-(concrete 10-node list, root cause understood) rather than filing proactively;
-deleting the 10 test nodes outright would make this moot entirely, if/when
-someone's doing test-data cleanup.
+**A data-hygiene question first, an infrastructure question a distant
+second.** The real fix here is deleting the 10 test nodes as part of
+ordinary test-data cleanup (John Alexander's early ingest batch) --
+that makes the Cantaloupe key-derivation bug moot for Mandala entirely,
+without touching infra anyone else depends on. Only worth raising with
+Library DevOps (Cantaloupe/S3 key delegate, not our codebase) if those
+nodes turn out to need to stay around for some other reason -- in which
+case there's now a concrete 10-node list and a root cause, not a vague
+"some images 404" report.
 
 ## What we observed (original finding, still accurate)
 
