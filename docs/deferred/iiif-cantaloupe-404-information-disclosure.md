@@ -56,16 +56,28 @@ Hummingbird image (nid 4) showed no image. Traced fully, not assumed:
   same top-level numeric prefix -- consistent with a scheme change mid-way,
   not a random corruption).
 - **Confirmed test data, not real content (Yuji, 2026-09-18):** all 10 are
-  known test/dev images, not Mandala archival material. A first attempt to
-  corroborate this from the data alone (checking each node's real collection
-  membership -- properly filtered to the `group_node:shanti_image`
-  relationship type, after an initial pass wrongly conflated it with
-  uid=1's unrelated 176 *user* group memberships via a numeric nid/uid
-  collision) found 8 of the 10 in single, thematically-coherent but
-  non-Mandala-core collections ("The Universe", "Birds", "Banksy", "Resist"
-  -- side/community collections the shared Group platform also hosts) --
-  suggestive but not conclusive on its own. Yuji's direct confirmation
-  settles it.
+  known test/dev images, not Mandala archival material -- uploaded early by
+  John Alexander. A first attempt to corroborate this from the data alone
+  (checking each node's real collection membership -- properly filtered to
+  the `group_node:shanti_image` relationship type, after an initial pass
+  wrongly conflated it with uid=1's unrelated 176 *user* group memberships
+  via a numeric nid/uid collision) found 8 of the 10 in single,
+  thematically-coherent but non-Mandala-core collections ("The Universe",
+  "Birds", "Banksy", "Resist" -- side/community collections the shared
+  Group platform also hosts) -- suggestive but not conclusive on its own.
+  Checked the other 4 Banksy-titled images (nid 40-43, iiif ids 371/381/
+  706/711) in case the test batch was larger than thought -- all 4 resolve
+  fine (200), so the broken set really is exactly these 10, not a wider
+  Banksy-specific gap.
+- **Confirmed pre-existing on live D7 production too, not a D11 regression
+  (2026-09-18):** fetched the equivalent D7 pages directly (`images.
+  mandala.library.virginia.edu/node/{legacy_nid}` for the 5 of these 10
+  that aren't themselves access-gated on D7) and found D7's own markup
+  embeds the identical broken `iiif.lib.virginia.edu/mandala/shanti-image-
+  36/...` URL verbatim (e.g. in its image-slider `<img src>` and Open
+  Graph meta tags) -- same shared external IIIF service, same 404. This
+  gap predates the D11 migration entirely; D11 didn't introduce it and
+  couldn't fix it by itself even if it were worth fixing.
 
 **Not our codebase to fix** (Cantaloupe/S3 key delegate, Library DevOps
 territory, same as the info-disclosure half below), and now also not
