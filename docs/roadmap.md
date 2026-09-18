@@ -108,7 +108,11 @@ Now the deliberate parallelism earns its keep — each owner takes an independen
 > track ADR 018 opened ([Sprint 3](sprints/sprint-03-av-core-implementation.md)). This is
 > the open question ADR 018 deliberately left unresolved, now answered. Explicitly
 > temporary — revisit when Than returns; nothing about the Texts/Sources *plans* below
-> changes, only when they get worked.
+> changes, only when they get worked. **Return date pushed 2026-09-18: Than is now back
+> Wednesday 2026-09-24, not Monday 2026-09-22** — Sprint 3's solo-workable AV scope is
+> fully done as of that date (see [Sprint 3](sprints/sprint-03-av-core-implementation.md)),
+> so revisiting whether Sources (Xiaoming's own track, not Than-gated the way Texts is)
+> could resume before Wednesday is an open team question, not yet decided.
 
 - **Texts** (Than): footnote markup transformation + Tibetan Unicode body round-trip. ⏸ paused
 - **Sources** (Xiaoming): bibcite + Tibetan-in-references if present. ⏸ paused
