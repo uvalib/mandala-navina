@@ -187,15 +187,23 @@ function mandala_av_metadata_node_view(array &$build, EntityInterface $node, Ent
 }
 
 /**
- * Builds the "Video Overview" block: date + creator names + description.
+ * Builds the "Video Overview" block: date + creator names + description +
+ * owning collection.
  *
  * A glimpse of production's above-the-fold summary, not a full port --
- * production also shows a duration and a collection link there. Duration is
- * deliberately excluded: verified against D7 that it is NOT backed by any
- * migrated field (field_duration is empty on the checked examples) -- it's
- * read live from the Kaltura entry itself, which is out of scope for a
- * static metadata panel. The collection link is skipped as duplicative --
- * AV9/AV16 already surface it in the page's own breadcrumb.
+ * production also shows a duration there, deliberately excluded: verified
+ * against D7 that it is NOT backed by any migrated field (field_duration is
+ * empty on the checked examples) -- it's read live from the Kaltura entry
+ * itself, out of scope for a static metadata panel.
+ *
+ * The collection link (D7's `.avcollection`) was first skipped here as
+ * "already in the page's own breadcrumb" -- that claim was never actually
+ * checked and was wrong: D11's breadcrumb only ever says "Explore", no
+ * group hierarchy. Added properly once caught, via the same
+ * group_relationship lookup `mandala_kmassets_sync`'s
+ * `CollectionFieldContributor::getOwningGroup()` already uses for this exact
+ * purpose (one collection/subcollection per node, ADR 011's one-level
+ * nesting) -- not re-derived, the identical pattern.
  */
 function _mandala_av_metadata_build_overview(NodeInterface $node): ?array {
   $creators = [];
@@ -215,7 +223,13 @@ function _mandala_av_metadata_build_overview(NodeInterface $node): ?array {
     }
   }
 
-  if (!$creators && !$description) {
+  $collection = NULL;
+  $group = _mandala_av_metadata_owning_group($node);
+  if ($group) {
+    $collection = ['label' => $group->label(), 'url' => $group->toUrl()->toString()];
+  }
+
+  if (!$creators && !$description && !$collection) {
     return NULL;
   }
   return [
@@ -228,7 +242,27 @@ function _mandala_av_metadata_build_overview(NodeInterface $node): ?array {
     'title' => $node->bundle() === 'audio' ? t('Audio Overview') : t('Video Overview'),
     'creators' => implode(', ', $creators),
     'description' => $description,
+    'collection' => $collection,
   ];
+}
+
+/**
+ * The node's immediate owning collection or subcollection group, if any.
+ *
+ * Identical lookup to `CollectionFieldContributor::getOwningGroup()`
+ * (`mandala_kmassets_sync`) -- kept as its own small copy rather than a
+ * cross-module service dependency for one four-line lookup; if a third
+ * caller needs this, promote it to a shared service then.
+ */
+function _mandala_av_metadata_owning_group(NodeInterface $node): ?\Drupal\group\Entity\GroupInterface {
+  $relationships = \Drupal::entityTypeManager()->getStorage('group_relationship')->loadByEntity($node);
+  foreach ($relationships as $relationship) {
+    $group = $relationship->getGroup();
+    if (in_array($group->bundle(), ['collection', 'subcollection'], TRUE)) {
+      return $group;
+    }
+  }
+  return NULL;
 }
 
 /**

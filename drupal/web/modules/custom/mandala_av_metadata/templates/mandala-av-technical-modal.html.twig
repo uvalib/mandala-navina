@@ -69,6 +69,9 @@
     <h5 class="video-overview-title">{{ overview.title }}</h5>
     {% if overview.creators %}<p><strong>{{ 'Creators'|t|upper }}:</strong> <em>{{ overview.creators }}</em></p>{% endif %}
     {% if overview.description %}<p>{{ overview.description }}</p>{% endif %}
+    {% if overview.collection %}
+      <p class="mandala-av-collection"><span class="icon shanticon-collections"></span> <a href="{{ overview.collection.url }}">{{ overview.collection.label }}</a></p>
+    {% endif %}
   </div>
 {% endif %}
 
