@@ -51,12 +51,43 @@ per-instance visual placement), rather than a bespoke content type or a hardcode
 Twig-only port. The two static feature panels are simple enough to be ordinary
 Drupal Block content (or Layout Builder blocks) once this is designed.
 
-## Not yet decided
+## DECIDED 2026-09-18 (Yuji) — planned for Monday 2026-09-21, not yet implemented
 
-- Block Plugin vs. Layout Builder vs. something else for the carousel.
-- Whether slide data should be a real content entity (a "Slide" paragraph/media
-  reference) instead of D7's raw textarea-of-ids approach — the D7 approach was clearly a
-  workaround for the era's tooling, not a design worth preserving on its own merits.
-- Who owns curating the actual slide content/copy (Carla? David Germano?) — this is an
-  editorial decision, not an engineering one, and shouldn't block the engineering design
-  from proceeding.
+Picked over Layout Builder and a direct D7-shape port (raw textarea of
+node/Solr IDs), per the reasoning already in this doc: the D7 approach was a
+tooling-era workaround, not worth preserving, and this project already
+models repeatable structured content as Paragraphs everywhere (AV's
+PBCore fields, etc.) — this follows the same pattern rather than inventing
+a new one.
+
+- **`mandala_home_slide`** (new Paragraph type): `field_slide_image`
+  (image, required), `field_slide_link` (link, optional — URL + title in
+  one core field), `field_slide_caption` (plain string, optional).
+- **`mandala_home_carousel`** (new custom Block type, `block_content`,
+  revisionable): `field_carousel_slides` (entity_reference_revisions to
+  paragraph, unlimited, target bundle `mandala_home_slide`),
+  `field_carousel_rotation_ms` (integer, default 5000). Editors manage
+  slides through the normal "Custom block library" UI (add/reorder/edit,
+  no deploy) and place the one carousel block instance in a region like
+  any other block -- no raw PHP Block Plugin class needed for the
+  editable part itself.
+- **The two static feature panels** ("Scholarly Collections"/"Knowledge
+  Maps") -- D7 had these as literal WYSIWYG body HTML on the front-page
+  node. Real D11 equivalent: core's existing **Basic block** type (`block_
+  content.type.basic`, already in this codebase), not a new content type --
+  same reasoning, editors edit body HTML with no deploy.
+- D7's two dead sections (empty "Recently Updated Collections"/
+  "Experiences" blocks, confirmed dead in the finding above) are **not**
+  being ported, per this project's migrate-not-improve floor (ADR 008) --
+  a disabled placeholder isn't real user-facing behavior to preserve.
+
+Not yet built: the entity/field creation (via Entity API + `config:
+export`, the established pattern for new fields this session), the
+carousel's JS rotation behavior (reuse shanti_sarvaka's existing Bootstrap
+5 stack, already loaded site-wide, rather than a new JS dependency), and
+wiring `mandala_home`'s controller/template to render the block instance
+above the placeholder's existing Images/AV links.
+
+Still open, unchanged from before: who curates the actual slide
+content/copy (Carla? David Germano?) -- editorial, not engineering, and
+doesn't block the build above from proceeding.
