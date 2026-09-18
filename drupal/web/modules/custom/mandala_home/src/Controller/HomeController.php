@@ -68,15 +68,21 @@ class HomeController implements ContainerInjectionInterface {
   }
 
   /**
-   * Images nodes, each representative of already-shipped Images work.
-   * Leaning toward Tibetan/Chinese-content examples; Blue Grosbeak is the
-   * one exception, kept because it's the specific node verified to carry
-   * real IIIF data for the OpenSeadragon deep-zoom viewer (Sprint 2, #170).
+   * Images nodes, each representative of already-shipped Images work,
+   * leaning toward Tibetan/Chinese-content examples.
+   *
+   * nid 5 (Blue Grosbeak) was here as the IIIF/OpenSeadragon deep-zoom
+   * demo pick -- dropped 2026-09-18: confirmed it's one of 10 known
+   * test/dev images (nid 1-10) whose IIIF viewer 404s on a legacy S3 key
+   * layout (docs/deferred/iiif-cantaloupe-404-information-disclosure.md).
+   * The node itself still loads fine (200), only the embedded image is
+   * broken, which would have been actively misleading in a demo. The
+   * remaining picks below already carry real IIIF data (confirmed live),
+   * so no replacement was needed.
    */
   private function imageSamples(): array {
     return [
-      5 => 'OpenSeadragon deep-zoom IIIF viewer (Sprint 2, PR #170) with real subject metadata',
-      9625 => 'Buddhas/prayers carved into a rock face (Lhasa) -- real subject metadata + collection membership',
+      9625 => 'Deep-zoom IIIF viewer: buddhas/prayers carved into a rock face (Lhasa) -- real subject metadata + collection membership',
       9626 => 'Pilgrims spinning prayer wheels (Lhasa)',
       9627 => 'Prayer flags on 1000 Buddha Hill (Lhasa)',
       22143 => 'Chinese restaurant owner at Lhasa Gongkar Airport -- Chinese/Tibetan intersection',
