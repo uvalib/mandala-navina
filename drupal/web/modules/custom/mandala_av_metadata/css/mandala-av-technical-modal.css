@@ -51,6 +51,25 @@
   margin-right: 0.3rem;
 }
 
+/* The owning collection/subcollection link -- prominent by design (real
+   size, real link color), not a footnote: confirmed live that D7 shows this
+   plainly in the overview body, and D11's breadcrumb (just "Explore", no
+   group hierarchy) doesn't carry it anywhere else on the page. */
+.mandala-av-overview .mandala-av-collection {
+  font-size: 1em;
+  margin: 0.5rem 0;
+}
+
+.mandala-av-overview .mandala-av-collection a {
+  color: #03038e;
+  font-weight: 600;
+}
+
+.mandala-av-overview .mandala-av-collection .icon {
+  margin-right: 0.3rem;
+  color: #444;
+}
+
 /* Real bug, found live: the ported `.glyphicon { float: left; }` rule has
    no block-formatting-context container around it in our simplified markup
    (we don't reproduce Field Group's own accordion wrapper classes), so the

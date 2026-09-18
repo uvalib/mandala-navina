@@ -500,23 +500,46 @@ differently-shaped file set.
 
 ## 8. Open questions
 
-- **The 42 ordering ties.** Carried from 2026-09-08. Two items on one host still
-  resolving to the same delta; `item_id` is the documented fallback, not a
-  considered answer. Ask AV staff whether a cataloguing convention should decide
-  it.
-- **`field_pbcore_instantiation`'s thinner `en` records** (§3). The rule is
-  data-preserving regardless, but knowing *why* would tell us whether it applies
-  elsewhere.
-- **`field_tags` "Tags Old"** — labelled that way and hidden on `video` while
-  live as "Tags" on `audio`. Migrates as-is per AV2; staff should say what it
-  should become.
-- **AV14's 18 media-less nodes** — the nid list still needs to reach AV staff.
+**Updated 2026-09-18** — this section had gone stale (two items below were
+resolved weeks ago but never crossed off here), and several of the
+still-open ones had never made it into `docs/deferred/`'s team-visible
+tracker, living only in session-log narrative. All now filed properly;
+this section links to them rather than duplicating their detail.
+
+- **The 42 ordering ties** — still open, unconfirmed with staff. Filed:
+  [av4-paragraph-ordering-ties.md](../deferred/av4-paragraph-ordering-ties.md).
+- **`field_pbcore_instantiation`'s thinner `en` records** (§3) — **partially
+  explained**: a real scoring bug (`COUNT(*)` counting D7's NULL/`''`
+  placeholder rows as "populated") caused 307 hosts to pick a *completely
+  empty* item over a populated one; found and fixed 2026-09-17, see
+  [av4-instantiation-wrong-winner.md](../deferred/av4-instantiation-wrong-winner.md).
+  That's a different population from the general "`en` genuinely has less
+  data than `und`, both real" pattern this note originally meant, which the
+  scoring rule was already designed to handle correctly — the *general*
+  question of whether that pattern means anything beyond normal cataloguing
+  variance is still open, folded into
+  [av4-84-und-en-content-differences.md](../deferred/av4-84-und-en-content-differences.md).
+- **`field_tags` "Tags Old"** — still open. Filed:
+  [av2-field-tags-old-label-inconsistency.md](../deferred/av2-field-tags-old-label-inconsistency.md).
+- **84 hosts with genuine `und`/`en` content differences** (not just
+  ordering, from the 2026-09-09 session) — never had its own tracked note
+  until now. Filed:
+  [av4-84-und-en-content-differences.md](../deferred/av4-84-und-en-content-differences.md).
+- **`field_pbcore_language` ISO-639 conversion** (recommended 2026-09-09,
+  before AV8) — never had its own tracked note either; confirmed 2026-09-18
+  still not done and AV8 shipped without it. Filed:
+  [av4-field-pbcore-language-iso639-conversion.md](../deferred/av4-field-pbcore-language-iso639-conversion.md).
+- **AV14's 18 media-less nodes — ✅ RESOLVED**, not still open as this
+  section previously said. The nid list is recorded in full in
+  [av-anomalous-node-dispositions.md](av-anomalous-node-dispositions.md)
+  §AV14, decided 2026-09-08.
 - **uid 7471** holds two AV collection memberships but has no D11 user; it is a
   D7 account deleted with the OG rows left behind, not a user-migration gap (the
   user migration imported all 1,542 shared-DB users with zero failures, verified
-  on dev-0). Those two rows are skipped.
-- **dev-0 cannot run this yet.** Its `MIGRATE_SOURCE_DATABASE` points at the
-  Images source and no D7 AV database exists on the staging RDS. Loading
-  `mandala_d7_av` and adding `MIGRATE_AV_DATABASE` to the container env is a
-  `terraform-infrastructure` change plus a deploy, once the migrations are
-  proven locally.
+  on dev-0). Those two rows are skipped. (No action needed — recorded here as
+  an explanation, not an open item.)
+- **dev-0 cannot run this yet — ✅ STALE, resolved 2026-09-10.** This was true
+  when written; dev-0's AV4 migration ran live and completed
+  2026-09-10T00:57:20Z, 24/24 verification checks matching the D7 source
+  exactly. `MIGRATE_AV_DATABASE` has been wired into dev-0 since. Left here
+  only so the history reads correctly, not as something still to do.
