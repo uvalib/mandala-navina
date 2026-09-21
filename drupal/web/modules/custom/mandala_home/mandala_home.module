@@ -12,9 +12,16 @@ function mandala_home_theme($existing, $type, $theme, $path) {
   return [
     'mandala_home' => [
       'variables' => [
+        'carousel' => NULL,
         'av_samples' => [],
         'image_samples' => [],
         'group_samples' => [],
+      ],
+    ],
+    'mandala_home_carousel' => [
+      'variables' => [
+        'slides' => [],
+        'rotation_ms' => 5000,
       ],
     ],
   ];

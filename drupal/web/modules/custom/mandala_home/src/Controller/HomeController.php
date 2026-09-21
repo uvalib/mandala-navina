@@ -6,6 +6,7 @@ namespace Drupal\mandala_home\Controller;
 
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\image\Entity\ImageStyle;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -14,9 +15,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * D7's real mandala.library.virginia.edu/ was a curated hero carousel plus
  * static feature panels, managed entirely as live editorial content (a
  * "Page" node + a custom carousel Block, see
- * docs/deferred/mandala-home-customizable-content-system.md) -- there is no
- * code to port. Until that real content system is designed, this is
- * deliberately a placeholder: links to the two landing pages that do exist.
+ * docs/deferred/mandala-home-customizable-content-system.md) -- there was no
+ * code to port. The D11 equivalent (mandala_home_carousel block_content type
+ * + mandala_home_slide paragraphs, decided 2026-09-18) is now wired up here;
+ * this page otherwise remains a placeholder for the two static feature
+ * panels (D7's WYSIWYG body HTML -- the D11 equivalent is a plain Basic
+ * block, not built here) and links to the two landing pages that do exist.
  *
  * The sample-content lists (added 2026-09-18, for demo purposes) are a
  * hardcoded curated set, not a query -- each one was picked and verified
@@ -40,11 +44,86 @@ class HomeController implements ContainerInjectionInterface {
   public function content(): array {
     return [
       '#theme' => 'mandala_home',
+      '#carousel' => $this->carousel(),
       '#av_samples' => $this->buildSamples($this->avSamples()),
       '#image_samples' => $this->buildSamples($this->imageSamples()),
       '#group_samples' => $this->groupSamples(),
       '#attached' => ['library' => ['mandala_home/home']],
     ];
+  }
+
+  /**
+   * Builds the hero carousel render array from the single
+   * mandala_home_carousel block_content instance, if one exists with
+   * slides. Editors manage its content through the normal "Custom block
+   * library" admin UI; there is deliberately no block-placement UI wiring
+   * here (see docs/deferred/mandala-home-customizable-content-system.md) --
+   * this page's whole markup already comes from this controller/template,
+   * so the carousel is pulled in the same way.
+   */
+  private function carousel(): ?array {
+    $storage = $this->entityTypeManager->getStorage('block_content');
+    $blocks = $storage->loadByProperties(['type' => 'mandala_home_carousel']);
+    $block = reset($blocks);
+    if (!$block || $block->get('field_carousel_slides')->isEmpty()) {
+      return NULL;
+    }
+
+    $image_style = ImageStyle::load('wide');
+    $slides = [];
+    foreach ($block->get('field_carousel_slides')->referencedEntities() as $slide) {
+      if ($slide->get('field_slide_image')->isEmpty()) {
+        continue;
+      }
+      $image_item = $slide->get('field_slide_image')->first();
+      $file = $image_item->entity;
+      if (!$file) {
+        continue;
+      }
+      $link_item = $slide->get('field_slide_link')->isEmpty() ? NULL : $slide->get('field_slide_link')->first();
+      $link_url = $link_item ? $link_item->getUrl() : NULL;
+      $slides[] = [
+        'image_url' => $image_style ? $image_style->buildUrl($file->getFileUri()) : $file->createFileUrl(),
+        'image_alt' => $image_item->alt ?? '',
+        'caption' => $slide->get('field_slide_caption')->value ?? '',
+        'link_url' => $link_url ? $link_url->toString() : NULL,
+        'link_title' => $link_item ? $link_item->title : NULL,
+        'link_type' => $link_url ? $this->linkedAssetType($link_url) : NULL,
+      ];
+    }
+    if (!$slides) {
+      return NULL;
+    }
+
+    return [
+      '#theme' => 'mandala_home_carousel',
+      '#slides' => $slides,
+      '#rotation_ms' => (int) $block->get('field_carousel_rotation_ms')->value,
+      '#cache' => ['tags' => $block->getCacheTags()],
+    ];
+  }
+
+  /**
+   * Maps a slide link to an asset-type icon key ('audio'/'video'/'image'),
+   * by resolving it to the node it actually points at (if it's a node link
+   * at all -- a collection/group link, or an external URL, has no single
+   * asset type, so those fall back to the template's generic icon).
+   */
+  private function linkedAssetType($url): ?string {
+    if (!$url->isRouted() || $url->getRouteName() !== 'entity.node.canonical') {
+      return NULL;
+    }
+    $nid = $url->getRouteParameters()['node'] ?? NULL;
+    $node = $nid ? $this->entityTypeManager->getStorage('node')->load($nid) : NULL;
+    if (!$node) {
+      return NULL;
+    }
+    return match ($node->bundle()) {
+      'audio' => 'audio',
+      'video' => 'video',
+      'shanti_image' => 'image',
+      default => NULL,
+    };
   }
 
   /**

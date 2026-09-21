@@ -69,19 +69,41 @@ class KalturaConfigResolver {
    *
    * @param string $entryId
    *   The Kaltura entry id (the field's `entry_id` property value).
+   * @param int|null $width
+   *   Optional target width. Omitted (the default, matching every existing
+   *   caller): Kaltura's own bare thumbnail endpoint, which defaults to a
+   *   fixed 120x68 -- fine for a small gallery card, too low-res for
+   *   anything shown larger (confirmed live: mandala_home's hero carousel).
+   *   Passing a width asks Kaltura's own resizing, preserving aspect ratio
+   *   when $height is omitted (confirmed live: width=1200 alone returns a
+   *   proper 1200x675 for a 16:9 source, not a stretched crop).
+   * @param int|null $height
+   *   Optional target height; only meaningful together with $width.
+   * @param int|null $quality
+   *   Optional JPEG quality (1-100); only meaningful together with $width.
    *
    * @return string
    *   The thumbnail URL.
    */
-  public function thumbnailUrl(string $entryId): string {
+  public function thumbnailUrl(string $entryId, ?int $width = NULL, ?int $height = NULL, ?int $quality = NULL): string {
     $settings = $this->settings();
-    return sprintf(
+    $url = sprintf(
       '%s/p/%s/sp/%s/thumbnail/entry_id/%s',
       $settings->get('server_url'),
       $settings->get('partner_id'),
       $settings->get('subp_id'),
       $entryId,
     );
+    if ($width !== NULL) {
+      $url .= '/width/' . $width;
+      if ($height !== NULL) {
+        $url .= '/height/' . $height;
+      }
+      if ($quality !== NULL) {
+        $url .= '/quality/' . $quality;
+      }
+    }
+    return $url;
   }
 
   protected function settings(): ImmutableConfig {

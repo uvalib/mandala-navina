@@ -1,0 +1,72 @@
+{#
+/**
+ * @file
+ * The Mandala home page hero carousel. Standard Bootstrap 5 carousel markup
+ * (data-bs-ride/data-bs-interval) -- shanti_sarvaka's base theme already
+ * loads Bootstrap 5's JS site-wide, so no library dependency is declared
+ * here; the markup alone is enough for it to auto-initialize. The
+ * asset-type markers are shanticon glyphs (shanti_sarvaka's own icon font,
+ * already loaded site-wide via shanti_sarvaka/global-styling), not custom
+ * SVG -- consistent with every other icon elsewhere on the site.
+ *
+ * Available variables:
+ * - slides: list of {image_url, image_alt, caption, link_url, link_title,
+ *   link_type}. link_type is 'audio'/'video'/'image' when the link
+ *   resolves to one of those node bundles, else null (generic icon).
+ * - rotation_ms: per-slide rotation interval in milliseconds.
+ */
+#}
+{% if slides %}
+  <div id="mandala-home-carousel" class="carousel slide mandala-home-carousel" data-bs-ride="carousel">
+    {% if slides|length > 1 %}
+      <div class="carousel-indicators">
+        {% for slide in slides %}
+          <button type="button" data-bs-target="#mandala-home-carousel" data-bs-slide-to="{{ loop.index0 }}"
+            {% if loop.first %}class="active" aria-current="true"{% endif %}
+            aria-label="{{ 'Slide @n'|t({'@n': loop.index}) }}"></button>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <div class="carousel-inner">
+      {% for slide in slides %}
+        <div class="carousel-item{% if loop.first %} active{% endif %}" data-bs-interval="{{ rotation_ms }}">
+          {% if slide.link_url %}<a href="{{ slide.link_url }}">{% endif %}
+          <img src="{{ slide.image_url }}" class="d-block w-100" alt="{{ slide.image_alt }}">
+          {% if slide.link_url %}</a>{% endif %}
+          {% if slide.caption or slide.link_title %}
+            <div class="carousel-caption d-none d-md-block">
+              <p>
+                {% if slide.link_url %}
+                  <a href="{{ slide.link_url }}">
+                    {{ slide.caption ?: slide.link_title }}
+                    {% if slide.link_type == 'audio' %}
+                      <i class="icon shanticon-audio mandala-home-carousel-caption-icon" aria-hidden="true"></i>
+                    {% elseif slide.link_type == 'video' %}
+                      <i class="icon shanticon-video mandala-home-carousel-caption-icon" aria-hidden="true"></i>
+                    {% elseif slide.link_type == 'image' %}
+                      <i class="icon shanticon-image mandala-home-carousel-caption-icon" aria-hidden="true"></i>
+                    {% else %}
+                      <i class="icon shanticon-arrow-right mandala-home-carousel-caption-icon" aria-hidden="true"></i>
+                    {% endif %}
+                  </a>
+                {% else %}
+                  {{ slide.caption }}
+                {% endif %}
+              </p>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    {% if slides|length > 1 %}
+      <button class="carousel-control-prev" type="button" data-bs-target="#mandala-home-carousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">{{ 'Previous'|t }}</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#mandala-home-carousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">{{ 'Next'|t }}</span>
+      </button>
+    {% endif %}
+  </div>
+{% endif %}

@@ -1,0 +1,51 @@
+uuid: dec03418-7bdd-4484-8ae4-5a6799ea3683
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.mandala_home_slide.field_slide_caption
+    - field.field.paragraph.mandala_home_slide.field_slide_image
+    - field.field.paragraph.mandala_home_slide.field_slide_link
+    - paragraphs.paragraphs_type.mandala_home_slide
+  module:
+    - image
+    - link
+id: paragraph.mandala_home_slide.default
+targetEntityType: paragraph
+bundle: mandala_home_slide
+mode: default
+content:
+  field_slide_caption:
+    type: string
+    label: hidden
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  field_slide_image:
+    type: image
+    label: hidden
+    settings:
+      image_link: ''
+      image_style: ''
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  field_slide_link:
+    type: link
+    label: hidden
+    settings:
+      trim_length: 80
+      url_only: false
+      url_plain: false
+      rel: ''
+      target: ''
+    third_party_settings: {  }
+    weight: 1
+    region: content
+hidden:
+  search_api_excerpt: true

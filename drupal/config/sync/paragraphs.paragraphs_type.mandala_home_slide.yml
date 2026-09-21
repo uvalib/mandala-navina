@@ -1,0 +1,10 @@
+uuid: a31e4f3f-417c-4de0-9c7e-c591e2847417
+langcode: en
+status: true
+dependencies: {  }
+id: mandala_home_slide
+label: 'Mandala Home Slide'
+icon_uuid: null
+icon_default: null
+description: null
+behavior_plugins: {  }

@@ -1,5 +1,10 @@
 name: 'Mandala Home'
 type: module
-description: 'The site-wide Mandala home page ("/") -- currently a deliberate placeholder linking to the Images and Audio-Video landing pages. See docs/deferred/mandala-home-customizable-content-system.md for what the real curated content (hero carousel, feature panels) needs once designed.'
+description: 'The site-wide Mandala home page ("/"): a real editor-managed hero carousel (mandala_home_carousel block_content + mandala_home_slide paragraphs) above links to the Images and Audio-Video landing pages. See docs/deferred/mandala-home-customizable-content-system.md; the two static feature panels D7 had are not yet built.'
 package: Mandala
 core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:block_content
+  - drupal:image
+  - drupal:link
+  - paragraphs:paragraphs

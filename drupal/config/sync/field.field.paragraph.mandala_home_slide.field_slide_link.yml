@@ -1,0 +1,23 @@
+uuid: 541b621c-bfac-47cd-b824-aaf0ca0f03a9
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_slide_link
+    - paragraphs.paragraphs_type.mandala_home_slide
+  module:
+    - link
+id: paragraph.mandala_home_slide.field_slide_link
+field_name: field_slide_link
+entity_type: paragraph
+bundle: mandala_home_slide
+label: Link
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  title: 1
+  link_type: 16
+field_type: link

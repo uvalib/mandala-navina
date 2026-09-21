@@ -1,0 +1,18 @@
+uuid: 852e3895-6d0b-48b3-aa4c-b04e29330f5d
+langcode: en
+status: true
+dependencies:
+  config:
+    - block_content.type.mandala_home_carousel
+    - field.field.block_content.mandala_home_carousel.field_carousel_rotation_ms
+    - field.field.block_content.mandala_home_carousel.field_carousel_slides
+id: block_content.mandala_home_carousel.default
+targetEntityType: block_content
+bundle: mandala_home_carousel
+mode: default
+content: {  }
+hidden:
+  field_carousel_rotation_ms: true
+  field_carousel_slides: true
+  langcode: true
+  search_api_excerpt: true

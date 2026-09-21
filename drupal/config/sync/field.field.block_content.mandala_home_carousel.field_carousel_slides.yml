@@ -1,0 +1,27 @@
+uuid: 3d604a26-7418-4cb8-9308-0d85634f65ff
+langcode: en
+status: true
+dependencies:
+  config:
+    - block_content.type.mandala_home_carousel
+    - field.storage.block_content.field_carousel_slides
+    - paragraphs.paragraphs_type.mandala_home_slide
+  module:
+    - entity_reference_revisions
+id: block_content.mandala_home_carousel.field_carousel_slides
+field_name: field_carousel_slides
+entity_type: block_content
+bundle: mandala_home_carousel
+label: Slides
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles:
+      mandala_home_slide: mandala_home_slide
+    negate: 0
+field_type: entity_reference_revisions
