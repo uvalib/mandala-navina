@@ -114,11 +114,16 @@ picked up ~17 files of pure re-serialization noise (comment stripping,
 quote-style changes) from unrelated pre-existing config, reverted
 unchanged.
 
-Still open, unchanged from before: who curates the actual slide
-content/copy (Carla? David Germano?) -- editorial, not engineering. The
-two static feature panels ("Scholarly Collections"/"Knowledge Maps") are
-also still not built (plain Basic block, per the decision above) --
-next engineering step once someone wants them.
+**Corrected 2026-09-21:** content/copy ownership is **Than's domain**,
+not Carla's (PM/Coordinator, not involved with project content at all)
+or David Germano's -- the earlier "Carla? David Germano?" framing here
+was wrong. Curating the actual slide content/copy is still open, but
+it's a scheduling question (when Than has time, back 2026-09-24), not
+an unassigned-owner question -- editorial, not engineering, either way.
+The two static feature panels ("Scholarly Collections"/"Knowledge
+Maps") are also still not built (plain Basic block, per the decision
+above) -- next engineering step once someone wants them; not blocked on
+Than, since the mechanism doesn't need real copy to exist yet.
 
 **A second, deliberately-kept demo block exists live on DDEV as of
 2026-09-21** (`block_content` id 2, `info: "Mandala Home Carousel
