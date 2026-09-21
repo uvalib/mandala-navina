@@ -7,6 +7,7 @@ namespace Drupal\mandala_migrations\Drush\Commands;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\file\FileRepositoryInterface;
 use Drush\Attributes as CLI;
 use Drush\Commands\AutowireTrait;
 use Drush\Commands\DrushCommands;
@@ -58,18 +59,29 @@ class MissingFileAuditCommands extends DrushCommands {
     'av' => 'https://av.mandala.library.virginia.edu/sites/mandala-av.lib.virginia.edu/files/',
   ];
 
+  /**
+   * Set by findD7Source() on its most recent call, since it returns NULL
+   * for both "checked every root, found nothing" and "a request errored" --
+   * the caller only needs to tell those apart for reporting, not for the
+   * fix decision (no URL either way means nothing to fetch).
+   */
+  private bool $lastCheckHadError = FALSE;
+
   public function __construct(
     private readonly EntityTypeManagerInterface $entityTypeManager,
     private readonly FileSystemInterface $fileSystem,
+    private readonly FileRepositoryInterface $fileRepository,
   ) {
     parent::__construct();
   }
 
   #[CLI\Command(name: 'mandala:missing-file-audit')]
   #[CLI\Option(name: 'check-d7-source', description: "For each missing file, try its basename against known D7 production file roots (currently: Images, AV) to see if it's still recoverable. Root-level only, see class docblock.")]
+  #[CLI\Option(name: 'fix', description: 'For missing files confirmed recoverable at a known D7 source, re-fetch the bytes and write them to the existing file entity in place (same fid/uri) -- restores the file, does not touch any entity reference, since those were never wrong. Implies --check-d7-source.')]
   #[CLI\Usage(name: 'drush mandala:missing-file-audit', description: 'Report every managed file whose physical file is missing from disk, and what references it.')]
   #[CLI\Usage(name: 'drush mandala:missing-file-audit --check-d7-source', description: 'Also check whether each missing file is still fetchable from its known D7 production source.')]
-  public function audit(array $options = ['check-d7-source' => FALSE]): void {
+  #[CLI\Usage(name: 'drush mandala:missing-file-audit --fix', description: 'Re-fetch and restore every missing file confirmed recoverable at a known D7 source.')]
+  public function audit(array $options = ['check-d7-source' => FALSE, 'fix' => FALSE]): void {
     $db = Database::getConnection();
 
     $fields = $this->realFileFields();
@@ -88,24 +100,46 @@ class MissingFileAuditCommands extends DrushCommands {
 
     $usages = $this->findUsages($db, $fields, array_keys($missing));
 
-    $checkSource = (bool) ($options['check-d7-source'] ?? FALSE);
+    $fix = (bool) ($options['fix'] ?? FALSE);
+    $checkSource = $fix || (bool) ($options['check-d7-source'] ?? FALSE);
     $recoverable = 0;
     $goneAtSource = 0;
     $unchecked = 0;
+    $fixed = 0;
+    $fixFailed = 0;
 
     foreach ($missing as $fid => $row) {
       $refs = $usages[$fid] ?? [];
       $refDescription = $refs ? implode('; ', $refs) : '(no real file/image field references it -- orphaned row)';
       $line = "fid={$fid} uri={$row->uri} -- {$refDescription}";
 
+      $sourceUrl = NULL;
       if ($checkSource) {
-        $status = $this->checkD7Source($row->filename);
+        $sourceUrl = $this->findD7Source($row->filename);
+        $status = $sourceUrl ? 'recoverable' : 'gone at source root too';
+        // findD7Source() returns NULL for both "checked, not found" and "a
+        // request errored" -- $lastCheckHadError disambiguates only when
+        // needed, to keep the common path (found it) cheap.
+        if ($sourceUrl === NULL && $this->lastCheckHadError) {
+          $status = 'source check failed';
+        }
         $line .= " [{$status}]";
         match ($status) {
           'recoverable' => $recoverable++,
           'gone at source root too' => $goneAtSource++,
           default => $unchecked++,
         };
+      }
+
+      if ($fix && $sourceUrl) {
+        if ($this->restoreFile($row->uri, $sourceUrl)) {
+          $line .= ' RESTORED';
+          $fixed++;
+        }
+        else {
+          $line .= ' RESTORE FAILED';
+          $fixFailed++;
+        }
       }
 
       $this->logger()->notice($line);
@@ -122,6 +156,13 @@ class MissingFileAuditCommands extends DrushCommands {
         'recoverable' => $recoverable,
         'gone' => $goneAtSource,
         'unchecked' => $unchecked,
+      ]);
+    }
+
+    if ($fix) {
+      $this->logger()->success('Restored {fixed} file(s) from their D7 source. {failed} attempted restore(s) failed.', [
+        'fixed' => $fixed,
+        'failed' => $fixFailed,
       ]);
     }
   }
@@ -203,28 +244,57 @@ class MissingFileAuditCommands extends DrushCommands {
   /**
    * Tries a missing file's basename against every known D7 source root.
    *
-   * @return string
-   *   'recoverable', 'gone at source root too', or 'source check failed'
-   *   (a request error, not a definitive answer either way).
+   * @return string|null
+   *   The first URL that returns a real 200, or NULL if none did. Check
+   *   $this->lastCheckHadError afterward to tell "confirmed gone" apart
+   *   from "a request errored" when NULL.
    */
-  private function checkD7Source(string $filename): string {
+  private function findD7Source(string $filename): ?string {
     $client = \Drupal::httpClient();
-    $sawRequestError = FALSE;
+    $this->lastCheckHadError = FALSE;
 
     foreach (self::D7_SOURCE_BASES as $base) {
       $url = $base . rawurlencode($filename);
       try {
         $response = $client->request('HEAD', $url, ['http_errors' => FALSE, 'timeout' => 10]);
         if ($response->getStatusCode() === 200) {
-          return 'recoverable';
+          return $url;
         }
       }
       catch (\Throwable) {
-        $sawRequestError = TRUE;
+        $this->lastCheckHadError = TRUE;
       }
     }
 
-    return $sawRequestError ? 'source check failed' : 'gone at source root too';
+    return NULL;
+  }
+
+  /**
+   * Fetches a confirmed-live D7 source URL and writes it to the given
+   * URI in place -- same fid, same uri, so no entity reference anywhere
+   * needs to change (they were already correct; only the binary was
+   * missing). Verifies the fetched byte count matches what the source
+   * itself reported before writing anything, so a truncated download
+   * can never silently replace a good row with a bad one.
+   */
+  private function restoreFile(string $uri, string $sourceUrl): bool {
+    $client = \Drupal::httpClient();
+    try {
+      $response = $client->request('GET', $sourceUrl, ['http_errors' => FALSE, 'timeout' => 30]);
+      if ($response->getStatusCode() !== 200) {
+        return FALSE;
+      }
+      $body = (string) $response->getBody();
+      $expectedLength = $response->getHeaderLine('Content-Length');
+      if ($expectedLength !== '' && (int) $expectedLength !== strlen($body)) {
+        return FALSE;
+      }
+      $this->fileRepository->writeData($body, $uri, \Drupal\Core\File\FileSystemInterface::EXISTS_REPLACE);
+      return TRUE;
+    }
+    catch (\Throwable) {
+      return FALSE;
+    }
   }
 
 }

@@ -1,4 +1,4 @@
-# Collection/subcollection featured images — 126 of 210 missing locally/on dev-0, but ALL recoverable from D7
+# Collection/subcollection featured images — 126 of 210 missing locally/on dev-0, FIXED on DDEV, root cause still open
 
 **Area:** migration / Images content / infrastructure
 **Raised during:** Session 2026-09-03 (backfilling `field_featured_image` onto D11
@@ -6,15 +6,17 @@ Group entities — see
 [docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md](../sprints/sprint-02-theme-images-ui-and-endpoint-access.md),
 Workstream B5, and
 [migrate-entity-group-update-mode-nulls-uid.md](migrate-entity-group-update-mode-nulls-uid.md)
-for the migration this surfaced during); **corrected and dramatically expanded 2026-09-21**
-via a proper full-corpus audit (`drush mandala:missing-file-audit`, new command in
-`mandala_migrations`), built after a manual demo-content check hit one missing file.
+for the migration this surfaced during); **corrected and dramatically expanded, then
+fixed on DDEV, 2026-09-21** via a proper full-corpus audit
+(`drush mandala:missing-file-audit`, new command in `mandala_migrations`), built after a
+manual demo-content check hit one missing file.
 **Priority:** Low — cosmetic (affects the "All Collections" card grid's thumbnail and a
 collection's own page image), not a functional/data-integrity blocker, and **not data
 loss** (see below). `shanti_collections_view` already falls back to a generic default
 thumbnail for any collection with no resolvable featured image, so nothing is broken or
 missing visually — affected collections just show the default instead of their real
-photo. Medium-effort, well-understood fix (re-import), not urgent.
+photo. **DDEV fixed; dev-0 still affected (fix not yet run there); root cause of the
+original loss still open** — see below.
 
 ## 2026-09-21 update: the real scope is far bigger than "15," and it's fully recoverable
 
@@ -38,11 +40,33 @@ metadata row and the group's field reference are both correct. Root cause of *wh
 binaries are missing (a `file_copy` failure that didn't surface as a migration error?
 something later removed from storage post-migration?) is not yet investigated.
 
-**Straightforward fix, not yet built:** re-run the equivalent of `file_copy` for these
-126 fids specifically (fetch from the confirmed-live D7 URL, write to the existing
-`uri`/`fid` in place) — the `d7_image_collection_featured_image_file` source plugin already
-has the exact query/URL-construction logic to reuse; this doesn't need a new migration,
-just a targeted re-fetch for the already-known 126.
+**Fixed 2026-09-21** — `drush mandala:missing-file-audit --fix` (new command,
+`mandala_migrations`) re-fetched all 126 from their confirmed-live D7 source and wrote
+them to the existing `uri`/`fid` in place (no entity reference changed). Verified: the
+audit re-run reports 0 missing of 8,425; spot-checked one restored file's bytes match
+the D7 source's `content-length` exactly; confirmed live in a browser that a restored
+collection page now shows its real photo instead of the fallback. **Run so far on DDEV
+only** — the same 126 are confirmed missing on dev-0 too; re-running there is a
+deliberate follow-up, not done automatically, since it writes to shared file storage.
+
+**⚠ FOR THAN (back 2026-09-24) — root cause discussion, not just a review.** Root cause
+still not confirmed, but a real lead exists: ruled out any *Drupal-level*
+edit as the cause -- every group referencing one of these 135 files (missing or
+surviving) has the identical `changed` timestamp as the original 2026-09-03
+migration/backfill run (~23s after the files' own `created` timestamp); nothing was
+touched afterward through Drupal. Whatever happened left no trace in Drupal's own data,
+pointing at either the original migration's own file-copy step silently failing for
+these specific items, or a later filesystem-level event (a partial rsync, an incomplete
+environment/files-directory restore) that wouldn't touch any Drupal timestamp either
+way. **Than has said (recalled during this session, not yet independently confirmed)
+that these particular collection-featured-images were "custom files"** -- consistent
+with `field_general_featured_image` generally being a hand-curated hero image per
+collection rather than reused member content, but unconfirmed whether that also
+explains *why* a majority specifically failed to survive locally while ~7% (9 of 135)
+did. Worth confirming directly with Than (back 2026-09-24) whether "custom" here means
+something more specific -- e.g. uploaded to D7 through a non-standard path that a normal
+backup/sync might not have captured -- since that would be a concrete, checkable root
+cause rather than a guess.
 
 ## Original 2026-09-03 finding (superseded above, kept for the specific 15 hosts already investigated)
 
