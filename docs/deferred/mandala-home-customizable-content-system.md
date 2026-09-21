@@ -171,3 +171,37 @@ recording so that later work doesn't start from zero:
   the user flagged, not a requirement -- worth another look once a
   real curator is actually using this regularly and finds the generic
   screen awkward.
+
+## Bookmarked 2026-09-21: carousel should be configurable for different situations
+
+Not designed yet -- explicitly deferred, but recording the concrete
+constraint in the current implementation so a later session doesn't
+have to rediscover it: `HomeController::carousel()` currently assumes
+**exactly one** carousel instance exists, site-wide. It loads the first
+`mandala_home_carousel` block_content entity it finds (no filter beyond
+bundle) and renders it in exactly one place -- this page's controller.
+There is deliberately no block-placement UI wiring (see the "who/how
+manages" section above) and no per-instance identifier of any kind.
+
+"Configurable for different situations" wasn't narrowed down further,
+so this covers what it plausibly means until someone picks a direction:
+
+- **Multiple distinct instances** -- e.g. a different curated carousel
+  per collection landing page, per asset-type gallery (Images vs. AV),
+  or per campaign/season -- would need the lookup to be scoped somehow
+  (a machine name / config reference per placement, or switching to
+  real Block Layout placement instead of the current direct-load
+  pattern, which was deliberately chosen over placement UI for the
+  *single* home-page case and would need revisiting for multiples).
+- **Per-instance behavior beyond rotation speed** -- transition style
+  (fade vs. slide), autoplay on/off, pause-on-hover, indicators on/off,
+  aspect ratio/height. `field_carousel_rotation_ms` is the only such
+  knob that exists today; the rest are hardcoded in
+  `mandala-home-carousel.html.twig`/`mandala-home.css`.
+- **A library of reusable configurations** vs. one-off instances (e.g.
+  a "carousel style" the block type could reference) -- only relevant
+  if multiple instances end up sharing a look/behavior rather than each
+  being configured independently.
+
+No decision made on which of these (if any) is actually wanted --
+narrow this down with the user before building any of it.
