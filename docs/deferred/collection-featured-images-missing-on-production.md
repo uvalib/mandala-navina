@@ -1,72 +1,72 @@
-# Collection/subcollection featured images — 126 of 210 missing locally/on dev-0, FIXED on DDEV, root cause still open
+# Collection/subcollection featured images — 126 of 210 missing on DDEV only, FIXED, dev-0 was never affected
 
-**Area:** migration / Images content / infrastructure
+**Area:** migration / Images content / local dev environment
 **Raised during:** Session 2026-09-03 (backfilling `field_featured_image` onto D11
 Group entities — see
 [docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md](../sprints/sprint-02-theme-images-ui-and-endpoint-access.md),
 Workstream B5, and
 [migrate-entity-group-update-mode-nulls-uid.md](migrate-entity-group-update-mode-nulls-uid.md)
-for the migration this surfaced during); **corrected and dramatically expanded, then
-fixed on DDEV, 2026-09-21** via a proper full-corpus audit
-(`drush mandala:missing-file-audit`, new command in `mandala_migrations`), built after a
-manual demo-content check hit one missing file.
+for the migration this surfaced during); **corrected, then fixed, 2026-09-21** via a
+proper full-corpus audit (`drush mandala:missing-file-audit`, new command in
+`mandala_migrations`), built after a manual demo-content check hit one missing file.
 **Priority:** Low — cosmetic (affects the "All Collections" card grid's thumbnail and a
-collection's own page image), not a functional/data-integrity blocker, and **not data
-loss** (see below). `shanti_collections_view` already falls back to a generic default
-thumbnail for any collection with no resolvable featured image, so nothing is broken or
-missing visually — affected collections just show the default instead of their real
-photo. **DDEV fixed; dev-0 still affected (fix not yet run there); root cause of the
-original loss still open** — see below.
+collection's own page image), was never a functional/data-integrity blocker, and turned
+out to be **DDEV-local only, now fixed** (see below). `shanti_collections_view` already
+falls back to a generic default thumbnail for any collection with no resolvable
+featured image, so nothing was ever broken or missing visually on a real environment —
+affected collections just showed the default instead of their real photo, on DDEV only.
 
-## 2026-09-21 update: the real scope is far bigger than "15," and it's fully recoverable
+## 2026-09-21 update: 126 missing on DDEV, D7 source intact, dev-0 was fine all along
 
-Running the new `drush mandala:missing-file-audit --check-d7-source` found **126 of 210
-`group.field_featured_image` references (60%) point to a file missing from disk** —
-confirmed on both DDEV and dev-0, so not a local-environment-only sync gap. That's a
-large jump from the 16 (15 Images + 1 AV) known as of 2026-09-03, meaning most of the
-"135 of 150 succeeded" files from the original migration have since gone missing too,
-not just the original 15 failures.
+Running the new `drush mandala:missing-file-audit --check-d7-source` on DDEV found
+**126 of 210 `group.field_featured_image` references (60%) point to a file missing from
+disk**. That's a large jump from the 16 (15 Images + 1 AV) known as of 2026-09-03 —
+but see the correction below on what that scope actually turned out to mean.
 
-**The good news, checked directly, not assumed:** all 126 are still live and fetchable
+**The good news, checked directly, not assumed:** all 126 were still live and fetchable
 at their known D7 production source root (`https://images.mandala.library.virginia.edu/
-sites/mandala-images.lib.virginia.edu/files/{filename}` for the Images-sourced ones —
-every one of the 126 turned out to be Images-sourced, none AV). Spot-verified one
-directly: a live `HEAD` request returns a real `200`, `content-type: image/png`, and a
-`content-length` that matches D11's own stored `filesize` for that fid exactly —
-genuinely the same, unchanged file, not a coincidence. **This is not data loss** — the
-source is intact; D11's local file storage (in whichever environment(s) this affects)
-just never received (or later lost) the copied bytes, even though the `file_managed`
-metadata row and the group's field reference are both correct. Root cause of *why* the
-binaries are missing (a `file_copy` failure that didn't surface as a migration error?
-something later removed from storage post-migration?) is not yet investigated.
+sites/mandala-images.lib.virginia.edu/files/{filename}`). Spot-verified one directly: a
+live `HEAD` request returned a real `200`, `content-type: image/png`, and a
+`content-length` that matched D11's own stored `filesize` for that fid exactly.
 
-**Fixed 2026-09-21** — `drush mandala:missing-file-audit --fix` (new command,
-`mandala_migrations`) re-fetched all 126 from their confirmed-live D7 source and wrote
-them to the existing `uri`/`fid` in place (no entity reference changed). Verified: the
-audit re-run reports 0 missing of 8,425; spot-checked one restored file's bytes match
-the D7 source's `content-length` exactly; confirmed live in a browser that a restored
-collection page now shows its real photo instead of the fallback. **Run so far on DDEV
-only** — the same 126 are confirmed missing on dev-0 too; re-running there is a
-deliberate follow-up, not done automatically, since it writes to shared file storage.
+**Fixed on DDEV 2026-09-21** — `drush mandala:missing-file-audit --fix` re-fetched all
+126 from their confirmed-live D7 source and wrote them to the existing `uri`/`fid` in
+place (no entity reference changed). Verified: the audit re-run reported 0 missing of
+8,425; spot-checked one restored file's bytes matched the D7 source's `content-length`
+exactly; confirmed live in a browser that a restored collection page now shows its real
+photo instead of the fallback.
 
-**⚠ FOR THAN (back 2026-09-24) — root cause discussion, not just a review.** Root cause
-still not confirmed, but a real lead exists: ruled out any *Drupal-level*
-edit as the cause -- every group referencing one of these 135 files (missing or
-surviving) has the identical `changed` timestamp as the original 2026-09-03
-migration/backfill run (~23s after the files' own `created` timestamp); nothing was
-touched afterward through Drupal. Whatever happened left no trace in Drupal's own data,
-pointing at either the original migration's own file-copy step silently failing for
-these specific items, or a later filesystem-level event (a partial rsync, an incomplete
-environment/files-directory restore) that wouldn't touch any Drupal timestamp either
-way. **Than has said (recalled during this session, not yet independently confirmed)
-that these particular collection-featured-images were "custom files"** -- consistent
-with `field_general_featured_image` generally being a hand-curated hero image per
-collection rather than reused member content, but unconfirmed whether that also
-explains *why* a majority specifically failed to survive locally while ~7% (9 of 135)
-did. Worth confirming directly with Than (back 2026-09-24) whether "custom" here means
-something more specific -- e.g. uploaded to D7 through a non-standard path that a normal
-backup/sync might not have captured -- since that would be a concrete, checkable root
-cause rather than a guess.
+**Correction, same day, before running the equivalent fix on dev-0:** this was
+originally reported as "confirmed missing on dev-0 too, not a local artifact" — that
+was **wrong**, caused by checking dev-0's filesystem at the wrong path
+(`/var/www/html/sites/default/files/`, a generic Docker-Drupal guess, never verified
+against this project's actual container). The real docroot on
+`mandala-drupal-dev-0.internal.lib.virginia.edu`'s `mandala-drupal-0` container is
+`/opt/drupal/app/drupal/web/sites/default/files/`. Re-checked properly (via Drupal's own
+`file_system` service, which resolves the real path, not a raw `ls` guess): **`drush
+mandala:missing-file-audit` on dev-0 reports 0 missing files, corpus-wide, before any
+fix was ever run there.** dev-0 was never affected. This was a DDEV-local sync/bootstrap
+gap the whole time, not a cross-environment or production-adjacent issue -- lesson
+recorded in [[feedback-negative-grep-is-not-proof-of-absence]]-adjacent territory: a
+raw filesystem check against an unverified guessed path is not proof of absence either.
+
+**Still open, now more narrowly scoped:** *why* did DDEV's local files specifically miss
+these 126 (mostly clustered late in the original 2026-09-03 migration's fid range, with
+one exception — fid 161 is missing despite sitting between two survivors, 121 and 176,
+breaking a simple "copy stopped partway through" theory) while dev-0's copy of the same
+migration output was always complete? Checked and ruled out any *Drupal-level* edit as
+the difference -- every group referencing one of these 135 files (missing on DDEV or
+not) has the identical `changed` timestamp as the original 2026-09-03 migration/backfill
+run; nothing was touched afterward through Drupal on either environment. **Than has said
+(recalled during this session, not yet independently confirmed) that these particular
+collection-featured-images were "custom files"** -- given dev-0 was fine, this now reads
+as a plausible lead specifically about *how DDEV's local files got bootstrapped*: if
+DDEV's local environment setup pulls files via some mechanism that specifically excludes
+non-standard/hand-uploaded ("custom") files while dev-0's storage never went through
+that same bootstrap step, that would explain the DDEV-only gap precisely. **FOR THAN
+(back 2026-09-24):** worth asking directly what "custom files" meant, and separately
+worth checking `scripts/refresh-d7-staging-source.sh` / whatever populated DDEV's local
+`sites/default/files/` for anything that would selectively skip this set.
 
 ## Original 2026-09-03 finding (superseded above, kept for the specific 15 hosts already investigated)
 

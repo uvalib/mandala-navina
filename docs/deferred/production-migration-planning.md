@@ -40,29 +40,27 @@ must not be forgotten. Planning items:
   production Solr topology; confirm the prod write path (ADR 014).
 - **Freeze / delta strategy** — decide whether cutover is a single freeze-and-migrate
   or a bulk-migrate-then-catch-up-delta, given prod keeps changing during prep.
-- **Binary-file integrity verification as a mandatory cutover gate (added
-  2026-09-21).** Found via `drush mandala:missing-file-audit` (new command,
-  `mandala_migrations`): 126 of 210 `group.field_featured_image` references
-  (60%) point to a file that's genuinely gone from local disk on **both**
-  DDEV and dev-0 — `file_managed` row and the group's field reference both
-  intact, binary just missing. All 126 confirmed still live and fetchable
-  from D7 production (checked directly, not assumed), so recoverable *for
-  now* — see
-  [collection-featured-images-missing-on-production.md](collection-featured-images-missing-on-production.md).
-  The concerning part isn't this specific batch, it's what it proves: **a
-  migration reporting success does not guarantee its binaries survive.**
-  AV's near-identical HTTP `file_copy` migration lost 1 file out of 8,292
-  (0.01%); this one lost the majority — the shared migration code isn't
-  inherently unreliable, so something *environment-specific* silently
-  dropped this one batch's files after the fact (a DB snapshot restored
-  without its matching files directory is the leading theory, unconfirmed).
-  **For the real cutover:** run this audit as a mandatory gate immediately
-  after any binary file-copy phase completes, before declaring that phase
-  done — not weeks or months later. Whatever caused this specific loss
-  needs to be root-caused *before* cutover, since the same mechanism
-  (a DB-only refresh/restore step, run without its files counterpart)
-  could just as easily hit the actual cutover process itself, at a much
-  higher-stakes moment with no do-over.
+- **Binary-file integrity verification worth keeping as a standing check
+  (added 2026-09-21, scope corrected same day).** Found via `drush
+  mandala:missing-file-audit` (new command, `mandala_migrations`): 126 of
+  210 `group.field_featured_image` references (60%) pointed to a file
+  missing from local disk on DDEV. **Correction:** initially reported as
+  also confirmed missing on dev-0 -- that was wrong, caused by checking
+  dev-0's filesystem at an unverified, incorrect path (`/var/www/html/...`
+  instead of the container's real docroot,
+  `/opt/drupal/app/drupal/web/sites/default/files/`). Properly re-checked
+  via Drupal's own `file_system` service (not a raw path guess): **dev-0
+  had 0 missing files, before any fix was run there.** See
+  [collection-featured-images-missing-on-production.md](collection-featured-images-missing-on-production.md)
+  for the full correction. This was a DDEV-local sync/bootstrap gap, not a
+  cross-environment one -- the real migration output (dev-0) was intact
+  the whole time. **Softens, doesn't remove, the planning implication:**
+  a migration reporting success still doesn't guarantee a *given
+  environment's* copy of its binaries stays complete (DDEV's clearly
+  didn't), so this audit is still worth running as a standing check after
+  any binary-heavy migration or environment rebuild -- just without the
+  more alarming "even the canonical environment silently loses files"
+  framing this note originally (incorrectly) implied.
 
 ## Related
 
