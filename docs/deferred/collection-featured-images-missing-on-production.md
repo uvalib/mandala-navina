@@ -1,17 +1,50 @@
-# 15 collection/subcollection featured images 404 on production — source files missing or misnamed
+# Collection/subcollection featured images — 126 of 210 missing locally/on dev-0, but ALL recoverable from D7
 
-**Area:** migration / Images content
+**Area:** migration / Images content / infrastructure
 **Raised during:** Session 2026-09-03 (backfilling `field_featured_image` onto D11
 Group entities — see
 [docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md](../sprints/sprint-02-theme-images-ui-and-endpoint-access.md),
 Workstream B5, and
 [migrate-entity-group-update-mode-nulls-uid.md](migrate-entity-group-update-mode-nulls-uid.md)
-for the migration this surfaced during)
+for the migration this surfaced during); **corrected and dramatically expanded 2026-09-21**
+via a proper full-corpus audit (`drush mandala:missing-file-audit`, new command in
+`mandala_migrations`), built after a manual demo-content check hit one missing file.
 **Priority:** Low — cosmetic (affects the "All Collections" card grid's thumbnail and a
-collection's own page image), not a functional/data-integrity blocker. The new
-`shanti_collections_view` module already falls back to a generic default thumbnail for
-any collection with no resolvable featured image, so nothing is broken or missing
-visually — these 15 just show the default instead of their real photo.
+collection's own page image), not a functional/data-integrity blocker, and **not data
+loss** (see below). `shanti_collections_view` already falls back to a generic default
+thumbnail for any collection with no resolvable featured image, so nothing is broken or
+missing visually — affected collections just show the default instead of their real
+photo. Medium-effort, well-understood fix (re-import), not urgent.
+
+## 2026-09-21 update: the real scope is far bigger than "15," and it's fully recoverable
+
+Running the new `drush mandala:missing-file-audit --check-d7-source` found **126 of 210
+`group.field_featured_image` references (60%) point to a file missing from disk** —
+confirmed on both DDEV and dev-0, so not a local-environment-only sync gap. That's a
+large jump from the 16 (15 Images + 1 AV) known as of 2026-09-03, meaning most of the
+"135 of 150 succeeded" files from the original migration have since gone missing too,
+not just the original 15 failures.
+
+**The good news, checked directly, not assumed:** all 126 are still live and fetchable
+at their known D7 production source root (`https://images.mandala.library.virginia.edu/
+sites/mandala-images.lib.virginia.edu/files/{filename}` for the Images-sourced ones —
+every one of the 126 turned out to be Images-sourced, none AV). Spot-verified one
+directly: a live `HEAD` request returns a real `200`, `content-type: image/png`, and a
+`content-length` that matches D11's own stored `filesize` for that fid exactly —
+genuinely the same, unchanged file, not a coincidence. **This is not data loss** — the
+source is intact; D11's local file storage (in whichever environment(s) this affects)
+just never received (or later lost) the copied bytes, even though the `file_managed`
+metadata row and the group's field reference are both correct. Root cause of *why* the
+binaries are missing (a `file_copy` failure that didn't surface as a migration error?
+something later removed from storage post-migration?) is not yet investigated.
+
+**Straightforward fix, not yet built:** re-run the equivalent of `file_copy` for these
+126 fids specifically (fetch from the confirmed-live D7 URL, write to the existing
+`uri`/`fid` in place) — the `d7_image_collection_featured_image_file` source plugin already
+has the exact query/URL-construction logic to reuse; this doesn't need a new migration,
+just a targeted re-fetch for the already-known 126.
+
+## Original 2026-09-03 finding (superseded above, kept for the specific 15 hosts already investigated)
 
 ## What happened
 
