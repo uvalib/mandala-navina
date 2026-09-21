@@ -81,13 +81,93 @@ a new one.
   being ported, per this project's migrate-not-improve floor (ADR 008) --
   a disabled placeholder isn't real user-facing behavior to preserve.
 
-Not yet built: the entity/field creation (via Entity API + `config:
-export`, the established pattern for new fields this session), the
-carousel's JS rotation behavior (reuse shanti_sarvaka's existing Bootstrap
-5 stack, already loaded site-wide, rather than a new JS dependency), and
-wiring `mandala_home`'s controller/template to render the block instance
-above the placeholder's existing Images/AV links.
+**BUILT 2026-09-21.** All three previously-open build items landed:
+
+- Entity/field creation via Entity API + `config:export` (established
+  pattern): `mandala_home_slide` paragraph type + its 3 fields,
+  `mandala_home_carousel` block_content type (revisionable) + its 2
+  fields, plus default form/view displays for both. The paragraph's own
+  view display is a normal one (image/link/string formatters); the block
+  type's view display has both fields hidden -- rendering is custom (see
+  below), matching the same hidden-field-plus-custom-render pattern AV's
+  own paragraph fields already use.
+- Carousel rendering: `mandala_home`'s own `mandala_home_carousel` theme
+  hook + Twig template, plain Bootstrap 5 carousel markup
+  (`data-bs-ride`/`data-bs-interval`) -- no new JS dependency, confirmed
+  `bootstrap5-js-latest` is already globally attached via the base
+  theme's own `libraries:` list.
+- Wiring: `HomeController::carousel()` loads the single
+  `mandala_home_carousel` block_content instance (if one exists with
+  slides), builds the image URL via the `wide` image style, and passes a
+  render array into `mandala-home.html.twig` above the existing
+  Images/AV links. No block-placement UI is used -- this whole page's
+  markup already comes from this one controller/template, so the
+  carousel is pulled in the same way rather than via Block Layout region
+  visibility rules.
+
+Verified end-to-end in DDEV: a temporary 2-slide test block rendered
+correct Bootstrap 5 markup (indicators, controls, per-slide
+`data-bs-interval`, image-style URL, link-wrapped image, caption), then
+deleted -- this was disposable verification data, not curated content.
+`config:status` clean before and after; the `config:export` run also
+picked up ~17 files of pure re-serialization noise (comment stripping,
+quote-style changes) from unrelated pre-existing config, reverted
+unchanged.
 
 Still open, unchanged from before: who curates the actual slide
-content/copy (Carla? David Germano?) -- editorial, not engineering, and
-doesn't block the build above from proceeding.
+content/copy (Carla? David Germano?) -- editorial, not engineering. The
+two static feature panels ("Scholarly Collections"/"Knowledge Maps") are
+also still not built (plain Basic block, per the decision above) --
+next engineering step once someone wants them.
+
+**A second, deliberately-kept demo block exists live on DDEV as of
+2026-09-21** (`block_content` id 2, `info: "Mandala Home Carousel
+(demo)"`, 3 slides -- Potala Palace/Tibetan mountain stream/Upper Tsum,
+real files already in the DDEV DB). Kept on request so it can be looked
+at directly rather than cleaned up like the first (disposable,
+2-slide) verification pass. Not curated content -- don't mistake it for
+a real editorial decision if found in a later session; safe to delete
+once real content exists or whenever it's no longer useful.
+
+## Bookmarked 2026-09-21: who/how manages carousel content long-term
+
+Raised while looking at the demo: carousel content shouldn't be
+editable by specific named people (that doesn't survive staff turnover
+and isn't how the rest of this project's access model works) -- it
+should gate on a **Drupal role**, consistent with ADR 015's global
+`content_editor` model, not per-group Group roles (there's no
+group/collection context for the home page). Management should
+probably also get a **friendlier UI** than core's generic "Custom
+block library" screen (`/admin/content/block`) eventually.
+
+**Not being implemented now** -- explicitly deferred until someone
+actually needs to manage this content in production. What's worth
+recording so that later work doesn't start from zero:
+
+- **The permission hook already exists, for free.** Because
+  `mandala_home_carousel` is its own `block_content` bundle, core's
+  `BlockContentPermissions::blockTypePermissions()` already generates
+  per-bundle permissions --
+  `create mandala_home_carousel block content`,
+  `edit any mandala_home_carousel block content`,
+  `delete any mandala_home_carousel block content`, etc. (see
+  `core/modules/block_content/src/BlockContentPermissions.php`). Scoping
+  a role to *just* this block type needs zero new code -- just granting
+  those specific permissions to a role, the same shape as `content_editor`
+  in `user.role.content_editor.yml` today (which currently has none of
+  these -- it would need them added, or a new narrower role created
+  instead of widening `content_editor` itself).
+- **Avoid `administer blocks`/`administer block content`** for this --
+  both are broad, unscoped ("restrict access: TRUE" in core), covering
+  every block type and block *placement* sitewide, not just this one
+  editorial surface.
+- **UI**: core's `/admin/content/block` list + the standard entity
+  add/edit form (already confirmed working end-to-end this session,
+  including the `paragraphs` widget for adding/reordering/editing
+  slides) is a legitimate v1 -- functional today, no extra engineering
+  needed to hand someone real curation work. A friendlier
+  purpose-built UI (e.g. scoped just to this one block instance,
+  hiding the generic block-library chrome) is the "should probably"
+  the user flagged, not a requirement -- worth another look once a
+  real curator is actually using this regularly and finds the generic
+  screen awkward.

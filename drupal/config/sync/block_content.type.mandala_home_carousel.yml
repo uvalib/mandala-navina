@@ -1,0 +1,8 @@
+uuid: 665d62e1-bd21-4a9b-af58-7f95a819ea84
+langcode: en
+status: true
+dependencies: {  }
+id: mandala_home_carousel
+label: 'Mandala Home Carousel'
+revision: true
+description: 'Hero carousel slides for the Mandala home page. Add/reorder/edit slides here -- no deploy needed. See docs/deferred/mandala-home-customizable-content-system.md.'

@@ -20,3 +20,134 @@
   margin-bottom: 0.4rem;
   color: #555;
 }
+
+/*
+ * shanti_sarvaka's aggregate CSS already styles bare `.carousel` for some
+ * other, unrelated use elsewhere in the theme -- a fixed, responsive
+ * height per breakpoint (26.5rem/28.5rem/32.5rem) plus padding, with no
+ * `.carousel-inner { overflow: hidden }` to go with it. Our slides render
+ * at their native aspect ratio, which is taller than that fixed box, so
+ * the image spills past it. Rather than guess a height of our own that
+ * would drift from that theme rule's breakpoints, cascade `height: 100%`
+ * down to the image so it always exactly fills whatever height the
+ * theme's own `.carousel` rule resolves to at the current breakpoint,
+ * cropping via `object-fit: cover`.
+ */
+#mandala-home-carousel {
+  /*
+   * That same leftover theme rule pads `.carousel` asymmetrically
+   * (2.5rem/2em/1rem/3rem -- top/right/bottom/left), so the image (which
+   * fills the padding-inset content box) sits visibly low and right of
+   * the outer box's true center rather than centered in it. Our image
+   * already fills the frame edge to edge via object-fit: cover, so there's
+   * no content here that needs the padding's breathing room in the first
+   * place -- remove it rather than trying to match it symmetrically.
+   *
+   * Using the id, not `.mandala-home-carousel`, because the theme's rule
+   * targets the bare `.carousel` class -- same specificity as a single
+   * class selector, and the theme's aggregate loads after this module's,
+   * so a same-specificity class override here would just lose the
+   * cascade. The id wins regardless of load order.
+   */
+  padding: 0;
+}
+
+.mandala-home-carousel .carousel-inner {
+  overflow: hidden;
+  height: 100%;
+}
+
+.mandala-home-carousel .carousel-item,
+.mandala-home-carousel .carousel-item img {
+  height: 100%;
+  object-fit: cover;
+}
+
+/*
+ * Bootstrap's default controls/caption are subtle by design (thin chevrons
+ * at 50% opacity, plain white text with no backing) -- against a busy
+ * photo they disappear. Give both a solid backing so they read regardless
+ * of what's underneath.
+ */
+.mandala-home-carousel .carousel-control-prev,
+.mandala-home-carousel .carousel-control-next {
+  width: 4rem;
+  opacity: 1;
+}
+
+.mandala-home-carousel .carousel-control-prev-icon,
+.mandala-home-carousel .carousel-control-next-icon {
+  width: 3rem;
+  height: 3rem;
+  padding: 0.6rem;
+  background-color: rgba(0, 0, 0, 0.55);
+  background-size: 60%;
+  border-radius: 50%;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.mandala-home-carousel .carousel-control-prev:hover .carousel-control-prev-icon,
+.mandala-home-carousel .carousel-control-next:hover .carousel-control-next-icon {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.mandala-home-carousel .carousel-caption {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  /* Bottom padding is the gap above the indicator dots (also bottom: 0,
+     their own ~23px tall including Bootstrap's built-in hit-area border) --
+     given room to breathe rather than sitting right on top of them. */
+  padding: 3rem 1.5rem 3.25rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.4) 65%, rgba(0, 0, 0, 0) 100%);
+}
+
+.mandala-home-carousel .carousel-caption p {
+  margin-bottom: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+/*
+ * The link target's own title/caption is the caption text itself -- no
+ * separate "Listen" line underneath, which used to sit low enough to
+ * overlap the indicator dots. The icon at the end signals "go to this"
+ * without needing its own line.
+ */
+.mandala-home-carousel .carousel-caption a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #fff;
+  text-decoration: none;
+}
+
+.mandala-home-carousel .carousel-caption a:hover {
+  text-decoration: underline;
+}
+
+.mandala-home-carousel-caption-icon {
+  flex-shrink: 0;
+  font-size: 0.85em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+/*
+ * Same source as the `.carousel`/`.carousel-inner` overrides above: the
+ * theme's other, unrelated carousel styling also carries its own
+ * `.carousel-indicators { width: 30rem; margin-left: -15rem; ... }`
+ * (a fixed-width, `left: 50%`-style centering trick, but without the
+ * `left: 50%` half of it -- it's paired with Bootstrap's own `left: 0`
+ * instead), which knocks the indicators off-center regardless of dot
+ * count. Restore Bootstrap 5's own default (full-width flex row,
+ * `justify-content: center`), which centers correctly no matter how
+ * many indicators there are.
+ */
+.mandala-home-carousel .carousel-indicators {
+  left: 0;
+  width: auto;
+  margin-left: 0;
+  margin-right: 0;
+  bottom: 0;
+}

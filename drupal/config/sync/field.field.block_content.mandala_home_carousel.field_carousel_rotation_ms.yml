@@ -1,0 +1,25 @@
+uuid: 41d0019a-6d8b-4938-854b-1cd1e8afd507
+langcode: en
+status: true
+dependencies:
+  config:
+    - block_content.type.mandala_home_carousel
+    - field.storage.block_content.field_carousel_rotation_ms
+id: block_content.mandala_home_carousel.field_carousel_rotation_ms
+field_name: field_carousel_rotation_ms
+entity_type: block_content
+bundle: mandala_home_carousel
+label: 'Rotation interval (ms)'
+description: ''
+required: true
+translatable: true
+default_value:
+  -
+    value: 5000
+default_value_callback: ''
+settings:
+  min: 500
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

@@ -1,0 +1,20 @@
+uuid: 770e35a3-8e38-4824-8112-edb7d8d360b4
+langcode: en
+status: true
+dependencies:
+  module:
+    - block_content
+id: block_content.field_carousel_rotation_ms
+field_name: field_carousel_rotation_ms
+entity_type: block_content
+type: integer
+settings:
+  unsigned: true
+  size: normal
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,16 +1,18 @@
 {#
 /**
  * @file
- * Placeholder Mandala home page. See HomeController's docblock -- the real
- * curated content (hero carousel, feature panels) D7's home page carried is
- * deliberately not ported here yet
- * (docs/deferred/mandala-home-customizable-content-system.md); this just
+ * Mandala home page. See HomeController's docblock -- the hero carousel
+ * (mandala_home_carousel block_content + mandala_home_slide paragraphs,
+ * docs/deferred/mandala-home-customizable-content-system.md) renders above
+ * the links when an editor has added one with slides; the two static
+ * feature panels D7 had are not yet built. Below the carousel, this also
  * links to the two landing pages that do exist, plus (for demo purposes) a
  * small hand-picked list of sample content under each showing off real
  * fixes from this session's work.
  */
 #}
 <div class="mandala-home">
+  {{ carousel }}
   <h1>{{ 'Mandala'|t }}</h1>
   <p>{{ 'Explore the Mandala Digital Library collections.'|t }}</p>
   <ul class="mandala-home-links">
