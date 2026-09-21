@@ -109,3 +109,4 @@ nav:
   - "AV4: 42 paragraph-ordering ties -- unconfirmed tiebreak": av4-paragraph-ordering-ties.md
   - "AV4: 84 und/en content differences -- never reviewed": av4-84-und-en-content-differences.md
   - "AV2: field_tags \"Tags Old\" label inconsistency": av2-field-tags-old-label-inconsistency.md
+  - "AV migration verify: orphaned-paragraph count drifted 3 -> 2": av-migration-verify-orphan-count-drift.md
