@@ -8,6 +8,14 @@ Monorepo for the Mandala Digital Library platform at the University of Virginia 
 
 ## Session startup
 
+Run `./scripts/session-start-check.sh` first (`--local-only` if dev-0 is
+unreachable, e.g. no VPN). It automates steps 1 and 3 below — git sync, and
+the DB/config parity check against dev-0 — and exits nonzero if anything
+needs attention before you proceed. Step 2 (reading the docs) is a
+judgment call and stays manual; the script only prints pointers to the
+right files. **This script and the checklist below are kept in sync
+deliberately — if you change one, update the other in the same PR.**
+
 At the start of every session, before doing any work:
 
 1. Run `git status` then `git pull --ff-only` (in this repo directory) to make sure local is current — since sessions are driven by different team members on different machines, a stale local copy is a recurring source of working from outdated context. If the pull isn't a fast-forward, stop and surface it rather than resolving it silently.
@@ -30,7 +38,14 @@ This ensures all team members' Claude instances start from the same shared conte
 Development is driven collaboratively — team members take turns leading sessions. Key practices:
 
 - **One repo, one session.** Always open Claude Code from this directory. Never work on Mandala from a legacy repo directory.
-- **Session end ritual.** Before closing a significant session:
+- **Session end ritual.** Run `./scripts/session-close-check.sh` first — it
+  checks the two mechanical traps (a doc that exists but never made it into
+  its directory's `.pages` nav or `README.md` index; uncommitted or
+  unpushed work) and prints the remaining judgment steps as a reminder. It
+  does not replace the steps below, only catches the parts that are
+  objectively checkable. **Kept in sync with this checklist deliberately —
+  if you change one, update the other in the same PR.** Before closing a
+  significant session:
   1. Flush any decisions to `docs/adr/`, findings to `docs/spikes/`, and deferred notes to `docs/deferred/`.
   2. Update the corresponding `.pages` file for every directory you added a doc to (`docs/adr/.pages`, `docs/spikes/.pages`, `docs/deferred/.pages`). New files are invisible in mkdocs until listed there. `docs/session-logs/.pages` uses `...` and self-updates.
   3. Run `scripts/save-session-log.py` for long planning or spike sessions.
