@@ -106,6 +106,16 @@ Deployment follows the UVA Library standard pattern (same as drupal-dsf, drupal-
 - `pipeline/deployspec.yml` — Terraform + Ansible deploy
 - Terraform in `uvalib/terraform-infrastructure/mandala/drupal/`
 
+Merging to `main` already triggers a deploy via GitHub webhook — don't also
+call `start-pipeline-execution` manually, or you'll create a real duplicate
+(known trap, see `feedback-codepipeline-webhook-auto-triggers` memory).
+After merging, find the webhook-triggered execution
+(`aws codepipeline list-pipeline-executions ...`) and watch **that specific
+execution ID** — `./scripts/watch-deploy.sh <execution-id>` — rather than
+polling the pipeline's own `latestExecution.status`, which lags behind
+which execution is actually current and can read a previous run's stale
+"Succeeded" right after triggering a fresh one.
+
 ## Related Repositories (legacy — being consolidated here)
 
 - `mandala-drupal` — D7 source codebase
