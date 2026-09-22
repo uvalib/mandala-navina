@@ -1,9 +1,33 @@
 <?php
 
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+
 /**
  * @file
  * Site-wide Mandala home page -- see HomeController's docblock.
  */
+
+/**
+ * Implements hook_block_content_view_alter().
+ *
+ * Single source of truth for the carousel's presentation: whenever a
+ * mandala_home_carousel block_content entity is rendered through Drupal's
+ * normal entity view builder -- HomeController's own lookup today, or a
+ * future Block Layout / Layout Builder placement -- swap the generic
+ * field-list $build for the real Bootstrap carousel markup. See
+ * CarouselBuilder's own docblock for why this lives here as a hook rather
+ * than only inline in the controller.
+ */
+function mandala_home_block_content_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
+  if ($entity->bundle() !== 'mandala_home_carousel') {
+    return;
+  }
+  $carousel = \Drupal::service('mandala_home.carousel_builder')->build($entity);
+  if ($carousel) {
+    $build = $carousel;
+  }
+}
 
 /**
  * Implements hook_theme().

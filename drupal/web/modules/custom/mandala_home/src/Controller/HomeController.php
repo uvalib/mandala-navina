@@ -6,7 +6,6 @@ namespace Drupal\mandala_home\Controller;
 
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\image\Entity\ImageStyle;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -56,10 +55,14 @@ class HomeController implements ContainerInjectionInterface {
    * Builds the hero carousel render array from the single
    * mandala_home_carousel block_content instance, if one exists with
    * slides. Editors manage its content through the normal "Custom block
-   * library" admin UI; there is deliberately no block-placement UI wiring
-   * here (see docs/deferred/mandala-home-customizable-content-system.md) --
-   * this page's whole markup already comes from this controller/template,
-   * so the carousel is pulled in the same way.
+   * library" admin UI. Rendering goes through the entity's own view
+   * builder (not a hand-built array here) so this looks and behaves
+   * identically if the same block is ever placed via Block Layout or
+   * Layout Builder instead of this hardcoded route -- see
+   * CarouselBuilder and mandala_home_block_content_view_alter() for where
+   * the actual markup comes from, and
+   * docs/deferred/mandala-home-customizable-content-system.md for the
+   * still-undecided direction this is meant to already be compatible with.
    */
   private function carousel(): ?array {
     $storage = $this->entityTypeManager->getStorage('block_content');
@@ -68,62 +71,7 @@ class HomeController implements ContainerInjectionInterface {
     if (!$block || $block->get('field_carousel_slides')->isEmpty()) {
       return NULL;
     }
-
-    $image_style = ImageStyle::load('wide');
-    $slides = [];
-    foreach ($block->get('field_carousel_slides')->referencedEntities() as $slide) {
-      if ($slide->get('field_slide_image')->isEmpty()) {
-        continue;
-      }
-      $image_item = $slide->get('field_slide_image')->first();
-      $file = $image_item->entity;
-      if (!$file) {
-        continue;
-      }
-      $link_item = $slide->get('field_slide_link')->isEmpty() ? NULL : $slide->get('field_slide_link')->first();
-      $link_url = $link_item ? $link_item->getUrl() : NULL;
-      $slides[] = [
-        'image_url' => $image_style ? $image_style->buildUrl($file->getFileUri()) : $file->createFileUrl(),
-        'image_alt' => $image_item->alt ?? '',
-        'caption' => $slide->get('field_slide_caption')->value ?? '',
-        'link_url' => $link_url ? $link_url->toString() : NULL,
-        'link_title' => $link_item ? $link_item->title : NULL,
-        'link_type' => $link_url ? $this->linkedAssetType($link_url) : NULL,
-      ];
-    }
-    if (!$slides) {
-      return NULL;
-    }
-
-    return [
-      '#theme' => 'mandala_home_carousel',
-      '#slides' => $slides,
-      '#rotation_ms' => (int) $block->get('field_carousel_rotation_ms')->value,
-      '#cache' => ['tags' => $block->getCacheTags()],
-    ];
-  }
-
-  /**
-   * Maps a slide link to an asset-type icon key ('audio'/'video'/'image'),
-   * by resolving it to the node it actually points at (if it's a node link
-   * at all -- a collection/group link, or an external URL, has no single
-   * asset type, so those fall back to the template's generic icon).
-   */
-  private function linkedAssetType($url): ?string {
-    if (!$url->isRouted() || $url->getRouteName() !== 'entity.node.canonical') {
-      return NULL;
-    }
-    $nid = $url->getRouteParameters()['node'] ?? NULL;
-    $node = $nid ? $this->entityTypeManager->getStorage('node')->load($nid) : NULL;
-    if (!$node) {
-      return NULL;
-    }
-    return match ($node->bundle()) {
-      'audio' => 'audio',
-      'video' => 'video',
-      'shanti_image' => 'image',
-      default => NULL,
-    };
+    return $this->entityTypeManager->getViewBuilder('block_content')->view($block);
   }
 
   /**
