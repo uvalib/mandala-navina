@@ -8,3 +8,5 @@ dependencies:
   - drupal:image
   - drupal:link
   - paragraphs:paragraphs
+  - mandala_kaltura:mandala_kaltura
+  - shanti_iiif:shanti_iiif

@@ -1,0 +1,5 @@
+services:
+  mandala_home.carousel_builder:
+    class: Drupal\mandala_home\CarouselBuilder
+    arguments:
+      - '@entity_type.manager'
