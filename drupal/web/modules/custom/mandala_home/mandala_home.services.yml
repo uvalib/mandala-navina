@@ -3,3 +3,8 @@ services:
     class: Drupal\mandala_home\CarouselBuilder
     arguments:
       - '@entity_type.manager'
+  mandala_home.carousel_seeder:
+    class: Drupal\mandala_home\CarouselSeeder
+    arguments:
+      - '@entity_type.manager'
+      - '@file.repository'

@@ -1,0 +1,39 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for mandala_home.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Seeds the default hero carousel the first time this module is ever
+ * enabled in an environment -- a fresh DDEV rebuild, staging if wiped, or
+ * production's first deploy. Deliberately hook_install(), not
+ * hook_update_N(): this only fires once, on first install, and never
+ * again -- update hooks fire on every environment's NEXT deploy
+ * regardless of whether the module was already installed, which is the
+ * wrong trigger for a module shipping its own default content.
+ *
+ * This does NOT retroactively fix an environment where mandala_home is
+ * already installed (dev-0, as of 2026-09-22) -- hook_install() only
+ * fires on a genuinely new install. Use `drush mandala:home-carousel-seed`
+ * for that; both call the same CarouselSeeder::seed(), so there's one
+ * source of truth either way.
+ *
+ * Whether this curated DEMO content (not real editorial curation) is
+ * actually what should land automatically on production's own first
+ * install is still an open call, not resolved here -- see
+ * docs/deferred/mandala-home-customizable-content-system.md.
+ */
+function mandala_home_install($is_syncing) {
+  if ($is_syncing) {
+    // Config sync never carries content -- guard anyway, since a fresh
+    // config:import bringing this module into core.extension.yml for the
+    // first time still fires hook_install(), and creating content mid-
+    // config-import is the wrong moment for it.
+    return;
+  }
+  \Drupal::service('mandala_home.carousel_seeder')->seed();
+}
