@@ -5,7 +5,8 @@
 # Implements CLAUDE.md's "Session startup" steps 1 and 3:
 #   1. git sync (status + pull --ff-only, stop if it doesn't fast-forward)
 #   3. local DDEV DB/config vs dev-0 parity (config:status, content/identity
-#      counts, config/sync pushed to GitHub)
+#      counts, config/sync pushed to GitHub, and an advisory spot-check for
+#      D11 id drift between environments -- see step 3d's own comment)
 #
 # Step 2 (reading docs/adr, docs/spikes, docs/deferred, docs/session-logs)
 # is a judgment task -- this script only prints pointers to make that faster,
@@ -157,6 +158,78 @@ elif [ -n "$SYNC_DIFF" ]; then
   fail "drupal/config/sync differs from origin/main (committed locally but not pushed?)"
 else
   pass "drupal/config/sync matches origin/main, nothing uncommitted"
+fi
+echo
+
+# ── 3d. ID-drift spot-check: does a D11 node id mean the same node in ──────
+#        both environments? (advisory, not pass/fail) ──────────────────────
+echo "=== 3d. Same-node-id spot-check (local vs dev-0) ==="
+echo "Not a gate -- drift here is EXPECTED once you've re-run migrations"
+echo "locally (each environment's D11 ids are an artifact of its own"
+echo "migration/rollback history, never a portable identifier). This is a"
+echo "standing reminder, not a failure: application code must resolve"
+echo "content via field_legacy_site + field_legacy_nid (ADR 017), never a"
+echo "hardcoded D11 id. Confirmed incident + fix: PRs #238/#239, and"
+echo "docs/deferred/migration-legacy-nid-required-convention.md."
+
+if [ "$LOCAL_ONLY" -eq 1 ]; then
+  echo "(skipped -- --local-only)"
+else
+  read -r -d '' DRIFT_SAMPLE_PHP <<'PHP' || true
+$db = \Drupal::database();
+$rows = $db->query("SELECT n.entity_id AS nid, n.field_legacy_nid_value AS lnid, s.field_legacy_site_value AS site
+  FROM {node__field_legacy_nid} n
+  JOIN {node__field_legacy_site} s ON s.entity_id = n.entity_id
+  ORDER BY RAND() LIMIT 25")->fetchAll();
+foreach ($rows as $r) {
+  echo $r->site . '|' . $r->lnid . '|' . $r->nid . "\n";
+}
+PHP
+  DRIFT_B64="$(printf '%s' "$DRIFT_SAMPLE_PHP" | base64 | tr -d '\n')"
+  LOCAL_SAMPLE="$(ddev drush eval "eval(base64_decode('$DRIFT_B64'));" 2>/dev/null)"
+
+  if [ -z "$LOCAL_SAMPLE" ]; then
+    warn "no field_legacy_nid rows found locally -- skipping drift spot-check"
+  else
+    PAIRS="$(echo "$LOCAL_SAMPLE" | awk -F'|' '{print $1":"$2}' | tr '\n' ',' | sed 's/,$//')"
+    read -r -d '' DRIFT_CHECK_TEMPLATE <<'PHP' || true
+$pairs = explode(',', 'PAIRS_PLACEHOLDER');
+$db = \Drupal::database();
+foreach ($pairs as $p) {
+  if (!str_contains($p, ':')) { continue; }
+  [$site, $lnid] = explode(':', $p);
+  $row = $db->query("SELECT n.entity_id AS nid FROM {node__field_legacy_nid} n
+    JOIN {node__field_legacy_site} s ON s.entity_id = n.entity_id
+    WHERE n.field_legacy_nid_value = :lnid AND s.field_legacy_site_value = :site",
+    [':lnid' => $lnid, ':site' => $site])->fetchField();
+  echo $site . '|' . $lnid . '|' . ($row ?: 'MISSING') . "\n";
+}
+PHP
+    DRIFT_CHECK_PHP="${DRIFT_CHECK_TEMPLATE/PAIRS_PLACEHOLDER/$PAIRS}"
+    DRIFT_CHECK_B64="$(printf '%s' "$DRIFT_CHECK_PHP" | base64 | tr -d '\n')"
+    REMOTE_SCRIPT="cd $DEV0_DOCROOT && vendor/bin/drush eval 'eval(base64_decode(\"$DRIFT_CHECK_B64\"));'"
+    REMOTE_B64="$(printf '%s' "$REMOTE_SCRIPT" | base64 | tr -d '\n')"
+
+    DEV0_SAMPLE="$(ssh -i "$DEV0_SSH_KEY" -o ConnectTimeout=10 -o BatchMode=yes \
+      "$DEV0_SSH_USER@$DEV0_SSH_HOST" \
+      "sudo docker exec $DEV0_CONTAINER sh -c \"echo $REMOTE_B64 | base64 -d | sh\"" 2>/dev/null)"
+
+    if [ -z "$DEV0_SAMPLE" ]; then
+      warn "could not reach dev-0 for drift spot-check"
+    else
+      DRIFT_DIFF="$(diff <(echo "$LOCAL_SAMPLE" | sort) <(echo "$DEV0_SAMPLE" | sort))"
+      if [ -z "$DRIFT_DIFF" ]; then
+        pass "sampled $(echo "$LOCAL_SAMPLE" | grep -c .) legacy-identity pairs -- same D11 nid in both environments"
+      else
+        warn "D11 nid MISMATCH for the same content between local and dev-0 (< local / > dev-0):"
+        echo "$DRIFT_DIFF" | sed 's/^/  /'
+        echo "  -> NOT a bug by itself -- expected after local migration re-runs."
+        echo "     If you're writing code that references specific content (a demo"
+        echo "     list, a hardcoded reference node, anything), resolve it via"
+        echo "     field_legacy_site + field_legacy_nid, never the raw id shown above."
+      fi
+    fi
+  fi
 fi
 echo
 

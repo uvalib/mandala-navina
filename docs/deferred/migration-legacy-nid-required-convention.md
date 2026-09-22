@@ -209,3 +209,41 @@ that were weighed:
 Retrofitting a discriminator across already-migrated rows is materially harder than
 populating it in the migration that creates them — which is why this belongs in the
 convention, before Texts/Sources/AV, rather than in whatever later work first trips over it.
+
+## Extension 2026-09-22: the same discipline applies to application code, not just migrations and redirects
+
+The convention above was written for migration authors and the two known
+consumers (URL redirects, the `uid_legacy_s` shim). A third, broader case
+showed up live: **any application code that hardcodes a D11 node/entity id
+is exposed to the same problem, even with `field_legacy_nid`/
+`field_legacy_site` populated correctly everywhere.**
+
+Confirmed with data: DDEV's and dev-0's AV node ids diverged by a clean,
+uniform **+4187** offset (every AV node checked -- 11 total -- is DDEV's id
+minus exactly 4187 to reach dev-0's id, zero exceptions; Images and Groups
+showed zero drift in the same sampling). Most likely cause: a full
+AV-sized migration batch was created and rolled back once during DDEV's
+own local migration-development history -- explicitly normal, sanctioned
+work per this doc's own domain -- permanently consuming that many
+`AUTO_INCREMENT` values (MySQL never reclaims them) before the
+currently-live migration ran. **Per-bundle node counts matching exactly
+between two environments says nothing about per-node id identity
+matching** -- that was the trap: DDEV and dev-0 had identical audio/video/
+image counts, which looked like proof of parity but wasn't.
+
+**Two real, live features silently showed wrong content on dev-0 as a
+result** (real nodes, just not the intended ones, sometimes even the wrong
+bundle), caught only by direct investigation, not by any error -- fixed in
+PRs #236/#238 (`CarouselSeeder`) and #239 (`HomeController::avSamples()`),
+both resolving via `field_legacy_site`/`field_legacy_nid` lookups instead
+of a hardcoded id.
+
+**New standing rule, not migration-specific:** never write
+`$storage->load($someHardcodedId)` for content referenced by a literal id
+in code (a demo/sample list, a curated reference node, anything similar).
+Resolve via the legacy composite key instead. See CLAUDE.md's own "Content
+identity across environments" section (added the same day) for the
+short version every session sees, and `scripts/session-start-check.sh`'s
+step 3d for an automated, advisory (non-blocking) spot-check that samples
+legacy-identity pairs and flags when local and dev-0 disagree on which
+D11 id they resolve to.

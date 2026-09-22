@@ -91,6 +91,26 @@ ddev drush cache:rebuild      # Clear caches
 
 Site URL: https://mandala.ddev.site
 
+## Content identity across environments
+
+**Never hardcode a raw D11 node/entity id in application code.** Each
+environment (DDEV, dev-0, staging, and eventually production) has its own
+independent migration/rollback history, so the same D7 content can land
+on a *different* D11 id in each one — confirmed 2026-09-22: DDEV's and
+dev-0's AV node ids diverged by a clean, uniform offset after a local
+migration re-run, silently showing wrong demo content on dev-0's home
+page until caught (PRs #236/#238/#239). This will recur — migration
+development on DDEV routinely involves rollback/re-run cycles, and
+that's expected, not a mistake to avoid.
+
+Resolve content via `field_legacy_site` + `field_legacy_nid` instead
+(ADR 017's composite key), never a direct `->load($id)` on a value
+written into code. See
+`docs/deferred/migration-legacy-nid-required-convention.md` for the full
+convention, and `scripts/session-start-check.sh`'s step 3d for an
+automated, non-blocking spot-check that surfaces id drift between local
+and dev-0 every session.
+
 ## Custom Modules
 
 All custom modules live in `drupal/web/modules/custom/`. Key modules:
