@@ -250,3 +250,29 @@ list instead, since the real markup only existed in the controller's
 own bypass logic. This doesn't resolve the mechanism choice itself,
 just removes one concrete way the current build would otherwise have
 been incompatible with whichever mechanism gets picked.
+
+**Seeding mechanism decided, same session**: the actual entity-creation
+logic (the curated node list + thumbnail resolution + block/paragraph
+creation) was extracted into a `CarouselSeeder` service, called by two
+callers that need different triggers:
+- `drush mandala:home-carousel-seed` (manual) -- what actually fixed
+  dev-0, since a module already installed in an environment never gets
+  a fresh `hook_install()` run.
+- `mandala_home_install()` (`hook_install()`, new `mandala_home.install`)
+  -- fires automatically, exactly once, the first time this module is
+  ever installed in a NEW environment (a fresh DDEV rebuild, staging if
+  wiped, production's first deploy). Deliberately **not**
+  `hook_update_N()`: that fires on every environment's next deploy
+  regardless of whether the module was already there, the wrong trigger
+  for a module shipping its own default content.
+
+**Still open, not resolved by this**: whether this curated DEMO content
+(hand-picked Tibetan/Chinese AV + Images nodes showcasing this sprint's
+fixes, not real editorial curation) is actually what should land
+automatically the first time production installs this module. Both
+`hook_install()` and the drush command create the exact same content --
+the risk is specifically the automatic trigger firing unattended on
+production's own first deploy. Revisit before production cutover:
+either remove/guard `mandala_home_install()` by then, or confirm real
+curated content will already exist through some other path before that
+first install happens.
