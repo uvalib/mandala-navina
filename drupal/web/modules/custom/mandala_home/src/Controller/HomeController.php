@@ -44,7 +44,7 @@ class HomeController implements ContainerInjectionInterface {
     return [
       '#theme' => 'mandala_home',
       '#carousel' => $this->carousel(),
-      '#av_samples' => $this->buildSamples($this->avSamples()),
+      '#av_samples' => $this->buildAvSamples(),
       '#image_samples' => $this->buildSamples($this->imageSamples()),
       '#group_samples' => $this->groupSamples(),
       '#attached' => ['library' => ['mandala_home/home']],
@@ -80,17 +80,32 @@ class HomeController implements ContainerInjectionInterface {
    * corpus (mostly Tibetan/Himalayan oral culture, some Chinese
    * translations) rather than the handful of unrelated English-language
    * test content also present.
+   *
+   * Keyed by D7 legacy nid (site is always 'audio-video', ADR 017's
+   * composite key), NOT D11 nid. Confirmed 2026-09-22: DDEV's and dev-0's
+   * AV node ids have diverged by a clean, uniform +4187 (every AV node in
+   * DDEV is dev-0's id + 4187, no exceptions found; Images and Groups are
+   * unaffected) -- most likely a full AV-sized migration batch created
+   * and rolled back once during DDEV's own local migration-development
+   * history, permanently consuming that many AUTO_INCREMENT values
+   * (MySQL never reclaims them) before the currently-live migration ran.
+   * A D11-nid-keyed list here silently showed WRONG content on dev-0 --
+   * real nodes, just not the intended ones, sometimes even the wrong
+   * bundle (an audio pick resolving to an unrelated video) -- and nothing
+   * errored, so it went unnoticed until checked directly. See
+   * CarouselSeeder's own docblock for the same fix applied there first,
+   * and buildAvSamples() below for the resolution.
    */
   private function avSamples(): array {
     return [
-      126524 => 'Multi-language description list (6 translations across English/Tibetan/Chinese, collapsed by default) + owning collection link + corrected Technical Metadata (the instantiation single-valued-winner scoring bug) + Kaltura duration',
-      121099 => 'Bsang offering ritual -- Related Media now populated (field_relation_identifier backfill, was empty on 6,114 paragraphs before the migration-ordering fix)',
-      115866 => 'Tibetan folktale recording -- Video/Audio Overview always shows date/title even with no creator or description (previously the whole block was silently suppressed on 16 nodes corpus-wide)',
-      122368 => 'Tibetan song -- duration now sourced from the real Kaltura media length, not PBCore\'s catalog value, which disagrees here by several minutes (see docs/deferred/av15-pbcore-duration-vs-kaltura-duration.md)',
-      116965 => 'Tulku Urgyen Buddhist teaching -- Availability & Access panel (field_available_from) populated with real data',
-      116809 => 'Bhutanese oral account of local deities -- Technical Metadata/Details panels with real PBCore + KMaps data',
-      121384 => 'Amdo (Rebgong) folktale, video -- same Technical Metadata fix as the flagship node, different region',
-      115874 => 'Kham-region song recording -- another Technical Metadata/instantiation example, different region again',
+      33126 => 'Multi-language description list (6 translations across English/Tibetan/Chinese, collapsed by default) + owning collection link + corrected Technical Metadata (the instantiation single-valued-winner scoring bug) + Kaltura duration',
+      1773 => 'Bsang offering ritual -- Related Media now populated (field_relation_identifier backfill, was empty on 6,114 paragraphs before the migration-ordering fix)',
+      1793 => 'Tibetan folktale recording -- Video/Audio Overview always shows date/title even with no creator or description (previously the whole block was silently suppressed on 16 nodes corpus-wide)',
+      3551 => 'Tibetan song -- duration now sourced from the real Kaltura media length, not PBCore\'s catalog value, which disagrees here by several minutes (see docs/deferred/av15-pbcore-duration-vs-kaltura-duration.md)',
+      24621 => 'Tulku Urgyen Buddhist teaching -- Availability & Access panel (field_available_from) populated with real data',
+      11986 => 'Bhutanese oral account of local deities -- Technical Metadata/Details panels with real PBCore + KMaps data',
+      2229 => 'Amdo (Rebgong) folktale, video -- same Technical Metadata fix as the flagship node, different region',
+      1801 => 'Kham-region song recording -- another Technical Metadata/instantiation example, different region again',
     ];
   }
 
@@ -117,6 +132,34 @@ class HomeController implements ContainerInjectionInterface {
       16913 => 'Mural of Guru Dragphur, a form of Guru Rinpoché (Tsering Gyalpo Collection)',
       17032 => 'Maitreya, Buddha of the Future, mural (Tsering Gyalpo Collection)',
     ];
+  }
+
+  /**
+   * Resolves avSamples()'s legacy_nid => blurb map to the same link +
+   * description shape buildSamples() produces, but via
+   * field_legacy_site/field_legacy_nid (ADR 017's composite key) instead
+   * of a direct node load -- see avSamples()'s own docblock for why a
+   * raw D11 nid isn't safe to hardcode for this content.
+   */
+  private function buildAvSamples(): array {
+    $storage = $this->entityTypeManager->getStorage('node');
+    $samples = [];
+    foreach ($this->avSamples() as $legacyNid => $blurb) {
+      $nodes = $storage->loadByProperties([
+        'field_legacy_site' => 'audio-video',
+        'field_legacy_nid' => $legacyNid,
+      ]);
+      $node = reset($nodes);
+      if (!$node) {
+        continue;
+      }
+      $samples[] = [
+        'label' => $node->label(),
+        'url' => $node->toUrl()->toString(),
+        'blurb' => $blurb,
+      ];
+    }
+    return $samples;
   }
 
   /**
