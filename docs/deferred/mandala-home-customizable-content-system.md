@@ -210,3 +210,43 @@ so this covers what it plausibly means until someone picks a direction:
 
 No decision made on which of these (if any) is actually wanted --
 narrow this down with the user before building any of it.
+
+## 2026-09-22: carousel missing on dev-0 (fixed) + real direction on the editable-page question
+
+**Root cause found**: the carousel `block_content` entity, its 12 slide
+paragraphs, and their managed thumbnail files were all built 2026-09-21
+via one-off `drush eval` in DDEV -- content, never config, never
+replicated anywhere else. Confirmed dev-0 had 0 rows in
+`block_content_field_data`/`paragraphs_item_field_data` for these
+bundles. Fixed with a new, real, idempotent
+`drush mandala:home-carousel-seed` command (`mandala_home`) that
+rebuilds the same curated carousel from live node data (Audio reuses
+its migrated `field_thumbnail_image`; Video fetches Kaltura's thumbnail
+endpoint; Images fetch the IIIF derivative) -- same "a real command
+doesn't get to be wrong twice" pattern as
+[[project-missing-file-audit]]/`MissingFileAuditCommands`. Verified in
+DDEV: deleted the existing content, re-ran the command, got back a
+working 12-slide carousel; re-run correctly no-ops. See PR #236.
+
+**Real direction given on the "who/how manages" question above**: the
+home page should eventually be a genuinely editable page --
+**mechanism (Layout Builder or something else) is explicitly still
+TBD**, not decided as Layout Builder specifically. Narrowing this down
+further (Layout Builder vs. plain Block Layout vs. something else) is
+still open -- this only records that "editable" itself is now a firm
+direction, not a maybe.
+
+**Made compatible with that direction today, ahead of the mechanism
+being chosen**: the carousel's actual rendering was moved out of
+`HomeController` (which previously hand-built the render array
+in-controller, reachable only from this one hardcoded route) into a new
+`CarouselBuilder` service + `hook_block_content_view_alter()`. Now
+*any* path that renders a `mandala_home_carousel` block_content entity
+through Drupal's normal entity view builder -- this controller today,
+Block Layout, or Layout Builder once chosen -- produces the same
+polished markup. Before this change, placing the same block via Block
+Layout/Layout Builder would have rendered a generic, unstyled field
+list instead, since the real markup only existed in the controller's
+own bypass logic. This doesn't resolve the mechanism choice itself,
+just removes one concrete way the current build would otherwise have
+been incompatible with whichever mechanism gets picked.
