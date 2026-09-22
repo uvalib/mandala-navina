@@ -48,23 +48,31 @@ use Drupal\node\NodeInterface;
 class CarouselSeeder {
 
   /**
-   * nid => caption, in display order. Bundle is looked up at seed time
-   * (not hardcoded here) so a bundle mismatch fails loudly instead of
-   * silently mis-resolving a thumbnail.
+   * Curated by D7 legacy identity (field_legacy_site + field_legacy_nid,
+   * ADR 017's composite key), NOT by D11 node id. Confirmed the hard way
+   * 2026-09-22: DDEV and dev-0 were independently migrated, so D11 nids
+   * for the SAME D7 content differ across environments even though
+   * per-bundle totals match exactly (D7 nid 33126, this list's "Oral
+   * Culture: Riddles" slide, is nid 126524 in DDEV but 122337 on dev-0).
+   * A list keyed by D11 nid silently resolves the wrong node -- or, as
+   * happened on dev-0's first real run, no node at all -- depending on
+   * the environment. Bundle is looked up at seed time (not hardcoded
+   * here) so a bundle mismatch fails loudly instead of silently
+   * mis-resolving a thumbnail.
    */
   private const SLIDES = [
-    116809 => 'An Account of Deities of Dogar Gewog',
-    126524 => 'Oral Culture: Riddles (39-68)',
-    9625 => 'Close-up of buddhas, saints, and prayers carved and painted into a rock face.',
-    116814 => 'In the Snowy Paradise to the North: A Song',
-    119716 => 'Song 8: Tibet University Nangma Group',
-    9626 => 'Pilgrims spinning prayer wheels beneath the rock carvings.',
-    116823 => 'The Drukpa Lineage: A Song and Dance',
-    122368 => 'Gung Ngyon Thoenpoi Lama: A Song',
-    1209 => 'Chortens at entrance to Lhasa from West',
-    116832 => 'On the Top of Lhasa Potala: A Song',
-    121384 => 'Three Smart Brothers: Folktales from the Rebgong Cultural Area',
-    16913 => 'Mural of Guru Dragphur, a form of Guru Rinpoché',
+    ['site' => 'audio-video', 'legacy_nid' => 11986, 'caption' => 'An Account of Deities of Dogar Gewog'],
+    ['site' => 'audio-video', 'legacy_nid' => 33126, 'caption' => 'Oral Culture: Riddles (39-68)'],
+    ['site' => 'images', 'legacy_nid' => 110836, 'caption' => 'Close-up of buddhas, saints, and prayers carved and painted into a rock face.'],
+    ['site' => 'audio-video', 'legacy_nid' => 12741, 'caption' => 'In the Snowy Paradise to the North: A Song'],
+    ['site' => 'audio-video', 'legacy_nid' => 27, 'caption' => 'Song 8: Tibet University Nangma Group'],
+    ['site' => 'images', 'legacy_nid' => 110846, 'caption' => 'Pilgrims spinning prayer wheels beneath the rock carvings.'],
+    ['site' => 'audio-video', 'legacy_nid' => 12786, 'caption' => 'The Drukpa Lineage: A Song and Dance'],
+    ['site' => 'audio-video', 'legacy_nid' => 3551, 'caption' => 'Gung Ngyon Thoenpoi Lama: A Song'],
+    ['site' => 'images', 'legacy_nid' => 15136, 'caption' => 'Chortens at entrance to Lhasa from West'],
+    ['site' => 'audio-video', 'legacy_nid' => 13001, 'caption' => 'On the Top of Lhasa Potala: A Song'],
+    ['site' => 'audio-video', 'legacy_nid' => 2229, 'caption' => 'Three Smart Brothers: Folktales from the Rebgong Cultural Area'],
+    ['site' => 'images', 'legacy_nid' => 183971, 'caption' => 'Mural of Guru Dragphur, a form of Guru Rinpoché'],
   ];
 
   private const ROTATION_MS = 6000;
@@ -95,21 +103,22 @@ class CarouselSeeder {
       ];
     }
 
-    $nodeStorage = $this->entityTypeManager->getStorage('node');
     $paragraphStorage = $this->entityTypeManager->getStorage('paragraph');
 
     $slideRefs = [];
     $skipped = [];
-    foreach (self::SLIDES as $nid => $caption) {
-      $node = $nodeStorage->load($nid);
-      if (!$node instanceof NodeInterface) {
-        $skipped[] = "nid $nid: not found";
+    foreach (self::SLIDES as $slideDef) {
+      $node = $this->resolveNode($slideDef['site'], $slideDef['legacy_nid']);
+      if (!$node) {
+        $skipped[] = "{$slideDef['site']}/{$slideDef['legacy_nid']}: no matching node (field_legacy_site + field_legacy_nid)";
         continue;
       }
+      $caption = $slideDef['caption'];
+      $nid = $node->id();
 
       $file = $this->resolveThumbnail($node);
       if (!$file) {
-        $skipped[] = "nid $nid ({$node->bundle()}): no thumbnail resolvable";
+        $skipped[] = "{$slideDef['site']}/{$slideDef['legacy_nid']} (nid=$nid, {$node->bundle()}): no thumbnail resolvable";
         continue;
       }
 
@@ -162,6 +171,20 @@ class CarouselSeeder {
       'total' => count(self::SLIDES),
       'skipped' => $skipped,
     ];
+  }
+
+  /**
+   * Resolves a curated slide's D7 legacy identity to this environment's
+   * own D11 node -- never a raw D11 nid, which isn't stable across
+   * independently-migrated environments (see the SLIDES docblock).
+   */
+  private function resolveNode(string $site, int $legacyNid): ?NodeInterface {
+    $nodes = $this->entityTypeManager->getStorage('node')->loadByProperties([
+      'field_legacy_site' => $site,
+      'field_legacy_nid' => $legacyNid,
+    ]);
+    $node = reset($nodes);
+    return $node instanceof NodeInterface ? $node : NULL;
   }
 
   /**
