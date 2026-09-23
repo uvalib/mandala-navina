@@ -84,9 +84,9 @@ beyond the carousel that's worth confirming directly.
 
 ## dev-0 confirmed as a complete, durable source (2026-09-23) -- this decides question 2
 
-Checked directly against dev-0 (SSH, read-only `file_system`-service check,
-same method as the local audit -- not a raw path guess) for the exact three
-fields found missing locally:
+First checked directly against dev-0 (SSH, read-only `file_system`-service
+check, same method as the local audit -- not a raw path guess) for the exact
+three fields found missing locally:
 
 | Field | Missing on dev-0 |
 |---|---|
@@ -94,13 +94,19 @@ fields found missing locally:
 | `node.field_thumbnail_image` | **0 of 2,843** |
 | `group.field_featured_image` | **0 of 206** |
 
-dev-0 has full coverage for every field this session found gapped locally.
-That resolves question 2 below in dev-0's favor over D7 production: it's a
-project-owned environment (not being decommissioned), confirmed complete for
-the fields that matter, and -- unlike D7's flat/basename-only file root --
-files there are addressable by exact `uri`, so a sync keyed on `uri` doesn't
-inherit D7 audit's "root-level only" blind spot (relevant for AV's
-`transcripts/`-style subdirectories).
+**Then ran the full `drush mandala:missing-file-audit` (every field, not
+just these three) directly on dev-0:** `No missing files -- every 8,447
+file_managed row has a real file on disk.` Zero exceptions, site-wide --
+not just the three fields this session happened to find gapped locally.
+(dev-0's 8,447 total vs. local's 8,433 -- a few more rows, likely newer
+content created directly on dev-0, e.g. the carousel demo block.)
+
+This resolves question 2 below in dev-0's favor over D7 production: it's a
+project-owned environment (not being decommissioned), confirmed **fully**
+complete, and -- unlike D7's flat/basename-only file root -- files there are
+addressable by exact `uri`, so a sync keyed on `uri` doesn't inherit the D7
+audit's "root-level only" blind spot (relevant for AV's `transcripts/`-style
+subdirectories).
 
 ## Recommended direction (not yet decided by the team -- for discussion)
 
