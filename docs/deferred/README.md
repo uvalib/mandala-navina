@@ -29,6 +29,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | File | Area | Raised | Priority |
 |---|---|---|---|
 | [config-export-drift-hand-edited-yaml.md](config-export-drift-hand-edited-yaml.md) | deployment / CMI / config sync / DX | Session 2026-09-02 (PR #177/#179) | Medium — how should hand-edited config YAML be validated before `main`, not just at deploy time? |
+| [local-dev-files-provisioning-mechanism.md](local-dev-files-provisioning-mechanism.md) | local dev environment / DX / infrastructure | Session 2026-09-23 | **Medium-High — no mechanism populates local `sites/default/files` on any DDEV.** Confirmed independently missing on two developers' machines; on Xiaoming's, 3 fields (`field_transcript`, `field_thumbnail_image`, `field_featured_image`) are ~100% missing, 8,413 files total. Needs a team decision on source + mechanism, not implementation |
 
 ## Open items
 

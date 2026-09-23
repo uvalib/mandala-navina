@@ -45,6 +45,13 @@ etc.) ever bulk-fetches file binaries — only the DB. Whatever "custom
 files" turns out to mean, expect this to be reproducible on **any**
 team member's fresh DDEV, not a one-off.
 
+**The general "how do we provision local file binaries at all" question is
+now split out into its own note:**
+[local-dev-files-provisioning-mechanism.md](local-dev-files-provisioning-mechanism.md)
+-- it carries the precise per-field breakdown (it's exactly 3 fields, not
+open-ended) and the open design options, since that's a forward-looking
+mechanism decision, not specific to collection images.
+
 **Only the carousel's 4 blank slides were fixed today** (`ugyen.png`,
 `Kelzang Dolma_2.png`, `65249.jpg`, `Choden_5.png` — all 4 confirmed
 recoverable from the AV production root, restored via the same
