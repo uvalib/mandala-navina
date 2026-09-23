@@ -33,26 +33,54 @@ use Drush\Commands\DrushCommands;
  * discovers real file/image fields via `field_storage_config` (type
  * `file`/`image`, or `entity_reference` targeting the `file` entity type)
  * before ever looking for usages -- it cannot repeat that mistake.
+ *
+ * Extended 2026-09-23 after the same DDEV-local gap recurred on a
+ * different developer's machine, sitewide (8,417 of 8,433 managed files,
+ * across `field_transcript`/`field_thumbnail_image`/`field_featured_image`
+ * -- see docs/deferred/local-dev-files-provisioning-mechanism.md). dev-0
+ * was verified fully complete in both directions (0 files missing from
+ * disk; only 12 of 8,459 on-disk files have no DB row, and those are
+ * explained) and is now tried FIRST, ahead of D7 production: it's a
+ * project-owned environment (not being decommissioned, unlike D7), and
+ * being addressable by exact `uri` rather than basename means it doesn't
+ * inherit D7's root-level-only blind spot for subdirectories like AV's
+ * `transcripts/`.
  */
 class MissingFileAuditCommands extends DrushCommands {
 
   use AutowireTrait;
 
   /**
-   * Known D7 production source bases for the one field class this
-   * currently affects (`group.field_featured_image` -- see the two
-   * migrations that populate it, `d7_images_collection_featured_image`
-   * and `d7_av_collections`/`d7_av_files`). There is no generic way to
-   * derive a legacy source URL for an arbitrary field -- it depends
-   * entirely on which migration created the reference -- so this map is
+   * dev-0's own public files root -- project-owned, confirmed complete
+   * (2026-09-23; see class docblock), and internal-only (VPN-gated, same
+   * as its SSH host). Addressed by the file's exact relative `uri`, not
+   * a basename guess, so subdirectories resolve correctly. If VPN isn't
+   * up, requests here simply time out and fall through to the D7 bases
+   * below -- no separate reachability flag needed.
+   */
+  private const DEV0_FILES_BASE = 'https://mandala-dev.internal.lib.virginia.edu/sites/default/files/';
+
+  /**
+   * Known D7 production source bases, tried only for whatever dev-0
+   * itself doesn't have. Originally the only source (see the class
+   * docblock's 2026-09-21 history) for the one field class it was built
+   * for (`group.field_featured_image` -- see the two migrations that
+   * populate it, `d7_images_collection_featured_image` and
+   * `d7_av_collections`/`d7_av_files`). There is no generic way to derive
+   * a legacy source URL for an arbitrary field -- it depends entirely on
+   * which migration created the reference -- so this map is
    * hand-maintained; extend it if another field/site combination needs
-   * the same reachability check later.
+   * the same reachability check later. D7 production is also a
+   * degrading fallback, not a durable one: as of 2026-09-23, 5,413 of
+   * 8,417 files missing on one developer's DDEV were already confirmed
+   * gone here too.
    *
    * Root-level only: a file that lived in a D7 subdirectory (as some AV
    * files do, e.g. `transcripts/`) won't be found here even if it still
    * exists, since only the D11 file's basename is known, not its
    * original D7 path. A negative result from this check means "not at
-   * the site's public files root," not "confirmed gone."
+   * the site's public files root," not "confirmed gone." (dev-0, tried
+   * first, does not have this limitation.)
    */
   private const D7_SOURCE_BASES = [
     'images' => 'https://images.mandala.library.virginia.edu/sites/mandala-images.lib.virginia.edu/files/',
@@ -60,12 +88,20 @@ class MissingFileAuditCommands extends DrushCommands {
   ];
 
   /**
-   * Set by findD7Source() on its most recent call, since it returns NULL
-   * for both "checked every root, found nothing" and "a request errored" --
-   * the caller only needs to tell those apart for reporting, not for the
-   * fix decision (no URL either way means nothing to fetch).
+   * Set by findRemoteSource() on its most recent call, since it returns
+   * NULL for both "checked every source, found nothing" and "a request
+   * errored" -- the caller only needs to tell those apart for reporting,
+   * not for the fix decision (no URL either way means nothing to fetch).
    */
   private bool $lastCheckHadError = FALSE;
+
+  /**
+   * Set by findRemoteSource() alongside its return value: a short label
+   * for which source resolved ('dev-0', 'images', 'av'), purely for
+   * reporting -- lets the audit log show where each restored file
+   * actually came from.
+   */
+  private ?string $lastSourceLabel = NULL;
 
   public function __construct(
     private readonly EntityTypeManagerInterface $entityTypeManager,
@@ -76,12 +112,12 @@ class MissingFileAuditCommands extends DrushCommands {
   }
 
   #[CLI\Command(name: 'mandala:missing-file-audit')]
-  #[CLI\Option(name: 'check-d7-source', description: "For each missing file, try its basename against known D7 production file roots (currently: Images, AV) to see if it's still recoverable. Root-level only, see class docblock.")]
-  #[CLI\Option(name: 'fix', description: 'For missing files confirmed recoverable at a known D7 source, re-fetch the bytes and write them to the existing file entity in place (same fid/uri) -- restores the file, does not touch any entity reference, since those were never wrong. Implies --check-d7-source.')]
+  #[CLI\Option(name: 'check-remote-source', description: "For each missing file, try dev-0's own files root first (exact uri match), then known D7 production file roots (currently: Images, AV; basename match, root-level only) to see if it's still recoverable. See class docblock.")]
+  #[CLI\Option(name: 'fix', description: 'For missing files confirmed recoverable at a known remote source, re-fetch the bytes and write them to the existing file entity in place (same fid/uri) -- restores the file, does not touch any entity reference, since those were never wrong. Implies --check-remote-source.')]
   #[CLI\Usage(name: 'drush mandala:missing-file-audit', description: 'Report every managed file whose physical file is missing from disk, and what references it.')]
-  #[CLI\Usage(name: 'drush mandala:missing-file-audit --check-d7-source', description: 'Also check whether each missing file is still fetchable from its known D7 production source.')]
-  #[CLI\Usage(name: 'drush mandala:missing-file-audit --fix', description: 'Re-fetch and restore every missing file confirmed recoverable at a known D7 source.')]
-  public function audit(array $options = ['check-d7-source' => FALSE, 'fix' => FALSE]): void {
+  #[CLI\Usage(name: 'drush mandala:missing-file-audit --check-remote-source', description: 'Also check whether each missing file is still fetchable from dev-0 or its known D7 production source.')]
+  #[CLI\Usage(name: 'drush mandala:missing-file-audit --fix', description: 'Re-fetch and restore every missing file confirmed recoverable, preferring dev-0 over D7 production.')]
+  public function audit(array $options = ['check-remote-source' => FALSE, 'fix' => FALSE]): void {
     $db = Database::getConnection();
 
     $fields = $this->realFileFields();
@@ -101,7 +137,7 @@ class MissingFileAuditCommands extends DrushCommands {
     $usages = $this->findUsages($db, $fields, array_keys($missing));
 
     $fix = (bool) ($options['fix'] ?? FALSE);
-    $checkSource = $fix || (bool) ($options['check-d7-source'] ?? FALSE);
+    $checkSource = $fix || (bool) ($options['check-remote-source'] ?? FALSE);
     $recoverable = 0;
     $goneAtSource = 0;
     $unchecked = 0;
@@ -115,18 +151,19 @@ class MissingFileAuditCommands extends DrushCommands {
 
       $sourceUrl = NULL;
       if ($checkSource) {
-        $sourceUrl = $this->findD7Source($row->filename);
-        $status = $sourceUrl ? 'recoverable' : 'gone at source root too';
-        // findD7Source() returns NULL for both "checked, not found" and "a
-        // request errored" -- $lastCheckHadError disambiguates only when
-        // needed, to keep the common path (found it) cheap.
+        $sourceUrl = $this->findRemoteSource($row->uri, $row->filename);
+        $status = $sourceUrl ? "recoverable ({$this->lastSourceLabel})" : 'gone at all known sources too';
+        // findRemoteSource() returns NULL for both "checked every source,
+        // not found" and "a request errored" -- $lastCheckHadError
+        // disambiguates only when needed, to keep the common path (found
+        // it) cheap.
         if ($sourceUrl === NULL && $this->lastCheckHadError) {
           $status = 'source check failed';
         }
         $line .= " [{$status}]";
-        match ($status) {
-          'recoverable' => $recoverable++,
-          'gone at source root too' => $goneAtSource++,
+        match (TRUE) {
+          $sourceUrl !== NULL => $recoverable++,
+          $status === 'gone at all known sources too' => $goneAtSource++,
           default => $unchecked++,
         };
       }
@@ -152,7 +189,7 @@ class MissingFileAuditCommands extends DrushCommands {
     ]);
 
     if ($checkSource) {
-      $this->logger()->notice('Of the missing files: {recoverable} still fetchable from a known D7 production root (re-import candidates), {gone} confirmed gone there too, {unchecked} not checked (root-level lookup failed or no known source mapped).', [
+      $this->logger()->notice('Of the missing files: {recoverable} still fetchable from a known remote source (dev-0 or D7 production; re-import candidates), {gone} confirmed gone everywhere checked, {unchecked} not checked (lookup failed or no known source mapped).', [
         'recoverable' => $recoverable,
         'gone' => $goneAtSource,
         'unchecked' => $unchecked,
@@ -160,7 +197,7 @@ class MissingFileAuditCommands extends DrushCommands {
     }
 
     if ($fix) {
-      $this->logger()->success('Restored {fixed} file(s) from their D7 source. {failed} attempted restore(s) failed.', [
+      $this->logger()->success('Restored {fixed} file(s) from their resolved source. {failed} attempted restore(s) failed.', [
         'fixed' => $fixed,
         'failed' => $fixFailed,
       ]);
@@ -242,27 +279,34 @@ class MissingFileAuditCommands extends DrushCommands {
   }
 
   /**
-   * Tries a missing file's basename against every known D7 source root.
+   * Tries dev-0's own files root first (exact `uri` match), then every
+   * known D7 source root (basename match only -- see D7_SOURCE_BASES'
+   * docblock for why).
    *
    * @return string|null
-   *   The first URL that returns a real 200, or NULL if none did. Check
-   *   $this->lastCheckHadError afterward to tell "confirmed gone" apart
-   *   from "a request errored" when NULL.
+   *   The first URL that returns a real 200, or NULL if none did. Sets
+   *   $this->lastSourceLabel on success. Check $this->lastCheckHadError
+   *   afterward to tell "confirmed gone everywhere" apart from "a request
+   *   errored" when NULL.
    */
-  private function findD7Source(string $filename): ?string {
+  private function findRemoteSource(string $uri, string $filename): ?string {
     $client = \Drupal::httpClient();
     $this->lastCheckHadError = FALSE;
+    $this->lastSourceLabel = NULL;
 
-    foreach (self::D7_SOURCE_BASES as $base) {
+    $relativePath = ltrim(str_replace('public://', '', $uri), '/');
+    $encodedPath = implode('/', array_map('rawurlencode', explode('/', $relativePath)));
+    $dev0Url = self::DEV0_FILES_BASE . $encodedPath;
+    if ($this->urlReturns200($client, $dev0Url)) {
+      $this->lastSourceLabel = 'dev-0';
+      return $dev0Url;
+    }
+
+    foreach (self::D7_SOURCE_BASES as $label => $base) {
       $url = $base . rawurlencode($filename);
-      try {
-        $response = $client->request('HEAD', $url, ['http_errors' => FALSE, 'timeout' => 10]);
-        if ($response->getStatusCode() === 200) {
-          return $url;
-        }
-      }
-      catch (\Throwable) {
-        $this->lastCheckHadError = TRUE;
+      if ($this->urlReturns200($client, $url)) {
+        $this->lastSourceLabel = $label;
+        return $url;
       }
     }
 
@@ -270,12 +314,30 @@ class MissingFileAuditCommands extends DrushCommands {
   }
 
   /**
-   * Fetches a confirmed-live D7 source URL and writes it to the given
-   * URI in place -- same fid, same uri, so no entity reference anywhere
-   * needs to change (they were already correct; only the binary was
-   * missing). Verifies the fetched byte count matches what the source
-   * itself reported before writing anything, so a truncated download
-   * can never silently replace a good row with a bad one.
+   * @param \GuzzleHttp\ClientInterface $client
+   *   Shared across the whole findRemoteSource() call so a single try/catch
+   *   here keeps the caller's loop simple; sets $this->lastCheckHadError on
+   *   a thrown request exception (a real error, not just a non-200).
+   */
+  private function urlReturns200($client, string $url): bool {
+    try {
+      $response = $client->request('HEAD', $url, ['http_errors' => FALSE, 'timeout' => 10]);
+      return $response->getStatusCode() === 200;
+    }
+    catch (\Throwable) {
+      $this->lastCheckHadError = TRUE;
+      return FALSE;
+    }
+  }
+
+  /**
+   * Fetches a confirmed-live source URL (dev-0 or D7 production, per
+   * findRemoteSource()) and writes it to the given URI in place -- same
+   * fid, same uri, so no entity reference anywhere needs to change (they
+   * were already correct; only the binary was missing). Verifies the
+   * fetched byte count matches what the source itself reported before
+   * writing anything, so a truncated download can never silently replace
+   * a good row with a bad one.
    */
   private function restoreFile(string $uri, string $sourceUrl): bool {
     $client = \Drupal::httpClient();

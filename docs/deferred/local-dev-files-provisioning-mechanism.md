@@ -130,20 +130,34 @@ orphaned when that migration's rows were later reset/re-run onto different
 no functional impact. Both directions now confirmed clean: dev-0's disk and
 database agree almost perfectly, reinforcing it as the right sync source.
 
-## Recommended direction (not yet decided by the team -- for discussion)
+## Built (2026-09-23) -- `mandala:missing-file-audit` now tries dev-0 first
 
-**Sync/fetch missing local files from dev-0, not D7 production**, most
-simply by extending `mandala:missing-file-audit`'s existing source map
-(`MissingFileAuditCommands::D7_SOURCE_BASES`) with dev-0's own public files
-URL as an additional, higher-priority source, reusing the same
-fetch/verify-byte-count/write-in-place logic already built and proven --
-no new SSH/rsync plumbing needed if dev-0 serves these files over plain
-HTTPS the same way D7 does (not yet confirmed for every field; spot-check
-before building). Keep D7 production as a fallback only for whatever dev-0
-itself is ever missing. This directly answers open question 4 below (yes,
-extend the existing tool) and narrows question 2 (dev-0 first, D7 as
-fallback) -- questions 1 and 3 (full parity vs. narrower scope; on-demand
-vs. automatic trigger) are still open for the team to decide.
+Implemented the recommended direction directly: `MissingFileAuditCommands`
+now has a `DEV0_FILES_BASE` constant
+(`https://mandala-dev.internal.lib.virginia.edu/sites/default/files/`,
+confirmed publicly reachable with a valid InCommon-issued cert, no special
+TLS handling needed) and a new `findRemoteSource()` that tries it first,
+addressed by the file's **exact `uri`** (not a basename guess -- verified
+against a real subdirectory file, `transcripts/t991.xml`, and a root-level
+one, `ugyen.png`, both resolved correctly). `D7_SOURCE_BASES` is kept as a
+fallback for anything dev-0 doesn't have. Same fetch/verify-byte-count/
+write-in-place logic as before, just reordered. CLI flag renamed
+`--check-d7-source` -> `--check-remote-source` (old name was actively
+misleading once dev-0 became a source too); `--fix` unchanged.
+
+**Validated end-to-end on Xiaoming's DDEV, full corpus, not a sample:**
+`drush mandala:missing-file-audit --check-remote-source` against all 8,413
+missing files -- **8,413 recoverable, all 8,413 from dev-0 (0 ever fell
+through to D7), 0 confirmed gone, 0 unchecked.** The D7 fallback path never
+even triggered in practice; dev-0 alone covers the entire local gap.
+
+This directly answers open question 4 below (yes, extend the existing tool
+-- done) and question 2 (dev-0 first, D7 as fallback -- done). Questions 1
+and 3 (full parity vs. narrower scope; on-demand vs. automatic trigger) are
+still open -- the tool exists and works either way, but hasn't been run
+with `--fix` against the full ~8,400-file backlog yet, and isn't wired into
+any automatic trigger (`ddev start`, `session-start-check.sh`) -- both
+deliberately left for the team to decide, not oversights.
 
 ## Open questions for the team (not decided, not started)
 
@@ -164,18 +178,13 @@ vs. automatic trigger) are still open for the team to decide.
    like step 3a/3b already do for config/content) vs. into `ddev start`
    itself.
 4. ~~Does `mandala:missing-file-audit` become the mechanism, extended?~~
-   **Recommended above: yes**, add dev-0 as a source, keep D7 as fallback.
+   **Done above (2026-09-23):** dev-0 added as the primary source, D7 kept
+   as fallback, validated against the full local corpus.
 
 ## Not yet done
 
-- Whether to build this at all, and on what trigger (question 1, 3) --
-  still an open team decision, not started.
-- The ~3,000 files on Xiaoming's DDEV confirmed recoverable from D7
-  production have **not** been bulk-restored -- deliberately deferred
-  pending this decision, not a forgotten step. With dev-0 confirmed
-  complete, restoring from dev-0 instead once a mechanism exists is
-  preferable to the D7-based `--fix` used for the carousel's 4 files.
-- Not yet confirmed whether dev-0 serves these files over plain HTTPS the
-  same way D7 does (assumed by analogy with the home-page/carousel checks
-  already run against it) -- verify before implementing the HTTP-fetch
-  approach above.
+- The trigger question (3) -- on-demand vs. wired into `ddev start`/
+  `session-start-check.sh` -- still an open team decision, not started.
+- The tool works and is validated, but **has not been run with `--fix`**
+  against Xiaoming's full ~8,400-file backlog -- deliberately deferred
+  pending the team's call on scope (question 1), not a forgotten step.
