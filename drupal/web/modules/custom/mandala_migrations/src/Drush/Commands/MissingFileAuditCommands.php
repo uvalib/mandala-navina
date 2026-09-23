@@ -338,6 +338,13 @@ class MissingFileAuditCommands extends DrushCommands {
    * fetched byte count matches what the source itself reported before
    * writing anything, so a truncated download can never silently replace
    * a good row with a bad one.
+   *
+   * Prepares the destination's parent directory first: `writeData()`
+   * throws `DirectoryNotReadyException` rather than creating a missing
+   * subdirectory on its own, which a fresh DDEV (or any environment that's
+   * never had a given field's files before) won't have -- confirmed live
+   * for AV's `transcripts/` (2026-09-23, every restore into that
+   * subdirectory failed until this was added).
    */
   private function restoreFile(string $uri, string $sourceUrl): bool {
     $client = \Drupal::httpClient();
@@ -351,6 +358,8 @@ class MissingFileAuditCommands extends DrushCommands {
       if ($expectedLength !== '' && (int) $expectedLength !== strlen($body)) {
         return FALSE;
       }
+      $directory = $this->fileSystem->dirname($uri);
+      $this->fileSystem->prepareDirectory($directory, \Drupal\Core\File\FileSystemInterface::CREATE_DIRECTORY);
       $this->fileRepository->writeData($body, $uri, \Drupal\Core\File\FileSystemInterface::EXISTS_REPLACE);
       return TRUE;
     }
