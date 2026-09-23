@@ -114,10 +114,21 @@ against disk, not the other way): diffed dev-0's on-disk files (8,459,
 excluding generated cache dirs `styles/`, `php/`, `css/`, `js/`) against all
 8,447 `public://` `file_managed` rows. Only **12 files on disk have no DB
 row** (0.14%, ~4 MB total) -- 4 are Drupal core's own built-in
-`media-icons/generic/*.png` defaults (not uploads, expected), the other 8
-are small orphaned test/demo images with no functional impact. Both
-directions now confirmed clean: dev-0's disk and database agree almost
-perfectly, reinforcing it as the right sync source.
+`media-icons/generic/*.png` defaults (not uploads, expected). The other 8
+all share the **exact same timestamp** (2026-09-03 19:29:22-23 UTC, within a
+1-second window -- one batch write, not scattered stray uploads) and
+filenames that read like plausible collection-hero-image candidates
+(`Banksy.jpg`, `Beethoven 9 unis.png`, `Brahms ex. ww + vla.jpg`,
+`MilkyWay_TA-147851475_0.jpg`, `AbernathySolidarityDay68.jpg`,
+`20170816-MattEich-0613.jpg`, `photo_0.jpg`,
+`d6eaef91aae6efa3a9643a12e5b2a7cc.jpg`) -- almost certainly leftover bytes
+from that same date's `d7_images_collection_featured_image` migration/
+backfill run (the session that opened
+[collection-featured-images-missing-on-production.md](collection-featured-images-missing-on-production.md)),
+orphaned when that migration's rows were later reset/re-run onto different
+`fid`s. An explainable byproduct of known prior work, not unrelated debris,
+no functional impact. Both directions now confirmed clean: dev-0's disk and
+database agree almost perfectly, reinforcing it as the right sync source.
 
 ## Recommended direction (not yet decided by the team -- for discussion)
 
