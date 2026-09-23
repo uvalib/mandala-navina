@@ -82,6 +82,41 @@ fix doesn't need to solve "sync arbitrary file fields," just these three,
 and `field_thumbnail_image` in particular is likely a live, user-visible gap
 beyond the carousel that's worth confirming directly.
 
+## dev-0 confirmed as a complete, durable source (2026-09-23) -- this decides question 2
+
+Checked directly against dev-0 (SSH, read-only `file_system`-service check,
+same method as the local audit -- not a raw path guess) for the exact three
+fields found missing locally:
+
+| Field | Missing on dev-0 |
+|---|---|
+| `node.field_transcript` | **0 of 5,379** |
+| `node.field_thumbnail_image` | **0 of 2,843** |
+| `group.field_featured_image` | **0 of 206** |
+
+dev-0 has full coverage for every field this session found gapped locally.
+That resolves question 2 below in dev-0's favor over D7 production: it's a
+project-owned environment (not being decommissioned), confirmed complete for
+the fields that matter, and -- unlike D7's flat/basename-only file root --
+files there are addressable by exact `uri`, so a sync keyed on `uri` doesn't
+inherit D7 audit's "root-level only" blind spot (relevant for AV's
+`transcripts/`-style subdirectories).
+
+## Recommended direction (not yet decided by the team -- for discussion)
+
+**Sync/fetch missing local files from dev-0, not D7 production**, most
+simply by extending `mandala:missing-file-audit`'s existing source map
+(`MissingFileAuditCommands::D7_SOURCE_BASES`) with dev-0's own public files
+URL as an additional, higher-priority source, reusing the same
+fetch/verify-byte-count/write-in-place logic already built and proven --
+no new SSH/rsync plumbing needed if dev-0 serves these files over plain
+HTTPS the same way D7 does (not yet confirmed for every field; spot-check
+before building). Keep D7 production as a fallback only for whatever dev-0
+itself is ever missing. This directly answers open question 4 below (yes,
+extend the existing tool) and narrows question 2 (dev-0 first, D7 as
+fallback) -- questions 1 and 3 (full parity vs. narrower scope; on-demand
+vs. automatic trigger) are still open for the team to decide.
+
 ## Open questions for the team (not decided, not started)
 
 1. **Does local dev need full file-binary parity at all?** Per
@@ -93,27 +128,26 @@ beyond the carousel that's worth confirming directly.
    locally (like the carousel's slide images), not the full historical
    corpus. Scoping this down could make the fix far cheaper than it looks
    from the raw 99.8% number.
-2. **What should the canonical source be, if not D7 production?** Candidates,
-   none evaluated yet: dev-0's own `sites/default/files` (already the shared
-   team resource for DB content, but this session never checked whether it
-   itself is fully populated); a dedicated S3 bucket; a files tarball
-   refreshed alongside `canonical-d7-dev-source-dump.md`'s existing DB
-   refresh-and-alert design.
+2. ~~What should the canonical source be, if not D7 production?~~ **Answered
+   above (2026-09-23): dev-0, confirmed complete for the affected fields.**
 3. **On-demand script, or automatic?** A files-sync script mirroring
    `update-db-from-remote.sh`'s pattern (pull, land locally, destructive
    warning) vs. wiring something into `session-start-check.sh` (detect drift,
    like step 3a/3b already do for config/content) vs. into `ddev start`
    itself.
-4. **Does `mandala:missing-file-audit` become the mechanism, extended?** It
-   already does the hard part (generic field discovery, safe restore-in-place
-   with byte-count verification) -- it may just need a better/broader source
-   map and a trigger, rather than a wholly new tool.
+4. ~~Does `mandala:missing-file-audit` become the mechanism, extended?~~
+   **Recommended above: yes**, add dev-0 as a source, keep D7 as fallback.
 
 ## Not yet done
 
-- No design chosen among the above.
+- Whether to build this at all, and on what trigger (question 1, 3) --
+  still an open team decision, not started.
 - The ~3,000 files on Xiaoming's DDEV confirmed recoverable from D7
   production have **not** been bulk-restored -- deliberately deferred
-  pending this decision, not a forgotten step.
-- Yuji's and dev-0's own file-binary completeness have not been
-  independently re-verified as part of this finding.
+  pending this decision, not a forgotten step. With dev-0 confirmed
+  complete, restoring from dev-0 instead once a mechanism exists is
+  preferable to the D7-based `--fix` used for the carousel's 4 files.
+- Not yet confirmed whether dev-0 serves these files over plain HTTPS the
+  same way D7 does (assumed by analogy with the home-page/carousel checks
+  already run against it) -- verify before implementing the HTTP-fetch
+  approach above.
