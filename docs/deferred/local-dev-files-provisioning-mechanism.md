@@ -108,6 +108,17 @@ addressable by exact `uri`, so a sync keyed on `uri` doesn't inherit the D7
 audit's "root-level only" blind spot (relevant for AV's `transcripts/`-style
 subdirectories).
 
+**Checked the reverse direction too** (disk -> DB, which
+`mandala:missing-file-audit` never checks -- it only validates DB rows
+against disk, not the other way): diffed dev-0's on-disk files (8,459,
+excluding generated cache dirs `styles/`, `php/`, `css/`, `js/`) against all
+8,447 `public://` `file_managed` rows. Only **12 files on disk have no DB
+row** (0.14%, ~4 MB total) -- 4 are Drupal core's own built-in
+`media-icons/generic/*.png` defaults (not uploads, expected), the other 8
+are small orphaned test/demo images with no functional impact. Both
+directions now confirmed clean: dev-0's disk and database agree almost
+perfectly, reinforcing it as the right sync source.
+
 ## Recommended direction (not yet decided by the team -- for discussion)
 
 **Sync/fetch missing local files from dev-0, not D7 production**, most
