@@ -16,6 +16,42 @@ falls back to a generic default thumbnail for any collection with no resolvable
 featured image, so nothing was ever broken or missing visually on a real environment —
 affected collections just showed the default instead of their real photo, on DDEV only.
 
+## 2026-09-23 update: back to 99.8% missing on DDEV (8,417 of 8,433) — the 2026-09-21 fix did not stick, and scope is much larger than `group.field_featured_image`
+
+Found while diagnosing blank thumbnails in the Mandala Home carousel (4 of 12
+audio-slide images blank, links working). `drush mandala:missing-file-audit
+--check-d7-source` (full corpus, not scoped to one field) reported **8,417 of
+8,433 managed files (99.8%) missing from disk**, not the 0 the 2026-09-21 fix
+left it at (8,425 total then; +8 today from freshly seeded carousel
+thumbnails matches exactly). Of the missing files: 3,004 still fetchable from
+a known D7 source (recoverable), 5,413 confirmed gone at the source too.
+
+This is the same class of problem as the 126/210 `group.field_featured_image`
+gap below, but the true scope is sitewide across every real file/image field
+(the command discovers fields generically via `field_storage_config`, not
+just the one field class it was originally built for) — **126/210 was an
+undercount of a much bigger, still-unexplained gap**, not the whole story.
+
+**Only the carousel's 4 blank slides were fixed today** (`ugyen.png`,
+`Kelzang Dolma_2.png`, `65249.jpg`, `Choden_5.png` — all 4 confirmed
+recoverable from the AV production root, restored via the same
+fetch-and-write-in-place approach as the command's `--fix`, spot-verified
+live on `mandala.ddev.site`). **The other ~3,000 recoverable files were
+deliberately NOT restored** — that's a much bigger action (real network
+fetches, tens of minutes) than what the carousel needed, and directly
+overlaps the open question below. Deferred to this afternoon's meeting with
+Than (2026-09-23) rather than acted on solo.
+
+**New data point for the "why DDEV specifically" question below:** whatever
+restored 0-missing on 2026-09-21 did not persist — DDEV was not rebuilt
+between sessions (git log shows no full-DB rebase this week), so either the
+2026-09-21 fix's restored bytes were written somewhere that didn't survive
+(e.g. a container recreate, since `ddev-mandala-web`'s writable layer is
+known to not survive a stop/start per
+[[project-ddev-local-env-gotchas]]'s stale-Apache-PID note), or something
+else quietly reset the files directory since then. Worth raising directly
+with Than, not just the original "custom files" lead.
+
 ## 2026-09-21 update: 126 missing on DDEV, D7 source intact, dev-0 was fine all along
 
 Running the new `drush mandala:missing-file-audit --check-d7-source` on DDEV found
