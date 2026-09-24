@@ -59,7 +59,11 @@ local Solr index. Reaching a shared endpoint from DDEV should be a deliberate op
 3. `kmassets:audit --check-stale` (or `--fix`) for the 27 wrong-content docs; then spot-check the reader.
 
 **Fix plan (proposed, not started)**
-1. **Guardrail, small PR, first.** In `settings.php`'s DDEV block set
+1. **Guardrail, small PR, first -- IMPLEMENTED in [PR #250](https://github.com/uvalib/mandala-navina/pull/250)
+   (2026-09-24), pending merge.** Verified locally: effective URL empty, hooks unconfigured,
+   `kmassets:index/audit/delete` abort with "solr_master_url is not configured", shared master
+   untouched, opt-in via `MANDALA_DDEV_SOLR_MASTER_URL`. The DDEV `search_api` reader is still
+   shared (read-only) and is not changed by it. Original plan: In `settings.php`'s DDEV block set
    `$config['mandala_kmassets_sync.settings']['solr_master_url'] = ''` so the sync module is
    unconfigured and writes nothing -- fail closed for every DDEV on the next `git pull`. **Verify
    the drush commands (`kmassets:index/index-all/delete/audit --fix`) also fail closed when it is
