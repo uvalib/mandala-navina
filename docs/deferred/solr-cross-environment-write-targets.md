@@ -3,7 +3,7 @@
 **Area:** solr / D7 legacy / environment isolation / production risk
 **Raised during:** Session 2026-08-13 (Solr index inventory across dev / staging / production)
 **Jira:** (add when available)
-**Priority:** **HIGH (new item, 2026-09-24): D11 DDEV writes to the shared staging Solr master by default and had already polluted it — see "D11: DDEV writes..." below; fix prioritized.** The original D7 items: **Medium — the two staging→production write paths are FIXED (2026-09-02, group
+**Priority:** **HIGH (new item, 2026-09-24): D11 DDEV writes to the shared staging Solr master by default and had already polluted it — see "D11: DDEV writes..." below. The guardrail is merged (PR #250) and the pollution is CLEANED UP (2026-09-24); a local Solr container, the ADR/CLAUDE.md/start-check follow-ups and a reusable cleanup command remain.** The original D7 items: **Medium — the two staging→production write paths are FIXED (2026-09-02, group
 decision).** `mandala-sources-staging`'s `solr` search_api server is disabled
 (`search-api-server-disable`, verified via `search-api-server-list`). `mandala-av-staging`'s
 `mandala_library_rw` apachesolr environment is repointed from the production Solr master to an
@@ -40,7 +40,7 @@ local Solr index. Reaching a shared endpoint from DDEV should be a deliberate op
   `av:backfill-kaltura-duration` run and is legitimate.
 - Result on the shared master: **4,149 orphaned docs** (`kmassets:audit audio|video`, report-only,
   run on dev-0) -- uids like `audio-video-11-123558` for nodes that do not exist on dev-0 -- plus
-  **27 docs with a valid dev-0 uid but the wrong content** (e.g. uid 116968 is titled as a
+  **45 docs with a valid dev-0 uid but the wrong content** (first reported as 27 from a too-narrow uid cutoff; corrected the same day) (e.g. uid 116968 is titled as a
   different recording than the real node; the orphan audit does not catch these). The master
   holds 27,273 AV docs against 11,583 AV nodes (legacy D7 docs account for part of the rest).
 - **Access impact:** the reader is a public-only view (0 private docs). It still serves **382
@@ -52,11 +52,26 @@ local Solr index. Reaching a shared endpoint from DDEV should be a deliberate op
   the 2026-09-22 log found "DDEV" ids at dev-0 + 4,187, which points at his DDEV, but that is
   inference. Ask him.
 
-**Cleanup -- NOT done, needs explicit approval (deletes from the shared master)**
-1. Get the full orphan uid list (the audit only prints 20) and confirm all fall in the shifted range.
-2. `kmassets:audit audio --fix` to delete the 4,149 orphans (the service-wide orphan set is safe
-   per bundle since PR #199, but review the list first).
-3. `kmassets:audit --check-stale` (or `--fix`) for the 27 wrong-content docs; then spot-check the reader.
+**Cleanup -- DONE 2026-09-24 (approved by Xiaoming; run against the shared master via dev-0 as `xw5d`)**
+1. Independent orphan list: all 15,731 `audio-video-11-*` docs paged from the master and diffed
+   against dev-0's 11,582 published AV nids -> **4,149 orphans, 0 missing** (matched the audit
+   exactly). Every orphan: uid 122,924-127,092 (above dev-0's max real nid, 122,923), written
+   16:15-16:45Z on 2026-09-18, all `node_changed` = `15:53:57Z` (3,314 public / 835 private; 474
+   inside the 15 repaired AV collections). Nothing legitimate in the delete set.
+2. **Backup before any change:** JSON of every orphan and wrong-content doc (8.7 MB) at
+   `~/Desktop/mandala/solr_cleanup_backup_2026-09-24.json` on Xiaoming's machine. It is the only
+   rollback (re-POST the docs); keep it until this is closed.
+3. `kmassets:audit audio --fix` on dev-0: **4,149 deleted, 0 reindexed.**
+4. The **45** wrong-content docs (valid uid, `node_changed` = `15:53:57Z`) were re-indexed from
+   their real nodes via `indexNode()`: 45 ok, 0 errors (e.g. uid 116968 now titled correctly).
+5. **Verified afterwards:** master has 11,582 `audio-video-11-*` docs = the 11,582 real nodes, 0
+   orphans, 0 missing, 0 docs left with the bad `node_changed`. Reader: 0 orphans (8,547 docs;
+   the difference is its public-only view), and 0 docs in the 15 repaired collections, while the
+   master holds their 1,143 private docs -- the 382 public orphans that had leaked are gone.
+
+**Still to do:** a reusable, tested drush command for this analysis and cleanup -- see item 3 in
+[kmassets-audit-hardening.md](kmassets-audit-hardening.md). The hand-run steps above are the
+reference for it.
 
 **Fix plan (proposed, not started)**
 1. **Guardrail, small PR, first -- IMPLEMENTED in [PR #250](https://github.com/uvalib/mandala-navina/pull/250)

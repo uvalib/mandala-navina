@@ -87,7 +87,7 @@ Ansible the same way other per-environment values are.
 **Update 2026-09-24 -- this is no longer hypothetical, and it is wider than the search host.** The
 same shared-`config/sync` problem applies to the **write** URL (`mandala_kmassets_sync`'s
 `solr_master_url`), and it has already bitten: a DDEV environment imported the shared staging
-master URL and wrote 4,194 wrongly-numbered docs into it (4,149 orphans + 27 wrong-content).
+master URL and wrote 4,194 wrongly-numbered docs into it (4,149 orphans + 45 wrong-content; cleaned up 2026-09-24).
 Prioritized (High) and folded into the plan in
 [solr-cross-environment-write-targets.md](solr-cross-environment-write-targets.md) --
 **DDEV must not write to any shared Solr by default; it gets a local index.**
