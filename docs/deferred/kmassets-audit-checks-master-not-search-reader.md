@@ -59,4 +59,4 @@ has it, reader doesn't" is expected for private content and should not be read a
 checking `visibility_s`; (2) the audit found **4,149 orphaned AV docs** on the master written by a
 DDEV with shifted node ids -- see
 [solr-cross-environment-write-targets.md](solr-cross-environment-write-targets.md). The audit does
-not detect a doc with a *valid* uid but the wrong content (27 found); `--check-stale` should.
+not detect a doc with a *valid* uid but the wrong content (45 found); `--check-stale` should.

@@ -50,7 +50,7 @@ letting subcollections inherit the parent's) is correct.
 - **Reader check done 2026-09-24 -- found a separate, related problem.** The repaired Images
   subcollections are clean on the reader (0 docs). But **382 stale public AV orphan docs**
   (nodes that do not exist on dev-0) still sit in 7 of the 15 repaired AV collections; 4,149
-  orphans exist in total, plus 27 wrong-content docs. They were written on 2026-09-18 by an
+  orphans existed in total, plus 45 wrong-content docs -- **cleaned up 2026-09-24**. They were written on 2026-09-18 by an
   environment with shifted node ids -- root cause and prioritized fix (DDEV must not write to a
   shared Solr) in [solr-cross-environment-write-targets.md](solr-cross-environment-write-targets.md).
   Cleanup is not done yet.
