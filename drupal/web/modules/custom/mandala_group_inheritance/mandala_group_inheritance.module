@@ -148,6 +148,14 @@ function _mandala_group_inheritance_node_access(EntityInterface $node, AccountIn
  *
  * When a subcollection is created with a parent_collection, copy the parent's
  * field_group_access value as the default visibility.
+ *
+ * A migration save (isSyncing()) is different: the source already carries the
+ * subcollection's own D7 value, and overwriting it with the parent's silently
+ * loosened 15 AV subcollections (private/UVA-only under a public parent
+ * became public/UVA-only). So a migration keeps its own value, and where that
+ * differs from the parent's it is recorded as an override
+ * (field_visibility_overridden, ADR 011) so a later change to the parent's
+ * visibility does not propagate over it.
  */
 function mandala_group_inheritance_group_presave(GroupInterface $group) {
   if ($group->bundle() !== 'subcollection' || !$group->isNew()) {
@@ -162,6 +170,14 @@ function mandala_group_inheritance_group_presave(GroupInterface $group) {
   /** @var \Drupal\group\Entity\GroupInterface $parent */
   $parent = $parent_ref->entity;
   if (!$parent) {
+    return;
+  }
+
+  if ($group->isSyncing()) {
+    if (!$group->get('field_group_access')->isEmpty()
+      && (int) $group->get('field_group_access')->value !== (int) $parent->get('field_group_access')->value) {
+      $group->set('field_visibility_overridden', TRUE);
+    }
     return;
   }
 

@@ -111,3 +111,4 @@ nav:
   - "AV2: field_tags \"Tags Old\" label inconsistency": av2-field-tags-old-label-inconsistency.md
   - "AV migration verify: orphaned-paragraph count drifted 3 -> 2": av-migration-verify-orphan-count-drift.md
   - "No mechanism populates local sites/default/files (needs a team decision)": local-dev-files-provisioning-mechanism.md
+  - "Migration overwrote subcollection access with the parent's value": subcollection-access-overwritten-by-inheritance-hook.md
