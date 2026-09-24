@@ -1084,6 +1084,17 @@ if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev
   // dev point at the dev site, not production.
   $config['mandala_kmassets_sync.settings']['base_url'] = 'https://mandala.ddev.site';
 
+  // DDEV must never write to a shared Solr index. config/sync carries the
+  // shared staging kmassets master URL (right for dev-0), and every DDEV
+  // imports it: on 2026-09-18 a DDEV whose node ids were offset from dev-0's
+  // wrote ~4,200 wrongly-numbered docs into the shared master through the
+  // inline node-save hooks. Blank it so the hooks are unconfigured (no write)
+  // and the drush tools (kmassets:index/index-all/delete/audit) throw instead
+  // of touching the shared index. Opt in deliberately -- e.g. to a local Solr
+  // container -- with MANDALA_DDEV_SOLR_MASTER_URL. See
+  // docs/deferred/solr-cross-environment-write-targets.md.
+  $config['mandala_kmassets_sync.settings']['solr_master_url'] = getenv('MANDALA_DDEV_SOLR_MASTER_URL') ?: '';
+
   // Migrate API source DB connection — points at the secondary 'd7_images'
   // database on the same DDEV MariaDB instance. Used by mandala_migrations
   // module to migrate D7 → D11 (Sprint 1 1a.6/1a.7). Load the dump with:
