@@ -13,16 +13,16 @@ settings:
   allowed_values:
     -
       value: 0
-      label: Public
+      label: 'Use group defaults'
     -
       value: 1
-      label: Private
+      label: 'Public - accessible to all site users'
     -
       value: 2
-      label: 'UVA members'
+      label: 'Private - accessible only to group members'
     -
       value: 3
-      label: 'Collection admins'
+      label: 'UVA Only - accessible only to UVA members'
   allowed_values_function: ''
 module: options
 locked: false

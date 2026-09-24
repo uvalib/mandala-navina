@@ -99,8 +99,12 @@ Images and AV migrations uses. `field_copyright_owner`, `field_license` and
 which has none; nothing is lost, as no row carried markup.
 
 **`group_content_access` → `field_group_content_access`.** D7's field has no
-`field_` prefix. All four AV realms (0 Public, 1 Private, 2 UVA members, 3
-Collection admins) were already present in the D11 storage's allowed values.
+`field_` prefix. The four values (0 Use group defaults, 1 Public, 2 Private, 3
+UVA Only -- verified against D7's `field_config` in the 2026-09-01 prod dump)
+are present in the D11 storage's allowed values. **Corrected 2026-09-24:** this
+note and the D11 labels originally read "0 Public, 1 Private, 2 UVA members, 3
+Collection admins", which was wrong -- the stored integers were always right
+(raw copy), only the labels were off.
 AV4 migrates the raw value; **AV7 owns the access *mapping*.**
 
 **Deliberately excluded.** `field_og_collection_ref` (membership migrates as
