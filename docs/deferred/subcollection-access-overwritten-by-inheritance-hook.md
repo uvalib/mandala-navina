@@ -23,6 +23,10 @@ are the ones exposed.
 0 public / 1 private / 2 UVA; node-level `group_content_access` is 0 use group defaults /
 1 public / 2 private / 3 UVA only. Both were verified against D7's `field_config`.)
 
+## Confirmed by Than (2026-09-24)
+The subcollection-specific values in D7 **were enforced**, so restoring them (rather than
+letting subcollections inherit the parent's) is correct.
+
 ## Fixed in code
 - The hook now leaves a migration's (`isSyncing()`) value alone, and records an override
   when it differs from the parent's. New subcollections created in the UI still inherit.
@@ -45,7 +49,8 @@ are the ones exposed.
   entirely from the affected subcollection -- a larger exposure than AV's. Repaired on the
   local DB only (`--site=images`; second run reported 0 changes). **Run on dev-0 first**,
   then AV.
-- Unexplained in the AV comparison: D7 subcollection nid 3 has no D11 group; D11 has
-  three AV subcollections (legacy nids 9, 20, 23) absent from the 2026-09-01 dump.
+- The four collections that did not line up in the AV comparison (D7 nid 3; D11 nids 9, 20,
+  23) are explained and harmless -- see
+  [av-collections-without-d7-group-access.md](av-collections-without-d7-group-access.md).
 - A fresh production migration at cutover is now correct by construction (hook fix), but
   worth re-running the D7-vs-D11 comparison as a post-migration check.
