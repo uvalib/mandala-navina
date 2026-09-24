@@ -36,9 +36,15 @@ are the ones exposed.
 - **Re-index member nodes afterwards** (`kmassets:index-all audio|video|shanti_image`):
   a group update does not re-index its members' Solr docs, so search visibility stays
   stale until then.
-- **Images has the same defect**: a dry run against the local Images source reports 7
-  subcollections that differ from D7. Not yet applied; confirm against the current Images
-  dump before running.
+- **Images has the same defect, confirmed against the production dump
+  (2026-06-29; staging 2026-07-07 gives identical results):** 7 subcollections are looser
+  in D11 than D7 -- 6 private -> public, 1 UVA-only -> public -- and in every case equal
+  the parent's value. **3,171 images** are members, 3,112 of them in a single
+  subcollection. Images nodes have no node-level access field, and each of these belongs
+  to exactly one group (none is a direct member of the parent), so their visibility comes
+  entirely from the affected subcollection -- a larger exposure than AV's. Repaired on the
+  local DB only (`--site=images`; second run reported 0 changes). **Run on dev-0 first**,
+  then AV.
 - Unexplained in the AV comparison: D7 subcollection nid 3 has no D11 group; D11 has
   three AV subcollections (legacy nids 9, 20, 23) absent from the 2026-09-01 dump.
 - A fresh production migration at cutover is now correct by construction (hook fix), but
