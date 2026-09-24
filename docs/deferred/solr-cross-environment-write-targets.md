@@ -70,8 +70,8 @@ local Solr index. Reaching a shared endpoint from DDEV should be a deliberate op
    master holds their 1,143 private docs -- the 382 public orphans that had leaked are gone.
 
 **Still to do:** a reusable, tested drush command for this analysis and cleanup -- see item 3 in
-[kmassets-audit-hardening.md](kmassets-audit-hardening.md). The hand-run steps above are the
-reference for it.
+[kmassets-audit-hardening.md](kmassets-audit-hardening.md) -- **assigned to Yuji (2026-09-24)**.
+The hand-run steps above are the reference for it.
 
 **Fix plan (proposed, not started)**
 1. **Guardrail, small PR, first -- IMPLEMENTED in [PR #250](https://github.com/uvalib/mandala-navina/pull/250)

@@ -2,7 +2,7 @@
 **Area:** solr / kmassets / audit / DX
 **Raised during:** Session 2026-07-07 (Sprint 1 1a.9, PR #19)
 **Jira:** (add when available)
-**Priority:** Low–Medium — non-blocking polish on the working `kmassets:audit` command. **Item 3 (new 2026-09-24) is Medium-High: the analysis-and-cleanup that had to be done by hand for the DDEV-pollution incident should be a real, tested drush command.**
+**Priority:** Low–Medium — non-blocking polish on the working `kmassets:audit` command. **Item 3 (new 2026-09-24) is Medium-High: the analysis-and-cleanup that had to be done by hand for the DDEV-pollution incident should be a real, tested drush command.** **Item 3 ASSIGNED to Yuji, 2026-09-24** (assigned by Xiaoming in the session, Yuji present).
 
 Three follow-ups (item 3 added 2026-09-24) flagged during the 1a.9 `kmassets:audit` build. The command works and is
 verified end-to-end; these are hardening items, not correctness bugs.
@@ -60,7 +60,7 @@ is done the same way every time. What the by-hand run needed that `kmassets:audi
    refuse to run when `solr_master_url` is unset (the DDEV guardrail) rather than fail midway.
 
 The 2026-09-24 manual procedure is the reference implementation (steps and results are in the
-write-targets note). Not started; no owner assigned.
+write-targets note). **Assigned to Yuji (2026-09-24)**; not started.
 
 ## Context
 
