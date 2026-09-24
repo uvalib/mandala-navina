@@ -84,19 +84,24 @@ The hand-run steps above are the reference for it.
    the drush commands (`kmassets:index/index-all/delete/audit --fix`) also fail closed when it is
    unset**, not only the save hooks. Re-point (or disable) the DDEV `search_api.server.kmassets`
    the same way.
-2. **A real local index.** Add a Solr container to DDEV (DDEV Solr add-on) with the kmassets
+2. **A real local index (Yuji).** Add a Solr container to DDEV (DDEV Solr add-on) with the kmassets
    configset, and point both the write URL and the search server at it (single node, so master =
    reader). Open decisions: full index (~122k docs, roughly 2.5 h at earlier rates) vs a scoped
    sample; configset source (check `solr-shanti-configsets` against the kmassets schema).
-3. **Make it stick.** A short ADR (local environments never write shared search indexes), a
+3. **Make it stick (Yuji).** A short ADR (local environments never write shared search indexes), a
    `CLAUDE.md` line, and a `scripts/session-start-check.sh` warning when the effective Solr write
    URL is not local.
 4. Supersedes the narrower "per-environment host override" idea in
    [spike-solr-demo-enabled-with-anonymous-route.md](spike-solr-demo-enabled-with-anonymous-route.md);
    the same mechanism also covers staging/production (each gets its own value).
 
-**Owner:** not assigned -- decide with Yuji in the session. Nothing above has been executed
-beyond the read-only investigation.
+**Owner: Yuji -- ALL local/DDEV Solr work, assigned 2026-09-24** (assigned by Xiaoming in the
+session, Yuji present; his formal acceptance is not recorded). That covers step 2 (a local Solr
+container in DDEV with the kmassets configset, incl. the full-vs-sample and configset-source
+decisions), step 3 (the ADR, the `CLAUDE.md` line, the `session-start-check.sh` warning), the
+DDEV `search_api` reader repoint, and the reusable cleanup command
+([kmassets-audit-hardening.md](kmassets-audit-hardening.md) item 3). Step 1 (the guardrail, PR #250)
+and the shared-master cleanup are already done (Xiaoming).
 
 ## What was found (D7 legacy, 2026-08-13)
 
