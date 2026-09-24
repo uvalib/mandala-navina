@@ -1,9 +1,9 @@
-# D7 staging writes to the production Solr master, and production Visuals writes to staging
+# Cross-environment Solr writes: D7 staging → production, production Visuals → staging, and (new) D11 DDEV → shared staging master
 
 **Area:** solr / D7 legacy / environment isolation / production risk
 **Raised during:** Session 2026-08-13 (Solr index inventory across dev / staging / production)
 **Jira:** (add when available)
-**Priority:** **Medium — the two staging→production write paths are FIXED (2026-09-02, group
+**Priority:** **HIGH (new item, 2026-09-24): D11 DDEV writes to the shared staging Solr master by default and had already polluted it — see "D11: DDEV writes..." below; fix prioritized.** The original D7 items: **Medium — the two staging→production write paths are FIXED (2026-09-02, group
 decision).** `mandala-sources-staging`'s `solr` search_api server is disabled
 (`search-api-server-disable`, verified via `search-api-server-list`). `mandala-av-staging`'s
 `mandala_library_rw` apachesolr environment is repointed from the production Solr master to an
@@ -11,7 +11,75 @@ inert local placeholder (`solr-set-env-url`, verified in `apachesolr_environment
 write to production anymore. **Production Visuals → staging remains open, assigned to Yuji** —
 see below.
 
-## What was found
+## D11: DDEV writes to the shared staging Solr master by default (found 2026-09-24) — HIGH, fix prioritized
+
+**Principle (raised in the 2026-09-24 session, Yuji present -- confirm agreement):** a DDEV
+environment must **not write to any shared Solr index by default**; it should have its own
+local Solr index. Reaching a shared endpoint from DDEV should be a deliberate opt-in.
+
+**What is true today**
+- DDEV has **no Solr service** (`.ddev/` has Redis only) and imports the committed `config/sync`
+  unchanged. `mandala_kmassets_sync.settings` sets `solr_master_url` to the shared
+  `mandala-solr-master-staging-private` master, with no DDEV override in `settings.php` /
+  `settings.ddev.php`. `mandala_kmassets_sync_node_insert/update` write **inline on every node
+  save**, so any node save on a DDEV writes to the shared master under **that DDEV's own node
+  ids**.
+- `search_api.server.kmassets` reads from the shared `mandala-index-dev`. Read-only, but a DDEV's
+  search shows shared-index content.
+- The drush tools can also **delete** from the shared master from a DDEV (`kmassets:delete`,
+  `kmassets:audit --fix`) -- the same isolation gap, in the destructive direction.
+- Redis (visibility tokens) is already DDEV-local; only Solr is shared.
+
+**What it already did (read-only investigation, 2026-09-24)**
+- On 2026-09-18, **4,194 AV docs** were written in one burst (15:50-17:15Z) with `node_changed`
+  all exactly `15:53:57Z` -- a single drush process (Drupal stamps `changed` with request time)
+  saving ~4,194 nodes over about an hour, in an environment whose AV nids were dev-0's **+4,187**
+  (uid max 127,092 = dev-0's max 122,905 + 4,187; the id offset documented in
+  [migration-legacy-nid-required-convention.md](migration-legacy-nid-required-convention.md)).
+  A separate 10,341-doc burst that day (18:00-20:10Z, dev-0's real ids) is dev-0's own
+  `av:backfill-kaltura-duration` run and is legitimate.
+- Result on the shared master: **4,149 orphaned docs** (`kmassets:audit audio|video`, report-only,
+  run on dev-0) -- uids like `audio-video-11-123558` for nodes that do not exist on dev-0 -- plus
+  **27 docs with a valid dev-0 uid but the wrong content** (e.g. uid 116968 is titled as a
+  different recording than the real node; the orphan audit does not catch these). The master
+  holds 27,273 AV docs against 11,583 AV nodes (legacy D7 docs account for part of the rest).
+- **Access impact:** the reader is a public-only view (0 private docs). It still serves **382
+  public orphan docs** inside 7 of the 15 AV collections whose access was just repaired (see
+  [subcollection-access-overwritten-by-inheritance-hook.md](subcollection-access-overwritten-by-inheritance-hook.md)):
+  titles/metadata searchable as public for private/UVA-only collections (links 404, the nodes
+  do not exist on dev-0).
+- **Which machine wrote it is not proven.** The 2026-09-18 sessions were git-authored by Yuji and
+  the 2026-09-22 log found "DDEV" ids at dev-0 + 4,187, which points at his DDEV, but that is
+  inference. Ask him.
+
+**Cleanup -- NOT done, needs explicit approval (deletes from the shared master)**
+1. Get the full orphan uid list (the audit only prints 20) and confirm all fall in the shifted range.
+2. `kmassets:audit audio --fix` to delete the 4,149 orphans (the service-wide orphan set is safe
+   per bundle since PR #199, but review the list first).
+3. `kmassets:audit --check-stale` (or `--fix`) for the 27 wrong-content docs; then spot-check the reader.
+
+**Fix plan (proposed, not started)**
+1. **Guardrail, small PR, first.** In `settings.php`'s DDEV block set
+   `$config['mandala_kmassets_sync.settings']['solr_master_url'] = ''` so the sync module is
+   unconfigured and writes nothing -- fail closed for every DDEV on the next `git pull`. **Verify
+   the drush commands (`kmassets:index/index-all/delete/audit --fix`) also fail closed when it is
+   unset**, not only the save hooks. Re-point (or disable) the DDEV `search_api.server.kmassets`
+   the same way.
+2. **A real local index.** Add a Solr container to DDEV (DDEV Solr add-on) with the kmassets
+   configset, and point both the write URL and the search server at it (single node, so master =
+   reader). Open decisions: full index (~122k docs, roughly 2.5 h at earlier rates) vs a scoped
+   sample; configset source (check `solr-shanti-configsets` against the kmassets schema).
+3. **Make it stick.** A short ADR (local environments never write shared search indexes), a
+   `CLAUDE.md` line, and a `scripts/session-start-check.sh` warning when the effective Solr write
+   URL is not local.
+4. Supersedes the narrower "per-environment host override" idea in
+   [spike-solr-demo-enabled-with-anonymous-route.md](spike-solr-demo-enabled-with-anonymous-route.md);
+   the same mechanism also covers staging/production (each gets its own value).
+
+**Owner:** not assigned -- decide with Yuji in the session. Nothing above has been executed
+beyond the read-only investigation.
+
+## What was found (D7 legacy, 2026-08-13)
 
 The D7 "staging" installation on `mandala-drupal-dev-1` is a **configuration clone of
 production** — its Solr settings were copied along with the databases and never

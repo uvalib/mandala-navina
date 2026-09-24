@@ -3,7 +3,7 @@
 **Area:** search_api / spike hygiene / dev environment / configuration
 **Raised during:** Session 2026-08-13 (checking what consumes the D11 kmassets Search API index)
 **Jira:** (add when available)
-**Priority:** **Low — mostly addressed in the same session (see Resolution).** One
+**Priority:** **Low for the original demo-module issue (addressed); the residual below is now HIGH -- see the 2026-09-24 update.** One
 residual item is genuinely open: the connector host is environment-specific config
 sitting in a shared `config/sync`.
 
@@ -83,6 +83,14 @@ API's Solarium connector does not read env vars natively, so this needs a delibe
 mechanism — most likely a `$config['search_api.server.kmassets']['backend_config']
 ['connector_config']['host']` override in the environment's `settings.php`, delivered by
 Ansible the same way other per-environment values are.
+
+**Update 2026-09-24 -- this is no longer hypothetical, and it is wider than the search host.** The
+same shared-`config/sync` problem applies to the **write** URL (`mandala_kmassets_sync`'s
+`solr_master_url`), and it has already bitten: a DDEV environment imported the shared staging
+master URL and wrote 4,194 wrongly-numbered docs into it (4,149 orphans + 27 wrong-content).
+Prioritized (High) and folded into the plan in
+[solr-cross-environment-write-targets.md](solr-cross-environment-write-targets.md) --
+**DDEV must not write to any shared Solr by default; it gets a local index.**
 
 **Decide this before a second D11 environment exists**, not after — otherwise the first
 staging deploy silently points staging's Search API at dev's proxy.

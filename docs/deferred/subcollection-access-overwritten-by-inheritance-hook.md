@@ -47,7 +47,14 @@ letting subcollections inherit the parent's) is correct.
 - Merged and deployed first: PR #248 (deploy `abf0394a-...` succeeded).
 
 ## Still open
-- **Verify on the search reader.** The re-index writes to the write master; whether the
+- **Reader check done 2026-09-24 -- found a separate, related problem.** The repaired Images
+  subcollections are clean on the reader (0 docs). But **382 stale public AV orphan docs**
+  (nodes that do not exist on dev-0) still sit in 7 of the 15 repaired AV collections; 4,149
+  orphans exist in total, plus 27 wrong-content docs. They were written on 2026-09-18 by an
+  environment with shifted node ids -- root cause and prioritized fix (DDEV must not write to a
+  shared Solr) in [solr-cross-environment-write-targets.md](solr-cross-environment-write-targets.md).
+  Cleanup is not done yet.
+- **Verify on the search reader (rest).** The re-index writes to the write master; whether the
   reader the live app queries reflects it was not checked (see
   [kmassets-audit-checks-master-not-search-reader.md](kmassets-audit-checks-master-not-search-reader.md),
   where the reader was already missing 70 docs). Spot-check a few of the 4,314 nodes.
