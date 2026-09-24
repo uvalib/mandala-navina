@@ -50,3 +50,13 @@ Master  (mandala-solr-master-staging, uid:images-11-*): numFound = 111,339
 - [`kmassets-index-has-no-d11-uids.md`](kmassets-index-has-no-d11-uids.md) — the same "silent, correct-looking-but-wrong" failure mode, previously root-caused and fixed
 - [`kmassets-audit-hardening.md`](kmassets-audit-hardening.md) — prior audit-tool follow-ups; this finding should be folded into that hardening backlog
 - `drupal/web/modules/custom/mandala_kmassets_sync/src/KmassetAuditor.php`, `KmassetDirectSink.php`
+
+## Update 2026-09-24
+
+Two further observations from running the report-only audit on dev-0 and comparing master vs
+reader directly: (1) the reader holds **no private docs at all** (public-only view), so "master
+has it, reader doesn't" is expected for private content and should not be read as a gap without
+checking `visibility_s`; (2) the audit found **4,149 orphaned AV docs** on the master written by a
+DDEV with shifted node ids -- see
+[solr-cross-environment-write-targets.md](solr-cross-environment-write-targets.md). The audit does
+not detect a doc with a *valid* uid but the wrong content (27 found); `--check-stale` should.
