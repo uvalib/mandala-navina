@@ -36,7 +36,7 @@ cd "$REPO_ROOT"
 LOCAL_ONLY=0
 [ "${1:-}" = "--local-only" ] && LOCAL_ONLY=1
 
-DEV0_SSH_USER="${DEV0_SSH_USER:-ys2n}"
+DEV0_SSH_USER="${DEV0_SSH_USER:-$(whoami)}"
 DEV0_SSH_HOST="${DEV0_SSH_HOST:-mandala-drupal-dev-0.internal.lib.virginia.edu}"
 DEV0_SSH_KEY="${DEV0_SSH_KEY:-$HOME/.ssh/id_rsa}"
 DEV0_CONTAINER="${DEV0_CONTAINER:-mandala-drupal-0}"
