@@ -124,12 +124,17 @@ else
   REMOTE_SCRIPT="cd $DEV0_DOCROOT && vendor/bin/drush eval 'eval(base64_decode(\"$PHP_B64\"));'"
   REMOTE_B64="$(printf '%s' "$REMOTE_SCRIPT" | base64 | tr -d '\n')"
 
+  DEV0_ERR="$(mktemp)"
   DEV0_COUNTS="$(ssh -i "$DEV0_SSH_KEY" -o ConnectTimeout=10 -o BatchMode=yes \
     "$DEV0_SSH_USER@$DEV0_SSH_HOST" \
-    "sudo docker exec $DEV0_CONTAINER sh -c \"echo $REMOTE_B64 | base64 -d | sh\"" 2>/dev/null)"
+    "sudo docker exec $DEV0_CONTAINER sh -c \"echo $REMOTE_B64 | base64 -d | sh\"" 2>"$DEV0_ERR")"
 
   if [ -z "$DEV0_COUNTS" ]; then
-    warn "could not reach dev-0 (VPN off? host down?) -- skipping comparison. Local counts:"
+    warn "could not reach dev-0 (VPN off? host down? SSH/auth error?) -- skipping comparison. Local counts:"
+    if [ -s "$DEV0_ERR" ]; then
+      echo "  stderr from ssh/remote command:"
+      sed 's/^/    /' "$DEV0_ERR"
+    fi
     echo "$LOCAL_COUNTS"
   else
     DIFF_OUT="$(diff <(echo "$LOCAL_COUNTS") <(echo "$DEV0_COUNTS"))"
@@ -143,6 +148,7 @@ else
       echo "     (destructive -- snapshot first: ddev snapshot)"
     fi
   fi
+  rm -f "$DEV0_ERR"
 fi
 echo
 
@@ -210,12 +216,17 @@ PHP
     REMOTE_SCRIPT="cd $DEV0_DOCROOT && vendor/bin/drush eval 'eval(base64_decode(\"$DRIFT_CHECK_B64\"));'"
     REMOTE_B64="$(printf '%s' "$REMOTE_SCRIPT" | base64 | tr -d '\n')"
 
+    DEV0_ERR="$(mktemp)"
     DEV0_SAMPLE="$(ssh -i "$DEV0_SSH_KEY" -o ConnectTimeout=10 -o BatchMode=yes \
       "$DEV0_SSH_USER@$DEV0_SSH_HOST" \
-      "sudo docker exec $DEV0_CONTAINER sh -c \"echo $REMOTE_B64 | base64 -d | sh\"" 2>/dev/null)"
+      "sudo docker exec $DEV0_CONTAINER sh -c \"echo $REMOTE_B64 | base64 -d | sh\"" 2>"$DEV0_ERR")"
 
     if [ -z "$DEV0_SAMPLE" ]; then
       warn "could not reach dev-0 for drift spot-check"
+      if [ -s "$DEV0_ERR" ]; then
+        echo "  stderr from ssh/remote command:"
+        sed 's/^/    /' "$DEV0_ERR"
+      fi
     else
       DRIFT_DIFF="$(diff <(echo "$LOCAL_SAMPLE" | sort) <(echo "$DEV0_SAMPLE" | sort))"
       if [ -z "$DRIFT_DIFF" ]; then
@@ -229,6 +240,7 @@ PHP
         echo "     field_legacy_site + field_legacy_nid, never the raw id shown above."
       fi
     fi
+    rm -f "$DEV0_ERR"
   fi
 fi
 echo
