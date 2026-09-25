@@ -5,7 +5,7 @@
  * Visibility and membership inheritance for collection/subcollection groups.
  *
  * Implements the five hooks required by ADR 011 (Option D):
- *   1. hook_entity_access     — deny access to private-group content for non-members
+ *   1. hook_entity_access     — enforce collection visibility on group content
  *   2. hook_group_presave     — copy parent visibility when subcollection is created
  *   3. hook_group_update      — propagate collection visibility change to subcollections
  *   4. hook_group_relationship_insert — cascade new members and backfill on subcollection create
@@ -55,10 +55,9 @@ function mandala_group_inheritance_entity_base_field_info(EntityTypeInterface $e
 /**
  * Implements hook_entity_access().
  *
- * Denies view access to shanti_image nodes and group entities that belong to
- * a private group (field_group_access = 1) for users who are not members.
- * The type-level outsider roles grant view by default; this hook restricts
- * that grant for private groups so per-group visibility is enforced.
+ * Enforces collection visibility on group entities and on the nodes inside
+ * them. The type-level outsider/anonymous roles grant view by default; this
+ * hook restricts that grant so per-collection visibility is actually enforced.
  */
 function mandala_group_inheritance_entity_access(EntityInterface $entity, $operation, AccountInterface $account) {
   if ($operation !== 'view') {
@@ -70,8 +69,16 @@ function mandala_group_inheritance_entity_access(EntityInterface $entity, $opera
     return _mandala_group_inheritance_group_access($entity, $account);
   }
 
-  // Restrict access to shanti_image nodes that belong to private groups.
-  if ($entity->getEntityTypeId() === 'node' && $entity->bundle() === 'shanti_image') {
+  // Restrict access to group content. Any bundle with a group_node plugin is
+  // in scope, discovered rather than listed: this check was hardcoded to
+  // `shanti_image` until 2026-09-25, so audio/video never reached it at all and
+  // 2,027 published AV nodes D7 restricted were viewable by anyone. That was
+  // the fourth bug of this exact shape (PR #201's group role grants, PR #199's
+  // groupKmassetUid(), SiblingCarouselService::getCollectionMemberNids()), so
+  // Texts and Sources get enforcement the moment their bundles are enabled,
+  // with no further code change here.
+  if ($entity->getEntityTypeId() === 'node'
+    && in_array($entity->bundle(), _mandala_group_inheritance_group_node_bundles(), TRUE)) {
     return _mandala_group_inheritance_node_access($entity, $account);
   }
 
@@ -79,10 +86,43 @@ function mandala_group_inheritance_entity_access(EntityInterface $entity, $opera
 }
 
 /**
- * Returns forbidden() for private group entities when user is not a member.
+ * Node bundles that have a group_node plugin installed.
+ *
+ * Read from group_relationship_type config rather than hardcoded, and statically
+ * cached because hook_entity_access() runs for every node on gallery and listing
+ * pages.
+ */
+function _mandala_group_inheritance_group_node_bundles(): array {
+  $bundles = &drupal_static(__FUNCTION__);
+
+  if ($bundles === NULL) {
+    $bundles = [];
+    $storage = \Drupal::entityTypeManager()->getStorage('group_relationship_type');
+    foreach ($storage->loadMultiple() as $relationship_type) {
+      $plugin_id = $relationship_type->getPluginId();
+      if (str_starts_with($plugin_id, 'group_node:')) {
+        $bundles[] = substr($plugin_id, strlen('group_node:'));
+      }
+    }
+    $bundles = array_values(array_unique($bundles));
+  }
+
+  return $bundles;
+}
+
+/**
+ * Restricts a collection's own page to match its visibility.
+ *
+ * Mirrors the node-side rules so a collection is never more visible than the
+ * content inside it. UVA handling was added 2026-09-25: only value 1 was tested
+ * before, so 24 of 30 published UVA-only collections were anonymously viewable
+ * while their contents were not.
  */
 function _mandala_group_inheritance_group_access(GroupInterface $group, AccountInterface $account) {
-  if ((int) $group->get('field_group_access')->value !== 1) {
+  $access = (int) $group->get('field_group_access')->value;
+
+  // 0 (public), or anything unrecognised, is left to Group's own permissions.
+  if ($access !== 1 && $access !== 2) {
     return AccessResult::neutral()->addCacheableDependency($group);
   }
 
@@ -91,6 +131,16 @@ function _mandala_group_inheritance_group_access(GroupInterface $group, AccountI
   // reach content in private collections without per-group membership.
   if ($account->hasPermission('bypass group access') || $account->hasPermission('bypass mandala group access')) {
     return AccessResult::neutral()->cachePerPermissions();
+  }
+
+  // UVA-only: any authenticated user, exactly as on the node side.
+  if ($access === 2) {
+    if ($account->isAuthenticated()) {
+      return AccessResult::neutral()->addCacheableDependency($group);
+    }
+    return AccessResult::forbidden('Group is UVA-only; user is not authenticated.')
+      ->addCacheableDependency($group)
+      ->addCacheContexts(['user.roles:authenticated']);
   }
 
   // Private group: deny non-members.
@@ -105,7 +155,30 @@ function _mandala_group_inheritance_group_access(GroupInterface $group, AccountI
 }
 
 /**
- * Returns forbidden() for nodes in private groups when user is not a member.
+ * Enforces a node's effective collection visibility.
+ *
+ * Resolution rules, decided with Than 2026-09-24 against D7's own
+ * mb_access.module, which is the only authority on what these values meant:
+ *
+ *  - The node's own field_group_content_access WINS when it carries a real
+ *    value: 1 Public, 2 Private (group members), 3 UVA only.
+ *  - Value 0 ("use group defaults"), or no such field at all, resolves from the
+ *    owning collection's field_group_access: 0 Public, 1 Private, 2 UVA. This is
+ *    ~78% of AV content. D7 reached the node scale by adding 1 to the collection
+ *    value; mapping the two scales directly says the same thing without
+ *    inheriting the off-by-one.
+ *  - UVA means any authenticated user, copying D7 exactly: its grant went to
+ *    DRUPAL_AUTHENTICATED_RID and never checked for NetBadge. Anonymous users
+ *    never see UVA content.
+ *
+ * Resolved live rather than denormalised onto each node, because a collection's
+ * visibility can be edited and ~9,000 nodes would silently go stale.
+ *
+ * Deliberately NOT copied from D7: for a "use group defaults" node, D7's public
+ * grant took the *collection's* published status instead of the node's, so an
+ * unpublished node in a published public collection could be publicly visible.
+ * Confirmed with Than as a bug to fix rather than replicate — publication status
+ * is core's business, and this function only resolves visibility.
  */
 function _mandala_group_inheritance_node_access(EntityInterface $node, AccountInterface $account) {
   // Let superadmins and bypass-capable accounts through immediately. The global
@@ -114,29 +187,94 @@ function _mandala_group_inheritance_node_access(EntityInterface $node, AccountIn
     return AccessResult::neutral()->cachePerPermissions();
   }
 
+  $group = _mandala_group_inheritance_owning_group($node);
+  if (!$group) {
+    // Not in a collection: nothing for this hook to enforce.
+    return AccessResult::neutral()->addCacheableDependency($node);
+  }
+
+  $visibility = _mandala_group_inheritance_effective_visibility($node, $group);
+
+  // Every outcome below depends on both entities: the node carries its own
+  // override and the group carries the value a 0 resolves from, so editing
+  // either one has to invalidate this decision.
+  switch ($visibility) {
+    case 'private':
+      if (!$group->getMember($account)) {
+        return AccessResult::forbidden('Node is private to its collection; user is not a member.')
+          ->addCacheableDependency($group)
+          ->addCacheableDependency($node)
+          ->cachePerUser();
+      }
+      break;
+
+    case 'uva':
+      if (!$account->isAuthenticated()) {
+        // Keyed on the authenticated role rather than the individual user: the
+        // decision is identical for every logged-in account, so cachePerUser()
+        // would fragment the cache for no benefit.
+        return AccessResult::forbidden('Node is UVA-only; user is not authenticated.')
+          ->addCacheableDependency($group)
+          ->addCacheableDependency($node)
+          ->addCacheContexts(['user.roles:authenticated']);
+      }
+      break;
+  }
+
+  return AccessResult::neutral()
+    ->addCacheableDependency($group)
+    ->addCacheableDependency($node);
+}
+
+/**
+ * Resolves a node's effective visibility to 'public', 'private' or 'uva'.
+ */
+function _mandala_group_inheritance_effective_visibility(EntityInterface $node, GroupInterface $group): string {
+  // field_group_content_access exists on audio/video (AV4) but never on
+  // shanti_image, whose visibility comes entirely from its collection.
+  if ($node->hasField('field_group_content_access') && !$node->get('field_group_content_access')->isEmpty()) {
+    switch ((int) $node->get('field_group_content_access')->value) {
+      case 1:
+        return 'public';
+
+      case 2:
+        return 'private';
+
+      case 3:
+        return 'uva';
+    }
+    // Value 0 is "use group defaults" — fall through to the collection.
+  }
+
+  return match ((int) $group->get('field_group_access')->value) {
+    1 => 'private',
+    2 => 'uva',
+    default => 'public',
+  };
+}
+
+/**
+ * The node's owning collection or subcollection, if any.
+ *
+ * Takes the first collection/subcollection relationship, matching
+ * CollectionFieldContributor::getOwningGroup() deliberately: that class decides
+ * what search sees, this one decides what Drupal sees, and ADR 013/014 exist to
+ * keep those two answers identical. A node belongs to exactly one collection in
+ * practice — confirmed for every grouped AV node, and D7 modelled
+ * cross-collection presence as asset links rather than multiple memberships.
+ */
+function _mandala_group_inheritance_owning_group(EntityInterface $node): ?GroupInterface {
   /** @var \Drupal\group\Entity\Storage\GroupRelationshipStorageInterface $rel_storage */
   $rel_storage = \Drupal::entityTypeManager()->getStorage('group_relationship');
-  $relationships = $rel_storage->loadByEntity($node);
 
-  foreach ($relationships as $relationship) {
+  foreach ($rel_storage->loadByEntity($node) as $relationship) {
     $group = $relationship->getGroup();
-    if (!in_array($group->bundle(), ['collection', 'subcollection'])) {
-      continue;
-    }
-    if ((int) $group->get('field_group_access')->value !== 1) {
-      continue;
-    }
-    // Node is in a private group — deny unless the user is a member.
-    $membership = $group->getMember($account);
-    if (!$membership) {
-      return AccessResult::forbidden('Node belongs to a private group; user is not a member.')
-        ->addCacheableDependency($group)
-        ->addCacheableDependency($node)
-        ->cachePerUser();
+    if (in_array($group->bundle(), ['collection', 'subcollection'], TRUE)) {
+      return $group;
     }
   }
 
-  return AccessResult::neutral()->addCacheableDependency($node);
+  return NULL;
 }
 
 // ---------------------------------------------------------------------------

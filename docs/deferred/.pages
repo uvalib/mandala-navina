@@ -113,3 +113,5 @@ nav:
   - "No mechanism populates local sites/default/files (needs a team decision)": local-dev-files-provisioning-mechanism.md
   - "Migration overwrote subcollection access with the parent's value": subcollection-access-overwritten-by-inheritance-hook.md
   - "AV collections missing from the D7-vs-D11 access comparison (nid 3, 9, 20, 23)": av-collections-without-d7-group-access.md
+  - "AV private/UVA collection content was not enforced in Drupal (fixed 2026-09-25)": av-private-uva-content-not-enforced-in-drupal.md
+  - "Collection visibility not enforced in listings (nodes or collections) -- awaiting a team decision": collection-visibility-not-enforced-in-listings.md
