@@ -73,7 +73,7 @@
 
 set -euo pipefail
 
-PROD_SSH_HOST="${PROD_SSH_HOST:-ys2n@mandala-drupal-0.internal.lib.virginia.edu}"
+PROD_SSH_HOST="${PROD_SSH_HOST:-$(whoami)@mandala-drupal-0.internal.lib.virginia.edu}"
 PROD_SSH_KEY="${PROD_SSH_KEY:-$HOME/.ssh/id_rsa}"
 # Any live production site vhost works as the credential source — they all
 # share the same `mandala_sites` DB user/password.
