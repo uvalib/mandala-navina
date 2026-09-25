@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mandala_solr_visibility;
 
 use Drupal\Core\Session\AccountInterface;
+use Drupal\group\Entity\GroupInterface;
 use Drupal\group\GroupMembershipLoader;
 
 /**
@@ -132,9 +133,23 @@ class VisibilityTokenBuilder {
    * needs to resolve itself -- GroupMembershipLoader::loadByUser() already
    * returns it.
    *
-   * Uid format mirrors CollectionFieldContributor::groupKmassetUid() exactly
-   * (images-11-{d11-group-id}) -- these two must never drift apart, since a
-   * mismatch here silently breaks the entire private-collection access path.
+   * Uid format mirrors
+   * CollectionFieldContributor::groupKmassetUid() (mandala_kmassets_sync) exactly
+   * -- these two must never drift apart, since a mismatch here silently breaks
+   * the entire private-collection access path.
+   *
+   * They did drift. The `{service}` half was hardcoded to `images` in both
+   * places through Sprint 1; PR #199 fixed the writer to derive it from
+   * field_legacy_site when AV8 landed, but missed this reader, so a member of a
+   * private AV collection got `images-11-{gid}` against documents carrying
+   * `audio-video-11-{gid}` and could not find their own content. Fixed
+   * 2026-09-25.
+   *
+   * The derivation is duplicated rather than shared on purpose: this module
+   * depends only on group and user because it runs on the login/logout path,
+   * and depending on mandala_kmassets_sync would drag paragraphs, shanti_iiif
+   * and shanti_kmaps_admin in behind it. Three lines of duplication is the
+   * cheaper price. If either side changes, change both.
    */
   protected function restrictedCollectionUids(AccountInterface $account): array {
     $memberships = $this->membershipLoader->loadByUser($account);
@@ -145,12 +160,32 @@ class VisibilityTokenBuilder {
       if (!in_array($group->bundle(), ['collection', 'subcollection'], TRUE)) {
         continue;
       }
-      if ((int) $group->get('field_group_access')->value === 0) {
+      // Only private collections need naming here. UVA collections are already
+      // admitted for every authenticated user by the visibility_i:(1 3) base
+      // clause above, so listing them would be redundant.
+      if ((int) $group->get('field_group_access')->value !== 1) {
         continue;
       }
-      $uids[] = 'images-11-' . $group->id();
+      $uids[] = $this->groupKmassetUid($group);
     }
     return $uids;
+  }
+
+  /**
+   * The kmasset uid for a collection group: {service}-11-{d11-group-id}.
+   *
+   * Keep in lockstep with CollectionFieldContributor::groupKmassetUid(), which
+   * writes the value this matches against. field_legacy_site already carries
+   * exactly the right per-site token (`images`, `audio-video`), so it IS the
+   * service value. Falls back to `images` only for a group missing the field,
+   * matching the writer's own fallback rather than emitting a malformed uid.
+   */
+  protected function groupKmassetUid(GroupInterface $group): string {
+    $service = 'images';
+    if ($group->hasField('field_legacy_site') && !$group->get('field_legacy_site')->isEmpty()) {
+      $service = $group->get('field_legacy_site')->value;
+    }
+    return $service . '-11-' . $group->id();
   }
 
 }
