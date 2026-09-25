@@ -5,7 +5,7 @@
 **Jira:** (add when available)
 **Priority:** **High -- FIXED 2026-09-25 for node pages.** Residual: listings are still
 unfiltered, tracked separately in
-[[group-visibility-not-enforced-in-listings-no-node-grants]]
+[[collection-visibility-not-enforced-in-listings]]
 
 ## What happened
 
@@ -124,7 +124,7 @@ Node **pages** are enforced; **listings are not**, because this is
 `hook_entity_access()` and Views filters on the node *grants* table instead. The
 `node_access` table holds exactly one row (realm `all`), so `/av` and `/images` still list
 restricted titles to anonymous. Pre-existing and wider than AV — see
-[[group-visibility-not-enforced-in-listings-no-node-grants]].
+[[collection-visibility-not-enforced-in-listings]].
 
 Also outstanding: staging and any future environment need the scoped kmassets re-index that
 flips UVA collection members from `private` to `uva`.
