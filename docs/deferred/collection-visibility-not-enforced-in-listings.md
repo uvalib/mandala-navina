@@ -3,9 +3,9 @@
 **Area:** access / Group / Views / node grants / ADR 011 / ADR 013 / ADR 015
 **Raised during:** Sprint 3 AV7 (session 2026-09-25, verifying the AV access fix in PR #255)
 **Jira:** (add when available)
-**Priority:** **High — real anonymous exposure of restricted titles and metadata in Drupal
-listings. AWAITING A TEAM DECISION (2026-09-25): do not start implementing; the approach for
-both halves below is an open group question.**
+**Priority:** **High — RESOLVED 2026-09-28. Both halves decided and implemented; see
+"Decision and implementation" at the end. The gap and the options are kept below as the
+record of what was weighed.**
 
 ## The gap
 
@@ -136,3 +136,77 @@ was invisible including to a site administrator. Verification must assert throug
   measures it?
 - Does the cutover plan need an explicit `node_access` rebuild step?
 - Is the collections-view leak fixed now as its own small change, or held with the node work?
+
+## Decision and implementation (2026-09-28)
+
+Decided with Than driving and Yuji present, then built the same session.
+
+**Approach: filter at query time, keyed on the `node_access` and `group_access` tags —
+not node grants.** The options above framed this as grants versus *per-view* alters and
+dismissed the latter, correctly, for failing open on every unnamed view. The framing
+missed a third shape: core attaches those tags to any query that declares itself
+access-checked (Views via `NodeViewsData`'s `access query tag`, `EntityQuery` via
+`accessCheck(TRUE)`), so one implementation reaches views that do not exist yet, without
+naming any of them.
+
+Three things decided it:
+
+- **The existing rule is a veto.** `mandala_group_inheritance_entity_access()` returns only
+  `forbidden()` or `neutral()`, never `allowed()`, composing on top of Group's permission
+  grid. Grants are positive, so a grants implementation would have to reproduce that grid
+  as a second copy — the exact shape that has drifted four times here.
+- **Grants fix only half.** `views.view.collections` is group-based, so it needed a group
+  query alter regardless. One mechanism covers both.
+- **Grants add a cutover step.** `node_access_rebuild()` over 122,923 nodes, still
+  unmeasured. Query-time filtering adds nothing to cutover, which answers the third open
+  question below: no, the cutover plan does not need a rebuild step.
+
+Also worth recording, because it was not obvious: **Group 3.3.5 already ships access-aware
+Views SQL rewriting** (`group_views_query_alter()` → `EntityQueryAlter`/`GroupQueryAlter`),
+and it was already running on all three views. It filtered nothing because it filters by
+Group *permissions*, and `group.role.collection-anonymous` grants `view group` and
+`view group_node:* entity`. The listing layer was never missing enforcement machinery — the
+enforcement present was keyed on the wrong thing.
+
+**Both halves in one PR**, since they share the resolver, the cache context and the test
+harness.
+
+### What was built
+
+- `CollectionVisibility` — the rule extracted to one place, in PHP and as the SQL
+  expression, so the entity-page and listing paths cannot diverge.
+- `NodeQueryAlter` / `GroupQueryAlter` on the two tags.
+- `user.mandala_collection_memberships` cache context. Grants would have supplied
+  `user.node_grants:view` free; this does not, and `user.group_permissions` is **wrong** —
+  it varies by calculated permissions, not membership identity, so two accounts with
+  identical roles and different memberships would collide and serve each other's listings.
+- The first test suite under `modules/custom`: 10 tests, 324 assertions.
+
+### Measured after
+
+Each figure independently matches what `hook_entity_access()` returns for the same account.
+
+| Account | `av_gallery` | `image_gallery` | `collections` |
+|---|---|---|---|
+| anonymous | 9,555 (was 11,582) | 111,269 (was 111,339) | **238** (was 387) |
+| authenticated non-member | 9,892 | 111,269 | 262 |
+| bypass | 11,582 | 111,339 | 387 |
+
+238 is 387 − 125 private − 24 UVA, exactly as predicted above.
+
+**Performance**, answering the other open question: a tagged `COUNT` over the full corpus
+runs at 353ms for images and 99ms for AV, against 22ms and 9ms for a bypass account. All
+three joins are index-driven (`group_relationship__load_by_entity`, `PRIMARY` ×2) — no new
+index needed. `total_rows` is the count query, so the pager filters in step.
+
+### Two things this deliberately does NOT fix
+
+- **Collection-less nodes keep their current behaviour.** The hook returns neutral before
+  reading a node's own override, so 18 published `video` nodes marked private or UVA with no
+  collection stay visible. Decided 2026-09-28 (Than, Yuji): those orphans are migrated into
+  a temporary review group instead — see
+  [[orphaned-content-temp-group-on-migration]].
+- **Queries that never carry the tag**, which no approach here or under grants would reach:
+  `accessCheck(FALSE)` callers (`SiblingCarouselService`, `shanti_collections_view`'s item
+  count) and any view shipping `disable_sql_rewrite: true`. All 24 views in `config/sync` are
+  `false` today; that is worth a CI guard.
