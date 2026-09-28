@@ -9,4 +9,7 @@ dependencies:
   - paragraphs:paragraphs
   - shanti_kmaps_fields:shanti_kmaps_fields
   - shanti_iiif:shanti_iiif
+  # For CollectionVisibility, the shared visibility resolver: what Solr
+  # labels a document must be what Drupal decides about it.
+  - mandala_group_inheritance:mandala_group_inheritance
   - shanti_kmaps_admin:shanti_kmaps_admin
