@@ -35,18 +35,26 @@ class CollectionFieldContributor implements KmassetDocContributorInterface {
    * Group field_group_access -> kmassets visibility_i/visibility_s.
    *
    * field_group_access (ADR 011 / mandala_group_inheritance): 0=public,
-   * 1=private, 2=subscribable.
+   * 1=private, 2=UVA.
    * kmassets visibility_i (contract §6): 1=public, 2=private, 3=uva.
    *
-   * The two enumerations don't line up: kmassets has no "subscribable"
-   * concept. Mapped to private (fail closed) rather than guessing it means
-   * "uva" -- a real decision, not yet made; see
-   * docs/deferred/kmassets-collection-docs-and-facets.md.
+   * Value 2 was mapped to private through 2026-09-25, on the reading that it
+   * meant "subscribable" and that kmassets had no equivalent -- recorded at the
+   * time as a decision not yet made. It was made 2026-09-24: 2 is D7's UVA
+   * tier, read from the real D7 field_config, so it maps to visibility_i 3,
+   * which the contract already reserves for uva.
+   *
+   * The old mapping failed closed (UVA collections were indexed private, so
+   * their members could not find them) rather than leaking, but it also meant
+   * no document was ever labelled 3 -- and the proxy's anonymous filter
+   * (visibility_i:1) plus VisibilityTokenBuilder's base clause
+   * (visibility_i:(1 3)) had already implemented the UVA tier correctly and had
+   * simply nothing to act on.
    */
   protected const ACCESS_TO_VISIBILITY = [
     0 => [1, 'public'],
     1 => [2, 'private'],
-    2 => [2, 'private'],
+    2 => [3, 'uva'],
   ];
 
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -132,6 +140,13 @@ class CollectionFieldContributor implements KmassetDocContributorInterface {
    * Defaults to `images` only for a group somehow missing the field, matching
    * the prior hardcoded behavior rather than silently emitting a malformed
    * uid.
+   *
+   * READER COUNTERPART: VisibilityTokenBuilder::groupKmassetUid()
+   * (mandala_solr_visibility) must produce the identical string, because it
+   * builds the proxy fq that matches against what this writes. That copy was
+   * missed when PR #199 fixed this one and stayed on the `images` hardcode until
+   * 2026-09-25, silently hiding private AV collections from their own members.
+   * Change both together.
    */
   protected function groupKmassetUid(GroupInterface $group): string {
     $service = 'images';
