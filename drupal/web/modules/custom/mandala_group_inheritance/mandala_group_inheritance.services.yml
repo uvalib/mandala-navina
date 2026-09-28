@@ -1,0 +1,37 @@
+services:
+
+  # Enforces collection visibility in access-checked node queries (Views,
+  # EntityQuery, and anything built on them). The entity-page equivalent is
+  # hook_entity_access() in the .module file; both resolve through
+  # Drupal\mandala_group_inheritance\Access\CollectionVisibility.
+  mandala_group_inheritance.node_query_alter:
+    class: Drupal\mandala_group_inheritance\QueryAccess\NodeQueryAlter
+    arguments:
+      - '@current_user'
+      - '@entity_type.manager'
+      - '@renderer'
+      - '@logger.channel.mandala_group_inheritance'
+
+  # The collections half. views.view.collections is group-based, so node grants
+  # would not have covered it however they were implemented.
+  mandala_group_inheritance.group_query_alter:
+    class: Drupal\mandala_group_inheritance\QueryAccess\GroupQueryAlter
+    arguments:
+      - '@current_user'
+      - '@entity_type.manager'
+      - '@renderer'
+      - '@logger.channel.mandala_group_inheritance'
+
+  logger.channel.mandala_group_inheritance:
+    parent: logger.channel_base
+    arguments: ['mandala_group_inheritance']
+
+  # Varies cached listings by which collections the viewer belongs to. See the
+  # class docblock on why user.group_permissions is NOT a safe substitute.
+  cache_context.user.mandala_collection_memberships:
+    class: Drupal\mandala_group_inheritance\Cache\Context\CollectionMembershipsCacheContext
+    arguments:
+      - '@current_user'
+      - '@entity_type.manager'
+    tags:
+      - { name: cache.context }

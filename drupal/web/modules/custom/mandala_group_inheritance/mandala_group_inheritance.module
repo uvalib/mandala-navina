@@ -13,12 +13,15 @@
  */
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Database\Query\AlterableInterface;
+use Drupal\Core\Database\Query\SelectInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\group\Entity\GroupInterface;
 use Drupal\group\Entity\GroupRelationshipInterface;
+use Drupal\mandala_group_inheritance\Access\CollectionVisibility;
 
 // ---------------------------------------------------------------------------
 // Membership metadata
@@ -65,7 +68,7 @@ function mandala_group_inheritance_entity_access(EntityInterface $entity, $opera
   }
 
   // Restrict access to private groups themselves.
-  if ($entity->getEntityTypeId() === 'group' && in_array($entity->bundle(), ['collection', 'subcollection'])) {
+  if ($entity->getEntityTypeId() === 'group' && in_array($entity->bundle(), CollectionVisibility::GROUP_BUNDLES)) {
     return _mandala_group_inheritance_group_access($entity, $account);
   }
 
@@ -78,7 +81,7 @@ function mandala_group_inheritance_entity_access(EntityInterface $entity, $opera
   // Texts and Sources get enforcement the moment their bundles are enabled,
   // with no further code change here.
   if ($entity->getEntityTypeId() === 'node'
-    && in_array($entity->bundle(), _mandala_group_inheritance_group_node_bundles(), TRUE)) {
+    && in_array($entity->bundle(), CollectionVisibility::groupNodeBundles(), TRUE)) {
     return _mandala_group_inheritance_node_access($entity, $account);
   }
 
@@ -86,28 +89,52 @@ function mandala_group_inheritance_entity_access(EntityInterface $entity, $opera
 }
 
 /**
+ * Implements hook_query_TAG_alter() for the node_access tag.
+ *
+ * The listings half of the same rule hook_entity_access() enforces on entity
+ * pages. hook_entity_access() does not govern the SQL Views builds, so without
+ * this every published node was listed to anonymous users regardless of its
+ * collection's visibility.
+ *
+ * Core attaches this tag to any query that declares itself access-checked, so
+ * one implementation covers Views (via NodeViewsData's 'access query tag', on
+ * both the result and the pager count query), EntityQuery with
+ * accessCheck(TRUE), and anything built on those.
+ */
+function mandala_group_inheritance_query_node_access_alter(AlterableInterface $query) {
+  if (!$query instanceof SelectInterface) {
+    return;
+  }
+  \Drupal::service('mandala_group_inheritance.node_query_alter')->alter($query);
+}
+
+/**
+ * Implements hook_query_TAG_alter() for the group_access tag.
+ *
+ * The collections half of the listings gap. views.view.collections is based on
+ * groups_field_data, so it listed 125 private and 24 UVA-only collection names
+ * to anonymous users -- a surface node grants would not have reached however
+ * they were implemented.
+ *
+ * Nobody declares the group_access tag explicitly: core's EntityViewsData
+ * builds it from the entity type id, and EntityQuery does the same on
+ * accessCheck(TRUE).
+ */
+function mandala_group_inheritance_query_group_access_alter(AlterableInterface $query) {
+  if (!$query instanceof SelectInterface) {
+    return;
+  }
+  \Drupal::service('mandala_group_inheritance.group_query_alter')->alter($query);
+}
+
+/**
  * Node bundles that have a group_node plugin installed.
  *
- * Read from group_relationship_type config rather than hardcoded, and statically
- * cached because hook_entity_access() runs for every node on gallery and listing
- * pages.
+ * @deprecated Kept as a thin wrapper for any external caller; new code should
+ *   call CollectionVisibility::groupNodeBundles() directly.
  */
 function _mandala_group_inheritance_group_node_bundles(): array {
-  $bundles = &drupal_static(__FUNCTION__);
-
-  if ($bundles === NULL) {
-    $bundles = [];
-    $storage = \Drupal::entityTypeManager()->getStorage('group_relationship_type');
-    foreach ($storage->loadMultiple() as $relationship_type) {
-      $plugin_id = $relationship_type->getPluginId();
-      if (str_starts_with($plugin_id, 'group_node:')) {
-        $bundles[] = substr($plugin_id, strlen('group_node:'));
-      }
-    }
-    $bundles = array_values(array_unique($bundles));
-  }
-
-  return $bundles;
+  return CollectionVisibility::groupNodeBundles();
 }
 
 /**
@@ -119,34 +146,30 @@ function _mandala_group_inheritance_group_node_bundles(): array {
  * while their contents were not.
  */
 function _mandala_group_inheritance_group_access(GroupInterface $group, AccountInterface $account) {
-  $access = (int) $group->get('field_group_access')->value;
+  $visibility = CollectionVisibility::forGroup($group);
 
-  // 0 (public), or anything unrecognised, is left to Group's own permissions.
-  if ($access !== 1 && $access !== 2) {
+  // Public, or anything unrecognised, is left to Group's own permissions.
+  if ($visibility === CollectionVisibility::VISIBILITY_PUBLIC) {
     return AccessResult::neutral()->addCacheableDependency($group);
   }
 
   // Let superadmins and accounts with a bypass permission through. The global
   // content_editor role (ADR 015) holds 'bypass mandala group access' so it can
   // reach content in private collections without per-group membership.
-  if ($account->hasPermission('bypass group access') || $account->hasPermission('bypass mandala group access')) {
+  if (CollectionVisibility::hasGroupBypass($account)) {
     return AccessResult::neutral()->cachePerPermissions();
   }
 
-  // UVA-only: any authenticated user, exactly as on the node side.
-  if ($access === 2) {
-    if ($account->isAuthenticated()) {
-      return AccessResult::neutral()->addCacheableDependency($group);
-    }
+  if (CollectionVisibility::allows($visibility, $account, $group)) {
+    return AccessResult::neutral()->addCacheableDependency($group);
+  }
+
+  // UVA-only: keyed on the authenticated role rather than the individual user,
+  // since the decision is identical for every logged-in account.
+  if ($visibility === CollectionVisibility::VISIBILITY_UVA) {
     return AccessResult::forbidden('Group is UVA-only; user is not authenticated.')
       ->addCacheableDependency($group)
       ->addCacheContexts(['user.roles:authenticated']);
-  }
-
-  // Private group: deny non-members.
-  $membership = $group->getMember($account);
-  if ($membership) {
-    return AccessResult::neutral()->addCacheableDependency($group);
   }
 
   return AccessResult::forbidden('Group is private; user is not a member.')
@@ -183,98 +206,67 @@ function _mandala_group_inheritance_group_access(GroupInterface $group, AccountI
 function _mandala_group_inheritance_node_access(EntityInterface $node, AccountInterface $account) {
   // Let superadmins and bypass-capable accounts through immediately. The global
   // content_editor role (ADR 015) holds 'bypass mandala group access'.
-  if ($account->hasPermission('bypass group access') || $account->hasPermission('bypass node access') || $account->hasPermission('bypass mandala group access')) {
+  if (CollectionVisibility::hasNodeBypass($account)) {
     return AccessResult::neutral()->cachePerPermissions();
   }
 
-  $group = _mandala_group_inheritance_owning_group($node);
+  $group = CollectionVisibility::owningGroup($node);
   if (!$group) {
-    // Not in a collection: nothing for this hook to enforce.
+    // Not in a collection: nothing for this hook to enforce. Note this returns
+    // before the node's own field_group_content_access is read, so a
+    // collection-less node marked private or UVA is still viewable — 18
+    // published video nodes are in exactly that state. Decided 2026-09-28
+    // (Than, Yuji): those orphans get migrated into a temporary review group
+    // rather than being handled here. See
+    // docs/deferred/orphaned-content-temp-group-on-migration.md.
     return AccessResult::neutral()->addCacheableDependency($node);
   }
 
-  $visibility = _mandala_group_inheritance_effective_visibility($node, $group);
+  $visibility = CollectionVisibility::forNode($node, $group);
+
+  if (CollectionVisibility::allows($visibility, $account, $group)) {
+    return AccessResult::neutral()
+      ->addCacheableDependency($group)
+      ->addCacheableDependency($node);
+  }
 
   // Every outcome below depends on both entities: the node carries its own
   // override and the group carries the value a 0 resolves from, so editing
   // either one has to invalidate this decision.
-  switch ($visibility) {
-    case 'private':
-      if (!$group->getMember($account)) {
-        return AccessResult::forbidden('Node is private to its collection; user is not a member.')
-          ->addCacheableDependency($group)
-          ->addCacheableDependency($node)
-          ->cachePerUser();
-      }
-      break;
-
-    case 'uva':
-      if (!$account->isAuthenticated()) {
-        // Keyed on the authenticated role rather than the individual user: the
-        // decision is identical for every logged-in account, so cachePerUser()
-        // would fragment the cache for no benefit.
-        return AccessResult::forbidden('Node is UVA-only; user is not authenticated.')
-          ->addCacheableDependency($group)
-          ->addCacheableDependency($node)
-          ->addCacheContexts(['user.roles:authenticated']);
-      }
-      break;
+  if ($visibility === CollectionVisibility::VISIBILITY_UVA) {
+    // Keyed on the authenticated role rather than the individual user: the
+    // decision is identical for every logged-in account, so cachePerUser()
+    // would fragment the cache for no benefit.
+    return AccessResult::forbidden('Node is UVA-only; user is not authenticated.')
+      ->addCacheableDependency($group)
+      ->addCacheableDependency($node)
+      ->addCacheContexts(['user.roles:authenticated']);
   }
 
-  return AccessResult::neutral()
+  return AccessResult::forbidden('Node is private to its collection; user is not a member.')
     ->addCacheableDependency($group)
-    ->addCacheableDependency($node);
+    ->addCacheableDependency($node)
+    ->cachePerUser();
 }
 
 /**
  * Resolves a node's effective visibility to 'public', 'private' or 'uva'.
+ *
+ * @deprecated Kept as a thin wrapper for any external caller; new code should
+ *   call CollectionVisibility::forNode() directly.
  */
 function _mandala_group_inheritance_effective_visibility(EntityInterface $node, GroupInterface $group): string {
-  // field_group_content_access exists on audio/video (AV4) but never on
-  // shanti_image, whose visibility comes entirely from its collection.
-  if ($node->hasField('field_group_content_access') && !$node->get('field_group_content_access')->isEmpty()) {
-    switch ((int) $node->get('field_group_content_access')->value) {
-      case 1:
-        return 'public';
-
-      case 2:
-        return 'private';
-
-      case 3:
-        return 'uva';
-    }
-    // Value 0 is "use group defaults" — fall through to the collection.
-  }
-
-  return match ((int) $group->get('field_group_access')->value) {
-    1 => 'private',
-    2 => 'uva',
-    default => 'public',
-  };
+  return CollectionVisibility::forNode($node, $group);
 }
 
 /**
  * The node's owning collection or subcollection, if any.
  *
- * Takes the first collection/subcollection relationship, matching
- * CollectionFieldContributor::getOwningGroup() deliberately: that class decides
- * what search sees, this one decides what Drupal sees, and ADR 013/014 exist to
- * keep those two answers identical. A node belongs to exactly one collection in
- * practice — confirmed for every grouped AV node, and D7 modelled
- * cross-collection presence as asset links rather than multiple memberships.
+ * @deprecated Kept as a thin wrapper for any external caller; new code should
+ *   call CollectionVisibility::owningGroup() directly.
  */
 function _mandala_group_inheritance_owning_group(EntityInterface $node): ?GroupInterface {
-  /** @var \Drupal\group\Entity\Storage\GroupRelationshipStorageInterface $rel_storage */
-  $rel_storage = \Drupal::entityTypeManager()->getStorage('group_relationship');
-
-  foreach ($rel_storage->loadByEntity($node) as $relationship) {
-    $group = $relationship->getGroup();
-    if (in_array($group->bundle(), ['collection', 'subcollection'], TRUE)) {
-      return $group;
-    }
-  }
-
-  return NULL;
+  return CollectionVisibility::owningGroup($node);
 }
 
 // ---------------------------------------------------------------------------
