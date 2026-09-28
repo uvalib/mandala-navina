@@ -109,6 +109,25 @@ function mandala_group_inheritance_query_node_access_alter(AlterableInterface $q
 }
 
 /**
+ * Implements hook_query_TAG_alter() for the group_access tag.
+ *
+ * The collections half of the listings gap. views.view.collections is based on
+ * groups_field_data, so it listed 125 private and 24 UVA-only collection names
+ * to anonymous users -- a surface node grants would not have reached however
+ * they were implemented.
+ *
+ * Nobody declares the group_access tag explicitly: core's EntityViewsData
+ * builds it from the entity type id, and EntityQuery does the same on
+ * accessCheck(TRUE).
+ */
+function mandala_group_inheritance_query_group_access_alter(AlterableInterface $query) {
+  if (!$query instanceof SelectInterface) {
+    return;
+  }
+  \Drupal::service('mandala_group_inheritance.group_query_alter')->alter($query);
+}
+
+/**
  * Node bundles that have a group_node plugin installed.
  *
  * @deprecated Kept as a thin wrapper for any external caller; new code should

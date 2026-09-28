@@ -12,6 +12,16 @@ services:
       - '@renderer'
       - '@logger.channel.mandala_group_inheritance'
 
+  # The collections half. views.view.collections is group-based, so node grants
+  # would not have covered it however they were implemented.
+  mandala_group_inheritance.group_query_alter:
+    class: Drupal\mandala_group_inheritance\QueryAccess\GroupQueryAlter
+    arguments:
+      - '@current_user'
+      - '@entity_type.manager'
+      - '@renderer'
+      - '@logger.channel.mandala_group_inheritance'
+
   logger.channel.mandala_group_inheritance:
     parent: logger.channel_base
     arguments: ['mandala_group_inheritance']

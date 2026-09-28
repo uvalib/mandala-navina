@@ -242,6 +242,76 @@ class CollectionVisibilityOracleTest extends KernelTestBase {
   }
 
   /**
+   * The same agreement, for collections themselves.
+   *
+   * views.view.collections is based on groups_field_data, so this is a
+   * genuinely separate surface from the node half — node grants would not have
+   * covered it however they were implemented. 125 private and 24 UVA-only
+   * collection names were listed to anonymous users before this.
+   */
+  public function testGroupPhpAndSqlAgree(): void {
+    $storage = $this->container->get('entity_type.manager')->getStorage('group');
+    $cases = [];
+
+    foreach (self::GROUP_VALUES as $group_value) {
+      $group = $storage->create([
+        'type' => 'collection',
+        'label' => 'Collection ' . var_export($group_value, TRUE),
+      ]);
+      if ($group_value !== 'empty') {
+        $group->set('field_group_access', $group_value);
+      }
+      $group->save();
+      $group->addMember($this->accounts['member']);
+      $cases[(int) $group->id()] = $group_value;
+    }
+
+    $switcher = $this->container->get('account_switcher');
+    $allowed_seen = 0;
+    $denied_seen = 0;
+
+    foreach ($this->accounts as $label => $account) {
+      $switcher->switchTo($account);
+      $visible = $this->visibleGids();
+
+      foreach ($cases as $gid => $group_value) {
+        $group = $storage->load($gid);
+        $php = $group->access('view', $account);
+        $sql = isset($visible[$gid]);
+
+        $this->assertSame($php, $sql, sprintf(
+          'Disagreement for account "%s", collection field_group_access=%s: entity access says %s, the tagged query says %s.',
+          $label,
+          var_export($group_value, TRUE),
+          $php ? 'ALLOWED' : 'DENIED',
+          $sql ? 'ALLOWED' : 'DENIED',
+        ));
+
+        $php ? $allowed_seen++ : $denied_seen++;
+      }
+
+      $switcher->switchBack();
+    }
+
+    $this->assertGreaterThan(0, $allowed_seen, 'No collection was ever allowed; the fixture is not exercising the rule.');
+    $this->assertGreaterThan(0, $denied_seen, 'No collection was ever denied; the fixture is not exercising the rule.');
+  }
+
+  /**
+   * Group ids returned by a group_access-tagged query for the current account.
+   *
+   * Note nobody declares that tag by name: core's EntityViewsData builds it
+   * from the entity type id, and EntityQuery does the same on accessCheck(TRUE).
+   */
+  protected function visibleGids(): array {
+    $query = $this->container->get('database')->select('groups_field_data', 'g');
+    $query->addTag('group_access');
+    $query->addField('g', 'id');
+
+    return array_flip(array_map('intval', $query->execute()->fetchCol()));
+  }
+
+  /**
    * Nids returned by a node_access-tagged query for the current account.
    *
    * Deliberately a tagged query rather than $node->access(): that is the whole
