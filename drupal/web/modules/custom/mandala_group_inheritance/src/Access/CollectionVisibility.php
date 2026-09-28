@@ -50,6 +50,66 @@ final class CollectionVisibility {
   public const GROUP_BUNDLES = ['collection', 'subcollection'];
 
   /**
+   * Numeric codes for the three visibilities, in SQL.
+   *
+   * Deliberately the same scale as field_group_content_access's own allowed
+   * values (1 public, 2 private, 3 UVA), so a node that carries an override
+   * needs no translation — the SQL expression can return the stored value
+   * directly. The group's field_group_access uses a different scale (0 public,
+   * 1 private, 2 UVA) and is mapped onto this one.
+   */
+  public const CODE_PUBLIC = 1;
+  public const CODE_PRIVATE = 2;
+  public const CODE_UVA = 3;
+
+  /**
+   * Maps a visibility string to its SQL code.
+   */
+  public static function code(string $visibility): int {
+    return match ($visibility) {
+      self::VISIBILITY_PRIVATE => self::CODE_PRIVATE,
+      self::VISIBILITY_UVA => self::CODE_UVA,
+      default => self::CODE_PUBLIC,
+    };
+  }
+
+  /**
+   * SQL expression resolving a node's effective visibility to a CODE_* value.
+   *
+   * The exact rule forNode() implements in PHP, expressed in SQL. These two are
+   * the only implementations of the rule that exist, and the kernel oracle test
+   * asserts they agree for every combination of inputs — including values
+   * outside the allowed lists — so they cannot silently drift.
+   *
+   * @param string $nca_alias
+   *   Alias of the joined node__field_group_content_access table.
+   * @param string $gfa_alias
+   *   Alias of the joined group__field_group_access table.
+   */
+  public static function nodeVisibilityExpression(string $nca_alias, string $gfa_alias): string {
+    $node_value = "$nca_alias.field_group_content_access_value";
+    return "CASE WHEN $node_value IN (" . self::CODE_PUBLIC . ', ' . self::CODE_PRIVATE . ', ' . self::CODE_UVA . ")"
+      . " THEN $node_value ELSE " . self::groupVisibilityExpression($gfa_alias) . ' END';
+  }
+
+  /**
+   * SQL expression resolving a group's visibility to a CODE_* value.
+   *
+   * The exact rule forGroup() implements in PHP. Note the COALESCE: a group
+   * with no field_group_access row at all resolves to public, matching the
+   * PHP's `default =>` arm, which treats an empty field as 0.
+   *
+   * @param string $gfa_alias
+   *   Alias of the joined group__field_group_access table.
+   */
+  public static function groupVisibilityExpression(string $gfa_alias): string {
+    $group_value = "COALESCE($gfa_alias.field_group_access_value, 0)";
+    return "CASE $group_value WHEN 1 THEN " . self::CODE_PRIVATE
+      . ' WHEN 2 THEN ' . self::CODE_UVA
+      . ' ELSE ' . self::CODE_PUBLIC . ' END';
+  }
+
+  /**
    * Resolves a node's effective visibility.
    *
    * Resolution rules, decided with Than 2026-09-24 against D7's own
@@ -144,12 +204,20 @@ final class CollectionVisibility {
    * membership.
    *
    * Note the asymmetry with hasGroupBypass(): the node path honours core's
-   * 'bypass node access' and the group path does not. That is existing
-   * behaviour, preserved here verbatim rather than unified, because unifying it
-   * would change who can see what. Flagged for Yuji 2026-09-28 — if it is
-   * deliberate (it is a *node* permission, so arguably it should not grant
-   * access to group entities) the two methods should stay separate and say so;
-   * if not, they collapse into one.
+   * 'bypass node access' and the group path does not.
+   *
+   * DECIDED 2026-09-28 (Yuji, with Than): keep the two sets separate. 'bypass
+   * node access' is core's *node* permission — "view, edit and delete all
+   * content" — and a collection is a group entity, not content. Unifying would
+   * let a node permission silently grant access to group entities.
+   *
+   * The asymmetry is observable only for an account holding 'bypass node
+   * access' while holding neither 'bypass group access' nor 'bypass mandala
+   * group access'; every other combination takes the same branch on both paths.
+   * No such account exists today (checked live: 0 of 1,543). Because
+   * hasGroupBypass()'s set is a strict subset of this one, the divergence can
+   * only ever make collections *more* restricted than their contents, never
+   * less — it cannot cause exposure.
    */
   public static function hasNodeBypass(AccountInterface $account): bool {
     return $account->hasPermission('bypass group access')
