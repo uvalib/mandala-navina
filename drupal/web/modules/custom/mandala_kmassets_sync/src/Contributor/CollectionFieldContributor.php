@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mandala_kmassets_sync\Contributor;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\mandala_group_inheritance\Access\CollectionVisibility;
 use Drupal\group\Entity\GroupInterface;
 use Drupal\node\NodeInterface;
 
@@ -51,6 +52,14 @@ class CollectionFieldContributor implements KmassetDocContributorInterface {
    * (visibility_i:(1 3)) had already implemented the UVA tier correctly and had
    * simply nothing to act on.
    */
+  /**
+   * @deprecated 2026-09-28 — superseded by CollectionVisibility.
+   *
+   * Retained because the docblock above is the record of how value 2 came to
+   * be understood. contribute() now resolves through CollectionVisibility so
+   * that Solr and Drupal cannot disagree; this map only ever described the
+   * collection's own value and had no way to express the node-level override.
+   */
   protected const ACCESS_TO_VISIBILITY = [
     0 => [1, 'public'],
     1 => [2, 'private'],
@@ -83,10 +92,19 @@ class CollectionFieldContributor implements KmassetDocContributorInterface {
       return;
     }
 
-    $access = (int) $group->get('field_group_access')->value;
-    [$visibility_i, $visibility_s] = self::ACCESS_TO_VISIBILITY[$access] ?? [1, 'public'];
-    $doc['visibility_i'] = $visibility_i;
-    $doc['visibility_s'] = $visibility_s;
+    // Resolve through the shared rule rather than reading the collection's
+    // value directly. Reading field_group_access alone ignored the node's own
+    // field_group_content_access override, which Drupal treats as
+    // authoritative -- so a node explicitly marked private inside a public
+    // collection was indexed as public and served to anonymous search while
+    // its page correctly 403'd. Confirmed live 2026-09-28 against the staging
+    // master: of 126 affected AV nodes, 35 were labelled visibility_i:1. The
+    // other 91 read as private only because those documents predate recent
+    // collection-access repairs, so a fresh index-all would have relabelled
+    // all 126 as public -- the exposure grew on reindex rather than shrinking.
+    $visibility = CollectionVisibility::forNode($node, $group);
+    $doc['visibility_i'] = CollectionVisibility::code($visibility);
+    $doc['visibility_s'] = $visibility;
 
     $doc['collection_uid_s'] = $this->groupKmassetUid($group);
     $doc['collection_title'] = $group->label();
