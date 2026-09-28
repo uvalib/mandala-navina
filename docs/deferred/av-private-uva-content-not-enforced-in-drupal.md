@@ -147,3 +147,56 @@ plan, run against real dev-0 data:
 
 **Still outstanding:** staging and any future environment need the same backfill/spot-check/
 scoped re-index sequence.
+
+## Listings (PR #259) and the Solr node-override gap (PR #261), 2026-09-28
+
+The residual above is now fixed. **PR #259** ("Enforce collection visibility in Views
+listings", Than driving, Yuji present, decided as a group 2026-09-28) closes it with
+query-time filtering keyed on the `node_access`/`group_access` tags — see
+[[collection-visibility-not-enforced-in-listings]] for the full detail, including why
+query-time filtering was chosen over node grants and the extracted `CollectionVisibility`
+resolver that `hook_entity_access()`, the new query alters, and
+`CollectionFieldContributor` all now share.
+
+Verifying #259 surfaced a second, independent gap: **`CollectionFieldContributor` read the
+collection's `field_group_access` directly and ignored the node's own
+`field_group_content_access` override**, which Drupal treats as authoritative. Solr and
+Drupal disagreed about **376 published nodes** (measured on the authoring database), in
+both directions — some restricted nodes indexed as public (an exposure that would have
+*grown* on the next full `index-all`, since the mapping derived from the public collection),
+others public nodes indexed as restricted (a correctness bug, not an exposure). Fixed in
+**PR #261** by resolving through the same `CollectionVisibility::forNode()` resolver
+`hook_entity_access()` and the listings alters use, so Solr can no longer disagree with
+Drupal about a node's visibility.
+
+### dev-0 verification (2026-09-28)
+
+Deploy (`b268ca7c…`, commits through PR #261) succeeded; `config:status` clean (only the
+known `simplesamlphp_auth.settings` drift).
+
+- **Listings (#259):** live matrix across all three views, all three account tiers —
+  monotonic and correctly shaped (anonymous < member < bypass in every view):
+
+  | View | Anonymous | uid 600 (member) | Bypass |
+  |---|---|---|---|
+  | `av_gallery` | 8,601 | 8,996 | 11,582 |
+  | `image_gallery` | 108,098 | 108,176 | 111,339 |
+  | `collections` | 219 | 250 | 387 |
+
+  (dev-0's real counts differ from the PR's own DDEV-measured 9,555/111,269/238 — same
+  pattern, different corpus.) Targeted check via the actual `node_access`-tagged
+  `EntityQuery` path (not the Views pager, which only samples the current page): nid 116898
+  (the private video from the case above) correctly denied to anonymous, correctly visible
+  to bypass.
+- **Solr node-override fix (#261):** dev-0's live mismatch count is **255** nodes (audio/
+  video only — `shanti_image` has no `field_group_content_access`), not the PR's 376; same
+  "different database" explanation as the listings numbers. Re-indexed all 255 via
+  `indexNode()` — 255/255, 0 errors. Confirmed on the write master: e.g. nid 111761 flipped
+  from the old, wrong `visibility_i:3`/`uva` (written during PR #255's own re-index, before
+  #261 fixed the mapping) to the correct `visibility_i:1`/`public`, matching both its own
+  node-level override and live `hook_entity_access()`.
+
+**Still outstanding:** the 18 published `video` nodes with an explicit restriction but no
+owning collection (documented in
+[[orphaned-content-temp-group-on-migration]], decided 2026-09-28 to migrate into a
+temporary review group — not yet built). Staging has received none of today's fixes.
