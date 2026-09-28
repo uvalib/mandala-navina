@@ -1,0 +1,8 @@
+name: 'Mandala group inheritance test'
+type: module
+description: 'Provides a node listing view for the collection-visibility functional tests.'
+package: Testing
+core_version_requirement: ^10 || ^11 || ^12
+dependencies:
+  - drupal:views
+  - drupal:node
