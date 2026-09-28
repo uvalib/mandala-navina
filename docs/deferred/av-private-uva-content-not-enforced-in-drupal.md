@@ -126,5 +126,24 @@ Node **pages** are enforced; **listings are not**, because this is
 restricted titles to anonymous. Pre-existing and wider than AV — see
 [[collection-visibility-not-enforced-in-listings]].
 
-Also outstanding: staging and any future environment need the scoped kmassets re-index that
-flips UVA collection members from `private` to `uva`.
+## dev-0 (2026-09-28)
+
+PR #255 merged and deployed clean (`a321e6c5…`; `config:status` shows only the known
+pre-existing `simplesamlphp_auth.settings` drift). Post-deploy checks from the PR's own test
+plan, run against real dev-0 data:
+
+- **Spot-check, all three bundles, both tiers:** video/audio private-collection nodes
+  (nid 116898/111738) now denied to anonymous, matching the pre-fix "EXPOSED" cases above.
+  A `shanti_image`/`video` node in a UVA collection (nid 29035/116905) denied to anonymous,
+  viewable to an authenticated non-member (uid 600).
+- **Scoped kmassets re-index:** 511 published nodes sit in a UVA-only collection on dev-0
+  (453 video, 53 `shanti_image`, 5 audio — narrower than AV alone, since the fix applies to
+  every bundle). Re-indexed via `KmassetDirectSink::indexNode()`, not `kmassets:index-all`
+  (511/511, 0 skipped, 0 errors). Confirmed on the write master: sampled docs across all
+  three bundles now carry `visibility_i:3`/`visibility_s:uva`. The search reader
+  (`mandala-index-dev`) returns 0 for the same uids — expected, not a regression: it's the
+  same public-only/stale-vs-master gap already tracked in
+  [[kmassets-audit-checks-master-not-search-reader]], not something this re-index could fix.
+
+**Still outstanding:** staging and any future environment need the same backfill/spot-check/
+scoped re-index sequence.
