@@ -136,6 +136,11 @@ polling the pipeline's own `latestExecution.status`, which lags behind
 which execution is actually current and can read a previous run's stale
 "Succeeded" right after triggering a fresh one.
 
+For "what's the deploy status right now" (no polling), use
+`./scripts/deploy-status.sh [drupal|ingest|solr-proxy]` — see
+[docs/dev-notes/howto-check-deploy-status.md](docs/dev-notes/howto-check-deploy-status.md)
+for the three pipeline names/stage specs and both scripts' usage.
+
 ## Related Repositories (legacy — being consolidated here)
 
 - `mandala-drupal` — D7 source codebase
