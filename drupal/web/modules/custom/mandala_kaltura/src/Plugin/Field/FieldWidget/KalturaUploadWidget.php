@@ -116,18 +116,35 @@ class KalturaUploadWidget extends WidgetBase {
       ];
     }
 
+    // Pass the node id when one exists (the edit-form case) so
+    // UploadSessionController::access() can require update access to
+    // THIS node, not just the generic create permission -- a minted KS is
+    // partner-account-wide (see KalturaSessionService's docblock), so
+    // node-scoping the *mint request* is the real access control here.
+    // No id yet on the node add form -- that case falls back to the
+    // permission check in access().
+    $entity = $items->getEntity();
+    $routeParams = !$entity->isNew() ? ['node' => $entity->id()] : [];
+
     $element['#attached']['library'][] = 'mandala_kaltura/kaltura-upload';
     $element['#attached']['drupalSettings']['mandalaKaltura']['uploadSessionUrl'] =
-      Url::fromRoute('mandala_kaltura.upload_session')->toString();
+      Url::fromRoute('mandala_kaltura.upload_session', $routeParams)->toString();
 
     return $element;
   }
 
   /**
    * {@inheritdoc}
+   *
+   * Unlike contrib KalturaWidget (which maps a violation straight to the
+   * specific textfield it applies to, all of them visible), this widget's
+   * entry_id/partner_id/uiconf_id/domain are hidden inputs the editor
+   * never sees -- attaching an error there leaves it invisible and the
+   * editor stuck with no way to fix it (real gap found by review). Route
+   * every violation to the widget's own visible wrapper instead.
    */
   public function errorElement(array $element, ConstraintViolationInterface $violation, array $form, FormStateInterface $form_state) {
-    return isset($violation->arrayPropertyPath[0]) ? $element[$violation->arrayPropertyPath[0]] : $element;
+    return $element;
   }
 
   /**

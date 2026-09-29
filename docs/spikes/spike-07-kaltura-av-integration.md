@@ -1,5 +1,6 @@
 # Spike 7: Kaltura AV Integration on Drupal 11
-**Status:** ◐ Partial — started 2026-09-04 (Yuji)
+**Status:** ✅ Closed 2026-09-29 — started 2026-09-04 (Yuji), closed by Than confirming
+the in-node upload workflow and Sprint 3's AV11/AV12 build
 **Date:** 2026-09-04 (module survey + live D11 prototype)
 **Branch/commit:** `f383ff6` (pushed directly to `main`, 2026-09-04) — the packaging
 solution below (`drupal/composer.json` + `drupal/patches/`), landed inert (nothing
@@ -200,6 +201,9 @@ this site** — real findings:
   *behavioural* rather than technical: how often staff actually use it versus
   uploading in Kaltura's KMC and importing via the admin page — a question for the AV
   content staff, not the codebase.
+  ~~**RESOLVED 2026-09-29 (Than, directly):** the in-node upload is the real
+  workflow.~~ This is what AV11/AV12 (Sprint 3) build, closing this spike out
+  entirely — see their rows for the build.
 - The `captionAsset->add()` cross-reference to Spike 11 (Kaltura-native caption
   storage, separate from the `transcripts_apachesolr`/XSLT pipeline already found) —
   flagged for Spike 11, not chased here.
