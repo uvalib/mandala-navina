@@ -20,17 +20,40 @@ by hand each session.
 
 ## Pipelines
 
-| Shortcut | Full pipeline name | Stages |
-|---|---|---|
-| `drupal` (default) | `uva-mandala-drupal-codepipeline` | Source → Build → Deploy |
-| `ingest` | `uva-mandala-ingest-production-deploy-codepipeline` | Source → Deploy |
-| `solr-proxy` | `uva-mandala-solr-proxy-codepipeline` | Source → Build |
+| Shortcut | Full pipeline name | Source repo | Stages | Trigger path filter |
+|---|---|---|---|---|
+| `drupal` (default) | `uva-mandala-drupal-codepipeline` | `uvalib/mandala-navina` (this repo) | Source → Build → Deploy | `drupal/**`, `package/**`, `pipeline/**` only |
+| `ingest` | `uva-mandala-ingest-production-deploy-codepipeline` | `uvalib/mandala-ingest-production-deploy` (separate repo) | Source → Deploy | none — any push to `main` |
+| `solr-proxy` | `uva-mandala-solr-proxy-codepipeline` | `uvalib/mandala-navina` (this repo) | Source → Build (**no Deploy stage**) | `solr-proxy/**` only |
 
-All three trigger on a GitHub webhook push to `main` on the corresponding
-repo (`mandala-navina` for `drupal`; each has its own repo). **Merging to
-`main` already triggers the deploy** — never also call
-`start-pipeline-execution` manually, or you'll create a real duplicate run
-(see `feedback-codepipeline-webhook-auto-triggers` memory).
+Verify/update these filters with:
+```bash
+aws codepipeline get-pipeline --name <pipeline-name> --query "pipeline.triggers"
+```
+
+**A merge to `main` in this monorepo only auto-deploys if it touches a
+path the pipeline's `triggers.gitConfiguration.push[].filePaths` matches.**
+A PR that only touches `docs/**`, `scripts/**`, `CLAUDE.md`, etc. merges
+cleanly but fires **no** pipeline execution — this is deliberate (added via
+terraform-infrastructure commit `8b753bff1`, 2026-07-16, specifically so
+docs-only commits wouldn't force an unnecessary container restart during a
+long-running migration) and not a bug. `deploy-status.sh` after such a
+merge will correctly keep showing the *previous* real execution — that's
+expected, not stale output.
+
+`solr-proxy/**` changes only run the **build-only** `solr-proxy` pipeline
+(pushes an image; there's no Deploy stage on it) — reaching dev-0 needs the
+`drupal` pipeline's Deploy stage to actually run, which a solr-proxy-only
+change does **not** trigger (different path filter). If a solr-proxy fix
+needs to land on dev-0 by itself, trigger the drupal pipeline's deploy
+manually: `aws codepipeline start-pipeline-execution --name
+uva-mandala-drupal-codepipeline` — this is the one legitimate case for a
+manual trigger (contrast with the *don't* case below).
+
+For pushes that **do** match a pipeline's path filter: merging to `main`
+already triggers the deploy via webhook — never also call
+`start-pipeline-execution` manually in that case, or you'll create a real
+duplicate run (see `feedback-codepipeline-webhook-auto-triggers` memory).
 
 ## Steps
 
@@ -66,6 +89,7 @@ pipeline (see table above) as `Succeeded` once a deploy completes.
 | A pipeline's own `latestExecution.status` looks "Succeeded" right after a fresh merge | It lags behind which execution is actually current — that's the *previous* run's stale status | Both scripts here already filter/query by the newest execution's own id, not the pipeline's aggregate status. Don't query `get-pipeline-state` unfiltered by hand. |
 | You're about to call `start-pipeline-execution` after merging | The GitHub webhook already triggered a run | Don't — check with `deploy-status.sh` first; find the webhook-triggered execution instead |
 | `deploy-status.sh`/`watch-deploy.sh` hang or error on `aws sts get-caller-identity` | No credentials in the shell and `aws-vault` isn't installed/configured | Install `aws-vault` and configure a `staging` profile, or run from a shell that already has credentials |
+| A merge to `main` shows no new execution in `deploy-status.sh` | The merge didn't touch a path the pipeline's trigger filters on (see Pipelines table) | Expected for docs/scripts-only merges to `drupal`/`solr-proxy`. If a deploy is actually needed and no in-scope path changed, trigger by hand (see above) |
 
 ## Related
 

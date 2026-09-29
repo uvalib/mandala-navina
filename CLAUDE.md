@@ -126,9 +126,15 @@ Deployment follows the UVA Library standard pattern (same as drupal-dsf, drupal-
 - `pipeline/deployspec.yml` — Terraform + Ansible deploy
 - Terraform in `uvalib/terraform-infrastructure/mandala/drupal/`
 
-Merging to `main` already triggers a deploy via GitHub webhook — don't also
-call `start-pipeline-execution` manually, or you'll create a real duplicate
-(known trap, see `feedback-codepipeline-webhook-auto-triggers` memory).
+Merging to `main` already triggers a deploy via GitHub webhook **only when
+the merge touches `drupal/**`, `package/**`, or `pipeline/**`** — the
+drupal pipeline's trigger has been path-filtered since 2026-07-16 so
+docs/scripts-only merges don't force a container restart. Don't call
+`start-pipeline-execution` manually for an in-scope merge, or you'll create
+a real duplicate (known trap, see `feedback-codepipeline-webhook-auto-triggers`
+memory). See `docs/dev-notes/howto-check-deploy-status.md` for all three
+pipelines' path filters, including `solr-proxy`'s (which is build-only and
+needs the drupal pipeline triggered by hand to actually reach dev-0).
 After merging, find the webhook-triggered execution
 (`aws codepipeline list-pipeline-executions ...`) and watch **that specific
 execution ID** — `./scripts/watch-deploy.sh <execution-id>` — rather than
