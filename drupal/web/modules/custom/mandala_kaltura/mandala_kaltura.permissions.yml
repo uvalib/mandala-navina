@@ -1,0 +1,11 @@
+# Permissions provided by mandala_kaltura.
+#
+# 'administer mandala kaltura secrets' is deliberately its own permission,
+# not folded into 'administer site configuration' -- this form can both view
+# whether a live Kaltura credential is set and overwrite it, so it is scoped
+# narrower than the broad admin permission most other Mandala settings forms
+# (shanti_iiif, shanti_kmaps_admin) use.
+'administer mandala kaltura secrets':
+  title: 'Administer Mandala Kaltura secrets'
+  description: 'Enter or rotate the Kaltura partner admin secret and secret used to mint upload sessions (AV11). Restricted: this page can overwrite a live credential.'
+  restrict access: true

@@ -48,6 +48,7 @@
         "drupal/simple_oauth": "^6.1",
         "drupal/simplesamlphp_auth": "^4.1",
         "drush/drush": "^13",
+        "kaltura/api-client-library": "^23.7",
         "predis/predis": "^3.3"
     },
     "require-dev": {

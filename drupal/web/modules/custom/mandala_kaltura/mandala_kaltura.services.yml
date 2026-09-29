@@ -3,3 +3,14 @@ services:
     class: Drupal\mandala_kaltura\KalturaConfigResolver
     arguments:
       - '@config.factory'
+  mandala_kaltura.session:
+    class: Drupal\mandala_kaltura\KalturaSessionService
+    arguments:
+      - '@state'
+      - '@mandala_kaltura.resolver'
+      - '@logger.channel.mandala_kaltura'
+      - '@datetime.time'
+
+  logger.channel.mandala_kaltura:
+    parent: logger.channel_base
+    arguments: ['mandala_kaltura']

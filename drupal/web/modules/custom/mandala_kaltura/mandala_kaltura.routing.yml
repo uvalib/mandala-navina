@@ -1,0 +1,17 @@
+mandala_kaltura.secrets_form:
+  path: '/admin/config/media/mandala-kaltura/secrets'
+  defaults:
+    _form: '\Drupal\mandala_kaltura\Form\KalturaSecretsForm'
+    _title: 'Mandala Kaltura secrets'
+  requirements:
+    _permission: 'administer mandala kaltura secrets'
+
+# AV11: mints a short-lived Kaltura upload session for AV12's browser-direct
+# upload widget. '+' is Drupal's routing OR syntax -- either permission is
+# enough, since this must work on both the video and audio node forms.
+mandala_kaltura.upload_session:
+  path: '/api/kaltura/upload-session'
+  defaults:
+    _controller: '\Drupal\mandala_kaltura\Controller\UploadSessionController::mint'
+  requirements:
+    _permission: 'create video content+create audio content'

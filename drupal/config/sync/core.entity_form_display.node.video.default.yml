@@ -37,6 +37,7 @@ dependencies:
     - field.field.node.video.field_year_published
     - node.type.video
   module:
+    - mandala_kaltura
     - path
     - shanti_kmaps_fields
 id: node.video.default
@@ -83,6 +84,12 @@ content:
   field_subject:
     type: kmap_tree_picker
     weight: 125
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_video:
+    type: kaltura_upload
+    weight: 100
     region: content
     settings: {  }
     third_party_settings: {  }
@@ -148,7 +155,6 @@ hidden:
   field_rating: true
   field_tags: true
   field_transcript: true
-  field_video: true
   field_workflow: true
   field_year_published: true
   promote: true
