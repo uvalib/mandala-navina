@@ -36,4 +36,5 @@ until added there) and add a row to the index below.
 | [howto-verify-oauth2-authenticated-path.md](howto-verify-oauth2-authenticated-path.md) | How-to | Run the ADR 014 OAuth2 regression test (SAML → token → `/oauth/userinfo`); why only step 7 counts, and the deploy timing trap |
 | [howto-verify-solr-proxy-visibility.md](howto-verify-solr-proxy-visibility.md) | How-to | Run the ADR 014 visibility test (does the user see exactly what they should?); why fail-closed makes a broken proxy look healthy, and why `id` is not unique in kmassets |
 | [howto-flush-image-style-derivatives.md](howto-flush-image-style-derivatives.md) | How-to | `drush image:flush`/`image:derive` — why replacing a managed file's content in place doesn't update its already-generated image style derivatives, and how to force regeneration |
+| [howto-check-deploy-status.md](howto-check-deploy-status.md) | How-to | One-shot deploy status snapshot (`deploy-status.sh`) and polling a deploy to completion (`watch-deploy.sh`) for all three Mandala CodePipelines |
 | [howto-template.md](howto-template.md) | Template | Starting point for new how-to guides |
