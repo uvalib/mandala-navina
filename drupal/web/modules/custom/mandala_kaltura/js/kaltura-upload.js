@@ -55,6 +55,7 @@
     var mediaType = wrapper.dataset.kalturaMediaType === 'audio' ? 5 : 1; // MediaType::AUDIO / VIDEO
     var playerUiconfId = wrapper.dataset.kalturaPlayerUiconfId || '';
     var uploadSessionUrl = drupalSettings.mandalaKaltura && drupalSettings.mandalaKaltura.uploadSessionUrl;
+    var form = wrapper.closest('form');
 
     if (!fileInput || !uploadSessionUrl) {
       return;
@@ -67,6 +68,7 @@
       }
       setStatus(statusEl, Drupal.t('Uploading @name…', {'@name': file.name}));
       fileInput.disabled = true;
+      beginFormUpload(form);
 
       runUpload(file, uploadSessionUrl, mediaType, function (progressMessage) {
         setStatus(statusEl, progressMessage);
@@ -83,6 +85,7 @@
         })
         .finally(function () {
           fileInput.disabled = false;
+          endFormUpload(form);
         });
     });
   }
@@ -91,6 +94,54 @@
     if (statusEl) {
       statusEl.textContent = message;
     }
+  }
+
+  /**
+   * Blocks saving the node while an upload is in flight.
+   *
+   * Without this, clicking Save mid-upload persists the node with an
+   * empty `kaltura` field while the upload keeps running in the
+   * background -- the resulting entry is never linked to any node once
+   * it completes (real gap found by review). Disabling the file input
+   * alone (above) isn't enough: it stops a second upload from starting,
+   * it does nothing to stop the form's own Save button.
+   *
+   * Tracks an active-upload count on the form element itself (not a
+   * module-level variable) so multiple upload widgets on the same form
+   * -- unlikely today at field cardinality 1, but not assumed away --
+   * are all accounted for before re-enabling Save.
+   */
+  function beginFormUpload(form) {
+    if (!form) {
+      return;
+    }
+    form.mandalaKalturaActiveUploads = (form.mandalaKalturaActiveUploads || 0) + 1;
+    setSubmitButtonsDisabled(form, true);
+
+    once('mandala-kaltura-upload-guard', form).forEach(function (guardedForm) {
+      guardedForm.addEventListener('submit', function (event) {
+        if (guardedForm.mandalaKalturaActiveUploads > 0) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      });
+    });
+  }
+
+  function endFormUpload(form) {
+    if (!form) {
+      return;
+    }
+    form.mandalaKalturaActiveUploads = Math.max(0, (form.mandalaKalturaActiveUploads || 1) - 1);
+    if (form.mandalaKalturaActiveUploads === 0) {
+      setSubmitButtonsDisabled(form, false);
+    }
+  }
+
+  function setSubmitButtonsDisabled(form, disabled) {
+    form.querySelectorAll('[type="submit"]').forEach(function (button) {
+      button.disabled = disabled;
+    });
   }
 
   async function runUpload(file, uploadSessionUrl, mediaType, onProgress) {

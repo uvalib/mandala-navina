@@ -7,11 +7,15 @@ mandala_kaltura.secrets_form:
     _permission: 'administer mandala kaltura secrets'
 
 # AV11: mints a short-lived Kaltura upload session for AV12's browser-direct
-# upload widget. '+' is Drupal's routing OR syntax -- either permission is
-# enough, since this must work on both the video and audio node forms.
+# upload widget. Access is node-scoped when a `?node=` query param is
+# present (requires update access to that specific node); otherwise falls
+# back to the generic create permission for the node *add* form case,
+# where no node exists yet to check access against -- see
+# UploadSessionController::access()'s docblock for why this matters (the
+# minted KS itself is partner-account-wide, not entry-scoped).
 mandala_kaltura.upload_session:
   path: '/api/kaltura/upload-session'
   defaults:
     _controller: '\Drupal\mandala_kaltura\Controller\UploadSessionController::mint'
   requirements:
-    _permission: 'create video content+create audio content'
+    _custom_access: '\Drupal\mandala_kaltura\Controller\UploadSessionController::access'
