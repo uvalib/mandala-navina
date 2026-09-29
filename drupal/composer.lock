@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b5b1077d00a85c78d2ddc95ae08f26d5",
+    "content-hash": "a32bc2dbe4b747908c9e54ada2d36722",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -4259,6 +4259,54 @@
                 "source": "https://github.com/jsonrainbow/json-schema/tree/6.8.2"
             },
             "time": "2026-05-05T05:39:01+00:00"
+        },
+        {
+            "name": "kaltura/api-client-library",
+            "version": "v23.7.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/kaltura/KalturaGeneratedAPIClientsPHP53.git",
+                "reference": "6b66ec4cdec03dea04e9446f28f6069e5563b9ab"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/kaltura/KalturaGeneratedAPIClientsPHP53/zipball/6b66ec4cdec03dea04e9446f28f6069e5563b9ab",
+                "reference": "6b66ec4cdec03dea04e9446f28f6069e5563b9ab",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Kaltura": "library"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "AGPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Kaltura",
+                    "homepage": "http://www.kaltura.org/"
+                }
+            ],
+            "description": "An auto generated Composer package for the Kaltura API client library",
+            "keywords": [
+                "api",
+                "client library",
+                "kaltura",
+                "open source video",
+                "video",
+                "video platform"
+            ],
+            "support": {
+                "issues": "https://github.com/kaltura/KalturaGeneratedAPIClientsPHP53/issues",
+                "source": "https://github.com/kaltura/KalturaGeneratedAPIClientsPHP53/tree/v23.7.0"
+            },
+            "time": "2026-09-06T06:09:18+00:00"
         },
         {
             "name": "laminas/laminas-stdlib",

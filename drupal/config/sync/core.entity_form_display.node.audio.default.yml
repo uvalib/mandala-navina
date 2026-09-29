@@ -38,6 +38,7 @@ dependencies:
     - field.field.node.audio.field_year_published
     - node.type.audio
   module:
+    - mandala_kaltura
     - path
     - shanti_kmaps_fields
 id: node.audio.default
@@ -48,6 +49,12 @@ content:
   created:
     type: datetime_timestamp
     weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_audio:
+    type: kaltura_upload
+    weight: 100
     region: content
     settings: {  }
     third_party_settings: {  }
@@ -126,7 +133,6 @@ content:
       placeholder: ''
     third_party_settings: {  }
 hidden:
-  field_audio: true
   field_available_from: true
   field_copyright_owner: true
   field_group_content_access: true

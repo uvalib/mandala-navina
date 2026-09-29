@@ -1,0 +1,6 @@
+mandala_kaltura.secrets_form:
+  title: 'Mandala Kaltura secrets'
+  description: 'Enter or rotate the Kaltura partner admin secret/secret used to mint AV11 upload sessions.'
+  route_name: mandala_kaltura.secrets_form
+  parent: system.admin_config_media
+  weight: 20

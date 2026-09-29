@@ -1,0 +1,14 @@
+# AV12: browser-direct chunked upload to Kaltura, attached by
+# KalturaUploadWidget::formElement(). Custom implementation, not a vendored
+# library -- see js/kaltura-upload.js's file docblock for why (this
+# codebase has no existing jQuery-File-Upload/blueimp code, and the real
+# flow is 3 REST calls, not enough surface to justify pulling in Kaltura's
+# reference chunked-file-upload-jquery widget and its dependency chain).
+kaltura-upload:
+  version: VERSION
+  js:
+    js/kaltura-upload.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/once
