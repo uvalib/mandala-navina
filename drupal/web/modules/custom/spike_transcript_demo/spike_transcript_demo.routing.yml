@@ -1,0 +1,8 @@
+spike_transcript_demo.view:
+  path: '/spike/transcript-demo/{legacy_nid}'
+  defaults:
+    _controller: '\Drupal\spike_transcript_demo\Controller\TranscriptDemoController::view'
+    _title: 'Spike 11: Transcript sync demo'
+  requirements:
+    _permission: 'access content'
+    legacy_nid: '\d+'

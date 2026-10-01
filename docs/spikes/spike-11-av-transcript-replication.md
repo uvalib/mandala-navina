@@ -113,6 +113,32 @@ Work item 2; it needs confirmation from the people who run AV.
 from Spike 4a should be applied at migration; round-trip through the chosen model is
 still to be demonstrated.
 
+## Prototype: timecode-to-playback sync (2026-10-01)
+
+Module `drupal/web/modules/custom/spike_transcript_demo` (throwaway, not enabled in
+`config/sync`). Route `/spike/transcript-demo/{legacy_nid}`. It resolves the migrated
+D11 node by `field_legacy_site` + `field_legacy_nid` (ADR 017), embeds the Kaltura player
+through the existing `mandala_kaltura` preset, and reads that node's TCUs **straight from
+the D7 source DB** (`migrate_av` connection), so no file parsing is involved. A small
+JS behavior renders the TCUs as a list and binds to the player.
+
+**Tested** on D7 nid 218 (D11 node via legacy key; 41 TCUs, Tibetan + Wylie + English
+tiers, 316 s) in Chrome against the real Kaltura entry, on DDEV:
+- All 41 TCUs rendered with the three tiers; Tibetan script displayed correctly.
+- **Click-to-seek:** clicking the `0:16` timestamp moved the player to 0:16 and
+  started playback; that row was highlighted.
+- **Highlight-on-play:** after seeking to 0:31 through the player API with no further
+  input, the highlight moved from the 0:16 row to the 0:34 row about 3.75 s later
+  (expected 3 s), via the `playerUpdatePlayhead` event.
+
+**Not established.** One node, one player preset (`31832371`), one browser. The
+highlight uses "last TCU whose start is at or before the playhead", so the zero-length
+and inverted-end TCUs found by the audit did not matter here, but this node had none.
+Search, deep-linking to a timecode, nodes with speakers, very long transcripts (max
+1,380 TCUs) and the 22-hour bad-timecode cases are untested. The player paused on its
+own at times during automated testing; that was not investigated (likely the
+non-foreground tab), so playback itself was driven partly through the player API.
+
 ## Background
 
 The D7 AV site pairs Kaltura-hosted media (see [Spike 7](spike-07-kaltura-av-integration.md))
