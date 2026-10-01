@@ -1,0 +1,7 @@
+#spike-transcript { max-height: 28rem; overflow-y: auto; margin-top: 1rem; border: 1px solid #ccc; }
+.spike-tcu-list { list-style: none; margin: 0; padding: 0; }
+.spike-tcu { padding: .5rem .75rem; border-bottom: 1px solid #eee; }
+.spike-tcu--active { background: #fff3c4; }
+.spike-tcu-time { font: inherit; font-size: .8rem; border: 0; background: none; color: #1a5fb4; cursor: pointer; padding: 0; }
+.spike-tier { margin: .15rem 0; }
+.spike-tier--content_bod, .spike-tier--dzo_bod { font-size: 1.2rem; }

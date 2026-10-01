@@ -1,0 +1,6 @@
+viewer:
+  js:
+    js/transcript-viewer.js: {}
+  css:
+    theme:
+      css/transcript-viewer.css: {}

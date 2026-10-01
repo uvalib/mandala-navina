@@ -1,6 +1,6 @@
 # Spike 11: AV Transcript Replication on Drupal 11
-**Status:** Pending
-**Date:** —
+**Status:** Partial — corpus audit done (2026-10-01); data-model, prototype, search and migration work not started
+**Date:** 2026-10
 **Branch/commit:** —
 
 ## Scope note (2026-09-04)
@@ -43,10 +43,10 @@ spike, and none of it has been run/tested, only read.**
   standard Toolbox/FLEx tier set. This is scholarly fieldwork transcription, not
   WebVTT-shaped captions.
 - **The DB table `transcripts_apachesolr_transcript`** (`trid`, `fid`, `module`,
-  `type`, `id`, `status`, `tiers`) is tracking metadata only — it does not hold
-  transcript content or timecodes itself. Content lives in the uploaded file, processed
-  through the XSLT pipeline, then indexed into a separate Apache Solr core via
-  `transcripts_apachesolr`.
+  `type`, `id`, `status`, `tiers`) is tracking metadata only. **~~Content lives only in
+  the uploaded file~~ — corrected by the 2026-10-01 audit below: the parsed content is
+  stored in the D7 database in the `tcu`, `tcu_tier` and `tcu_speaker` tables**, and is
+  also indexed into a separate Apache Solr core via `transcripts_apachesolr`.
 - **Rendering and sync**: `TranscriptUI.php` builds a server-rendered `<ul>` of TCU
   `<li>` elements (one per tier per sentence, speaker-turn-aware), attaches
   `transcripts-ui.js` + `transcripts-scroller.js` + `jquery.scrollTo.min.js`, and syncs
@@ -61,6 +61,162 @@ spike, and none of it has been run/tested, only read.**
   `transcripts_xslt_as_tcus()` (Toolbox `.txt`, `.srt`, arbitrary `.xml`), each with
   different parameters passed to the XSLT transform — not a single normalized input
   format.
+
+## Corpus audit (2026-10-01, against the `d7_av` production dump loaded in DDEV)
+
+Read-only SQL against the 2026-09-01 AV dump. Counts are aggregate; nothing here
+identifies individuals. **Not covered yet:** the D7 Solr index shape, a sample of
+real source files, and the `transcripts_editor` feature surface.
+
+**Where the content lives (corrects the earlier assumption).** D7 already stored the
+converted transcripts in the database: `tcu` (245,158 rows: `trid`, `start`, `end`),
+`tcu_tier` (355,536 rows: `tcuid`, `tier`, `value`) and `tcu_speaker` (142,445 rows).
+A D11 migration can read these tables directly. It does **not** need to re-run the
+Saxon XSLT pipeline or parse the uploaded Toolbox/SRT/XML/VTT files.
+
+**Volume.**
+- 5,343 tracked transcripts, exactly one per node (4,231 video, 1,112 audio); every
+  one has TCUs (mean 46, max 1,380 per transcript).
+- 5,380 nodes have a `field_transcript` file (4,252 video, 1,128 audio), but only 5,272
+  of those files are tracked, so about 108 attached files were never processed. This is
+  the gap between "file attached" (the audit's 46.4%) and "transcript exists".
+- 19 transcript ids have TCUs but no tracking row (orphans from 2016-2021, 1-526 TCUs
+  each); not yet investigated. Probably stale rows from replaced uploads.
+
+**Source formats** (tracked files): `.vtt` 3,227, `.xml` 1,881, `.txt` (Toolbox) 136,
+`.srt` 28. WebVTT is the majority format; Toolbox is about 2.5%. The "Live evidence"
+framing above (Toolbox as the headline format) overstates it.
+
+**Tiers are language-coded parallel text, not the Toolbox tx/mb/ge/ft set.** By tier
+value count: `content_bod` (Tibetan) 173,764; `ts_content_eng` 71,873; `dzo_bod`
+(Dzongkha) 35,525; `ts_content_wylie` 30,497; Nepali 13,625; Chinese 5,191; ten smaller
+languages. `ts_content_gloss` has only 3,491 values, so interlinear gloss is minor.
+
+**Authoring is nearly dormant.** TCUs were created 2015-2024, peaking 2018 (81,717).
+Since 2021 only 38 transcripts were created (about 3,900 TCUs), the last in 2024. No
+TCU has ever been edited (`changed` equals `created` for all 245,158 rows). Whether
+this means the editor is unused or just that corrections never happened is not
+established. This supports, but does not settle, the migration-only option for
+Work item 2; it needs confirmation from the people who run AV.
+
+**Timecode quality (a migration-fidelity risk, escalate per the fail table).**
+- 3,299 TCUs have zero length (start = end), 970 have end before start, 1 has a
+  negative start (-0.125). Together 4,269 TCUs across 679 transcripts, concentrated in a
+  few transcripts (the worst has 406).
+- 190 TCUs end after 4 hours (maximum 81,807 s, about 22 h), so some are certainly bad
+  values; 113 TCUs span more than 10 minutes.
+- Zero-length rows may be deliberate point cues; this needs checking against a real
+  file before treating them as corruption.
+
+**Unicode (relates to Spike 4a).** Not NFC: 933 of 35,525 Dzongkha tier values (2.6%),
+12 of 173,764 Tibetan, 0 of 30,497 Wylie. None are pure NFD. The normalization approach
+from Spike 4a should be applied at migration; round-trip through the chosen model is
+still to be demonstrated.
+
+## Prototype: timecode-to-playback sync (2026-10-01)
+
+Module `drupal/web/modules/custom/spike_transcript_demo` (throwaway, not enabled in
+`config/sync`). Route `/spike/transcript-demo/{legacy_nid}`. It resolves the migrated
+D11 node by `field_legacy_site` + `field_legacy_nid` (ADR 017), embeds the Kaltura player
+through the existing `mandala_kaltura` preset, and reads that node's TCUs **straight from
+the D7 source DB** (`migrate_av` connection), so no file parsing is involved. A small
+JS behavior renders the TCUs as a list and binds to the player.
+
+**Tested** on D7 nid 218 (D11 node via legacy key; 41 TCUs, Tibetan + Wylie + English
+tiers, 316 s) in Chrome against the real Kaltura entry, on DDEV:
+- All 41 TCUs rendered with the three tiers; Tibetan script displayed correctly.
+- **Click-to-seek:** clicking the `0:16` timestamp moved the player to 0:16 and
+  started playback; that row was highlighted.
+- **Highlight-on-play:** after seeking to 0:31 through the player API with no further
+  input, the highlight moved from the 0:16 row to the 0:34 row about 3.75 s later
+  (expected 3 s), via the `playerUpdatePlayhead` event.
+
+**Not established.** One node, one player preset (`31832371`), one browser. The
+highlight uses "last TCU whose start is at or before the playhead", so the zero-length
+and inverted-end TCUs found by the audit did not matter here, but this node had none.
+Search, deep-linking to a timecode, nodes with speakers, very long transcripts (max
+1,380 TCUs) and the 22-hour bad-timecode cases are untested. The player paused on its
+own at times during automated testing; that was not investigated (likely the
+non-foreground tab), so playback itself was driven partly through the player API.
+
+## Data-model evaluation (2026-10-01)
+
+**Recommendation (provisional, pending the authoring decision and review by Than and
+Yuji): Option B, a dedicated transcript entity plus one row per TCU, keeping D7's own
+shape.** Reasoning and the evidence behind it follow.
+
+### What the model has to carry (from the audit)
+- One transcript per node (5,343); 245,158 TCUs total, 1 to 1,380 per transcript.
+- Each TCU is `start`, `end`, plus **a variable set of language tiers** (17 distinct
+  tier names; 75 distinct tier combinations across transcripts; 1.45 tiers per TCU on
+  average, at most 5) and **speaker values** (14 distinct speaker tier names; 142,445
+  rows; 32,919 TCUs carry more than one speaker row).
+- Total text is small: about 58 MB across 355,536 tier values (mean 78 characters,
+  maximum 10,611). The largest transcript is 336,543 characters.
+- D7 itself models this as a **dedicated non-fieldable `tcu` entity** (base table
+  `tcu`, plus `tcu_tier` and `tcu_speaker` key/value tables), indexed one Solr document
+  per TCU into the AV site's own core (`fts_start` sort field). Read from the D7
+  module code; not confirmed against the live core.
+
+### Options against the evidence
+
+| Option | Verdict | Why |
+|---|---|---|
+| **A. Paragraphs (one per TCU)** | Reject | 245,158 paragraph entities at minimum. Tiers are variable, so either ~31 sparse fields on one type or nested paragraphs per tier value (roughly 740k entities). Each host-node revision save copies the paragraph tree (reasoned from how Paragraphs revisions work, not measured here), and the node edit form would try to render up to 1,380 widgets. **Performance is not the objection:** loading 1,380 simple Paragraph entities took 189 ms and 49 MB on DDEV, against 29 ms for one SQL query for the largest transcript's 2,760 tier rows. The objection is entity count, revision multiplication and editing UX. |
+| **B. Dedicated transcript entity + TCU rows** | **Recommend** | Mirrors D7, so migration is a near 1:1 copy and can be verified by row counts (245,158 in, 245,158 out). One indexed range read gets a transcript in order. A stable per-TCU id gives search results a deep link. Leaves room for editing later if AV staff want it. 245k small rows is trivial for MySQL. |
+| **B2. One row per transcript with the TCUs as a JSON blob** | Viable alternative | Only 5,343 rows, one read per transcript, simplest migration. Costs: no stable per-TCU id for deep links unless one is synthesised, no per-TCU edit or constraint, and an opaque column. Reasonable if editing is confirmed out of scope. |
+| **C. Sidecar WebVTT or JSON files per language** | Reject as the store | WebVTT requires each cue's end to be after its start, but **4,269 TCUs have zero-length or inverted timecodes** and would be invalid or silently altered. Per-language files also split the shared time spans the tiers sit on, and carry speakers poorly. A WebVTT file can still be **generated** from the model later if a `<track>` is wanted. |
+| **D. Kaltura-native captions or cue points** | Reject (reasoned, not checked live) | Same WebVTT limits, plus 5,343 transcripts times several languages pushed into Kaltura, a second access-control surface next to the AV7 enforcement, and Spike 7's finding that uploads are a separate path. The audit did not look for existing transcripts inside Kaltura; if any exist, revisit. |
+
+### Sketch for the recommended model (for T2)
+- `av_transcript`: node reference, source file reference, source format (vtt/xml/txt/srt),
+  tier list, legacy transcript id (`trid`), workflow flags. Access follows the parent node
+  (the AV7 rules); the viewer and any API must check node access, never expose TCUs on
+  their own.
+- `av_tcu`: transcript reference, sequence number, `start`, `end`, tier map (tier name to
+  text), speaker map, legacy TCU id. Tier names kept as D7's values.
+- Timecodes: store as `DECIMAL(10,3)`. D7 uses single-precision `FLOAT`, so sub-millisecond
+  digits are float noise, not data, but this has not been verified value by value.
+- **Do not repair the 4,269 bad timecodes at migration.** Carry them as found and add a
+  computed flag (ok, zero-length, inverted, out-of-range) so the viewer can decide how to
+  show them. Whether to correct them is a scholarly-integrity call for David Germano.
+- Search: index one Solr document per TCU (matching D7) or per transcript; this is the
+  next open question and depends on the Solr owner (see the Spike 2 relationship).
+- Unicode: normalise to NFC at migration per Spike 4a (933 Dzongkha values are not NFC).
+
+### Still open before this can be called decided
+- The authoring question. Option B keeps editing possible; B2 would be cheaper if it is
+  confirmed out of scope.
+- Search index shape and where it lives (D7 used a per-site core; D11 has the flat
+  kmassets documents and the visibility proxy).
+- The prototype read the D7 tables directly; it has not been run against the proposed
+  D11 entities.
+
+## Questions for Than (decisions are his; recorded 2026-10-01 for review)
+
+The data decisions below belong to Than. The recommendation above is Claude's reading of
+the audit, not a decision.
+
+1. **Authoring.** Is anyone still uploading or correcting transcripts? The data shows 38
+   transcripts created since 2021 (last in 2024) and no TCU ever edited. If transcripts
+   are migration-only, the JSON-per-transcript alternative becomes attractive and Sprint 4
+   task T6 (editor UI) can be dropped.
+2. **Data model.** One entity row per TCU (recommended, mirrors D7) or one row per
+   transcript with a JSON blob. Paragraphs, sidecar VTT and Kaltura captions are
+   rejected in the evaluation; say so if any should be reconsidered.
+3. **Bad timecodes.** 4,269 TCUs (679 transcripts) have zero-length, inverted or absurd
+   times. Are zero-length TCUs deliberate point cues? Carry them as found and flag them
+   (recommended), or correct them? Needs a look at real source files, and likely David
+   Germano for any correction.
+4. **Source files.** Please supply a few real files per format (VTT, XML, Toolbox, SRT),
+   including one of the high-count transcripts, to check the TCU shape against the
+   database rows.
+5. **Unprocessed files.** About 108 nodes have a transcript file that D7 never processed
+   into TCUs, and 19 transcript ids have TCUs but no tracking row. Expected or stale?
+6. **Search.** One Solr document per TCU (as D7 did) or per transcript, and which index.
+   Needs Yuji as well (kmassets documents are flat; the visibility proxy applies).
+7. **React viewer.** The app's own transcript viewer (reading the `mandala-av` core) stays
+   out of scope per the 2026-09-04 decision. Confirm that still holds.
 
 ## Background
 

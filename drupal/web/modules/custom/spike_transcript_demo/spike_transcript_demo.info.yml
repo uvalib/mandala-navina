@@ -1,0 +1,8 @@
+name: 'Spike 11: Transcript Sync Demo'
+type: module
+description: 'Throwaway prototype for Spike 11 -- reads D7 TCU tables directly and syncs a transcript to Kaltura playback. Not for production use.'
+core_version_requirement: ^10.2 || ^11
+package: Mandala Spikes
+dependencies:
+  - node:node
+  - mandala_kaltura:mandala_kaltura
