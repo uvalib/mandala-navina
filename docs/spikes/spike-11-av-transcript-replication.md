@@ -1,6 +1,6 @@
 # Spike 11: AV Transcript Replication on Drupal 11
-**Status:** Pending
-**Date:** —
+**Status:** Partial — corpus audit done (2026-10-01); data-model, prototype, search and migration work not started
+**Date:** 2026-10
 **Branch/commit:** —
 
 ## Scope note (2026-09-04)
@@ -43,10 +43,10 @@ spike, and none of it has been run/tested, only read.**
   standard Toolbox/FLEx tier set. This is scholarly fieldwork transcription, not
   WebVTT-shaped captions.
 - **The DB table `transcripts_apachesolr_transcript`** (`trid`, `fid`, `module`,
-  `type`, `id`, `status`, `tiers`) is tracking metadata only — it does not hold
-  transcript content or timecodes itself. Content lives in the uploaded file, processed
-  through the XSLT pipeline, then indexed into a separate Apache Solr core via
-  `transcripts_apachesolr`.
+  `type`, `id`, `status`, `tiers`) is tracking metadata only. **~~Content lives only in
+  the uploaded file~~ — corrected by the 2026-10-01 audit below: the parsed content is
+  stored in the D7 database in the `tcu`, `tcu_tier` and `tcu_speaker` tables**, and is
+  also indexed into a separate Apache Solr core via `transcripts_apachesolr`.
 - **Rendering and sync**: `TranscriptUI.php` builds a server-rendered `<ul>` of TCU
   `<li>` elements (one per tier per sentence, speaker-turn-aware), attaches
   `transcripts-ui.js` + `transcripts-scroller.js` + `jquery.scrollTo.min.js`, and syncs
@@ -61,6 +61,57 @@ spike, and none of it has been run/tested, only read.**
   `transcripts_xslt_as_tcus()` (Toolbox `.txt`, `.srt`, arbitrary `.xml`), each with
   different parameters passed to the XSLT transform — not a single normalized input
   format.
+
+## Corpus audit (2026-10-01, against the `d7_av` production dump loaded in DDEV)
+
+Read-only SQL against the 2026-09-01 AV dump. Counts are aggregate; nothing here
+identifies individuals. **Not covered yet:** the D7 Solr index shape, a sample of
+real source files, and the `transcripts_editor` feature surface.
+
+**Where the content lives (corrects the earlier assumption).** D7 already stored the
+converted transcripts in the database: `tcu` (245,158 rows: `trid`, `start`, `end`),
+`tcu_tier` (355,536 rows: `tcuid`, `tier`, `value`) and `tcu_speaker` (142,445 rows).
+A D11 migration can read these tables directly. It does **not** need to re-run the
+Saxon XSLT pipeline or parse the uploaded Toolbox/SRT/XML/VTT files.
+
+**Volume.**
+- 5,343 tracked transcripts, exactly one per node (4,231 video, 1,112 audio); every
+  one has TCUs (mean 46, max 1,380 per transcript).
+- 5,380 nodes have a `field_transcript` file (4,252 video, 1,128 audio), but only 5,272
+  of those files are tracked, so about 108 attached files were never processed. This is
+  the gap between "file attached" (the audit's 46.4%) and "transcript exists".
+- 19 transcript ids have TCUs but no tracking row (orphans from 2016-2021, 1-526 TCUs
+  each); not yet investigated. Probably stale rows from replaced uploads.
+
+**Source formats** (tracked files): `.vtt` 3,227, `.xml` 1,881, `.txt` (Toolbox) 136,
+`.srt` 28. WebVTT is the majority format; Toolbox is about 2.5%. The "Live evidence"
+framing above (Toolbox as the headline format) overstates it.
+
+**Tiers are language-coded parallel text, not the Toolbox tx/mb/ge/ft set.** By tier
+value count: `content_bod` (Tibetan) 173,764; `ts_content_eng` 71,873; `dzo_bod`
+(Dzongkha) 35,525; `ts_content_wylie` 30,497; Nepali 13,625; Chinese 5,191; ten smaller
+languages. `ts_content_gloss` has only 3,491 values, so interlinear gloss is minor.
+
+**Authoring is nearly dormant.** TCUs were created 2015-2024, peaking 2018 (81,717).
+Since 2021 only 38 transcripts were created (about 3,900 TCUs), the last in 2024. No
+TCU has ever been edited (`changed` equals `created` for all 245,158 rows). Whether
+this means the editor is unused or just that corrections never happened is not
+established. This supports, but does not settle, the migration-only option for
+Work item 2; it needs confirmation from the people who run AV.
+
+**Timecode quality (a migration-fidelity risk, escalate per the fail table).**
+- 3,299 TCUs have zero length (start = end), 970 have end before start, 1 has a
+  negative start (-0.125). Together 4,269 TCUs across 679 transcripts, concentrated in a
+  few transcripts (the worst has 406).
+- 190 TCUs end after 4 hours (maximum 81,807 s, about 22 h), so some are certainly bad
+  values; 113 TCUs span more than 10 minutes.
+- Zero-length rows may be deliberate point cues; this needs checking against a real
+  file before treating them as corruption.
+
+**Unicode (relates to Spike 4a).** Not NFC: 933 of 35,525 Dzongkha tier values (2.6%),
+12 of 173,764 Tibetan, 0 of 30,497 Wylie. None are pure NFD. The normalization approach
+from Spike 4a should be applied at migration; round-trip through the chosen model is
+still to be demonstrated.
 
 ## Background
 
