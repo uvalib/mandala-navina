@@ -11,9 +11,9 @@ executes against rather than restating them.
 
 | # | Title | Phase | Status |
 |---|-------|-------|--------|
-| [Sprint 1](sprint-01-images-implementation.md) | Mandala Images implementation (pilot) | Roadmap Phase 1 | ◐ In progress |
+| [Sprint 1](sprint-01-images-implementation.md) | Mandala Images implementation (pilot) | Roadmap Phase 1 | ● Done (2026-10-01; staging promotion rehearsal deferred until a staging server exists) |
 | [Sprint 2](sprint-02-theme-images-ui-and-endpoint-access.md) | D11 base theme, Images interactive UI, other-asset-type groundwork | Roadmap Phase 2 setup | ● Done (2026-09-04) |
-| [Sprint 3](sprint-03-av-core-implementation.md) | AV core implementation (`audio`/`video`, Kaltura, access, collections) | Roadmap Phase 3 (reordered, [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md)) | ◐ In progress (started 2026-09-08) |
+| [Sprint 3](sprint-03-av-core-implementation.md) | AV core implementation (`audio`/`video`, Kaltura, access, collections) | Roadmap Phase 3 (reordered, [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md)) | ● Done (2026-10-01) |
 | [Sprint 4](sprint-04-av-transcripts.md) | AV transcripts (D7 authoring pipeline replication) — depends on Sprint 3 | Roadmap Phase 3 | ○ Planned |
 
 **Status key:** ● Done · ◐ In progress · ○ Planned
