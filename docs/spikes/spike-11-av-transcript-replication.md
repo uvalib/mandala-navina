@@ -139,6 +139,59 @@ Search, deep-linking to a timecode, nodes with speakers, very long transcripts (
 own at times during automated testing; that was not investigated (likely the
 non-foreground tab), so playback itself was driven partly through the player API.
 
+## Data-model evaluation (2026-10-01)
+
+**Recommendation (provisional, pending the authoring decision and review by Than and
+Yuji): Option B, a dedicated transcript entity plus one row per TCU, keeping D7's own
+shape.** Reasoning and the evidence behind it follow.
+
+### What the model has to carry (from the audit)
+- One transcript per node (5,343); 245,158 TCUs total, 1 to 1,380 per transcript.
+- Each TCU is `start`, `end`, plus **a variable set of language tiers** (17 distinct
+  tier names; 75 distinct tier combinations across transcripts; 1.45 tiers per TCU on
+  average, at most 5) and **speaker values** (14 distinct speaker tier names; 142,445
+  rows; 32,919 TCUs carry more than one speaker row).
+- Total text is small: about 58 MB across 355,536 tier values (mean 78 characters,
+  maximum 10,611). The largest transcript is 336,543 characters.
+- D7 itself models this as a **dedicated non-fieldable `tcu` entity** (base table
+  `tcu`, plus `tcu_tier` and `tcu_speaker` key/value tables), indexed one Solr document
+  per TCU into the AV site's own core (`fts_start` sort field). Read from the D7
+  module code; not confirmed against the live core.
+
+### Options against the evidence
+
+| Option | Verdict | Why |
+|---|---|---|
+| **A. Paragraphs (one per TCU)** | Reject | 245,158 paragraph entities at minimum. Tiers are variable, so either ~31 sparse fields on one type or nested paragraphs per tier value (roughly 740k entities). Each host-node revision save copies the paragraph tree (reasoned from how Paragraphs revisions work, not measured here), and the node edit form would try to render up to 1,380 widgets. **Performance is not the objection:** loading 1,380 simple Paragraph entities took 189 ms and 49 MB on DDEV, against 29 ms for one SQL query for the largest transcript's 2,760 tier rows. The objection is entity count, revision multiplication and editing UX. |
+| **B. Dedicated transcript entity + TCU rows** | **Recommend** | Mirrors D7, so migration is a near 1:1 copy and can be verified by row counts (245,158 in, 245,158 out). One indexed range read gets a transcript in order. A stable per-TCU id gives search results a deep link. Leaves room for editing later if AV staff want it. 245k small rows is trivial for MySQL. |
+| **B2. One row per transcript with the TCUs as a JSON blob** | Viable alternative | Only 5,343 rows, one read per transcript, simplest migration. Costs: no stable per-TCU id for deep links unless one is synthesised, no per-TCU edit or constraint, and an opaque column. Reasonable if editing is confirmed out of scope. |
+| **C. Sidecar WebVTT or JSON files per language** | Reject as the store | WebVTT requires each cue's end to be after its start, but **4,269 TCUs have zero-length or inverted timecodes** and would be invalid or silently altered. Per-language files also split the shared time spans the tiers sit on, and carry speakers poorly. A WebVTT file can still be **generated** from the model later if a `<track>` is wanted. |
+| **D. Kaltura-native captions or cue points** | Reject (reasoned, not checked live) | Same WebVTT limits, plus 5,343 transcripts times several languages pushed into Kaltura, a second access-control surface next to the AV7 enforcement, and Spike 7's finding that uploads are a separate path. The audit did not look for existing transcripts inside Kaltura; if any exist, revisit. |
+
+### Sketch for the recommended model (for T2)
+- `av_transcript`: node reference, source file reference, source format (vtt/xml/txt/srt),
+  tier list, legacy transcript id (`trid`), workflow flags. Access follows the parent node
+  (the AV7 rules); the viewer and any API must check node access, never expose TCUs on
+  their own.
+- `av_tcu`: transcript reference, sequence number, `start`, `end`, tier map (tier name to
+  text), speaker map, legacy TCU id. Tier names kept as D7's values.
+- Timecodes: store as `DECIMAL(10,3)`. D7 uses single-precision `FLOAT`, so sub-millisecond
+  digits are float noise, not data, but this has not been verified value by value.
+- **Do not repair the 4,269 bad timecodes at migration.** Carry them as found and add a
+  computed flag (ok, zero-length, inverted, out-of-range) so the viewer can decide how to
+  show them. Whether to correct them is a scholarly-integrity call for David Germano.
+- Search: index one Solr document per TCU (matching D7) or per transcript; this is the
+  next open question and depends on the Solr owner (see the Spike 2 relationship).
+- Unicode: normalise to NFC at migration per Spike 4a (933 Dzongkha values are not NFC).
+
+### Still open before this can be called decided
+- The authoring question. Option B keeps editing possible; B2 would be cheaper if it is
+  confirmed out of scope.
+- Search index shape and where it lives (D7 used a per-site core; D11 has the flat
+  kmassets documents and the visibility proxy).
+- The prototype read the D7 tables directly; it has not been run against the proposed
+  D11 entities.
+
 ## Background
 
 The D7 AV site pairs Kaltura-hosted media (see [Spike 7](spike-07-kaltura-av-integration.md))
