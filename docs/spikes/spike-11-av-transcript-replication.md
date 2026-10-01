@@ -192,6 +192,32 @@ shape.** Reasoning and the evidence behind it follow.
 - The prototype read the D7 tables directly; it has not been run against the proposed
   D11 entities.
 
+## Questions for Than (decisions are his; recorded 2026-10-01 for review)
+
+The data decisions below belong to Than. The recommendation above is Claude's reading of
+the audit, not a decision.
+
+1. **Authoring.** Is anyone still uploading or correcting transcripts? The data shows 38
+   transcripts created since 2021 (last in 2024) and no TCU ever edited. If transcripts
+   are migration-only, the JSON-per-transcript alternative becomes attractive and Sprint 4
+   task T6 (editor UI) can be dropped.
+2. **Data model.** One entity row per TCU (recommended, mirrors D7) or one row per
+   transcript with a JSON blob. Paragraphs, sidecar VTT and Kaltura captions are
+   rejected in the evaluation; say so if any should be reconsidered.
+3. **Bad timecodes.** 4,269 TCUs (679 transcripts) have zero-length, inverted or absurd
+   times. Are zero-length TCUs deliberate point cues? Carry them as found and flag them
+   (recommended), or correct them? Needs a look at real source files, and likely David
+   Germano for any correction.
+4. **Source files.** Please supply a few real files per format (VTT, XML, Toolbox, SRT),
+   including one of the high-count transcripts, to check the TCU shape against the
+   database rows.
+5. **Unprocessed files.** About 108 nodes have a transcript file that D7 never processed
+   into TCUs, and 19 transcript ids have TCUs but no tracking row. Expected or stale?
+6. **Search.** One Solr document per TCU (as D7 did) or per transcript, and which index.
+   Needs Yuji as well (kmassets documents are flat; the visibility proxy applies).
+7. **React viewer.** The app's own transcript viewer (reading the `mandala-av` core) stays
+   out of scope per the 2026-09-04 decision. Confirm that still holds.
+
 ## Background
 
 The D7 AV site pairs Kaltura-hosted media (see [Spike 7](spike-07-kaltura-av-integration.md))
