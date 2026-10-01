@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-01  
 **Participants:** Yuji Shinozaki, Claude Code  
-**Outcome:** [Spike 11](../spikes/spike-11-av-transcript-replication.md) moved from Pending to Partial: corpus audit (D7 already stores parsed TCUs in the database, so migration can skip the XSLT pipeline), a working click-to-seek and highlight-on-play prototype on one real node, and a data-model evaluation (provisionally a dedicated transcript entity plus one row per TCU). Seven open questions recorded for Than, whose call the data decisions are. [PR #269](https://github.com/uvalib/mandala-navina/pull/269).
+**Outcome:** [Spike 11](../spikes/spike-11-av-transcript-replication.md) moved from Pending to Partial: corpus audit (D7 already stores parsed TCUs in the database, so migration can skip the XSLT pipeline), a working click-to-seek and highlight-on-play prototype on one real node, and a data-model evaluation (provisionally a dedicated transcript entity plus one row per TCU). Seven open questions recorded for Than, whose call the data decisions are. Also fixed `session-close-check.sh`, which false-FAILed on pushed feature branches. [PR #269](https://github.com/uvalib/mandala-navina/pull/269) and [PR #270](https://github.com/uvalib/mandala-navina/pull/270), both merged.
 
 ---
 
@@ -425,5 +425,153 @@ First I'll write up the questions for Than in the spike doc, since it's his call
 ## Claude — 2026-10-01 20:46
 
 The check says local `main` is 4 commits ahead of `origin/main`. That shouldn't be so, because I worked on a branch, so I'll look at it before doing anything.
+
+---
+
+## Claude — 2026-10-01 20:47
+
+The script flags a false positive again for the same reason. Now the memory refresh: a new pick-up block at the top of the state snapshot, and an updated index line.
+
+---
+
+## Claude — 2026-10-01 20:47
+
+That index change is mine from the refresh. One last memory item: the correction that data decisions are Than's belongs with the existing ownership note.
+
+---
+
+## Claude — 2026-10-01 20:47
+
+The session is closed. PR #269 is open with 5 commits, mergeable and not yet reviewed. The working tree is clean and everything is pushed.
+
+## What's recorded
+- **Spike 11 doc:** I added a "Questions for Than" section with seven items, framed as his decisions. My data-model recommendation is labelled as a provisional reading, not a decision.
+  - Is anyone still authoring transcripts?
+  - One row per unit or one JSON row per transcript?
+  - What to do with the 4,269 bad timecodes?
+  - Real source files for each format.
+  - The roughly 108 unprocessed files and 19 orphan ids.
+  - Search index shape (Yuji's input too).
+  - Whether the React viewer stays out of scope.
+- **Session log:** `docs/session-logs/2026-10-01-spike-11-corpus-audit-prototype-and-data-model.md`. I used the script, since nothing in this session touched the privately-tracked material.
+- **Memory:**
+  - `project-mandala-state` has a new pick-up block.
+  - The Spike 11 scope note is corrected.
+  - The content-ownership note now says data decisions are Than's.
+
+## Checklist status
+- **Docs indexes:** pass.
+- **Working tree:** clean.
+- **Config:** local `config:status` is clean. The prototype module is uninstalled locally.
+- **`session-close-check.sh`:** it reports "local main is 5 commits ahead", which is a false positive. It compares `HEAD` to `origin/main`, so it fails on any feature branch. Local `main` is not ahead. I didn't fix the script. Do you want a small PR for it?
+- **PR #269:** it touches `drupal/**`, so merging triggers a dev-0 deploy. That's harmless, because the module isn't enabled anywhere.
+
+## For the morning
+1. Walk through the seven questions with Than.
+2. Review and merge #269, or hold it until Than has answered.
+3. If the answers are in, the next work is the search strategy and the migration plan. The remaining unaudited items are the live Solr index shape, the real source files, and the Unicode round-trip.
+
+---
+
+## User — 2026-10-01 20:48
+
+yes, fix the close-check script in a small PR
+
+---
+
+## Claude — 2026-10-01 20:48
+
+I'll test the cases that matter: a pushed branch ahead of `main`, which was the false positive; an unpushed commit; and a commit made directly on local `main`.
+
+---
+
+## Claude — 2026-10-01 20:48
+
+Cases A, B, C and E behave correctly. Case D ran on `main`, which still has the old script, so it didn't exercise my new `main` check. I'll redo it without leaving the branch.
+
+---
+
+## Claude — 2026-10-01 20:48
+
+All five cases now behave correctly, and local `main` is restored to match `origin/main`. Opening the PR:
+
+---
+
+## Claude — 2026-10-01 20:49
+
+PR #270 is open and fixes the script: https://github.com/uvalib/mandala-navina/pull/270.
+
+**The bug:** it compared `HEAD` to `origin/main` and called the result "local main". Every pushed feature branch printed a false FAIL.
+
+**The fix:** two separate checks.
+- **Current branch against its own upstream:** FAIL if it's ahead. If it has no upstream, FAIL only when it holds commits beyond `origin/main`.
+- **Local `main` against `origin/main`:** this catches commits made directly on `main`. It also warns on a detached HEAD.
+
+**Tested:**
+- A pushed feature branch ahead of main now passes. That was the old false positive.
+- An unpushed commit on a pushed branch fails.
+- A commit made on local `main` while on a feature branch fails.
+- A clean branch passes.
+- A new local branch that tracks only `origin/main` fails correctly.
+
+I left `main` restored to `origin/main`, and I'm back on the Spike 11 branch with a clean tree. The change is scripts only, so merging triggers no deploy. I didn't touch the checklist in CLAUDE.md. It says "uncommitted or unpushed work", which the script now implements more accurately.
+
+Both PRs are open and unreviewed: #269 (Spike 11) and #270 (this fix).
+
+---
+
+## User — 2026-10-01 20:49
+
+merge PR 270
+
+---
+
+## Claude — 2026-10-01 20:49
+
+PR #270 is merged into `main` as `0977c5e`, after its one check passed. It only touched `scripts/`, so no deploy was triggered.
+
+The only open PR is #269, the Spike 11 work, which is still waiting on review. My local `main` is now behind `origin/main`, so I'll run `git pull --ff-only` on it at the start of the next session.
+
+---
+
+## User — 2026-10-01 20:49
+
+merge PR 269
+
+---
+
+## Claude — 2026-10-01 20:49
+
+Merging #269 touches `drupal/**`, so it will trigger a dev-0 deploy through the webhook. I'll merge it, then watch that execution without starting one by hand.
+
+---
+
+## Claude — 2026-10-01 20:49
+
+The webhook may take a few seconds to fire, so I'll just snapshot the status now.
+
+---
+
+## Claude — 2026-10-01 20:50
+
+The webhook fired execution `b937d83a` for the #269 merge commit. I'll watch that specific execution in the background. The script is bounded, as my notes require.
+
+---
+
+## Claude — 2026-10-01 20:50
+
+PR #269 is merged and the Spike 11 work is now on `main`. The merge commit is `74fab8810bbe` (merged 2026-10-01T20:49:40Z). Its one check passed.
+
+The webhook started a drupal deploy for it, execution `b937d83a`. It's building now. I didn't start it by hand, and I'm watching that specific execution in the background. I'll report when it finishes.
+
+The module `spike_transcript_demo` ships in the image but isn't enabled anywhere. The deploy should be a no-op apart from restarting the container. After it finishes, I'd check that dev-0's `config:status` shows nothing new. The only drift there should still be the known `simplesamlphp_auth.settings` difference.
+
+Local `main` is behind `origin/main` by two merges (#270 and #269). Run `git pull --ff-only` on it at the start of the next session.
+
+---
+
+## User — 2026-10-01 20:51
+
+check the deploy status, but you can also do the session logs now
 
 ---
