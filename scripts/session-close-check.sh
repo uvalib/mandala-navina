@@ -67,12 +67,38 @@ else
   pass "working tree clean"
 fi
 
-git fetch origin main -q 2>/dev/null || true
-AHEAD="$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)"
-if [ "$AHEAD" -gt 0 ]; then
-  fail "local main is $AHEAD commit(s) ahead of origin/main -- push or open a PR"
+git fetch origin -q 2>/dev/null || true
+
+# Two separate questions, deliberately not conflated: (a) is the CURRENT
+# branch pushed to its own remote, and (b) did anyone commit straight onto
+# local main. Comparing HEAD to origin/main (the old check) mislabelled (a)
+# as (b) and false-FAILed on every pushed feature branch.
+BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+if [ "$BRANCH" = "HEAD" ]; then
+  warn "detached HEAD -- cannot tell whether this work is pushed anywhere"
+elif UPSTREAM="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null)"; then
+  UNPUSHED="$(git rev-list --count "$UPSTREAM"..HEAD 2>/dev/null || echo 0)"
+  if [ "$UNPUSHED" -gt 0 ]; then
+    fail "branch $BRANCH is $UNPUSHED commit(s) ahead of $UPSTREAM -- push"
+  else
+    pass "branch $BRANCH is pushed (in sync with $UPSTREAM)"
+  fi
 else
-  pass "local main matches origin/main (nothing unpushed)"
+  AHEAD_MAIN="$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)"
+  if [ "$AHEAD_MAIN" -gt 0 ]; then
+    fail "branch $BRANCH has no upstream and is $AHEAD_MAIN commit(s) ahead of origin/main -- push it and open a PR"
+  else
+    pass "branch $BRANCH has no upstream but holds nothing beyond origin/main"
+  fi
+fi
+
+if git rev-parse --verify -q main >/dev/null 2>&1; then
+  MAIN_AHEAD="$(git rev-list --count origin/main..main 2>/dev/null || echo 0)"
+  if [ "$MAIN_AHEAD" -gt 0 ]; then
+    fail "local main is $MAIN_AHEAD commit(s) ahead of origin/main -- move them to a branch and open a PR"
+  else
+    pass "local main has nothing beyond origin/main"
+  fi
 fi
 echo
 
