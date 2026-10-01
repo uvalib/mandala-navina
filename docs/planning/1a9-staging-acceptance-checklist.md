@@ -12,6 +12,8 @@ copy of the production Images DB **on dev-0**, and evidence the acceptance crite
 **Script:** `scripts/migration-cycle.sh`
 **Acceptance criteria source:** [sprint doc](../sprints/sprint-01-images-implementation.md) §Acceptance criteria
 
+> **Deferred 2026-10-01:** Sprint 1 closed without this run; it waits until a D11 staging server exists. Unticked items below are not Sprint 1 blockers.
+
 > **Scheduling note (2026-07-08):** This staging run has been deferred to **end of
 > Sprint 1 (after Step 1b)**. The security criterion (§D) is 1b-gated, the local
 > MySQL 8.4 rehearsal has de-risked migration quality, and the DevOps prerequisites

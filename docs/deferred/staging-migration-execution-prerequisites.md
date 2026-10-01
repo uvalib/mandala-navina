@@ -2,7 +2,9 @@
 **Area:** migration / deployment / infrastructure / staging
 **Raised during:** Session 2026-07-07 (Sprint 1 1a.9)
 **Jira:** (add when available)
-**Priority:** High — **blocks the end-of-Sprint-1 staging acceptance run**
+**Priority:** Deferred (2026-10-01) — **no staging server exists; revisit when one does.** Was: High, blocks the end-of-Sprint-1 staging acceptance run
+
+> **Sprint 1 closed 2026-10-01 without this run.** Its acceptance criteria were evidenced on dev-0 (scope decision 2026-08-25). What was *not* proved, and is deferred until a D11 staging environment exists: a promotion rehearsal between two D11 environments, and the per-environment config-override mechanism (see [spike-solr-demo-enabled-with-anonymous-route](spike-solr-demo-enabled-with-anonymous-route.md)). The two prerequisites below stay valid for that future run. Also revisit before production rollout.
 
 > **Deferral decision (2026-07-08):** The staging acceptance run has been deferred from
 > 1a.9 close to **end of Sprint 1 (after Step 1b)**. Rationale: (1) the security
