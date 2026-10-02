@@ -373,6 +373,28 @@ to carry the facet):
 - **Work:** a Drupal-side search UI (page, header block, snippets, deep links) is new work
   beyond indexing, so it is added to Sprint 4 as T8.
 
+
+**Question 6, document id and write path. DECIDED 2026-10-02 (Yuji):**
+- **Ids:** the D7 `tcuid` is preserved as the D11 unit id (the migration sets it explicitly;
+  new units are allocated above the D7 maximum), and D7's `trid` is preserved as the
+  transcript id (`is_trid`, `trid_i`). Reasons: existing `#tcu/NNN` links keep working, ids
+  are identical on every environment, and the node-id divergence problem does not apply
+  because the unit table is AV-only. Solr `id` is `tcu-11-{unit id}` (kmassets pattern,
+  deterministic so a re-save overwrites). Extra fields: `nid`, `entity_id` (= unit id).
+- **Write path:** a new sink for the transcript core, modelled on `KmassetDirectSink`
+  (core URL its own setting). Per edit: index the one unit with a short `commitWithin`.
+  Whole-transcript operations (insert, delete, copy, revert, delete transcript): delete by
+  `is_trid`, then re-add the unit set in one batch. Migration and bulk reindex: batches of a
+  few hundred with one commit at the end. Drupal stays the source of truth: the save always
+  succeeds in the database; the index write is tried synchronously and, on failure, goes to
+  a **retry queue** (accepted). The Drupal editor and in-Drupal view read the database, so
+  staff see their own edits at once; the React client and cross-transcript search read Solr.
+  The per-transcript language set is recomputed on every save.
+- **Replica lag:** some lag between master and replica is expected and accepted; reviewing it
+  is deferred, see [replica lag review](../deferred/transcript-core-replica-lag-review.md).
+- **Queue triage** (visibility, retry policy, alerting, reconcile command) is deferred, see
+  [triage support](../deferred/transcript-index-queue-triage.md).
+- **Still open for question 6:** the core's name, the schema source, and who creates the core.
 7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
    viable.** Its UI is still not part of this spike's build, but D11 must keep the
    `mandala-av` index (or an equivalent the client can be pointed at through
@@ -536,3 +558,5 @@ Drupal pipeline) only, per the 2026-09-04 scope note above.
 
 - [Transcript bad timecodes: investigate and fix](../deferred/transcript-bad-timecodes-investigate-and-fix.md) (2026-10-02)
 - [Transcript source files: account for every original](../deferred/transcript-source-file-accounting.md) (2026-10-02)
+- [Transcript core replica lag: review later](../deferred/transcript-core-replica-lag-review.md) (2026-10-02)
+- [Transcript index retry queue: triage support](../deferred/transcript-index-queue-triage.md) (2026-10-02)
