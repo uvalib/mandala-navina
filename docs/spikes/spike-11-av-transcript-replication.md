@@ -394,7 +394,14 @@ to carry the facet):
   is deferred, see [replica lag review](../deferred/transcript-core-replica-lag-review.md).
 - **Queue triage** (visibility, retry policy, alerting, reconcile command) is deferred, see
   [triage support](../deferred/transcript-index-queue-triage.md).
-- **Still open for question 6:** the core's name, the schema source, and who creates the core.
+- **Core name: `mandala-av-transcripts`** (decided 2026-10-02, Yuji). Existing cores are
+  `kmassets` and `kmterms` (KMaps) and `mandala-av`, `mandala-images`, `mandala-sources`,
+  `mandala-texts`, `mandala-visuals` (the per-site Drupal ApacheSolr indexes); the same names
+  in staging and production, no environment suffix. The new name keeps the `mandala-` prefix,
+  states the purpose, and is clearly distinct from D7's `mandala-av`. It is AV-specific on
+  purpose; revisit if another site ever gets time-coded transcripts.
+- **Still open for question 6:** the schema source, and who creates the core (Dave Goldstein;
+  also which Solr version, 7.x or 9.x, since configsets exist for both).
 7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
    viable.** Its UI is still not part of this spike's build, but D11 must keep the
    `mandala-av` index (or an equivalent the client can be pointed at through
