@@ -23,6 +23,12 @@ loose ends. For now they are only **tracked**, not worked.
 Of the 540 nodes edited in D7, 539 have a matching source-file record; one is missing its
 record and one has a replaced file (the same node may be both; not checked).
 
+## Where the originals are
+
+On dev-0, at `/opt/drupal/app/drupal/web/sites/default/files/transcripts` (the real files
+path, not the stub tree at `/var/www/html`). Recorded 2026-10-02 (Yuji). **Not yet listed or
+counted**; the inventory below starts there and compares against the D7 file records.
+
 ## What closes it
 
 1. Build the inventory: for every transcript and the 41 unprocessed nodes, confirm the file
