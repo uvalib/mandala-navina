@@ -295,18 +295,24 @@ unknown and none of it was run live.
    `transcripts_apachesolr_redirect` deep link). Sorts: temporal order (`fts_start`), and
    transcript title (D7's title field was commented out as a FIXME in `tcu_solr_document`,
    so title sort may never have worked).
-3. **"Transcript Languages" facet** (`sm_has_tier`): filter by which language tiers a
-   transcript has. This is a node-level attribute, not a unit-level one.
+3. **"Transcript Languages" facet** (`sm_has_tier`): declared as a facet to filter by which
+   language tiers a transcript has. **It may never have worked:** nothing in the D7 sites
+   code writes `sm_has_tier` to any document (searched 2026-10-02, including contrib), so
+   the facet is declared but probably empty. Not checked against the live core. Treat it as
+   unconfirmed; check the live core for `sm_has_tier` before deciding whether to reproduce
+   it, build it new, or drop it.
 4. **Per-transcript tier list:** the viewer shows only the tiers a transcript actually has.
 
-Design consequences for the new core:
+Design consequences for the new core (D7's index held node documents and unit documents;
+**there was no transcript-level document in D7**, an earlier version of this section wrongly
+proposed one to carry the facet):
 - **Unit documents** keep the client-compatible shape and add the unit id as `entity_id`
   (D7's value, used for the deep link), a node id, and access fields.
-- **The language facet and title need something above the unit.** If a transcript-level
-  document is added to the same core, it **must not carry `is_trid`**: the React client
-  selects everything matching `is_trid:<trid>` and would receive the extra document. Use a
-  different key field. Alternative: derive languages from the units, or serve the facet from
-  the node's kmassets document.
+- **If the language facet is wanted,** it needs the set of languages per transcript from
+  somewhere. Options: derive it from the unit documents, serve it from the node's
+  kmassets document, or add a new document type. A new document type in this core must
+  **not carry `is_trid`**, because the React client selects everything matching
+  `is_trid:<trid>` and would receive the extra document.
 - **Titles in results:** look up from Drupal by node id at render time, or denormalise onto
   the unit documents (cheap but needs reindexing when a title changes).
 - **Compatibility test:** capture real responses from the D7 `mandala-av` core for a few
