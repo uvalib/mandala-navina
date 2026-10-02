@@ -116,3 +116,4 @@ nav:
   - "AV private/UVA collection content was not enforced in Drupal (fixed 2026-09-25)": av-private-uva-content-not-enforced-in-drupal.md
   - "Collection visibility not enforced in listings (nodes or collections) -- awaiting a team decision": collection-visibility-not-enforced-in-listings.md
   - "Hand AV staff the 18 media-less AV nodes for cleanup (deferred)": av14-media-less-nodes-staff-handoff.md
+  - "Audit AV node fields D7 vs D11 -- technical metadata fields missing on D11": av-field-audit-d7-vs-d11-technical-metadata.md
