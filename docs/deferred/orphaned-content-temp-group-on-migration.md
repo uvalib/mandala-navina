@@ -3,7 +3,7 @@
 **Area:** migration / Group / content model / access
 **Raised during:** ADR 015 Q2 decision, 2026-08-07 (Than, team present)
 **Jira:** (add when available)
-**Priority:** **Medium–High — direction CONFIRMED 2026-09-28 (Than, Yuji).** Applies to **every** per-site asset migration; if the current membership migration silently drops orphans, content is lost on cutover. AV orphans are now quantified and carry a live access consequence — see "Confirmed 2026-09-28" at the end.
+**Priority:** **Medium–High — direction CONFIRMED 2026-09-28 (Than, Yuji); open specifics RESOLVED 2026-10-02 (Than).** Applies to **every** per-site asset migration. Confirmed 2026-10-02: the current Images membership migration genuinely drops orphans today, not just a theoretical risk. AV orphans are quantified and carry a live access consequence — see "Confirmed 2026-09-28" below. Ready to build; not yet started.
 
 ## Context
 
@@ -40,14 +40,42 @@ Mandala Home) must each be swept for their own orphans — the count is site- an
 - The group must be **non-public** (these are unreviewed anomalies) and clearly named as a
   holding area.
 
-## Open specifics (to decide when implementing)
+## Open specifics — resolved 2026-10-02 (Than)
 
-- **Temp group identity:** one global review group, or one per site? Group type — a normal
-  `collection`, or a distinct holding bundle?
-- **Ownership / review workflow:** who owns the review, and is there a tracked task per item?
-- **Does 1b.2 already drop these?** Check whether the current
-  `d7_images_collection_memberships` migration silently skips orphans (the 36-node gap suggests
-  it may). If so, this is a live gap, not just a future requirement.
+- **Confirmed this is a live gap, not just a future requirement.** Checked
+  `migrate_plus.migration.d7_images_image_collection_membership.yml`: it only creates a
+  `group_node` relationship when a D7 `og_membership` row exists for that node. A node with no
+  membership row gets no relationship at all — no fallback, no sweep step. Every orphan today
+  migrates into D11 exactly as group-less as it was in D7. Applies the same way to the AV
+  migration once it reads its own membership source.
+- **Group identity: one parent group, with a child per site.** A single top-level "Orphaned
+  Content" group, holding one child subgroup per site (AV, Images, Texts, Sources), each
+  holding that site's own orphans. This reuses the existing hierarchy structurally: the parent
+  is a `collection`-bundle group, and the four children are `subcollection`-bundle groups under
+  it — the same parent/child relationship real collections and subcollections already have, so
+  no new entity-reference field is needed to express the nesting.
+- **Group bundle: reuse `collection`/`subcollection`, don't add a new bundle.** Add a new
+  boolean flag field (e.g. `field_is_review_holding`) to both existing group bundles instead of
+  introducing a distinct entity bundle. Set `true` on the parent "Orphaned Content" group and
+  each of its four site children.
+  - **Still open, not decided:** does every piece of code that treats "is in a collection" as
+    sufficient for visibility/listing need to check this flag directly on each group, or can a
+    subcollection inherit "is review holding" from its parent without the flag being set
+    redundantly on every child? Whoever implements this should decide and document it — getting
+    it wrong either re-exposes review content (flag not checked somewhere) or makes every new
+    child subgroup need its own manual flag (easy to forget).
+  - Every listing surface that currently shows collections/subcollections (`/collections`,
+    `/my_collections`, any gallery/view keyed off group membership) must be checked against the
+    flag and must exclude flagged groups — this follows the same enforcement gap already found
+    for private/UVA content in
+    [[collection-visibility-not-enforced-in-listings]], so don't assume a flag field alone is
+    sufficient without also auditing the views.
+- **Ownership: AV/content staff per site**, matching the precedent already set for the AV14
+  media-less-nodes handoff ([[av14-media-less-nodes-staff-handoff]]) — engineering files the
+  content into the right per-site holding group, content staff decide per node whether to
+  reassign it to a real collection or delete it. No tracked-task mechanism exists yet (Jira
+  integration is itself still deferred); for now the per-site count in this note (and whatever
+  the AV/Texts/Sources sweeps find) is the handoff list.
 - Add "sweep orphans into the review group" to the per-site migration checklist alongside ADR
   015's content_editor / contributor-tier items.
 
