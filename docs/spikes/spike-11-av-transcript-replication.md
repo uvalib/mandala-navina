@@ -278,7 +278,45 @@ the audit, not a decision.
    D7 at cutover; the D7 core is left to be retired with D7; the client is pointed at the new
    core through `REACT_APP_SOLR_TRANSCRIPTS`. Still open: the core's name and schema source,
    document id scheme, access enforcement, the write path and edit freshness, who creates
-   the core, and whether D11 needs its own search across transcripts.
+   the core. Decided 2026-10-02: D11 needs the same search features as D7 (see below).
+### Search features D7 offers, which D11 must reproduce (decided 2026-10-02, Yuji)
+
+Decision: **D11 gets the same search features as D7.** Read from the D7 module code and the
+`d7_av` dump; the block and search page below are enabled in the dump, but actual usage is
+unknown and none of it was run live.
+
+1. **Search within one transcript:** a term is matched as a phrase against every tier;
+   matches are wrapped in `<mark>`, the full tier text is returned (no snippet cut-off), and
+   a "hits only" option shows just the matching units.
+2. **Cross-transcript search:** a "Transcripts" search page (`search/transcripts`) over
+   unit documents, with a "Search Transcripts" block enabled in the AV site's themes. Each
+   tier is queried with equal weight (`qf` of every tier at 1.0). Results show a highlighted
+   unit snippet, and a result links to the node at `#tcu/{unit id}` (the
+   `transcripts_apachesolr_redirect` deep link). Sorts: temporal order (`fts_start`), and
+   transcript title (D7's title field was commented out as a FIXME in `tcu_solr_document`,
+   so title sort may never have worked).
+3. **"Transcript Languages" facet** (`sm_has_tier`): filter by which language tiers a
+   transcript has. This is a node-level attribute, not a unit-level one.
+4. **Per-transcript tier list:** the viewer shows only the tiers a transcript actually has.
+
+Design consequences for the new core:
+- **Unit documents** keep the client-compatible shape and add the unit id as `entity_id`
+  (D7's value, used for the deep link), a node id, and access fields.
+- **The language facet and title need something above the unit.** If a transcript-level
+  document is added to the same core, it **must not carry `is_trid`**: the React client
+  selects everything matching `is_trid:<trid>` and would receive the extra document. Use a
+  different key field. Alternative: derive languages from the units, or serve the facet from
+  the node's kmassets document.
+- **Titles in results:** look up from Drupal by node id at render time, or denormalise onto
+  the unit documents (cheap but needs reindexing when a title changes).
+- **Compatibility test:** capture real responses from the D7 `mandala-av` core for a few
+  transcripts and diff them against the new core's output, because the full set of fields the
+  client reads has not been enumerated (only the ones in `audiovideo.js`).
+- **Not yet checked:** the D7 search page names Solr environment `solr`, which is not in the
+  environment table (only `mandala_library_rw` is); it presumably falls back to the default.
+- **Work:** a Drupal-side search UI (page, header block, snippets, deep links) is new work
+  beyond indexing, so it is added to Sprint 4 as T8.
+
 7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
    viable.** Its UI is still not part of this spike's build, but D11 must keep the
    `mandala-av` index (or an equivalent the client can be pointed at through
