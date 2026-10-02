@@ -295,7 +295,7 @@ unknown and none of it was run live.
    `transcripts_apachesolr_redirect` deep link). Sorts: temporal order (`fts_start`), and
    transcript title (D7's title field was commented out as a FIXME in `tcu_solr_document`,
    so title sort may never have worked).
-3. **"Transcript Languages" facet** (`sm_has_tier`): declared as a facet to filter by which
+3. **"Transcript Languages" facet** (`sm_has_tier`, a Drupal ApacheSolr facet on the unused node documents, not on units): declared as a facet to filter by which
    language tiers a transcript has. **It may never have worked:** nothing in the D7 sites
    code writes `sm_has_tier` to any document (searched 2026-10-02, including contrib), so
    the facet is declared but probably empty. Not checked against the live core. Treat it as
@@ -303,9 +303,18 @@ unknown and none of it was run live.
    it, build it new, or drop it.
 4. **Per-transcript tier list:** the viewer shows only the tiers a transcript actually has.
 
-Design consequences for the new core (D7's index held node documents and unit documents;
-**there was no transcript-level document in D7**, an earlier version of this section wrongly
-proposed one to carry the facet):
+**What the D7 `mandala-av` core is (Yuji, 2026-10-02; not verified against the live core).**
+It is the Drupal ApacheSolr module's index. That module can index any content type, and
+the core does hold node documents (the AV site's indexing config lists audio, video,
+collection and other node bundles), but the D7 sites do not use those: asset discovery and
+search go through the **kmassets** core. **The transcript units are, as far as Yuji knows,
+the only real use of Drupal Solr.** So the node documents in that core are a Drupal-module
+by-product and are not a requirement for D11; only the unit documents matter, and the new
+core should not copy the Drupal ApacheSolr schema or its node-level fields.
+
+Design consequences for the new core (it needs unit documents only; **there was no
+transcript-level document in D7**, an earlier version of this section wrongly proposed one
+to carry the facet):
 - **Unit documents** keep the client-compatible shape and add the unit id as `entity_id`
   (D7's value, used for the deep link), a node id, and access fields.
 - **If the language facet is wanted,** it needs the set of languages per transcript from
