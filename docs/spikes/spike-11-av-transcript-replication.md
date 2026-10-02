@@ -325,9 +325,9 @@ real use of Drupal Solr.** The node documents are not wholly idle, though: they 
 and the per-transcript language set has to come from somewhere other than a copy of the
 Drupal node documents. The new core should not copy the Drupal ApacheSolr schema.
 
-**The live `mandala-av` `select` endpoint answered an unauthenticated query from a laptop on
-the VPN** (2026-10-02). Unit documents carry no node id or access field, so this is the
-access concern for the new core; not tested against a private node.
+**Access.** The new core must enforce the same visibility rules as the rest of D11 (see
+question 6). A separate concern about the legacy core's access is tracked privately; ask
+Yuji Shinozaki.
 
 Design consequences for the new core (it needs unit documents only; **there was no
 transcript-level document in D7**, an earlier version of this section wrongly proposed one
