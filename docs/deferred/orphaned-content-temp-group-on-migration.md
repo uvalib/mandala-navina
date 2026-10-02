@@ -3,7 +3,7 @@
 **Area:** migration / Group / content model / access
 **Raised during:** ADR 015 Q2 decision, 2026-08-07 (Than, team present)
 **Jira:** (add when available)
-**Priority:** **Medium–High — direction CONFIRMED 2026-09-28 (Than, Yuji); open specifics RESOLVED 2026-10-02 (Than).** Applies to **every** per-site asset migration. Confirmed 2026-10-02: the current Images membership migration genuinely drops orphans today, not just a theoretical risk. AV orphans are quantified and carry a live access consequence — see "Confirmed 2026-09-28" below. Ready to build; not yet started.
+**Priority:** **Medium–High — direction CONFIRMED 2026-09-28 (Than, Yuji); open specifics RESOLVED 2026-10-02 (Than); BUILT and the AV exposure FIXED on local DDEV 2026-10-02.** Applies to **every** per-site asset migration. Confirmed 2026-10-02: the current Images membership migration genuinely drops orphans today, not just a theoretical risk. AV orphans are quantified and carry a live access consequence — see "Confirmed 2026-09-28" below. **Still needed: run the sweep on dev-0, and sweep Images/Texts/Sources** (only AV has been swept so far).
 
 ## Context
 
@@ -78,6 +78,37 @@ Mandala Home) must each be swept for their own orphans — the count is site- an
   the AV/Texts/Sources sweeps find) is the handoff list.
 - Add "sweep orphans into the review group" to the per-site migration checklist alongside ADR
   015's content_editor / contributor-tier items.
+
+## Built 2026-10-02, verified on local DDEV
+
+- **Field:** `field_is_review_holding` (boolean) added to both the `collection` and
+  `subcollection` group bundles.
+- **Listing exclusion:** `GroupQueryAlter` now joins the flag unconditionally and excludes any
+  flagged group from a `group_access`-tagged query (e.g. `/collections`) for every viewer,
+  including an account with bypass permission — the one case in this module where bypass is
+  deliberately NOT honoured, since a review-holding group is never a real, browsable collection
+  for anyone. Covered by a new kernel test, `ReviewHoldingGroupVisibilityTest`.
+- **Resolved the "still open" question above:** the flag is set explicitly on every group
+  (parent and each child) rather than inherited — simpler to reason about and query, at the cost
+  of needing to remember to set it on any future child. Not inheritance-based.
+- **Drush commands** (`mandala_group_inheritance` module,
+  `OrphanedContentReviewCommands.php`):
+  - `group:create-review-holding-groups` — idempotently creates the parent "Orphaned Content"
+    collection and its four site children (AV, Images, Texts, Sources). Content/data, not
+    config — each environment runs this for itself, same pattern as
+    `SubcollectionAccessBackfillCommands`.
+  - `group:sweep-orphans --site={audio-video,images,texts,sources} [--dry-run]` — moves that
+    site's group-less nodes into the matching child, scoped to
+    `CollectionVisibility::groupNodeBundles()` and `field_legacy_site`. A node's own
+    `field_group_content_access` override is left alone, so a restriction already set is kept.
+- **Verified live on local DDEV:** ran `group:sweep-orphans --site=audio-video` for real (not
+  dry-run). Swept 66 AV orphans. Checked all 18 previously-exposed nodes (6 private, 12
+  UVA-only, the exact count from "Confirmed 2026-09-28" below) by id: every one now resolves
+  into the AV child group and `$node->access('view', $anonymous_user)` returns `FALSE` for all
+  18, with zero remaining exposed nodes of that shape. `config:status` stayed clean throughout.
+- **Not yet done:** the Images (36 known), Texts, and Sources sweeps — only `--site=audio-video`
+  has been run. Nothing has been run on dev-0 yet (local DDEV only). Branch
+  `feat/orphaned-content-review-group`, not yet pushed or opened as a PR.
 
 ## Confirmed 2026-09-28 — AV orphans quantified, with an access consequence
 
