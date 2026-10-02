@@ -92,12 +92,18 @@ value count: `content_bod` (Tibetan) 173,764; `ts_content_eng` 71,873; `dzo_bod`
 (Dzongkha) 35,525; `ts_content_wylie` 30,497; Nepali 13,625; Chinese 5,191; ten smaller
 languages. `ts_content_gloss` has only 3,491 values, so interlinear gloss is minor.
 
-**Authoring is nearly dormant.** TCUs were created 2015-2024, peaking 2018 (81,717).
-Since 2021 only 38 transcripts were created (about 3,900 TCUs), the last in 2024. No
-TCU has ever been edited (`changed` equals `created` for all 245,158 rows). Whether
-this means the editor is unused or just that corrections never happened is not
-established. This supports, but does not settle, the migration-only option for
-Work item 2; it needs confirmation from the people who run AV.
+**Authoring: new transcripts are rare, but editing is live (corrected 2026-10-02).**
+TCUs were created 2015-2024, peaking 2018 (81,717). Since 2021 only 38 transcripts were
+created (about 3,900 TCUs), the last in 2024. The first version of this audit also said
+no TCU had ever been edited because `changed` equals `created` for all 245,158 rows.
+**That inference was wrong:** the D7 editor does not touch `tcu.changed`; it marks the
+*node* with the `keep_transcript_edits` flag (`transcripts_editor_mark_edited`). That flag
+is set on **540 nodes, with flaggings from 2016-01-06 to 2026-04-30**, so staff were
+correcting transcripts as recently as five months before this note. Editing is in use.
+Consequences: Than decided on 2026-10-02 that the editor is kept (see Questions for Than);
+and the 540 flagged nodes carry human corrections that a re-import from the source
+files would overwrite, which is one more reason to migrate from the database rows and to
+carry the flag across.
 
 **Timecode quality (a migration-fidelity risk, escalate per the fail table).**
 - 3,299 TCUs have zero length (start = end), 970 have end before start, 1 has a
@@ -177,37 +183,58 @@ shape.** Reasoning and the evidence behind it follow.
   text), speaker map, legacy TCU id. Tier names kept as D7's values.
 - Timecodes: store as `DECIMAL(10,3)`. D7 uses single-precision `FLOAT`, so sub-millisecond
   digits are float noise, not data, but this has not been verified value by value.
-- **Do not repair the 4,269 bad timecodes at migration.** Carry them as found and add a
-  computed flag (ok, zero-length, inverted, out-of-range) so the viewer can decide how to
-  show them. Whether to correct them is a scholarly-integrity call for David Germano.
+- **Do not repair the 4,269 bad timecodes at migration.** Carry them as found. Add a
+  `timecode_status` on `av_tcu`, computed deterministically at migration so a re-run gives
+  the same answer: `ok`, `zero_length_shared_start`, `zero_length_other`, `inverted`,
+  `last_unit_no_end`, `end_implausible` (the 190 over 4 hours), and later `corrected`.
+  Keep the D7 value in `end_original` whenever a fix is applied. Decided 2026-10-02: the
+  fixup is deferred (see "Bad timecodes" under Questions for Than and the deferred note).
+  Where the bad values have to be accounted for:
+  - **Migration verification:** row counts must include flagged units (245,158 in, 245,158
+    out), and the per-status counts are recorded so the number can be watched going down.
+  - **Display and sync:** the active-unit rule is "last TCU whose start is at or before
+    the playhead". With zero-length units that share a start with their neighbour, only the
+    last unit of such a stack can ever be highlighted. The prototype did not meet this case
+    (its node had no bad units), so it must be tested on a flagged transcript before T3.
+  - **Editor (T6):** flagged units must stay editable, and editors need a "needs timecode
+    review" marker or filter. The editor is the natural place to fix them one transcript at a time.
+  - **Readers:** the status is for staff and never shown on public pages.
+  - **Search:** indexing must not depend on `end`, so a bad end never drops a unit.
 - Search: index one Solr document per TCU (matching D7) or per transcript; this is the
   next open question and depends on the Solr owner (see the Spike 2 relationship).
 - Unicode: normalise to NFC at migration per Spike 4a (933 Dzongkha values are not NFC).
 
 ### Still open before this can be called decided
-- The authoring question. Option B keeps editing possible; B2 would be cheaper if it is
-  confirmed out of scope.
+- ~~The authoring question.~~ Settled 2026-10-02: editing is kept, so Option B stands
+  and B2 is out (see Questions for Than).
 - Search index shape and where it lives (D7 used a per-site core; D11 has the flat
   kmassets documents and the visibility proxy).
 - The prototype read the D7 tables directly; it has not been run against the proposed
   D11 entities.
 
-## Questions for Than (decisions are his; recorded 2026-10-01 for review)
+## Questions for Than (decisions are his; recorded 2026-10-01, answers 1-3 added 2026-10-02)
 
 The data decisions below belong to Than. The recommendation above is Claude's reading of
 the audit, not a decision.
 
-1. **Authoring.** Is anyone still uploading or correcting transcripts? The data shows 38
-   transcripts created since 2021 (last in 2024) and no TCU ever edited. If transcripts
-   are migration-only, the JSON-per-transcript alternative becomes attractive and Sprint 4
-   task T6 (editor UI) can be dropped.
-2. **Data model.** One entity row per TCU (recommended, mirrors D7) or one row per
-   transcript with a JSON blob. Paragraphs, sidecar VTT and Kaltura captions are
-   rejected in the evaluation; say so if any should be reconsidered.
-3. **Bad timecodes.** 4,269 TCUs (679 transcripts) have zero-length, inverted or absurd
-   times. Are zero-length TCUs deliberate point cues? Carry them as found and flag them
-   (recommended), or correct them? Needs a look at real source files, and likely David
-   Germano for any correction.
+1. **Authoring. ANSWERED 2026-10-02 (Than): keep the editing UI; do not drop it.** The
+   D7 editor is in live use (540 nodes flagged as edited, latest 2026-04-30; see the
+   corrected audit finding). Sprint 4 T6 is therefore in scope: an editor equivalent to
+   D7's (in-place tier edit with optimistic locking, speaker edit, time edit, insert
+   before/after, copy, delete, per-node and per-tier disable hooks, access following
+   node-edit permission, immediate reindex). Open follow-ups for Than: who the editors are,
+   and whether the `keep_transcript_edits` flag should migrate as a visible marker.
+2. **Data model. ANSWERED 2026-10-02 (Than): one row per TCU, following D7's design.**
+   Option B stands; B2 (JSON blob) is out because editing is kept. Paragraphs, sidecar VTT
+   and Kaltura captions stay rejected.
+3. **Bad timecodes. DECIDED 2026-10-02 (Than): carry as found now; fix later.** Than's
+   proposed fixup rule is "end = start of the next TCU". Measured on the D7 dump, that
+   rule only covers 383 of the 4,269 bad TCUs: 3,487 share their start with the next TCU
+   (the rule would give a zero-length unit again) and 399 are the last unit of their
+   transcript (no next TCU). The investigation and the fix are deferred to
+   [a deferred note](../deferred/transcript-bad-timecodes-investigate-and-fix.md); the data
+   model carries a `timecode_status` and `end_original` so nothing is lost meanwhile. Any
+   correction beyond Than's rule still goes to David Germano.
 4. **Source files.** Please supply a few real files per format (VTT, XML, Toolbox, SRT),
    including one of the high-count transcripts, to check the TCU shape against the
    database rows.
@@ -332,4 +359,4 @@ Drupal pipeline) only, per the 2026-09-04 scope note above.
 
 ## Deferred notes
 
-*(To be filled in after the spike runs.)*
+- [Transcript bad timecodes: investigate and fix](../deferred/transcript-bad-timecodes-investigate-and-fix.md) (2026-10-02)

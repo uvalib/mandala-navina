@@ -52,7 +52,7 @@ already exist, not the node migration itself.
 | T3 | Build the display/sync mechanism (field formatter + JS, or WebVTT `<track>`) | T2 | ○ |
 | T4 | Wire search indexing (Solr/kmassets integration, or a dedicated index if Spike 11 finds the D7 shape requires one) | T2 | ○ |
 | T5 | Migrate existing D7 transcript content (all three formats) into the chosen D11 model; replace Sprint 3's inert `field_transcript` placeholder | T2–T4, Sprint 3 AV4 | ○ |
-| T6 | If Spike 11 decides live multi-format authoring must be reproduced: build an editor UI equivalent. Otherwise, record the explicit decision that transcripts become migration-only content in D11 | T1 | ○ |
+| T6 | Build an editor UI equivalent to D7's `transcripts_editor`. **Decided 2026-10-02 (Than): the editor is kept, not dropped**; D7's editing is in live use (540 nodes flagged, latest 2026-04-30). Must tolerate flagged timecodes and offer a review marker; see Spike 11 | T1 | ○ |
 
 ## Acceptance criteria
 
