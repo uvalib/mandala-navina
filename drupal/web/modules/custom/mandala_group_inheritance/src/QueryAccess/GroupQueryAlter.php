@@ -56,11 +56,12 @@ final class GroupQueryAlter {
       return;
     }
 
-    // The orphaned-content review holding group and its per-site children are
-    // never a browsable collection, for anyone — including an account with
-    // bypass, which is why this is a separate, unconditional join rather than
-    // folded into the visibility expression below (that one IS skipped for
-    // bypass). See docs/deferred/orphaned-content-temp-group-on-migration.md.
+    // An orphaned-content review holding group (created and flagged by hand
+    // through the Group UI, not by this module) is never a browsable
+    // collection, for anyone — including an account with bypass, which is
+    // why this is a separate, unconditional join rather than folded into the
+    // visibility expression below (that one IS skipped for bypass). See
+    // docs/deferred/orphaned-content-temp-group-on-migration.md.
     $review_holding = $query->leftJoin(
       'group__field_is_review_holding',
       'mgi_review_holding',

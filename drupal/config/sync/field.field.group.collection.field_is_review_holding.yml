@@ -10,7 +10,7 @@ field_name: field_is_review_holding
 entity_type: group
 bundle: collection
 label: 'Is review-holding group'
-description: 'True for the orphaned-content review holding group and its per-site children. Excluded from collection listings regardless of viewer permission; set once at creation, not an editorial field.'
+description: 'Check this for the orphaned-content review group(s) created by hand for staff to triage group-less content swept in by drush group:sweep-orphans. A flagged group never appears in /collections or other collection listings, for any viewer, including an administrator. Leave unchecked for a real collection.'
 required: false
 translatable: true
 default_value:
