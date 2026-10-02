@@ -400,8 +400,23 @@ to carry the facet):
   in staging and production, no environment suffix. The new name keeps the `mandala-` prefix,
   states the purpose, and is clearly distinct from D7's `mandala-av`. It is AV-specific on
   purpose; revisit if another site ever gets time-coded transcripts.
-- **Still open for question 6:** the schema source, and who creates the core (Dave Goldstein;
-  also which Solr version, 7.x or 9.x, since configsets exist for both).
+- **Schema: a minimal draft is written** at `solr/mandala-av-transcripts/conf/schema.xml` (new
+  top-level directory, outside the deploy path filters). It keeps the legacy field names the
+  client reads and drops D7's Drupal ApacheSolr fields. **Checked 2026-10-02 in a throwaway
+  Solr 7.7.3** with synthetic units: the client query shape and exact float output, per-tier
+  phrase search with `<mark>` highlighting (English, Chinese, Tibetan), cross-transcript
+  edismax, the `sm_has_tier` facet, and delete by `is_trid`. Not checked: Solr 9.x, real data,
+  replication, the proxy join. It uses Point field types (portable to 9.x) and needs the ICU
+  analysis-extras libs in `solrconfig.xml`, which is **not written yet** (base it on
+  `kmassets`). **Open decision for Than:** the `ts_*` tiers use ICU tokenizing and folding
+  instead of D7's English analyzer, so there is no stemming (`chant` no longer matches
+  `chanting`) but Chinese, Nepali and Wylie tokenize sensibly.
+- **Creating the core:** the team can create cores whose names start with `mandala` on the
+  dev/staging Solr instance (Yuji, 2026-10-02), so Dave is not needed for dev. Production
+  creation and the Solr 7.x versus 9.x target are still to be confirmed. Creating the core on
+  dev has not been done.
+- **Still open for question 6:** the `solrconfig.xml`, the join prototype, and the ICU
+  analyzer decision above.
 7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
    viable.** Its UI is still not part of this spike's build, but D11 must keep the
    `mandala-av` index (or an equivalent the client can be pointed at through
