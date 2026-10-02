@@ -325,9 +325,29 @@ real use of Drupal Solr.** The node documents are not wholly idle, though: they 
 and the per-transcript language set has to come from somewhere other than a copy of the
 Drupal node documents. The new core should not copy the Drupal ApacheSolr schema.
 
-**Access.** The new core must enforce the same visibility rules as the rest of D11 (see
-question 6). A separate concern about the legacy core's access is tracked privately; ask
-Yuji Shinozaki.
+**Access (open, 2026-10-02).** The new core must enforce the same visibility rules as the
+rest of D11. Today the D11 proxy (`solr-proxy`, ADR 014) injects a per-user `fq` that Drupal
+precomputes into Redis (`mandala_solr_fq:{uid}`), built from kmassets fields (`visibility_i`,
+`members_uid_ss`, `collection_uid_s`, `node_user_i`); it makes no membership decision of
+its own and is built around one core (kmassets). Unit documents carry none of those fields.
+Options for the new core:
+- **A. Denormalise** the visibility fields onto every unit document, so the existing token
+  applies unchanged. Cost: a visibility or membership change fans out to every unit of every
+  node affected, and denormalised access has drifted before (AV7).
+- **C. Cross-core join to kmassets:** units carry only the transcript id; the proxy wraps
+  the user's existing filter in a join against kmassets, so kmassets stays the single source
+  of access truth and access changes never touch units. Needs both cores on the same Solr
+  instance, a proxy change, and a prototype (not yet done). Recommended, pending that
+  prototype.
+
+**New compatibility requirement found 2026-10-02: `trid_i` on kmassets.** The React client
+finds a node's transcript through `trid_i` on the node's **kmassets** document (`kmap.trid_i`
+in `audiovideo.js`, then `is_trid:<trid_i>` against the transcript core). Live legacy kmassets
+carries `trid_i` on 4,965 `audio-video` documents. **No D11 code writes `trid_i`** (searched
+`drupal/web/modules/custom`), so on D11 the client could not find any transcript. The
+kmassets sync must write the transcript id for AV nodes that have one; that is a requirement
+on the kmassets writer, not only on the new core. Whether dev-0's kmassets documents already
+have it by some other path was not checked.
 
 Design consequences for the new core (it needs unit documents only; **there was no
 transcript-level document in D7**, an earlier version of this section wrongly proposed one
