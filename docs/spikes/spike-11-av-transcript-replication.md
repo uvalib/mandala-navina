@@ -307,10 +307,10 @@ so far (database records only): of the 540 edited nodes, 539 have a source file 
 matches their current file, so revert is possible for them if the files exist; **1 is
 missing its source record and 1 has a replaced file** (the same node can be in both; not
 checked). Before T7 the inventory must also confirm, for all 5,343 transcripts plus the 41
-unprocessed nodes, that the file physically exists on disk or S3 and parses to the stored
-units, and list the 3 tracked transcripts with no attached file as unrevertable (the 68 with a replaced file use the current attachment as the original, decided 2026-10-02). Follow the existing
+unprocessed nodes, that the file parses to the stored units (existence on disk was
+checked 2026-10-02), and list the 3 tracked transcripts with no attached file as unrevertable (the 68 with a replaced file use the current attachment as the original, decided 2026-10-02). Follow the existing
 missing-file-audit pattern (`drush mandala:missing-file-audit`). The originals are on dev-0 at
-`/opt/drupal/app/drupal/web/sites/default/files/transcripts` (recorded 2026-10-02, not yet counted).
+`/opt/drupal/app/drupal/web/sites/default/files/transcripts` (recorded 2026-10-02; listing scan done the same day: 5,379 files, all current attachments present, see the deferred note).
 
 F2. **Who the transcript editors are. ANSWERED 2026-10-02 (Yuji): the THL team** (Tibetan
 and Himalayan Library) are the editors. Follow-ups not yet done: which D7 roles or groups
