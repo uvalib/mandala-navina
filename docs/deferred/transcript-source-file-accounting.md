@@ -23,6 +23,20 @@ loose ends. For now they are only **tracked**, not worked.
 Of the 540 nodes edited in D7, 539 have a matching source-file record; one is missing its
 record and one has a replaced file (the same node may be both; not checked).
 
+## Open decisions for Than (Spike 11 question 5), deferred
+
+The "default" column is a proposal to apply if nobody decides, **not a decision**.
+
+| Group | What is known | Question | Proposed default | Affects |
+|---|---|---|---|---|
+| **41 files never processed** | The node has a transcript file attached; D7 has no transcript row and no units for it. The files exist on dev-0. | Parse them at migration so they get units, or migrate the node with the file and no units? | Migrate the node, keep the file, no units; parse later as part of T7's parsers | T5 (migration), T7 (the parsers would also serve this) |
+| **19 orphan transcript ids** | Units exist (1 to 526 each, created 2016 to 2021) but no row in `transcripts_apachesolr_transcript`, so no node link. Probably stale rows from replaced uploads; **not investigated**. | Stale and droppable, or real transcripts that lost their link? | Do not migrate; list them for Than | T5 (migration); also shows in the unit counts, which will not reconcile 1:1 until decided |
+| **3 tracked transcripts with no file attached** | Units and a tracking row exist, but no file is attached to the node now. | Does anyone need them? | Migrate the units, flag as unrevertable | T7 (revert impossible) |
+
+Note on counts: the migration's "245,158 in, 245,158 out" check includes the units of the 19
+orphans and the 3, so whatever is decided here changes the expected migrated-unit count and
+must be written down when decided.
+
 ## Where the originals are
 
 On dev-0, at `/opt/drupal/app/drupal/web/sites/default/files/transcripts` (the real files
