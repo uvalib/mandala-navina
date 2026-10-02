@@ -255,9 +255,12 @@ the audit, not a decision.
    [a deferred note](../deferred/transcript-bad-timecodes-investigate-and-fix.md); the data
    model carries a `timecode_status` and `end_original` so nothing is lost meanwhile. Any
    correction beyond Than's rule still goes to David Germano.
-4. **Source files.** Please supply a few real files per format (VTT, XML, Toolbox, SRT),
-   including one of the high-count transcripts, to check the TCU shape against the
-   database rows.
+4. **Source files. ANSWERED 2026-10-02 (Yuji): no files need to be supplied; the originals are
+   on dev-0** at `/opt/drupal/app/drupal/web/sites/default/files/transcripts` (inside the
+   `mandala-drupal-0` container). A listing scan found 5,379 files in all four formats, all
+   current attachments present (see the deferred accounting note). **Not done:** opening the
+   files to check their shape against the database rows, which is deferred into that note
+   (the parse-versus-stored comparison, a prerequisite for T7).
 5. **Unprocessed and replaced files.** Numbers corrected 2026-10-02 (see the audit): 41
    nodes have a transcript file that D7 never processed into units; 68 nodes have a
    replaced file, so their units came from an earlier upload that is no longer recorded;
