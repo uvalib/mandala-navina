@@ -100,6 +100,12 @@ abstract class CollectionVisibilityKernelTestBase extends KernelTestBase {
     $this->createField('group', 'subcollection', 'field_group_access');
     $this->createField('node', 'audio', 'field_group_content_access');
     $this->createField('group', 'subcollection', 'field_visibility_overridden', 'boolean');
+    // GroupQueryAlter joins this field unconditionally (it must hide a
+    // flagged review-holding group even from bypass), so every group_access
+    // query in every test needs the table to exist, not just the test that
+    // exercises the flag itself.
+    $this->createField('group', 'collection', 'field_is_review_holding', 'boolean');
+    $this->createField('group', 'subcollection', 'field_is_review_holding', 'boolean');
     $this->createEntityReferenceField('subcollection', 'field_parent_collection');
 
     // Install the group_node:audio plugin, which is what puts `audio` in scope

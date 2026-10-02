@@ -50,16 +50,36 @@ final class GroupQueryAlter {
 
     $account = $query->getMetaData('account') ?: $this->currentUser;
 
-    // Note this uses the GROUP bypass set, which omits 'bypass node access'.
-    // That asymmetry is deliberate — see CollectionVisibility::hasNodeBypass().
-    if (CollectionVisibility::hasGroupBypass($account)) {
-      $this->applyCacheability((new CacheableMetadata())->addCacheContexts(['user.permissions']));
-      return;
-    }
-
     $base_table = $this->baseTable($query);
     if ($base_table === NULL) {
       $this->logger->warning('Query tagged group_access has no group base table; visibility not enforced.');
+      return;
+    }
+
+    // The orphaned-content review holding group and its per-site children are
+    // never a browsable collection, for anyone — including an account with
+    // bypass, which is why this is a separate, unconditional join rather than
+    // folded into the visibility expression below (that one IS skipped for
+    // bypass). See docs/deferred/orphaned-content-temp-group-on-migration.md.
+    $review_holding = $query->leftJoin(
+      'group__field_is_review_holding',
+      'mgi_review_holding',
+      "%alias.entity_id = $base_table.id AND %alias.deleted = 0",
+    );
+    $query->condition(
+      $query->orConditionGroup()
+        ->isNull("$review_holding.field_is_review_holding_value")
+        ->condition("$review_holding.field_is_review_holding_value", 0)
+    );
+
+    // Note this uses the GROUP bypass set, which omits 'bypass node access'.
+    // That asymmetry is deliberate — see CollectionVisibility::hasNodeBypass().
+    if (CollectionVisibility::hasGroupBypass($account)) {
+      $this->applyCacheability(
+        (new CacheableMetadata())
+          ->addCacheContexts(['user.permissions'])
+          ->addCacheTags(['group_list'])
+      );
       return;
     }
 
