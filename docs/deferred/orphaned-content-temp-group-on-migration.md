@@ -54,6 +54,8 @@ Mandala Home) must each be swept for their own orphans — the count is site- an
   is a `collection`-bundle group, and the four children are `subcollection`-bundle groups under
   it — the same parent/child relationship real collections and subcollections already have, so
   no new entity-reference field is needed to express the nesting.
+  - **Revised 2026-10-02 (Than): these groups are created by hand** by admin editors through
+    the normal Group UI, not by a drush command — see "Built" below.
 - **Group bundle: reuse `collection`/`subcollection`, don't add a new bundle.** Add a new
   boolean flag field (e.g. `field_is_review_holding`) to both existing group bundles instead of
   introducing a distinct entity bundle. Set `true` on the parent "Orphaned Content" group and
@@ -82,7 +84,9 @@ Mandala Home) must each be swept for their own orphans — the count is site- an
 ## Built 2026-10-02, verified on local DDEV
 
 - **Field:** `field_is_review_holding` (boolean) added to both the `collection` and
-  `subcollection` group bundles.
+  `subcollection` group bundles. **Editable on the group edit form** (not hidden) with an
+  editor-facing description, since an admin now creates a review group by hand and has to be
+  able to flag it themselves.
 - **Listing exclusion:** `GroupQueryAlter` now joins the flag unconditionally and excludes any
   flagged group from a `group_access`-tagged query (e.g. `/collections`) for every viewer,
   including an account with bypass permission — the one case in this module where bypass is
@@ -91,24 +95,33 @@ Mandala Home) must each be swept for their own orphans — the count is site- an
 - **Resolved the "still open" question above:** the flag is set explicitly on every group
   (parent and each child) rather than inherited — simpler to reason about and query, at the cost
   of needing to remember to set it on any future child. Not inheritance-based.
-- **Drush commands** (`mandala_group_inheritance` module,
-  `OrphanedContentReviewCommands.php`):
-  - `group:create-review-holding-groups` — idempotently creates the parent "Orphaned Content"
-    collection and its four site children (AV, Images, Texts, Sources). Content/data, not
-    config — each environment runs this for itself, same pattern as
-    `SubcollectionAccessBackfillCommands`.
-  - `group:sweep-orphans --site={audio-video,images,texts,sources} [--dry-run]` — moves that
-    site's group-less nodes into the matching child, scoped to
-    `CollectionVisibility::groupNodeBundles()` and `field_legacy_site`. A node's own
-    `field_group_content_access` override is left alone, so a restriction already set is kept.
-- **Verified live on local DDEV:** ran `group:sweep-orphans --site=audio-video` for real (not
-  dry-run). Swept 66 AV orphans. Checked all 18 previously-exposed nodes (6 private, 12
-  UVA-only, the exact count from "Confirmed 2026-09-28" below) by id: every one now resolves
-  into the AV child group and `$node->access('view', $anonymous_user)` returns `FALSE` for all
-  18, with zero remaining exposed nodes of that shape. `config:status` stayed clean throughout.
-- **Not yet done:** the Images (36 known), Texts, and Sources sweeps — only `--site=audio-video`
-  has been run. Nothing has been run on dev-0 yet (local DDEV only). Branch
-  `feat/orphaned-content-review-group`, not yet pushed or opened as a PR.
+- **Revised design (Than, 2026-10-02): group creation is manual, the sweep is the only
+  tool.** An admin editor creates the parent/child group(s) by hand through the Group UI,
+  checks `field_is_review_holding` on it, and notes its group id. There is **no**
+  `group:create-review-holding-groups` command — an earlier version of this build had one,
+  assuming a fixed one-parent-plus-four-children shape with fixed labels; removed because the
+  shape and labels are now the editor's call, not something to hardcode.
+- **Drush command** (`mandala_group_inheritance` module, `OrphanedContentReviewCommands.php`):
+  `group:sweep-orphans` (alias `sweep-orphans`), options `--gid` (required — the target group
+  id, created by hand first) and `--site` (optional — `audio-video`/`images`/`texts`/`sources`;
+  omit it to sweep every known site into the same `--gid`), plus `--dry-run`. Scoped to
+  `CollectionVisibility::groupNodeBundles()` and `field_legacy_site`; a node's own
+  `field_group_content_access` override is left alone, so a restriction already set is kept.
+  Warns (but still proceeds) if the target `--gid` isn't flagged `field_is_review_holding`.
+- **Batching fix, found live:** sweeping Images (111k+ nodes) with the first version OOM'd —
+  `loadMultiple()` was called on every candidate id at once. Fixed by chunking in batches of
+  500 and resetting the node storage's static cache per batch. Verified: a full `--site=images`
+  dry-run now completes cleanly and finds exactly the 36 known orphans, no OOM.
+- **Verified live on local DDEV:** ran the real (non-dry-run) sweep for AV. Swept 66 AV
+  orphans. Checked all 18 previously-exposed nodes (6 private, 12 UVA-only, the exact count
+  from "Confirmed 2026-09-28" below) by id: every one now resolves into the chosen group and
+  `$node->access('view', $anonymous_user)` returns `FALSE` for all 18, with zero remaining
+  exposed nodes of that shape. `config:status` stayed clean throughout.
+- **Not yet done:** the real (non-dry-run) Images/Texts/Sources sweeps — only AV has actually
+  been swept; Images was only dry-run to prove the batching fix. Nothing has been run on dev-0
+  yet (local DDEV only), and dev-0 needs its own review group(s) created by hand before any
+  sweep can target it. Branch `feat/orphaned-content-review-group`, not yet pushed or opened as
+  a PR.
 
 ## Confirmed 2026-09-28 — AV orphans quantified, with an access consequence
 
