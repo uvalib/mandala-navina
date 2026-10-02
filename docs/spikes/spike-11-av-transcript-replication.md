@@ -295,33 +295,46 @@ unknown and none of it was run live.
    `transcripts_apachesolr_redirect` deep link). Sorts: temporal order (`fts_start`), and
    transcript title (D7's title field was commented out as a FIXME in `tcu_solr_document`,
    so title sort may never have worked).
-3. **"Transcript Languages" facet** (`sm_has_tier`, a Drupal ApacheSolr facet on the unused node documents, not on units): declared as a facet to filter by which
-   language tiers a transcript has. **It may never have worked:** nothing in the D7 sites
-   code writes `sm_has_tier` to any document (searched 2026-10-02, including contrib), so
-   the facet is declared but probably empty. Not checked against the live core. Treat it as
-   unconfirmed; check the live core for `sm_has_tier` before deciding whether to reproduce
-   it, build it new, or drop it.
+3. **"Transcript Languages" facet** (`sm_has_tier`): **live and populated** (verified
+   2026-10-02 against the live `mandala-av` core). 5,342 **node** documents carry
+   `sm_has_tier` (one value per language tier the transcript has; 0 unit documents do).
+   Counts by value: `content_bod` 2,891, `ts_content_eng` 2,095, `dzo_bod` 1,787,
+   `ts_content_wylie` 611, `ts_content_und` 483, Nepali 146, Chinese 80, plus ten smaller
+   languages and 8 empty values. It is the **only** transcript-related facet enabled on the
+   D7 search page (`transcript_languages`, a facet block); no tier or speaker facets are
+   enabled, so nothing else covers that function. An earlier version of this note said
+   nothing writes this field and that the facet was probably empty. **That was wrong**: that
+   conclusion came from a code search that did not find the writer (it is not in the module
+   code available here; it is probably in another module or an indexing hook). The live data
+   shows it works. D11 does not need D7's writer, only the same data: the per-transcript tier
+   list that D7 keeps in `transcripts_apachesolr_transcript.tiers`.
 4. **Per-transcript tier list:** the viewer shows only the tiers a transcript actually has.
 
 **What the D7 `mandala-av` core is (Yuji, 2026-10-02; not verified against the live core).**
-It is the Drupal ApacheSolr module's index. That module can index any content type, and
-the core does hold node documents (the AV site's indexing config lists audio, video,
-collection and other node bundles), but the D7 sites do not use those: asset discovery and
-search go through the **kmassets** core. **The transcript units are, as far as Yuji knows,
-the only real use of Drupal Solr.** So the node documents in that core are a Drupal-module
-by-product and are not a requirement for D11; only the unit documents matter, and the new
-core should not copy the Drupal ApacheSolr schema or its node-level fields.
+It is the Drupal ApacheSolr module's index. Live counts (2026-10-02): 256,975 documents,
+245,159 units and 11,816 nodes (video 7,402, audio 4,194, collection 131, subcollection 85,
+page 4). The D7 sites do not use the node documents for asset discovery or search, which go
+through the **kmassets** core. **The transcript units are, as far as Yuji knows, the only
+real use of Drupal Solr.** The node documents are not wholly idle, though: they are where
+`sm_has_tier` (the language facet) lives. So for D11 the unit documents are what matters,
+and the per-transcript language set has to come from somewhere other than a copy of the
+Drupal node documents. The new core should not copy the Drupal ApacheSolr schema.
+
+**The live `mandala-av` `select` endpoint answered an unauthenticated query from a laptop on
+the VPN** (2026-10-02). Unit documents carry no node id or access field, so this is the
+access concern for the new core; not tested against a private node.
 
 Design consequences for the new core (it needs unit documents only; **there was no
 transcript-level document in D7**, an earlier version of this section wrongly proposed one
 to carry the facet):
 - **Unit documents** keep the client-compatible shape and add the unit id as `entity_id`
   (D7's value, used for the deep link), a node id, and access fields.
-- **If the language facet is wanted,** it needs the set of languages per transcript from
-  somewhere. Options: derive it from the unit documents, serve it from the node's
-  kmassets document, or add a new document type. A new document type in this core must
-  **not carry `is_trid`**, because the React client selects everything matching
-  `is_trid:<trid>` and would receive the extra document.
+- **Language facet:** it is live in D7, so reproduce it. The per-transcript language list is
+  already part of the planned `av_transcript` record (the tier list). Options for serving it:
+  facet over the unit documents in the new core (a per-transcript value on each unit, or a
+  group/stats query), or from the node's kmassets document. Avoid a new document type in
+  this core, or if one is added it must **not carry `is_trid`**, because the React client
+  selects everything matching `is_trid:<trid>` and would receive the extra document.
 - **Titles in results:** look up from Drupal by node id at render time, or denormalise onto
   the unit documents (cheap but needs reindexing when a title changes).
 - **Compatibility test:** capture real responses from the D7 `mandala-av` core for a few
