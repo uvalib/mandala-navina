@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  mandala-av-transcripts: one Solr document per time-coded unit (TCU) of an AV transcript.
+  See docs/spikes/spike-11-av-transcript-replication.md (question 6) for the decisions behind
+  this file.
+
+  Legacy compatibility. The React client (mandala-om/kmaps-app, src/legacy/audiovideo.js) reads
+  documents from D7's `mandala-av` core by `is_trid:<transcript id>` sorted by `fts_start`, and
+  uses only these fields: fts_start, fts_end, fts_duration, ss_speaker_bod, ss_language, and the
+  language tier fields (content_bod, dzo_bod, ts_content_*). Those names and value shapes are kept
+  exactly. D7's Drupal ApacheSolr fields (site, hash, bundle, path, url, content, teaser, spell,
+  ...) are NOT carried over; nothing reads them.
+
+  Not in this file: access control. Units carry only the transcript id (is_trid); visibility is
+  enforced by a cross-core join to kmassets in solr-proxy (decided in the spike).
+
+  Needs the Solr analysis-extras contrib (ICU) loaded by solrconfig.xml. Written for Solr 7.x
+  and uses Point field types, which also work on 9.x (Trie types were removed in 9).
+-->
+<schema name="mandala-av-transcripts" version="1.6">
+
+  <!-- ===== Field types ===== -->
+  <fieldType name="string" class="solr.StrField" sortMissingLast="true" docValues="true"/>
+  <fieldType name="long"   class="solr.LongPointField"  docValues="true"/>
+  <!-- float, not double: D7 stored single-precision floats, and a float keeps the JSON output
+       identical (10.033, not 10.032999...) for the client. -->
+  <fieldType name="float"  class="solr.FloatPointField" docValues="true"/>
+
+  <!-- Tibetan-script tiers (content_bod, dzo_bod, speaker_bod). Identical to the legacy
+       text_bod: ICU tokenizer, no filters. -->
+  <fieldType name="text_bod" class="solr.TextField">
+    <analyzer>
+      <tokenizer class="solr.ICUTokenizerFactory"/>
+    </analyzer>
+  </fieldType>
+
+  <!-- All other language tiers (ts_content_*). DEFAULT FOR NOW, analyzer choice deferred (see
+       docs/deferred/transcript-tier-analyzers-and-language-fields.md). Legacy used an English
+       analyzer for these (whitespace tokenizer, English stemming and stop words, Latin-1 accent
+       mapping), which is poor for Chinese, Nepali, Wylie and other languages. This uses the ICU
+       tokenizer plus ICU folding (case and accent folding, no stemming, no stop words), so
+       phrase search per tier works but English loses stemming. The tiers should eventually be
+       separate language-specific fields; that discussion is deferred too. -->
+  <fieldType name="text_tier" class="solr.TextField" positionIncrementGap="100">
+    <analyzer>
+      <tokenizer class="solr.ICUTokenizerFactory"/>
+      <filter class="solr.ICUFoldingFilterFactory"/>
+    </analyzer>
+  </fieldType>
+
+  <!-- ===== Fields ===== -->
+  <field name="id" type="string" indexed="true" stored="true" required="true"/>
+  <field name="_version_" type="long" indexed="false" stored="false"/>
+
+  <!-- tcu-11-{unit id}. entity_id is the unit id (D7's tcuid, preserved); it builds the
+       #tcu/{id} deep link, as in D7. -->
+  <field name="entity_id" type="long" indexed="true" stored="true"/>
+  <!-- Parent AV node (D11 nid). Ours, not in D7 documents. -->
+  <field name="nid" type="long" indexed="true" stored="true"/>
+  <!-- Transcript id (D7's trid, preserved). The client's one query key. -->
+  <field name="is_trid" type="long" indexed="true" stored="true"/>
+
+  <field name="fts_start"    type="float" indexed="true" stored="true"/>
+  <field name="fts_end"      type="float" indexed="true" stored="true"/>
+  <field name="fts_duration" type="float" indexed="true" stored="true"/>
+
+  <!-- ss_speaker_bod would match both ss_* and *_bod; the longer pattern (*_bod) would win and
+       index it as Tibetan text. Define it explicitly as the string the client expects. -->
+  <field name="ss_speaker_bod" type="string" indexed="true" stored="true"/>
+  <field name="ss_language"    type="string" indexed="true" stored="true"/>
+
+  <!-- ===== Dynamic fields (legacy names) ===== -->
+  <!-- Language tiers: 17 names in the D7 data, ts_content_* plus content_bod and dzo_bod. -->
+  <dynamicField name="ts_*"   type="text_tier" indexed="true" stored="true" multiValued="false"/>
+  <dynamicField name="*_bod"  type="text_bod"  indexed="true" stored="true" multiValued="false"/>
+  <!-- Speaker tiers: ss_speaker, ss_speaker_{lang} (14 names in the D7 data). -->
+  <dynamicField name="ss_*"   type="string"    indexed="true" stored="true" multiValued="false"/>
+  <!-- Multi-valued strings, e.g. sm_has_tier (the "Transcript Languages" facet). How that facet
+       is served from this core is still open in the spike. -->
+  <dynamicField name="sm_*"   type="string"    indexed="true" stored="true" multiValued="true"/>
+
+  <uniqueKey>id</uniqueKey>
+</schema>

@@ -12,12 +12,23 @@ covers only the first:
    `transcripts_apachesolr` + `transcripts_xslt`) — **in scope.** This is the system
    this spike replicates on D11. See "Live evidence" below for what was already found
    by reading the real code, so this spike does not have to re-derive it.
-2. **The React app's (`mandala-om`/`kmaps-app`) independent client-side transcript
-   viewer** (`src/legacy/audiovideo.js`), which fetches directly from a dedicated Solr
-   core (`REACT_APP_SOLR_TRANSCRIPTS` → `/solr/mandala-av`) and has its own
-   sync/search/download logic, entirely decoupled from the D7 module — **explicitly out
-   of scope for now** (decided 2026-09-04, Yuji). Not reconciled with system 1 by this
-   spike.
+2. **The React app's (`mandala-om`/`kmaps-app`) client-side transcript viewer**
+   (`src/legacy/audiovideo.js`) — **its UI is out of scope for building** (decided
+   2026-09-04, Yuji). It fetches from `REACT_APP_SOLR_TRANSCRIPTS` (`/solr/mandala-av`)
+   and has its own sync, search and download logic.
+
+   **Correction (2026-10-02): the data is not independent of system 1.** The first version
+   of this note called the viewer "entirely decoupled" and its core a separate index. It is
+   not. D7's AV site writes its TCU documents to that same core (its
+   `apachesolr_environment` points at `.../solr/mandala-av`; `tcu.module` writes `is_trid`
+   and `fts_start`), and the React viewer queries `is_trid:<trid>` sorted by `fts_start`.
+   The `mandala-av` configset is the Drupal ApacheSolr schema. So the viewer is a second
+   consumer of the documents the D7 pipeline indexes. **Consequence:** when D7 is retired,
+   whatever D11 builds for search (T4) must keep producing compatible documents, or the
+   React viewer loses its transcripts. That is a requirement on the search design, not a
+   separate project (confirmed as a requirement 2026-10-02, question 7). Read from the D7 dump and the legacy code; **not confirmed against the
+   live core**. The viewer also already filters out `fts_start = 0` units (MANU-7271, 2022),
+   i.e. it hides some of the same bad-timecode data found in the audit.
 
 ## Theory
 Mandala's D7 AV **time-synced transcripts** — timecoded text segments, potentially
@@ -77,9 +88,17 @@ Saxon XSLT pipeline or parse the uploaded Toolbox/SRT/XML/VTT files.
 **Volume.**
 - 5,343 tracked transcripts, exactly one per node (4,231 video, 1,112 audio); every
   one has TCUs (mean 46, max 1,380 per transcript).
-- 5,380 nodes have a `field_transcript` file (4,252 video, 1,128 audio), but only 5,272
-  of those files are tracked, so about 108 attached files were never processed. This is
-  the gap between "file attached" (the audit's 46.4%) and "transcript exists".
+- 5,380 nodes have a `field_transcript` file (4,252 video, 1,128 audio). Reconciled
+  2026-10-02 against the 5,343 tracked transcripts (`transcripts_apachesolr_transcript`,
+  all status 1): **5,271** nodes' current file is the file their units came from;
+  **68** have a *different* current file, and the file the units came from no longer has a
+  `file_managed` row; **41** have a file but were never processed (no transcript, no
+  units); **4** tracked transcripts have no current file attached (3 of them also have no
+  source-file record). So **71 transcripts (68 + 3) have units but no record of their
+  source file** (the 68 are resolved by treating the current file as the original, see question 5), and 41 nodes have a file with no units. This replaces the earlier
+  "about 108 never processed" figure, which was computed by file id and mixed the two
+  groups. Checked against database records only; whether the files exist on disk or S3 has
+  not been checked.
 - 19 transcript ids have TCUs but no tracking row (orphans from 2016-2021, 1-526 TCUs
   each); not yet investigated. Probably stale rows from replaced uploads.
 
@@ -92,12 +111,18 @@ value count: `content_bod` (Tibetan) 173,764; `ts_content_eng` 71,873; `dzo_bod`
 (Dzongkha) 35,525; `ts_content_wylie` 30,497; Nepali 13,625; Chinese 5,191; ten smaller
 languages. `ts_content_gloss` has only 3,491 values, so interlinear gloss is minor.
 
-**Authoring is nearly dormant.** TCUs were created 2015-2024, peaking 2018 (81,717).
-Since 2021 only 38 transcripts were created (about 3,900 TCUs), the last in 2024. No
-TCU has ever been edited (`changed` equals `created` for all 245,158 rows). Whether
-this means the editor is unused or just that corrections never happened is not
-established. This supports, but does not settle, the migration-only option for
-Work item 2; it needs confirmation from the people who run AV.
+**Authoring: new transcripts are rare, but editing is live (corrected 2026-10-02).**
+TCUs were created 2015-2024, peaking 2018 (81,717). Since 2021 only 38 transcripts were
+created (about 3,900 TCUs), the last in 2024. The first version of this audit also said
+no TCU had ever been edited because `changed` equals `created` for all 245,158 rows.
+**That inference was wrong:** the D7 editor does not touch `tcu.changed`; it marks the
+*node* with the `keep_transcript_edits` flag (`transcripts_editor_mark_edited`). That flag
+is set on **540 nodes, with flaggings from 2016-01-06 to 2026-04-30**, so staff were
+correcting transcripts as recently as five months before this note. Editing is in use.
+Consequences: Than decided on 2026-10-02 that the editor is kept (see Questions for Than);
+and the 540 flagged nodes carry human corrections that a re-import from the source
+files would overwrite, which is one more reason to migrate from the database rows and to
+carry the flag across.
 
 **Timecode quality (a migration-fidelity risk, escalate per the fail table).**
 - 3,299 TCUs have zero length (start = end), 970 have end before start, 1 has a
@@ -170,53 +195,278 @@ shape.** Reasoning and the evidence behind it follow.
 
 ### Sketch for the recommended model (for T2)
 - `av_transcript`: node reference, source file reference, source format (vtt/xml/txt/srt),
-  tier list, legacy transcript id (`trid`), workflow flags. Access follows the parent node
+  tier list, legacy transcript id (`trid`), `has_edits` and `edits_flagged_at` (from D7's
+  `keep_transcript_edits` flag, decided 2026-10-02), workflow flags. Access follows the parent node
   (the AV7 rules); the viewer and any API must check node access, never expose TCUs on
   their own.
 - `av_tcu`: transcript reference, sequence number, `start`, `end`, tier map (tier name to
   text), speaker map, legacy TCU id. Tier names kept as D7's values.
 - Timecodes: store as `DECIMAL(10,3)`. D7 uses single-precision `FLOAT`, so sub-millisecond
   digits are float noise, not data, but this has not been verified value by value.
-- **Do not repair the 4,269 bad timecodes at migration.** Carry them as found and add a
-  computed flag (ok, zero-length, inverted, out-of-range) so the viewer can decide how to
-  show them. Whether to correct them is a scholarly-integrity call for David Germano.
+- **Do not repair the 4,269 bad timecodes at migration.** Carry them as found. Add a
+  `timecode_status` on `av_tcu`, computed deterministically at migration so a re-run gives
+  the same answer: `ok`, `zero_length_shared_start`, `zero_length_other`, `inverted`,
+  `last_unit_no_end`, `end_implausible` (the 190 over 4 hours), and later `corrected`.
+  Keep the D7 value in `end_original` whenever a fix is applied. Decided 2026-10-02: the
+  fixup is deferred (see "Bad timecodes" under Questions for Than and the deferred note).
+  Where the bad values have to be accounted for:
+  - **Migration verification:** row counts must include flagged units (245,158 in, 245,158
+    out), and the per-status counts are recorded so the number can be watched going down.
+  - **Display and sync:** the active-unit rule is "last TCU whose start is at or before
+    the playhead". With zero-length units that share a start with their neighbour, only the
+    last unit of such a stack can ever be highlighted. The prototype did not meet this case
+    (its node had no bad units), so it must be tested on a flagged transcript before T3.
+  - **Editor (T6):** flagged units must stay editable, and editors need a "needs timecode
+    review" marker or filter. The editor is the natural place to fix them one transcript at a time.
+  - **Readers:** the status is for staff and never shown on public pages.
+  - **Search:** indexing must not depend on `end`, so a bad end never drops a unit.
 - Search: index one Solr document per TCU (matching D7) or per transcript; this is the
   next open question and depends on the Solr owner (see the Spike 2 relationship).
 - Unicode: normalise to NFC at migration per Spike 4a (933 Dzongkha values are not NFC).
 
 ### Still open before this can be called decided
-- The authoring question. Option B keeps editing possible; B2 would be cheaper if it is
-  confirmed out of scope.
+- ~~The authoring question.~~ Settled 2026-10-02: editing is kept, so Option B stands
+  and B2 is out (see Questions for Than).
 - Search index shape and where it lives (D7 used a per-site core; D11 has the flat
   kmassets documents and the visibility proxy).
 - The prototype read the D7 tables directly; it has not been run against the proposed
   D11 entities.
 
-## Questions for Than (decisions are his; recorded 2026-10-01 for review)
+## Questions for Than (decisions are his; recorded 2026-10-01, answers 1-3 added 2026-10-02)
 
 The data decisions below belong to Than. The recommendation above is Claude's reading of
 the audit, not a decision.
 
-1. **Authoring.** Is anyone still uploading or correcting transcripts? The data shows 38
-   transcripts created since 2021 (last in 2024) and no TCU ever edited. If transcripts
-   are migration-only, the JSON-per-transcript alternative becomes attractive and Sprint 4
-   task T6 (editor UI) can be dropped.
-2. **Data model.** One entity row per TCU (recommended, mirrors D7) or one row per
-   transcript with a JSON blob. Paragraphs, sidecar VTT and Kaltura captions are
-   rejected in the evaluation; say so if any should be reconsidered.
-3. **Bad timecodes.** 4,269 TCUs (679 transcripts) have zero-length, inverted or absurd
-   times. Are zero-length TCUs deliberate point cues? Carry them as found and flag them
-   (recommended), or correct them? Needs a look at real source files, and likely David
-   Germano for any correction.
-4. **Source files.** Please supply a few real files per format (VTT, XML, Toolbox, SRT),
-   including one of the high-count transcripts, to check the TCU shape against the
-   database rows.
-5. **Unprocessed files.** About 108 nodes have a transcript file that D7 never processed
-   into TCUs, and 19 transcript ids have TCUs but no tracking row. Expected or stale?
-6. **Search.** One Solr document per TCU (as D7 did) or per transcript, and which index.
-   Needs Yuji as well (kmassets documents are flat; the visibility proxy applies).
-7. **React viewer.** The app's own transcript viewer (reading the `mandala-av` core) stays
-   out of scope per the 2026-09-04 decision. Confirm that still holds.
+1. **Authoring. ANSWERED 2026-10-02 (Than): keep the editing UI; do not drop it.** The
+   D7 editor is in live use (540 nodes flagged as edited, latest 2026-04-30; see the
+   corrected audit finding). Sprint 4 T6 is therefore in scope: an editor equivalent to
+   D7's (in-place tier edit with optimistic locking, speaker edit, time edit, insert
+   before/after, copy, delete, per-node and per-tier disable hooks, access following
+   node-edit permission, immediate reindex). Open follow-ups for Than: who the editors are,
+   and whether the `keep_transcript_edits` flag should migrate as a visible marker.
+2. **Data model. ANSWERED 2026-10-02 (Than): one row per TCU, following D7's design.**
+   Option B stands; B2 (JSON blob) is out because editing is kept. Paragraphs, sidecar VTT
+   and Kaltura captions stay rejected.
+3. **Bad timecodes. DECIDED 2026-10-02 (Than): carry as found now; fix later.** Than's
+   proposed fixup rule is "end = start of the next TCU". Measured on the D7 dump, that
+   rule only covers 383 of the 4,269 bad TCUs: 3,487 share their start with the next TCU
+   (the rule would give a zero-length unit again) and 399 are the last unit of their
+   transcript (no next TCU). The investigation and the fix are deferred to
+   [a deferred note](../deferred/transcript-bad-timecodes-investigate-and-fix.md); the data
+   model carries a `timecode_status` and `end_original` so nothing is lost meanwhile. Any
+   correction beyond Than's rule still goes to David Germano.
+4. **Source files. ANSWERED 2026-10-02 (Yuji): no files need to be supplied; the originals are
+   on dev-0** at `/opt/drupal/app/drupal/web/sites/default/files/transcripts` (inside the
+   `mandala-drupal-0` container). A listing scan found 5,379 files in all four formats, all
+   current attachments present (see the deferred accounting note). **Not done:** opening the
+   files to check their shape against the database rows, which is deferred into that note
+   (the parse-versus-stored comparison, a prerequisite for T7).
+5. **Unprocessed and replaced files.** Numbers corrected 2026-10-02 (see the audit): 41
+   nodes have a transcript file that D7 never processed into units; 68 nodes have a
+   replaced file, so their units came from an earlier upload that is no longer recorded;
+   19 transcript ids have units but no tracking row. **DECIDED 2026-10-02 (Yuji): for the 68
+   replaced files, treat the current attachment as the original of record** and ignore the
+   missing earlier file. This is an assumption that the current file is the right source;
+   whether D7 ever processed it is unknown, so the stored units may differ from what the
+   current file parses to. T7's inventory compares the two for these 68 and reports
+   differences; it does not rewrite the migrated units. The rest (the 41 never
+   processed, the 19 orphan ids, the 3 with no file) is **deferred and tracked** in
+   [a deferred note](../deferred/transcript-source-file-accounting.md) (2026-10-02).
+6. **Search. PARTLY DECIDED 2026-10-02 (Yuji): D11 gets a completely new and separate Solr
+   core for transcript units**, compatible with the existing React client. It does not write
+   to D7's `mandala-av` core. "Compatible" means the document shape and query interface the
+   client uses (`is_trid`, `fts_start`, `fts_end`, `fts_duration`, language-tier and speaker
+   fields; `select` by `is_trid`, up to 1,000 rows). Extra fields are allowed, so D11 can add
+   its own (for example a node id and an access field). Consequences: no write collision with
+   D7 at cutover; the D7 core is left to be retired with D7; the client is pointed at the new
+   core through `REACT_APP_SOLR_TRANSCRIPTS`. Still open: the core's name and schema source,
+   document id scheme, access enforcement, the write path and edit freshness, who creates
+   the core. Decided 2026-10-02: D11 needs the same search features as D7 (see below).
+### Search features D7 offers, which D11 must reproduce (decided 2026-10-02, Yuji)
+
+Decision: **D11 gets the same search features as D7.** Read from the D7 module code and the
+`d7_av` dump; the block and search page below are enabled in the dump, but actual usage is
+unknown and none of it was run live.
+
+1. **Search within one transcript:** a term is matched as a phrase against every tier;
+   matches are wrapped in `<mark>`, the full tier text is returned (no snippet cut-off), and
+   a "hits only" option shows just the matching units.
+2. **Cross-transcript search:** a "Transcripts" search page (`search/transcripts`) over
+   unit documents, with a "Search Transcripts" block enabled in the AV site's themes. Each
+   tier is queried with equal weight (`qf` of every tier at 1.0). Results show a highlighted
+   unit snippet, and a result links to the node at `#tcu/{unit id}` (the
+   `transcripts_apachesolr_redirect` deep link). Sorts: temporal order (`fts_start`), and
+   transcript title (D7's title field was commented out as a FIXME in `tcu_solr_document`,
+   so title sort may never have worked).
+3. **"Transcript Languages" facet** (`sm_has_tier`): **live and populated** (verified
+   2026-10-02 against the live `mandala-av` core). 5,342 **node** documents carry
+   `sm_has_tier` (one value per language tier the transcript has; 0 unit documents do).
+   Counts by value: `content_bod` 2,891, `ts_content_eng` 2,095, `dzo_bod` 1,787,
+   `ts_content_wylie` 611, `ts_content_und` 483, Nepali 146, Chinese 80, plus ten smaller
+   languages and 8 empty values. It is the **only** transcript-related facet enabled on the
+   D7 search page (`transcript_languages`, a facet block); no tier or speaker facets are
+   enabled, so nothing else covers that function. An earlier version of this note said
+   nothing writes this field and that the facet was probably empty. **That was wrong**: that
+   conclusion came from a code search that did not find the writer (it is not in the module
+   code available here; it is probably in another module or an indexing hook). The live data
+   shows it works. D11 does not need D7's writer, only the same data: the per-transcript tier
+   list that D7 keeps in `transcripts_apachesolr_transcript.tiers`. **Verified 2026-10-02:** the
+   live facet counts for the six largest tiers equal the counts from that column exactly
+   (2,891 / 2,095 / 1,787 / 611 / 483 / 18). Small unexplained difference: the column has 9
+   transcripts with no tiers, the core 8 empty values and 5,342 nodes against 5,343
+   transcripts. D11 should recompute the value on every save, since an edit can add a tier;
+   when D7 refreshed it was not established.
+4. **Per-transcript tier list:** the viewer shows only the tiers a transcript actually has.
+
+**What the D7 `mandala-av` core is (Yuji, 2026-10-02; not verified against the live core).**
+It is the Drupal ApacheSolr module's index. Live counts (2026-10-02): 256,975 documents,
+245,159 units and 11,816 nodes (video 7,402, audio 4,194, collection 131, subcollection 85,
+page 4). The D7 sites do not use the node documents for asset discovery or search, which go
+through the **kmassets** core. **The transcript units are, as far as Yuji knows, the only
+real use of Drupal Solr.** The node documents are not wholly idle, though: they are where
+`sm_has_tier` (the language facet) lives. So for D11 the unit documents are what matters,
+and the per-transcript language set has to come from somewhere other than a copy of the
+Drupal node documents. The new core should not copy the Drupal ApacheSolr schema.
+
+**Access (open, 2026-10-02).** The new core must enforce the same visibility rules as the
+rest of D11. Today the D11 proxy (`solr-proxy`, ADR 014) injects a per-user `fq` that Drupal
+precomputes into Redis (`mandala_solr_fq:{uid}`), built from kmassets fields (`visibility_i`,
+`members_uid_ss`, `collection_uid_s`, `node_user_i`); it makes no membership decision of
+its own and is built around one core (kmassets). Unit documents carry none of those fields.
+**Decided 2026-10-02 (Yuji): option C, a cross-core join to kmassets.** Units carry only
+the transcript id; the proxy wraps the user's existing filter in a join against kmassets, so
+kmassets stays the single source of access truth and access changes never touch units.
+Requirements and risks: both cores on the same Solr instance (the join runs on the replica
+that serves reads); a proxy change (it is currently built around one core); and a **prototype
+before build** (not yet done), since cross-core join behaviour on Solr 7.7.3 and the proxy's
+fq encoding have not been exercised. Rejected: **A, denormalising the visibility fields onto
+every unit document**, because a visibility or membership change fans out to every unit of
+every node affected, and denormalised access has drifted before (AV7).
+
+**New compatibility requirement found 2026-10-02: `trid_i` on kmassets.** The React client
+finds a node's transcript through `trid_i` on the node's **kmassets** document (`kmap.trid_i`
+in `audiovideo.js`, then `is_trid:<trid_i>` against the transcript core). Live legacy kmassets
+carries `trid_i` on 4,965 `audio-video` documents. **No D11 code writes `trid_i`** (searched
+`drupal/web/modules/custom`), so on D11 the client could not find any transcript. The
+kmassets sync must write the transcript id for AV nodes that have one; that is a requirement
+on the kmassets writer, not only on the new core. **Checked on dev-0 2026-10-02** (the dev replica `kmassets`, 122,923 D11-style documents):
+the AV documents are `asset_type:audio-video`, uid `audio-video-11-{nid}`; **11,584 of them,
+0 carry `trid_i`**. So the gap is real. Design point: the id the client queries must be an
+integer. Migrated transcripts keep D7's `trid`; any new D11 transcript needs an id that cannot
+collide with D7's range (for example allocate above the D7 maximum).
+
+Design consequences for the new core (it needs unit documents only; **there was no
+transcript-level document in D7**, an earlier version of this section wrongly proposed one
+to carry the facet):
+- **Unit documents** keep the client-compatible shape and add the unit id as `entity_id`
+  (D7's value, used for the deep link), a node id, and access fields.
+- **Language facet:** it is live in D7, so reproduce it. The per-transcript language list is
+  already part of the planned `av_transcript` record (the tier list). Options for serving it:
+  facet over the unit documents in the new core (a per-transcript value on each unit, or a
+  group/stats query), or from the node's kmassets document. Avoid a new document type in
+  this core, or if one is added it must **not carry `is_trid`**, because the React client
+  selects everything matching `is_trid:<trid>` and would receive the extra document.
+- **Titles in results:** look up from Drupal by node id at render time, or denormalise onto
+  the unit documents (cheap but needs reindexing when a title changes).
+- **Compatibility test:** capture real responses from the D7 `mandala-av` core for a few
+  transcripts and diff them against the new core's output, because the full set of fields the
+  client reads has not been enumerated (only the ones in `audiovideo.js`).
+- **Not yet checked:** the D7 search page names Solr environment `solr`, which is not in the
+  environment table (only `mandala_library_rw` is); it presumably falls back to the default.
+- **Work:** a Drupal-side search UI (page, header block, snippets, deep links) is new work
+  beyond indexing, so it is added to Sprint 4 as T8.
+
+
+**Question 6, document id and write path. DECIDED 2026-10-02 (Yuji):**
+- **Ids:** the D7 `tcuid` is preserved as the D11 unit id (the migration sets it explicitly;
+  new units are allocated above the D7 maximum), and D7's `trid` is preserved as the
+  transcript id (`is_trid`, `trid_i`). Reasons: existing `#tcu/NNN` links keep working, ids
+  are identical on every environment, and the node-id divergence problem does not apply
+  because the unit table is AV-only. Solr `id` is `tcu-11-{unit id}` (kmassets pattern,
+  deterministic so a re-save overwrites). Extra fields: `nid`, `entity_id` (= unit id).
+- **Write path:** a new sink for the transcript core, modelled on `KmassetDirectSink`
+  (core URL its own setting). Per edit: index the one unit with a short `commitWithin`.
+  Whole-transcript operations (insert, delete, copy, revert, delete transcript): delete by
+  `is_trid`, then re-add the unit set in one batch. Migration and bulk reindex: batches of a
+  few hundred with one commit at the end. Drupal stays the source of truth: the save always
+  succeeds in the database; the index write is tried synchronously and, on failure, goes to
+  a **retry queue** (accepted). The Drupal editor and in-Drupal view read the database, so
+  staff see their own edits at once; the React client and cross-transcript search read Solr.
+  The per-transcript language set is recomputed on every save.
+- **Replica lag:** some lag between master and replica is expected and accepted; reviewing it
+  is deferred, see [replica lag review](../deferred/transcript-core-replica-lag-review.md).
+- **Queue triage** (visibility, retry policy, alerting, reconcile command) is deferred, see
+  [triage support](../deferred/transcript-index-queue-triage.md).
+- **Core name: `mandala-av-transcripts`** (decided 2026-10-02, Yuji). Existing cores are
+  `kmassets` and `kmterms` (KMaps) and `mandala-av`, `mandala-images`, `mandala-sources`,
+  `mandala-texts`, `mandala-visuals` (the per-site Drupal ApacheSolr indexes); the same names
+  in staging and production, no environment suffix. The new name keeps the `mandala-` prefix,
+  states the purpose, and is clearly distinct from D7's `mandala-av`. It is AV-specific on
+  purpose; revisit if another site ever gets time-coded transcripts.
+- **Schema: a minimal draft is written** at `solr/mandala-av-transcripts/conf/schema.xml` (new
+  top-level directory, outside the deploy path filters). It keeps the legacy field names the
+  client reads and drops D7's Drupal ApacheSolr fields. **Checked 2026-10-02 in a throwaway
+  Solr 7.7.3** with synthetic units: the client query shape and exact float output, per-tier
+  phrase search with `<mark>` highlighting (English, Chinese, Tibetan), cross-transcript
+  edismax, the `sm_has_tier` facet, and delete by `is_trid`. Not checked: Solr 9.x, real data,
+  replication, the proxy join. It uses Point field types (portable to 9.x) and needs the ICU
+  analysis-extras libs in `solrconfig.xml`, which is **not written yet** (base it on
+  `kmassets`). **Analyzer: ICU is the default for now (Yuji, 2026-10-02); the choice and a
+  split into separate language fields are deferred**, see
+  [the deferred note](../deferred/transcript-tier-analyzers-and-language-fields.md). The `ts_*`
+  tiers use ICU tokenizing and folding instead of D7's English analyzer, so there is no
+  stemming (`chant` no longer matches `chanting`) but Chinese, Nepali and Wylie tokenize sensibly.
+- **Creating the core:** the team can create cores whose names start with `mandala` on the
+  dev/staging Solr instance (Yuji, 2026-10-02), so Dave is not needed for dev. Production
+  creation and the Solr 7.x versus 9.x target are still to be confirmed. Creating the core on
+  dev has not been done.
+- **Still open for question 6:** the `solrconfig.xml` and the join prototype.
+7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
+   viable.** Its UI is still not part of this spike's build, but D11 must keep the
+   `mandala-av` index (or an equivalent the client can be pointed at through
+   `REACT_APP_SOLR_TRANSCRIPTS`) serving the documents the client already reads:
+   `is_trid`, `fts_start` and the language tiers, queried by `is_trid`, up to 1,000 rows,
+   through the visibility proxy. Consequences for the design: (a) question 6 (search shape)
+   is constrained to per-TCU documents in that shape; (b) editor saves (T6) must reach
+   that index, as D7's real-time reindex did, or the client shows stale text; (c) the
+   client's `fts_start = 0` filter (MANU-7271) means flagged zero-start units stay hidden
+   there, which the bad-timecode work should account for; (d) cutover needs a check that the
+   client renders a migrated transcript from D11-written documents.
+
+**Follow-ups raised by answer 1 (the editor):**
+
+F1. **The `keep_transcript_edits` flag. DECIDED 2026-10-02 (Yuji, with Than): yes to all three.**
+In D7 the flag is set automatically on a node's first edit; while set, the transcript is
+excluded from the re-processing queue and the file field's remove button is hidden;
+unflagging (by anyone who can edit the node) **discards the edits and re-imports the units
+from the originally uploaded file** (`transcripts_editor_discard_edits`). D7 does not keep
+the pre-edit units, so the original text exists only in the uploaded file.
+1. **Migrate the flag as data:** a boolean on `av_transcript` ("has human corrections since
+   upload") plus the flagging date (about the first-edit date), from the 540 flagged nodes.
+2. **Revert-to-upload is a required D11 feature.** This is new scope: with no XSLT in D11,
+   it needs a parser per source format (VTT 3,227 files, XML 1,881, Toolbox 136, SRT 28),
+   producing the same unit shape as the migrated rows. Added to Sprint 4 as T7. It also
+   makes question 4 (real source files per format) a prerequisite, and means the uploaded
+   source files must be kept and stay reachable for every transcript.
+3. **Show it to staff:** an "edited" marker in the editor, staff only, never on public
+   pages. It can share the "needs timecode review" marker surface.
+
+**Source-file inventory (follows from F1.2, raised 2026-10-02).** Revert-to-upload means
+every original transcript must be accounted for, not just those that migrate. Reconciliation
+so far (database records only): of the 540 edited nodes, 539 have a source file record that
+matches their current file, so revert is possible for them if the files exist; **1 is
+missing its source record and 1 has a replaced file** (the same node can be in both; not
+checked). Before T7 the inventory must also confirm, for all 5,343 transcripts plus the 41
+unprocessed nodes, that the file parses to the stored units (existence on disk was
+checked 2026-10-02), and list the 3 tracked transcripts with no attached file as unrevertable (the 68 with a replaced file use the current attachment as the original, decided 2026-10-02). Follow the existing
+missing-file-audit pattern (`drush mandala:missing-file-audit`). The originals are on dev-0 at
+`/opt/drupal/app/drupal/web/sites/default/files/transcripts` (recorded 2026-10-02; listing scan done the same day: 5,379 files, all current attachments present, see the deferred note).
+
+F2. **Who the transcript editors are. ANSWERED 2026-10-02 (Yuji): the THL team** (Tibetan
+and Himalayan Library) are the editors. Follow-ups not yet done: which D7 roles or groups
+THL staff hold, and how that maps to D11 editor permission; it ties into the
+contributor-CRUD and editor-permissions gaps, so it is recorded there as a dependency, not
+decided here.
 
 ## Background
 
@@ -332,4 +582,8 @@ Drupal pipeline) only, per the 2026-09-04 scope note above.
 
 ## Deferred notes
 
-*(To be filled in after the spike runs.)*
+- [Transcript bad timecodes: investigate and fix](../deferred/transcript-bad-timecodes-investigate-and-fix.md) (2026-10-02)
+- [Transcript source files: account for every original](../deferred/transcript-source-file-accounting.md) (2026-10-02)
+- [Transcript core replica lag: review later](../deferred/transcript-core-replica-lag-review.md) (2026-10-02)
+- [Transcript index retry queue: triage support](../deferred/transcript-index-queue-triage.md) (2026-10-02)
+- [Transcript tier analyzers and separate language fields](../deferred/transcript-tier-analyzers-and-language-fields.md) (2026-10-02)
