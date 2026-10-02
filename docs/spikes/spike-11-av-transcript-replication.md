@@ -187,7 +187,8 @@ shape.** Reasoning and the evidence behind it follow.
 
 ### Sketch for the recommended model (for T2)
 - `av_transcript`: node reference, source file reference, source format (vtt/xml/txt/srt),
-  tier list, legacy transcript id (`trid`), workflow flags. Access follows the parent node
+  tier list, legacy transcript id (`trid`), `has_edits` and `edits_flagged_at` (from D7's
+  `keep_transcript_edits` flag, decided 2026-10-02), workflow flags. Access follows the parent node
   (the AV7 rules); the viewer and any API must check node access, never expose TCUs on
   their own.
 - `av_tcu`: transcript reference, sequence number, `start`, `end`, tier map (tier name to
@@ -264,6 +265,27 @@ the audit, not a decision.
    client's `fts_start = 0` filter (MANU-7271) means flagged zero-start units stay hidden
    there, which the bad-timecode work should account for; (d) cutover needs a check that the
    client renders a migrated transcript from D11-written documents.
+
+**Follow-ups raised by answer 1 (the editor):**
+
+F1. **The `keep_transcript_edits` flag. DECIDED 2026-10-02 (Yuji, with Than): yes to all three.**
+In D7 the flag is set automatically on a node's first edit; while set, the transcript is
+excluded from the re-processing queue and the file field's remove button is hidden;
+unflagging (by anyone who can edit the node) **discards the edits and re-imports the units
+from the originally uploaded file** (`transcripts_editor_discard_edits`). D7 does not keep
+the pre-edit units, so the original text exists only in the uploaded file.
+1. **Migrate the flag as data:** a boolean on `av_transcript` ("has human corrections since
+   upload") plus the flagging date (about the first-edit date), from the 540 flagged nodes.
+2. **Revert-to-upload is a required D11 feature.** This is new scope: with no XSLT in D11,
+   it needs a parser per source format (VTT 3,227 files, XML 1,881, Toolbox 136, SRT 28),
+   producing the same unit shape as the migrated rows. Added to Sprint 4 as T7. It also
+   makes question 4 (real source files per format) a prerequisite, and means the uploaded
+   source files must be kept and stay reachable for every transcript.
+3. **Show it to staff:** an "edited" marker in the editor, staff only, never on public
+   pages. It can share the "needs timecode review" marker surface.
+
+F2. **Who the transcript editors are today.** Open. Decides who gets the editor permission,
+and ties into the contributor-CRUD and editor-permissions gaps.
 
 ## Background
 
