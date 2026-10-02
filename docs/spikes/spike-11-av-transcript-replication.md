@@ -26,7 +26,7 @@ covers only the first:
    consumer of the documents the D7 pipeline indexes. **Consequence:** when D7 is retired,
    whatever D11 builds for search (T4) must keep producing compatible documents, or the
    React viewer loses its transcripts. That is a requirement on the search design, not a
-   separate project. Read from the D7 dump and the legacy code; **not confirmed against the
+   separate project (confirmed as a requirement 2026-10-02, question 7). Read from the D7 dump and the legacy code; **not confirmed against the
    live core**. The viewer also already filters out `fts_start = 0` units (MANU-7271, 2022),
    i.e. it hides some of the same bad-timecode data found in the audit.
 
@@ -253,9 +253,17 @@ the audit, not a decision.
    into TCUs, and 19 transcript ids have TCUs but no tracking row. Expected or stale?
 6. **Search.** One Solr document per TCU (as D7 did) or per transcript, and which index.
    Needs Yuji as well (kmassets documents are flat; the visibility proxy applies).
-7. **React viewer. AGREED 2026-10-02 in session (see correction in the scope note; Than and Yuji to confirm):** the
-   viewer's UI stays out of scope, but it reads the same `mandala-av` documents the D7
-   pipeline writes, so D11's search design (question 6) must keep them compatible.
+7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
+   viable.** Its UI is still not part of this spike's build, but D11 must keep the
+   `mandala-av` index (or an equivalent the client can be pointed at through
+   `REACT_APP_SOLR_TRANSCRIPTS`) serving the documents the client already reads:
+   `is_trid`, `fts_start` and the language tiers, queried by `is_trid`, up to 1,000 rows,
+   through the visibility proxy. Consequences for the design: (a) question 6 (search shape)
+   is constrained to per-TCU documents in that shape; (b) editor saves (T6) must reach
+   that index, as D7's real-time reindex did, or the client shows stale text; (c) the
+   client's `fts_start = 0` filter (MANU-7271) means flagged zero-start units stay hidden
+   there, which the bad-timecode work should account for; (d) cutover needs a check that the
+   client renders a migrated transcript from D11-written documents.
 
 ## Background
 
