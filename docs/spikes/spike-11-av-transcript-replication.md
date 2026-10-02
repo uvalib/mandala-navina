@@ -95,7 +95,7 @@ Saxon XSLT pipeline or parse the uploaded Toolbox/SRT/XML/VTT files.
   `file_managed` row; **41** have a file but were never processed (no transcript, no
   units); **4** tracked transcripts have no current file attached (3 of them also have no
   source-file record). So **71 transcripts (68 + 3) have units but no record of their
-  source file**, and 41 nodes have a file with no units. This replaces the earlier
+  source file** (the 68 are resolved by treating the current file as the original, see question 5), and 41 nodes have a file with no units. This replaces the earlier
   "about 108 never processed" figure, which was computed by file id and mixed the two
   groups. Checked against database records only; whether the files exist on disk or S3 has
   not been checked.
@@ -261,8 +261,13 @@ the audit, not a decision.
 5. **Unprocessed and replaced files.** Numbers corrected 2026-10-02 (see the audit): 41
    nodes have a transcript file that D7 never processed into units; 68 nodes have a
    replaced file, so their units came from an earlier upload that is no longer recorded;
-   19 transcript ids have units but no tracking row. Expected, or stale? For the 68, which
-   is right, the units or the current file?
+   19 transcript ids have units but no tracking row. **DECIDED 2026-10-02 (Yuji): for the 68
+   replaced files, treat the current attachment as the original of record** and ignore the
+   missing earlier file. This is an assumption that the current file is the right source;
+   whether D7 ever processed it is unknown, so the stored units may differ from what the
+   current file parses to. T7's inventory compares the two for these 68 and reports
+   differences; it does not rewrite the migrated units. Still open for Than: the 41 never
+   processed, the 19 orphan ids, and the 3 tracked transcripts with no file at all.
 6. **Search.** One Solr document per TCU (as D7 did) or per transcript, and which index.
    Needs Yuji as well (kmassets documents are flat; the visibility proxy applies).
 7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
@@ -302,7 +307,7 @@ matches their current file, so revert is possible for them if the files exist; *
 missing its source record and 1 has a replaced file** (the same node can be in both; not
 checked). Before T7 the inventory must also confirm, for all 5,343 transcripts plus the 41
 unprocessed nodes, that the file physically exists on disk or S3 and parses to the stored
-units, and list the 71 with no source-file record as unrevertable. Follow the existing
+units, and list the 3 tracked transcripts with no attached file as unrevertable (the 68 with a replaced file use the current attachment as the original, decided 2026-10-02). Follow the existing
 missing-file-audit pattern (`drush mandala:missing-file-audit`).
 
 F2. **Who the transcript editors are today.** Open. Decides who gets the editor permission,
