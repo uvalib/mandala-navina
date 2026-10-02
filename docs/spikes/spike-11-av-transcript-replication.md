@@ -408,15 +408,16 @@ to carry the facet):
   edismax, the `sm_has_tier` facet, and delete by `is_trid`. Not checked: Solr 9.x, real data,
   replication, the proxy join. It uses Point field types (portable to 9.x) and needs the ICU
   analysis-extras libs in `solrconfig.xml`, which is **not written yet** (base it on
-  `kmassets`). **Open decision for Than:** the `ts_*` tiers use ICU tokenizing and folding
-  instead of D7's English analyzer, so there is no stemming (`chant` no longer matches
-  `chanting`) but Chinese, Nepali and Wylie tokenize sensibly.
+  `kmassets`). **Analyzer: ICU is the default for now (Yuji, 2026-10-02); the choice and a
+  split into separate language fields are deferred**, see
+  [the deferred note](../deferred/transcript-tier-analyzers-and-language-fields.md). The `ts_*`
+  tiers use ICU tokenizing and folding instead of D7's English analyzer, so there is no
+  stemming (`chant` no longer matches `chanting`) but Chinese, Nepali and Wylie tokenize sensibly.
 - **Creating the core:** the team can create cores whose names start with `mandala` on the
   dev/staging Solr instance (Yuji, 2026-10-02), so Dave is not needed for dev. Production
   creation and the Solr 7.x versus 9.x target are still to be confirmed. Creating the core on
   dev has not been done.
-- **Still open for question 6:** the `solrconfig.xml`, the join prototype, and the ICU
-  analyzer decision above.
+- **Still open for question 6:** the `solrconfig.xml` and the join prototype.
 7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
    viable.** Its UI is still not part of this spike's build, but D11 must keep the
    `mandala-av` index (or an equivalent the client can be pointed at through
@@ -582,3 +583,4 @@ Drupal pipeline) only, per the 2026-09-04 scope note above.
 - [Transcript source files: account for every original](../deferred/transcript-source-file-accounting.md) (2026-10-02)
 - [Transcript core replica lag: review later](../deferred/transcript-core-replica-lag-review.md) (2026-10-02)
 - [Transcript index retry queue: triage support](../deferred/transcript-index-queue-triage.md) (2026-10-02)
+- [Transcript tier analyzers and separate language fields](../deferred/transcript-tier-analyzers-and-language-fields.md) (2026-10-02)

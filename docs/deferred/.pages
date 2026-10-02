@@ -121,3 +121,4 @@ nav:
   - "Transcript source files: account for every original": transcript-source-file-accounting.md
   - "Transcript core replica lag: review later": transcript-core-replica-lag-review.md
   - "Transcript index retry queue: triage support": transcript-index-queue-triage.md
+  - "Transcript tier analyzers and separate language fields": transcript-tier-analyzers-and-language-fields.md

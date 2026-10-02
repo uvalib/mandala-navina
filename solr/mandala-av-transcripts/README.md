@@ -39,8 +39,10 @@ schema swapped in, the two `<lib>` lines above added), then exercised with **syn
 
 **Not checked:** Solr 9.x, real data, the production `solrconfig.xml`, replication, the proxy.
 
-## Open decision (Than)
+## Deferred: tier analyzers
 
-`ts_*` tiers use the ICU tokenizer plus ICU folding, **not** D7's English analyzer. Result:
-no stemming (`chant` does not match `chanting`, as it did in D7) but sensible tokenization of
-Chinese, Nepali, Wylie and other languages. Switch back to the legacy analyzer for exact parity.
+`ts_*` tiers use the ICU tokenizer plus ICU folding as a **default for now**, not D7's English
+analyzer: no stemming (`chant` does not match `chanting`, as it did in D7) but sensible
+tokenization of Chinese, Nepali, Wylie and other languages. The analyzer per tier, and splitting
+the tiers into separate language fields, are deferred:
+[deferred note](../../docs/deferred/transcript-tier-analyzers-and-language-fields.md).

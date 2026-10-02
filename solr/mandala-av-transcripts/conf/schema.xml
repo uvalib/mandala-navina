@@ -34,13 +34,13 @@
     </analyzer>
   </fieldType>
 
-  <!-- All other language tiers (ts_content_*). DECISION NEEDED (Than). Legacy used an English
-       analyzer for these (whitespace tokenizer, English stemming and stop words, Latin-1
-       accent mapping), which is poor for Chinese, Nepali, Wylie and the Bhutanese and Himalayan
-       languages. This draft uses the ICU tokenizer plus ICU folding (case and accent folding,
-       no stemming, no stop words), so phrase search per tier still works but results will
-       differ from D7 for English text (no stemming). Switch to the legacy analyzer if exact
-       parity is wanted. -->
+  <!-- All other language tiers (ts_content_*). DEFAULT FOR NOW, analyzer choice deferred (see
+       docs/deferred/transcript-tier-analyzers-and-language-fields.md). Legacy used an English
+       analyzer for these (whitespace tokenizer, English stemming and stop words, Latin-1 accent
+       mapping), which is poor for Chinese, Nepali, Wylie and other languages. This uses the ICU
+       tokenizer plus ICU folding (case and accent folding, no stemming, no stop words), so
+       phrase search per tier works but English loses stemming. The tiers should eventually be
+       separate language-specific fields; that discussion is deferred too. -->
   <fieldType name="text_tier" class="solr.TextField" positionIncrementGap="100">
     <analyzer>
       <tokenizer class="solr.ICUTokenizerFactory"/>
