@@ -269,8 +269,16 @@ the audit, not a decision.
    differences; it does not rewrite the migrated units. The rest (the 41 never
    processed, the 19 orphan ids, the 3 with no file) is **deferred and tracked** in
    [a deferred note](../deferred/transcript-source-file-accounting.md) (2026-10-02).
-6. **Search.** One Solr document per TCU (as D7 did) or per transcript, and which index.
-   Needs Yuji as well (kmassets documents are flat; the visibility proxy applies).
+6. **Search. PARTLY DECIDED 2026-10-02 (Yuji): D11 gets a completely new and separate Solr
+   core for transcript units**, compatible with the existing React client. It does not write
+   to D7's `mandala-av` core. "Compatible" means the document shape and query interface the
+   client uses (`is_trid`, `fts_start`, `fts_end`, `fts_duration`, language-tier and speaker
+   fields; `select` by `is_trid`, up to 1,000 rows). Extra fields are allowed, so D11 can add
+   its own (for example a node id and an access field). Consequences: no write collision with
+   D7 at cutover; the D7 core is left to be retired with D7; the client is pointed at the new
+   core through `REACT_APP_SOLR_TRANSCRIPTS`. Still open: the core's name and schema source,
+   document id scheme, access enforcement, the write path and edit freshness, who creates
+   the core, and whether D11 needs its own search across transcripts.
 7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
    viable.** Its UI is still not part of this spike's build, but D11 must keep the
    `mandala-av` index (or an equivalent the client can be pointed at through
