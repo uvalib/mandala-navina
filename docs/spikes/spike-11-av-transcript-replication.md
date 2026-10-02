@@ -307,7 +307,12 @@ unknown and none of it was run live.
    conclusion came from a code search that did not find the writer (it is not in the module
    code available here; it is probably in another module or an indexing hook). The live data
    shows it works. D11 does not need D7's writer, only the same data: the per-transcript tier
-   list that D7 keeps in `transcripts_apachesolr_transcript.tiers`.
+   list that D7 keeps in `transcripts_apachesolr_transcript.tiers`. **Verified 2026-10-02:** the
+   live facet counts for the six largest tiers equal the counts from that column exactly
+   (2,891 / 2,095 / 1,787 / 611 / 483 / 18). Small unexplained difference: the column has 9
+   transcripts with no tiers, the core 8 empty values and 5,342 nodes against 5,343
+   transcripts. D11 should recompute the value on every save, since an edit can add a tier;
+   when D7 refreshed it was not established.
 4. **Per-transcript tier list:** the viewer shows only the tiers a transcript actually has.
 
 **What the D7 `mandala-av` core is (Yuji, 2026-10-02; not verified against the live core).**
