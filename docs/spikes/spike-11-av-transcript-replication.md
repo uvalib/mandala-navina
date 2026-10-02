@@ -12,12 +12,23 @@ covers only the first:
    `transcripts_apachesolr` + `transcripts_xslt`) — **in scope.** This is the system
    this spike replicates on D11. See "Live evidence" below for what was already found
    by reading the real code, so this spike does not have to re-derive it.
-2. **The React app's (`mandala-om`/`kmaps-app`) independent client-side transcript
-   viewer** (`src/legacy/audiovideo.js`), which fetches directly from a dedicated Solr
-   core (`REACT_APP_SOLR_TRANSCRIPTS` → `/solr/mandala-av`) and has its own
-   sync/search/download logic, entirely decoupled from the D7 module — **explicitly out
-   of scope for now** (decided 2026-09-04, Yuji). Not reconciled with system 1 by this
-   spike.
+2. **The React app's (`mandala-om`/`kmaps-app`) client-side transcript viewer**
+   (`src/legacy/audiovideo.js`) — **its UI is out of scope for building** (decided
+   2026-09-04, Yuji). It fetches from `REACT_APP_SOLR_TRANSCRIPTS` (`/solr/mandala-av`)
+   and has its own sync, search and download logic.
+
+   **Correction (2026-10-02): the data is not independent of system 1.** The first version
+   of this note called the viewer "entirely decoupled" and its core a separate index. It is
+   not. D7's AV site writes its TCU documents to that same core (its
+   `apachesolr_environment` points at `.../solr/mandala-av`; `tcu.module` writes `is_trid`
+   and `fts_start`), and the React viewer queries `is_trid:<trid>` sorted by `fts_start`.
+   The `mandala-av` configset is the Drupal ApacheSolr schema. So the viewer is a second
+   consumer of the documents the D7 pipeline indexes. **Consequence:** when D7 is retired,
+   whatever D11 builds for search (T4) must keep producing compatible documents, or the
+   React viewer loses its transcripts. That is a requirement on the search design, not a
+   separate project. Read from the D7 dump and the legacy code; **not confirmed against the
+   live core**. The viewer also already filters out `fts_start = 0` units (MANU-7271, 2022),
+   i.e. it hides some of the same bad-timecode data found in the audit.
 
 ## Theory
 Mandala's D7 AV **time-synced transcripts** — timecoded text segments, potentially
@@ -242,8 +253,9 @@ the audit, not a decision.
    into TCUs, and 19 transcript ids have TCUs but no tracking row. Expected or stale?
 6. **Search.** One Solr document per TCU (as D7 did) or per transcript, and which index.
    Needs Yuji as well (kmassets documents are flat; the visibility proxy applies).
-7. **React viewer.** The app's own transcript viewer (reading the `mandala-av` core) stays
-   out of scope per the 2026-09-04 decision. Confirm that still holds.
+7. **React viewer. AGREED 2026-10-02 in session (see correction in the scope note; Than and Yuji to confirm):** the
+   viewer's UI stays out of scope, but it reads the same `mandala-av` documents the D7
+   pipeline writes, so D11's search design (question 6) must keep them compatible.
 
 ## Background
 
