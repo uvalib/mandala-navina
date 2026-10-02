@@ -266,8 +266,9 @@ the audit, not a decision.
    missing earlier file. This is an assumption that the current file is the right source;
    whether D7 ever processed it is unknown, so the stored units may differ from what the
    current file parses to. T7's inventory compares the two for these 68 and reports
-   differences; it does not rewrite the migrated units. Still open for Than: the 41 never
-   processed, the 19 orphan ids, and the 3 tracked transcripts with no file at all.
+   differences; it does not rewrite the migrated units. The rest (the 41 never
+   processed, the 19 orphan ids, the 3 with no file) is **deferred and tracked** in
+   [a deferred note](../deferred/transcript-source-file-accounting.md) (2026-10-02).
 6. **Search.** One Solr document per TCU (as D7 did) or per transcript, and which index.
    Needs Yuji as well (kmassets documents are flat; the visibility proxy applies).
 7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
@@ -310,8 +311,11 @@ unprocessed nodes, that the file physically exists on disk or S3 and parses to t
 units, and list the 3 tracked transcripts with no attached file as unrevertable (the 68 with a replaced file use the current attachment as the original, decided 2026-10-02). Follow the existing
 missing-file-audit pattern (`drush mandala:missing-file-audit`).
 
-F2. **Who the transcript editors are today.** Open. Decides who gets the editor permission,
-and ties into the contributor-CRUD and editor-permissions gaps.
+F2. **Who the transcript editors are. ANSWERED 2026-10-02 (Yuji): the THL team** (Tibetan
+and Himalayan Library) are the editors. Follow-ups not yet done: which D7 roles or groups
+THL staff hold, and how that maps to D11 editor permission; it ties into the
+contributor-CRUD and editor-permissions gaps, so it is recorded there as a dependency, not
+decided here.
 
 ## Background
 
@@ -428,3 +432,4 @@ Drupal pipeline) only, per the 2026-09-04 scope note above.
 ## Deferred notes
 
 - [Transcript bad timecodes: investigate and fix](../deferred/transcript-bad-timecodes-investigate-and-fix.md) (2026-10-02)
+- [Transcript source files: account for every original](../deferred/transcript-source-file-accounting.md) (2026-10-02)
