@@ -5,9 +5,11 @@ dependencies:
   config:
     - field.field.group.collection.field_featured_image
     - field.field.group.collection.field_group_access
+    - field.field.group.collection.field_is_review_holding
     - field.field.group.collection.field_legacy_nid
     - field.field.group.collection.field_legacy_site
     - field.field.group.collection.field_overview
+    - field.field.group.collection.field_subcollection_root
     - group.type.collection
     - image.style.thumbnail
   module:
@@ -26,6 +28,13 @@ content:
     settings:
       progress_indicator: throbber
       preview_image_style: thumbnail
+    third_party_settings: {  }
+  field_is_review_holding:
+    type: boolean_checkbox
+    weight: 5
+    region: content
+    settings:
+      display_label: true
     third_party_settings: {  }
   field_overview:
     type: text_textarea_with_summary
@@ -69,4 +78,5 @@ hidden:
   field_group_access: true
   field_legacy_nid: true
   field_legacy_site: true
+  field_subcollection_root: true
   uid: true

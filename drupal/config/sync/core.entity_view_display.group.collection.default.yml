@@ -5,9 +5,11 @@ dependencies:
   config:
     - field.field.group.collection.field_featured_image
     - field.field.group.collection.field_group_access
+    - field.field.group.collection.field_is_review_holding
     - field.field.group.collection.field_legacy_nid
     - field.field.group.collection.field_legacy_site
     - field.field.group.collection.field_overview
+    - field.field.group.collection.field_subcollection_root
     - group.type.collection
     - image.style.medium
   module:
@@ -49,8 +51,10 @@ hidden:
   changed: true
   created: true
   field_group_access: true
+  field_is_review_holding: true
   field_legacy_nid: true
   field_legacy_site: true
+  field_subcollection_root: true
   langcode: true
   search_api_excerpt: true
   uid: true

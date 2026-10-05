@@ -1,0 +1,23 @@
+uuid: 959ff81f-f362-4bac-a2f4-cef5f681852a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.group.field_is_review_holding
+    - group.type.subcollection
+id: group.subcollection.field_is_review_holding
+field_name: field_is_review_holding
+entity_type: group
+bundle: subcollection
+label: 'Is review-holding group'
+description: 'Check this for the orphaned-content review group(s) created by hand for staff to triage group-less content swept in by drush group:sweep-orphans. A flagged group never appears in /collections or other collection listings, for any viewer, including an administrator. Leave unchecked for a real collection.'
+required: false
+translatable: true
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

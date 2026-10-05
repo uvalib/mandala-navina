@@ -88,6 +88,10 @@ class CollectionVisibilityListingsTest extends BrowserTestBase {
     $this->createField('group', 'subcollection', 'field_group_access');
     $this->createField('node', 'audio', 'field_group_content_access');
     $this->createField('group', 'subcollection', 'field_visibility_overridden', 'boolean');
+    // GroupQueryAlter joins this field unconditionally on every group_access
+    // query, so the table must exist even though this test never sets it.
+    $this->createField('group', 'collection', 'field_is_review_holding', 'boolean');
+    $this->createField('group', 'subcollection', 'field_is_review_holding', 'boolean');
 
     FieldStorageConfig::create([
       'field_name' => 'field_parent_collection',

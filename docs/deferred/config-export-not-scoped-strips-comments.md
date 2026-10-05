@@ -113,3 +113,18 @@ pass, write back only the single changed config object via
 in a `drush php:eval` — this never touches any file but the one that actually changed, so
 there's no revert step needed at all. Doesn't replace the CI-check recommendation (option
 2 above) but is a cheaper per-session mitigation than "export everything, then clean up."
+
+## Fifth recurrence, 2026-10-02 (orphaned-content review group build)
+
+Added a new `field_is_review_holding` boolean field to the `collection`/`subcollection`
+group bundles. A plain `config:export -y` touched 25 files — only 3 were the new field
+definitions; the rest were comment-stripped `mandala_kaltura.settings.yml`,
+`mandala_kmassets_sync.settings.yml`, several `migrate_plus.migration.d7_av_*.yml` and
+`group.relationship_type.*.yml` files, and `views.view.collection_gallery.yml`, none of
+which the field addition should have touched at all. Reverted all 22 with
+`git checkout --`, then used the narrower per-object write-back (above) for the 6 display
+configs that genuinely did need the new field added to their `hidden`/`dependencies`
+lists (`core.entity_{form,view}_display.group.{collection,subcollection}.{default,teaser}`),
+rather than a second blind `config:export -y`. Confirms the pattern is reliably
+per-session, not a one-off — worth treating "run `config:export -y`, then diff and revert"
+as the default expectation for any future Group-entity field addition, not an edge case.
