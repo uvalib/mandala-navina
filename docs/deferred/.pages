@@ -122,3 +122,6 @@ nav:
   - "Transcript core replica lag: review later": transcript-core-replica-lag-review.md
   - "Transcript index retry queue: triage support": transcript-index-queue-triage.md
   - "Transcript tier analyzers and separate language fields": transcript-tier-analyzers-and-language-fields.md
+  - "SAML SP deploy playbooks: review findings (deferred)": saml-sp-deploy-playbook-review.md
+  - "dev-0 /mnt/data on unbacked root volume": dev0-data-directory-on-unbacked-root-volume.md
+  - "Carousel demo file churn on dev-0 (deferred)": carousel-demo-file-churn-on-dev0.md

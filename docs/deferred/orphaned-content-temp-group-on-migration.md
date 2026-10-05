@@ -60,7 +60,7 @@ Mandala Home) must each be swept for their own orphans — the count is site- an
   boolean flag field (e.g. `field_is_review_holding`) to both existing group bundles instead of
   introducing a distinct entity bundle. Set `true` on the parent "Orphaned Content" group and
   each of its four site children.
-  - **Still open, not decided:** does every piece of code that treats "is in a collection" as
+  - **Still open, not decided -- ASSIGNED to Than, 2026-10-05:** does every piece of code that treats "is in a collection" as
     sufficient for visibility/listing need to check this flag directly on each group, or can a
     subcollection inherit "is review holding" from its parent without the flag being set
     redundantly on every child? Whoever implements this should decide and document it — getting
