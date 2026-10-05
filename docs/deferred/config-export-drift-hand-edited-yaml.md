@@ -96,10 +96,12 @@ written up (not yet added to CLAUDE.md, which needs Xiaoming's and Than's agreem
    Drupal save.
 
 **Why the norm alone is not enough:** it has already failed once -- the 2026-09-15 recurrence
-happened the same day the sibling export risk was documented. Candidate backing, cheapest first
-(none built): a local `scripts/config-check.sh` (`config:import` then `config:status`, exit
-nonzero on drift, plus the comment lint described in the sibling note); a scoped-export script
-wrapping the `config.storage.sync` technique; and Option 2's CI check. **Still open for the
+happened the same day the sibling export risk was documented. Candidate backing, cheapest first:
+a local `scripts/config-check.sh` (**built 2026-10-05**: `config:status`, then an export-to-temp-dir
+diff that reports unexported config, comments an export would strip, and formatting
+differences; `--strict` turns the last two into failures once the existing comments are
+relocated; not wired into CI or any hook); a scoped-export script wrapping the
+`config.storage.sync` technique (not built); and Option 2's CI check (not built). **Still open for the
 group:** whether the CI check is worth its cost. Until then this note stays in "Awaiting a team
 decision".
 

@@ -232,6 +232,10 @@ shape.** Reasoning and the evidence behind it follow.
 - The prototype read the D7 tables directly; it has not been run against the proposed
   D11 entities.
 
+> **2026-10-05:** the remaining open questions below (the `ts_*` analyzer and separate language
+> fields; the 41 / 19 / 3 transcript-file accounting; whether English stemming matters) were
+> put on Than's plate in the group session, with no date set.
+
 ## Questions for Than (decisions are his; recorded 2026-10-01, answers 1-3 added 2026-10-02)
 
 The data decisions below belong to Than. The recommendation above is Claude's reading of

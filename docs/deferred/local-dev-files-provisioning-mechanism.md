@@ -196,6 +196,14 @@ it, its behaviour against dev-0 as origin, subdirectory and Unicode-named files,
 the origin setting stays out of exported config and off dev-0 itself. It is an alternative to
 (or a complement for) the on-demand audit command, not yet a recommendation.
 
+**Plan agreed 2026-10-05, deferred to the next session (not started):**
+(1) wire `mandala:missing-file-audit` into `scripts/session-start-check.sh` as a report-only
+step (no `--fix`), the same way steps 3a/3b already report config and content drift; and
+(2) trial `stage_file_proxy` on Xiaoming's DDEV as a short time-boxed spike (install, dev-0
+as origin, a subdirectory file such as a transcript, and the Unicode-named thumbnail) before
+deciding whether it replaces or complements the audit. Question 1 below (full parity or only
+the fields features render) and the trigger question stay open until that trial.
+
 ## Open questions for the team (not decided, not started)
 
 1. **Does local dev need full file-binary parity at all?** Per

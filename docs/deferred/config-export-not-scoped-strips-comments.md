@@ -89,9 +89,11 @@ many lines.
 `config:status` first), otherwise unrelated drift appears in the same diff. That drift is real
 today: the same diff also showed 29 removed non-comment lines (mostly in the same migration
 files, plus a few `group.relationship_type.*` files and one view). They were not examined;
-they look like the cosmetic re-serialization described above. The lint idea therefore
-fits the proposed `scripts/config-check.sh`: one export diff gives both the comment check and
-the drift check.
+they look like the cosmetic re-serialization described above. This is now built as
+`scripts/config-check.sh` (2026-10-05): one export diff gives both the comment check and the
+formatting-drift check. On `main` today it reports 296 comment lines in 16 files and 8 files
+the export would reformat, as warnings; `--strict` fails on them, to be used after the
+rationale has been relocated.
 
 **Not done:** the rationale in those 296 lines has not been moved anywhere. It should be
 relocated once, deliberately, before any export strips it -- decide the destination first
