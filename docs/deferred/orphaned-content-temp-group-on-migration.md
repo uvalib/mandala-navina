@@ -3,7 +3,7 @@
 **Area:** migration / Group / content model / access
 **Raised during:** ADR 015 Q2 decision, 2026-08-07 (Than, team present)
 **Jira:** (add when available)
-**Priority:** **Medium–High — direction CONFIRMED 2026-09-28 (Than, Yuji); open specifics RESOLVED 2026-10-02 (Than); BUILT and the AV exposure FIXED on local DDEV 2026-10-02.** Applies to **every** per-site asset migration. Confirmed 2026-10-02: the current Images membership migration genuinely drops orphans today, not just a theoretical risk. AV orphans are quantified and carry a live access consequence — see "Confirmed 2026-09-28" below. **Still needed: run the sweep on dev-0, and sweep Images/Texts/Sources** (only AV has been swept so far).
+**Priority:** **Medium–High — direction CONFIRMED 2026-09-28 (Than, Yuji); open specifics RESOLVED 2026-10-02 (Than); BUILT and the AV exposure FIXED on local DDEV 2026-10-02; MERGED to `main` 2026-10-05 ([PR #275](https://github.com/uvalib/mandala-navina/pull/275)).** Applies to **every** per-site asset migration. Confirmed 2026-10-02: the current Images membership migration genuinely drops orphans today, not just a theoretical risk. AV orphans are quantified and carry a live access consequence — see "Confirmed 2026-09-28" below. **Still needed: run the sweep on dev-0** (its own review group(s) must be created there first); **Texts/Sources sweeps wait on those sites' migrations**, not yet run.
 
 ## Context
 
@@ -117,11 +117,21 @@ Mandala Home) must each be swept for their own orphans — the count is site- an
   from "Confirmed 2026-09-28" below) by id: every one now resolves into the chosen group and
   `$node->access('view', $anonymous_user)` returns `FALSE` for all 18, with zero remaining
   exposed nodes of that shape. `config:status` stayed clean throughout.
-- **Not yet done:** the real (non-dry-run) Images/Texts/Sources sweeps — only AV has actually
-  been swept; Images was only dry-run to prove the batching fix. Nothing has been run on dev-0
-  yet (local DDEV only), and dev-0 needs its own review group(s) created by hand before any
-  sweep can target it. Branch `feat/orphaned-content-review-group`, not yet pushed or opened as
-  a PR.
+- **Images swept too, 2026-10-05 (Than), local DDEV.** Real (non-dry-run) sweep found and
+  moved exactly the 36 known `shanti_image` orphans, no OOM — the batching fix held under
+  the real run, not just the earlier dry-run. The sweep command also gained a live progress
+  counter (`N of TOTAL checked`) in the same session, since orphans are rare enough on a
+  111k+-node site that the per-match notice alone can go silent for a long stretch and look
+  hung.
+- **Review groups owned and populated, 2026-10-05 (Than), local DDEV.** All five groups
+  (414 parent, 415 AV / 416 Images / 417 Texts / 418 Sources) now have `ShantiAdmin` (uid 1)
+  set as both owner and member — they'd defaulted to Anonymous on creation.
+- **Merged 2026-10-05, [PR #275](https://github.com/uvalib/mandala-navina/pull/275).**
+  Branch `feat/orphaned-content-review-group` deleted (local and remote) post-merge.
+- **Still not done:** Texts/Sources sweeps, which wait on those sites being migrated —
+  there's nothing to sweep yet. Nothing has been run on dev-0 (local DDEV only); dev-0 needs
+  its own review group(s) created by hand (and `ShantiAdmin`, or whichever account should
+  own them there, set as owner/member) before any sweep can target it.
 
 ## Confirmed 2026-09-28 — AV orphans quantified, with an access consequence
 
