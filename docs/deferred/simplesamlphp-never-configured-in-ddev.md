@@ -77,6 +77,56 @@ should be a deliberate, checked-in mechanism, not a one-off local file:
    `drush user:login`/direct role assignment cover it? If nothing near-term needs it,
    this can sit exactly as deferred as it is now.
 
+## Optional personal workaround (2026-10-05) — suppresses the admin error message only, not a fix
+
+An admin account (one holding `administer simplesamlphp authentication`) visiting an admin
+route in DDEV sees: *"There is a Simplesamlphp configuration problem. The configuration
+(config/config.php) is invalid: Missing configuration file."* This is
+`SimplesamlphpAuthManager::getSimpleSamlConfiguration()`/`getSimpleSamlInstance()`
+(`simplesamlphp_auth` module) catching the library's `CriticalConfigurationError` and calling
+`$messenger->addError()` — gated on that permission + admin route, so it's cosmetic (an admin
+notice), not a crash, and nothing else in normal DDEV use depends on the library actually
+loading. It is the exact symptom this note describes, now that it has a user noticing it.
+
+If the message itself is annoying and you don't need real SAML sessions locally, each developer
+can give their own DDEV a throwaway library config, entirely outside git and outside Drupal's
+config:
+
+1. Copy the library's own `.dist` templates into an untracked directory:
+   ```bash
+   mkdir -p drupal/simplesamlphp-local
+   cp drupal/vendor/simplesamlphp/simplesamlphp/config/config.php.dist drupal/simplesamlphp-local/config.php
+   cp drupal/vendor/simplesamlphp/simplesamlphp/config/authsources.php.dist drupal/simplesamlphp-local/authsources.php
+   cp drupal/vendor/simplesamlphp/simplesamlphp/config/acl.php.dist drupal/simplesamlphp-local/acl.php
+   ```
+   The `.dist` `authsources.php` already defines a `default-sp` entry, which matters: that's
+   the exact `auth_source` value in this project's `simplesamlphp_auth.settings.yml`, and
+   `checkAuthStatus()` runs `isAuthenticated()` (hence `new Simple('default-sp')`) on **every**
+   request. If the authsource were missing instead of just the config file, the result would be
+   an uncaught `\SimpleSAML\Error\AuthSource` on every page load, not a quiet admin notice — worse
+   than what this works around. Keeping the `.dist` default intact is what makes this safe.
+2. Point the library's config loader at it, in your personal (already git-ignored) DDEV
+   override file:
+   ```yaml
+   # .ddev/config.local.yaml
+   web_environment:
+     - SIMPLESAMLPHP_CONFIG_DIR=/var/www/html/drupal/simplesamlphp-local
+   ```
+3. `ddev restart`.
+
+Both `drupal/simplesamlphp-local/` and `.ddev/config.local.yaml` are untracked (the former via
+`.git/info/exclude`, the latter already covered by `.ddev/.gitignore`) — nothing is committed,
+nothing on dev-0/staging/production is touched, and `drush config:status` is unaffected since no
+Drupal config entity is involved.
+
+**What this does and does not do:** it only stops the admin notice by giving
+`\SimpleSAML\Configuration::getInstance()` a file to load. It does **not** stand up a working
+SP, does not let you exercise "Netbadge Login," and does not touch anything in "What's true
+today" above. This is explicitly **not** the checked-in mechanism decision item 3 above calls
+for — it is the kind of personal, never-committed local file that decision warns will let the
+gap silently re-form if mistaken for a real fix. Treat it as a cosmetic convenience for
+individual developers, not a step toward closing this note.
+
 ## Cross-references
 
 - [Spike 10 — SAML + OAuth2 coexistence](../spikes/spike-10-saml-oauth2-coexistence.md) — proved coexistence using `drush user:login` as a stand-in; never exercised the real test IdP in DDEV
