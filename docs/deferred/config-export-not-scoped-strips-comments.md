@@ -31,6 +31,53 @@ No damage occurred here — caught by `git status`/`git diff` before committing,
 - [[config-export-drift-hand-edited-yaml.md]] — the mirror-image risk (not exporting, hand-editing instead)
 - Session log: `docs/session-logs/2026-09-14-*` (AV6/AV10 close-out)
 
+## Direction and inventory, 2026-10-05 (group session)
+
+**Direction (Yuji):** treat comments in `config/sync` as unsupported rather than merely fragile
+-- do not add them, and record rationale where an export cannot touch it: the entity's own
+text fields (`description`, `label`, help text) where they exist; a rationale doc keyed by
+config name (for example under `docs/dev-notes/`), or the relevant ADR, spike or deferred
+note; and the commit message for "why this changed". A comment appearing in a config diff is
+rejected or relocated in review. Backing (not built): a comment lint in the proposed
+`scripts/config-check.sh` (see
+[config-export-drift-hand-edited-yaml.md](config-export-drift-hand-edited-yaml.md)).
+**The lint must be YAML-aware**, not a line grep -- see the false positives below.
+
+**Inventory of `drupal/config/sync` at `main` (a line starting with optional whitespace and
+`#`), validated by parsing each file with and without those lines:**
+
+- **20 YAML files / 630 lines match; only 16 files / 296 lines are real comments.** (A recursive
+  grep over the whole directory finds 21 files / 636 lines: the extra file is `.htaccess`, the
+  Apache deny-all file Drupal places in a config directory. It is not YAML or config data, an
+  export does not touch it, and the lint must skip it.)
+- **4 files / 334 lines are false positives:** `search_api_solr.solr_field_type.text_en_6_0_0`,
+  `text_en_7_0_0`, `text_und_6_0_0` and `text_und_7_0_0`. Their `#` lines sit inside string
+  values (Solr character-mapping data), so removing them changes the parsed config. A plain
+  grep lint would flag these wrongly, and stripping them would break the field types.
+- **The 16 real-comment files are all comments we added** (first committed 2026-06-29 to
+  2026-09-15), none shipped by a module:
+
+  | Lines | File |
+  |---|---|
+  | 48 / 46 | `migrate_plus.migration.d7_av_audio` / `d7_av_video` |
+  | 30 | `mandala_kaltura.settings` |
+  | 25 | `migrate_plus.migration.d7_av_files` |
+  | 21 | `mandala_kmassets_sync.settings` |
+  | 18 / 17 | `migrate_plus.migration.d7_av_collections` / `d7_av_node_collection_membership` |
+  | 17 / 14 | `migrate_plus.migration.d7_images_collections` / `d7_images_subcollections` |
+  | 15 | `migrate_plus.migration.d7_av_user_memberships` |
+  | 12 / 9 | `migrate_plus.migration.d7_av_workflow` / `d7_av_tags` |
+  | 8 / 6 / 6 / 4 | `d7_av_url_alias` / `d7_av_collection_url_alias` / `d7_av_subcollections` / `d7_av_pbcore_instantiation` |
+
+- Of the 16, 14 are migration definitions (data-audit counts and rationale), and two are
+  settings files. **`mandala_kmassets_sync.settings` already lost its comment block once to an
+  export** (2026-09-14, above) and it was re-added.
+
+**Not done:** the rationale in those 296 lines has not been moved anywhere. It should be
+relocated once, deliberately, before any export strips it -- decide the destination first
+(a rationale doc per area is the likely fit for the migration files; the settings files may
+fit their module's docs). Ask Yuji before doing the move.
+
 ## Fourth recurrence, 2026-09-15 (AV9 gallery-thumbnail session)
 
 Same shape again: building `node.audio.teaser`/`node.video.teaser` view displays via a

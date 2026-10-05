@@ -77,6 +77,32 @@ Given this has now caused two real deploy incidents, option 2 (a CI check runnin
 more urgency than "no option chosen yet" implies — it would have caught both incidents before
 merge, not just after.
 
+## Direction stated 2026-10-05 (group session) -- Option 1 adopted as the working practice; CI check still open
+
+Yuji stated the practice in the group session: **make the change in DDEV (or dev-0) Drupal and
+export it, in lieu of hand-editing config YAML.** That is Option 1. The practice, as
+written up (not yet added to CLAUDE.md, which needs Xiaoming's and Than's agreement):
+
+1. Make the change in a live Drupal (DDEV or dev-0), then export it.
+2. Run `git diff` on `config/sync` afterward and revert anything unexplained -- a bare
+   `config:export` is not scoped (see
+   [config-export-not-scoped-strips-comments.md](config-export-not-scoped-strips-comments.md)).
+   The narrower alternative recorded there (write back only the one changed object through
+   `config.storage.sync`) avoids the revert step.
+3. Run `drush config:status` and require "No differences between DB and sync directory"
+   before pushing.
+4. The one hand-edit exception is changing a single scalar value in an existing file. Anything
+   structural (a view display's `content` order, adding a component) must come from a live
+   Drupal save.
+
+**Why the norm alone is not enough:** it has already failed once -- the 2026-09-15 recurrence
+happened the same day the sibling export risk was documented. Candidate backing, cheapest first
+(none built): a local `scripts/config-check.sh` (`config:import` then `config:status`, exit
+nonzero on drift, plus the comment lint described in the sibling note); a scoped-export script
+wrapping the `config.storage.sync` technique; and Option 2's CI check. **Still open for the
+group:** whether the CI check is worth its cost. Until then this note stays in "Awaiting a team
+decision".
+
 ## Related
 
 - [Deploy never imports config/sync (the guard's origin)](deploy-never-imports-config-sync.md)
