@@ -1129,6 +1129,17 @@ if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev
   // NOTE: no DDEV `migrate_users` connection — the shared user DB is PII and
   // is NOT replicated to laptops. The user migration runs on the dev server;
   // its `migrate_users` connection is defined in the env-driven block above.
+
+  // stage_file_proxy (dev-only convenience, see
+  // docs/deferred/local-dev-files-provisioning-mechanism.md): fetches a
+  // missing local file binary from dev-0 on first request instead of 404ing.
+  // The module itself is required `--dev`-only, so it is never installed in
+  // the production/dev-0 image (`composer install --no-dev`) -- this config
+  // is a no-op anywhere stage_file_proxy isn't enabled, and
+  // session-start-check.sh enables it locally (never exported to
+  // config/sync, matching the kmassets solr_master_url guard above).
+  $config['stage_file_proxy.settings']['origin'] = 'https://mandala-dev.internal.lib.virginia.edu';
+  $config['stage_file_proxy.settings']['origin_dir'] = 'sites/default/files';
 }
 
 /**
