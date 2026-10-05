@@ -159,6 +159,51 @@ with `--fix` against the full ~8,400-file backlog yet, and isn't wired into
 any automatic trigger (`ddev start`, `session-start-check.sh`) -- both
 deliberately left for the team to decide, not oversights.
 
+## Addendum 2026-10-05 -- production also holds everything; `stage_file_proxy` evaluated for question 3
+
+Re-checked in a group session, read-only, by comparing path and byte size (paths
+Unicode-normalized) of every `public://` `file_managed` row (8,447) against listings of
+dev-0 and of the legacy production hosts' site `files/` trees (image styles, imagecache and
+iiif excluded; six D7 sites).
+
+- **dev-0:** all 8,447 present (matches the 2026-09-23 audit above).
+- **Production (legacy D7):** 8,417 of 8,447 present, **0 size mismatches** against dev-0.
+  This includes all 5,379 transcripts, 2,843 thumbnails and 206 featured images. The other 30
+  are dev-0-only generated thumbnails (see the carousel note below).
+- **Correction to the earlier figure on this page** ("5,413 confirmed gone from D7
+  production"): that came from the audit's fetch against the *root* of each D7 files
+  directory, and cannot see subdirectories such as `transcripts/`. Nothing managed is missing
+  on production. The same blind spot means `--check-d7-source` will keep reporting false
+  "gone" results for subdirectory files; the dev-0-first ordering built on 2026-09-23 avoids
+  it.
+- **Production is temporary.** It is idle D7 and will be retired after cutover. Whatever
+  holds these originals after that needs a named home; that is a cutover-planning question
+  not yet recorded elsewhere.
+- **Unicode filenames:** `Rangdrol-Rinpoché.jpg` is stored decomposed (NFD) on both hosts
+  while its DB URI is composed (NFC). A strict byte-for-byte path match reports it missing.
+  Anything resolving paths strictly (an HTTP fetch, a proxy module) may fail on it. Only this
+  one was noticed; others may exist. Related family: [Spike 4a](../spikes/spike-04a-tibetan-unicode-roundtrip.md),
+  which was about content, not filenames.
+
+**`stage_file_proxy` as a candidate for question 3 (trigger).** D7 used it for non-production
+copies (it was enabled by D7's local-site and stage-settings scripts). On drupal.org it is
+published and covered by the security advisory policy; supported branches 3.1.x and 4.0.x.
+**4.0.0 (2026-06-25) requires core `^11.3 || ^12.0`**, which this site's 11.4.5 satisfies;
+3.1.6 (2025-09-11) requires `^10.3 || ^11`. All 8,447 managed files use the `public://`
+scheme, so the module's usual public-file limitation does not appear to apply. It would
+fetch lazily, on request, so there would be nothing to run. **Not tested here:** installing
+it, its behaviour against dev-0 as origin, subdirectory and Unicode-named files, and that
+the origin setting stays out of exported config and off dev-0 itself. It is an alternative to
+(or a complement for) the on-demand audit command, not yet a recommendation.
+
+**Plan agreed 2026-10-05, deferred to the next session (not started):**
+(1) wire `mandala:missing-file-audit` into `scripts/session-start-check.sh` as a report-only
+step (no `--fix`), the same way steps 3a/3b already report config and content drift; and
+(2) trial `stage_file_proxy` on Xiaoming's DDEV as a short time-boxed spike (install, dev-0
+as origin, a subdirectory file such as a transcript, and the Unicode-named thumbnail) before
+deciding whether it replaces or complements the audit. Question 1 below (full parity or only
+the fields features render) and the trigger question stay open until that trial.
+
 ## Open questions for the team (not decided, not started)
 
 1. **Does local dev need full file-binary parity at all?** Per
