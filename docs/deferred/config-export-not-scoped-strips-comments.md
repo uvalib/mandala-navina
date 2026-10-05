@@ -41,7 +41,7 @@ note; and the commit message for "why this changed". A comment appearing in a co
 rejected or relocated in review. Backing (not built): a comment lint in the proposed
 `scripts/config-check.sh` (see
 [config-export-drift-hand-edited-yaml.md](config-export-drift-hand-edited-yaml.md)).
-**The lint must be YAML-aware**, not a line grep -- see the false positives below.
+**The lint must not be a line grep** (see the false positives below); the reliable test is a real export diff -- see "How to identify comments an export would strip" below.
 
 **Inventory of `drupal/config/sync` at `main` (a line starting with optional whitespace and
 `#`), validated by parsing each file with and without those lines:**
@@ -72,6 +72,26 @@ rejected or relocated in review. Backing (not built): a comment lint in the prop
 - Of the 16, 14 are migration definitions (data-audit counts and rationale), and two are
   settings files. **`mandala_kmassets_sync.settings` already lost its comment block once to an
   export** (2026-09-14, above) and it was re-added.
+
+### How to identify comments an export would strip (verified 2026-10-05)
+
+Diff `config/sync` against what Drupal would actually write: `drush config:export
+--destination=<tmp> -y`, then `diff -r config/sync <tmp>`; the comments an export would
+strip are the removed lines matching `^\s*#`. No heuristic is involved, because the export is
+the thing that strips them. Run in DDEV against `main`, this found **exactly the 296 lines in
+the 16 files above**, left the four Solr field-type files untouched (so their `#` lines are
+data), and showed `.htaccess` only as "Only in `config/sync`" (an export never writes it).
+A comment-tracking parser (ruamel.yaml) agreed on the 16 files and found no trailing
+`value # note` comments, but over-counted lines (331), so use it for *which* files, not how
+many lines.
+
+**Caveats:** it needs a running DDEV whose database matches `config/sync` (check
+`config:status` first), otherwise unrelated drift appears in the same diff. That drift is real
+today: the same diff also showed 29 removed non-comment lines (mostly in the same migration
+files, plus a few `group.relationship_type.*` files and one view). They were not examined;
+they look like the cosmetic re-serialization described above. The lint idea therefore
+fits the proposed `scripts/config-check.sh`: one export diff gives both the comment check and
+the drift check.
 
 **Not done:** the rationale in those 296 lines has not been moved anywhere. It should be
 relocated once, deliberately, before any export strips it -- decide the destination first
