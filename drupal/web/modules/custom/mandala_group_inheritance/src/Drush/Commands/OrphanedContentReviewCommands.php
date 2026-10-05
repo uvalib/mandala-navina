@@ -84,8 +84,23 @@ class OrphanedContentReviewCommands extends DrushCommands {
     $dryRun = (bool) $options['dry-run'];
     $nodeStorage = $this->entityTypeManager->getStorage('node');
 
+    // Orphans are rare (tens out of hundreds of thousands of candidates), so
+    // the per-match notice below can go silent for a long stretch on a large
+    // site -- not hung, just not finding one. Count up front and report
+    // progress as we go so that silence doesn't look like a freeze.
+    $totalCandidates = 0;
+    foreach ($sitesToSweep as $siteToSweep) {
+      $totalCandidates += (int) $nodeStorage->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('type', CollectionVisibility::groupNodeBundles(), 'IN')
+        ->condition('field_legacy_site', $siteToSweep)
+        ->count()
+        ->execute();
+    }
+
     $swept = 0;
     $alreadyGrouped = 0;
+    $checked = 0;
     // Sites like Images run past 100k nodes; loadMultiple() on every
     // candidate id at once is the memory-exhaustion path. Batch instead, and
     // reset the static entity cache each round -- otherwise the cache itself
@@ -100,28 +115,38 @@ class OrphanedContentReviewCommands extends DrushCommands {
 
       foreach (array_chunk($candidateIds, $batchSize) as $batch) {
         foreach ($nodeStorage->loadMultiple($batch) as $node) {
+          $checked++;
           if (CollectionVisibility::owningGroup($node) !== NULL) {
             $alreadyGrouped++;
-            continue;
+          }
+          else {
+            // Drop to a fresh line so the notice below doesn't land in the
+            // middle of the progress counter.
+            $this->io()->newLine();
+            $this->logger()->notice('{action} node {nid} ("{title}", site {site}) into {label} (gid {gid}).', [
+              'action' => $dryRun ? 'Would move' : 'Moving',
+              'nid' => $node->id(),
+              'title' => $node->label(),
+              'site' => $siteToSweep,
+              'label' => $reviewGroup->label(),
+              'gid' => $gid,
+            ]);
+
+            if (!$dryRun) {
+              $reviewGroup->addRelationship($node, 'group_node:' . $node->bundle());
+            }
+            $swept++;
           }
 
-          $this->logger()->notice('{action} node {nid} ("{title}", site {site}) into {label} (gid {gid}).', [
-            'action' => $dryRun ? 'Would move' : 'Moving',
-            'nid' => $node->id(),
-            'title' => $node->label(),
-            'site' => $siteToSweep,
-            'label' => $reviewGroup->label(),
-            'gid' => $gid,
-          ]);
-
-          if (!$dryRun) {
-            $reviewGroup->addRelationship($node, 'group_node:' . $node->bundle());
-          }
-          $swept++;
+          // Redraw every node so a stalled process is visible immediately,
+          // not throttled -- these loadMultiple() batches are the slow part,
+          // not the terminal write.
+          $this->io()->write(sprintf("\r%d of %d checked (%d orphan(s) found)%s", $checked, $totalCandidates, $swept, str_repeat(' ', 10)));
         }
         $nodeStorage->resetCache($batch);
       }
     }
+    $this->io()->newLine();
 
     $this->logger()->success('{action} {count} orphan(s) ({sites}) into {label} (gid {gid}).', [
       'action' => $dryRun ? 'Would sweep' : 'Swept',
