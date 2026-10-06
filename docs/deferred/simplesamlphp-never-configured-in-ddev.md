@@ -5,9 +5,11 @@
 **Jira:** (add when available)
 **Priority:** Medium for the core gap (not breaking anything today, deliberately deferred;
 noted so it isn't rediscovered as a surprise outage in local dev, and so the eventual fix
-is designed rather than bolted on under pressure). **Medium-High, 2026-10-06, for the
-personal workaround specifically:** it breaks local logout entirely for anyone who has it
-enabled — see "Correction" below.
+is designed rather than bolted on under pressure). **Low, 2026-10-06, for local logout
+being broken in DDEV:** the personal workaround that caused one confirmed instance of
+this has been removed, but logout remains broken in DDEV for a second, un-root-caused
+reason — **tabled, not release-blocking, since logout is confirmed working correctly on
+dev-0** (`mandala-dev.internal.lib.virginia.edu`). See "Correction" below.
 
 ## What's true today
 
@@ -145,30 +147,35 @@ first) reaches its own `session_manager->destroy()` + anonymous-account reset. C
 via `curl` with the workaround active: the logout response's `Set-Cookie` headers clear
 only the `SimpleSAML` cookie, never the Drupal `SSESS*` cookie — the browser keeps
 presenting its original, still-valid authenticated session indefinitely, so clicking
-"Log out" any number of times has no effect. Removing the workaround (or just not having
-it configured) restores normal logout, confirmed by the same `curl` reproduction.
+"Log out" any number of times has no effect.
 
-A related, not-fully-isolated observation from the same investigation: at least once,
-immediately after hitting this broken logout path, Drupal's Dynamic Page Cache served
-the **authenticated admin's rendered homepage to a brand-new request carrying no cookie
-at all** (`x-drupal-dynamic-cache: HIT`, `body` class including `user-logged-in`) — i.e.
-a real information-disclosure shape, not just a UX annoyance. A clean login→logout→
-anonymous cycle (workaround removed, cache rebuilt) did **not** reproduce this on repeat
-testing, so it's plausibly a side effect of the broken flow (headers already sent mid-
-request leaving Drupal's own cache-writing code running against stale request state)
-rather than a standing cache bug — but it was only observed once and not cleanly
-isolated. **Flag for whoever next touches SAML/logout locally: re-check this specifically
-with a real browser (not synthetic `curl` sessions) before assuming it's fully explained
-by the logout defect above.**
+The workaround (`drupal/simplesamlphp-local/` + `.ddev/config.local.yaml`'s
+`SIMPLESAMLPHP_CONFIG_DIR`) has been **removed outright, 2026-10-06** — it was never
+actually load-bearing (only suppressed a cosmetic admin notice) and does carry this real
+logout-breaking side effect, so it's not worth keeping around. If you see the "There is a
+Simplesamlphp configuration problem... Missing configuration file" admin notice again,
+that's expected and harmless — do not re-add a local `config.php`/`authsources.php`
+workaround; it is not safe, per this note.
 
-**Practical takeaway:** if your local logout stops working, check whether
-`.ddev/config.local.yaml` sets `SIMPLESAMLPHP_CONFIG_DIR` — remove it (or comment it out)
-and `ddev restart` to get working logout back; you'll see the cosmetic admin notice
-again as the tradeoff. This is not something to "fix" by patching the vendored
-`simplesamlphp_auth` module — the real fix is the checked-in mechanism decision item 3
-above still calls for, which wouldn't have this failure mode (a correctly-configured
-local SP wouldn't report a phantom authenticated session for a non-SAML login in the
-first place).
+**Update 2026-10-06, continued: removing the workaround did not fully fix local
+logout.** Further investigation (after deleting the workaround, a full `ddev poweroff` +
+restart, and testing from a fresh incognito window) showed logout *still* fails in this
+DDEV: the `/user/logout/confirm` form submits and gets a genuine `303` (not a cache or
+browser-extension artifact — ruled out via DevTools Network inspection and an incognito
+retest), but the post-redirect homepage, even with a **fresh, uncached** render
+(`x-drupal-dynamic-cache: MISS`), still shows the user as logged in. Apache's log shows
+`simplesamlphp_auth`/the vendored SimpleSAMLphp library is *still* calling
+`session_start()` under a competing session name on every request ("There is already a
+PHP session with the same name as SimpleSAMLphp's session...") even with no local
+workaround config present at all — a real, independent signal that the library is
+interfering with Drupal's native PHP session handling regardless of whether the specific
+`CriticalConfigurationError` path is hit. This was **not root-caused** before the
+investigation was tabled — **confirmed live on `mandala-dev.internal.lib.virginia.edu`
+(dev-0) that logout works correctly there**, so this is a DDEV-local-only problem, not an
+application defect, and not release-blocking. Do not spend further time on it without a
+specific need; if picked back up, start from the `session_start()` collision warning in
+`ddev logs -s web`, not from the already-ruled-out cache/cookie/browser-extension
+theories above.
 
 ## Cross-references
 
