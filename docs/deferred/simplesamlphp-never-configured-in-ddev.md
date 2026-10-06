@@ -3,9 +3,13 @@
 **Area:** infrastructure / DDEV / local dev environment / SAML
 **Raised during:** Session 2026-08-06 (PR #75 DDEV-readiness check)
 **Jira:** (add when available)
-**Priority:** Medium — not breaking anything today, deliberately deferred; noted so it isn't
-rediscovered as a surprise outage in local dev, and so the eventual fix is designed rather
-than bolted on under pressure.
+**Priority:** Medium for the core gap (not breaking anything today, deliberately deferred;
+noted so it isn't rediscovered as a surprise outage in local dev, and so the eventual fix
+is designed rather than bolted on under pressure). **Low, 2026-10-06, for local logout
+being broken in DDEV:** the personal workaround that caused one confirmed instance of
+this has been removed, but logout remains broken in DDEV for a second, un-root-caused
+reason — **tabled, not release-blocking, since logout is confirmed working correctly on
+dev-0** (`mandala-dev.internal.lib.virginia.edu`). See "Correction" below.
 
 ## What's true today
 
@@ -126,6 +130,52 @@ today" above. This is explicitly **not** the checked-in mechanism decision item 
 for — it is the kind of personal, never-committed local file that decision warns will let the
 gap silently re-form if mistaken for a real fix. Treat it as a cosmetic convenience for
 individual developers, not a step toward closing this note.
+
+**Correction (2026-10-06): this claim was wrong — it also breaks local logout.** Than
+reported being unable to log out of DDEV as `ShantiAdmin` (tokenized logout link "does
+nothing"). Root-caused live: the workaround changes `getSimpleSamlInstance()` from
+throwing (caught, returns `NULL`) to succeeding, which flips
+`simplesamlphp_auth_user_logout()`'s `isActivated() && isAuthenticated()` guard from
+false to true **even for a plain `drush user:login`/local-password session that never
+went through real SAML** — the `.dist` `authsources.php`'s `default-sp` example source
+registers as "authenticated" in SimpleSAMLphp's own local session store once anything
+has exercised it. That branch calls SimpleSAMLphp's own `Simple::logout()`, which (via
+`Utils\HTTP::redirect()`) sends a raw `header('Location: ...')` + echoes its own minimal
+HTML **directly**, bypassing Symfony's response pipeline entirely — and does so *before*
+Drupal's `user_logout()` (the caller, which runs all `hook_user_logout()` implementations
+first) reaches its own `session_manager->destroy()` + anonymous-account reset. Confirmed
+via `curl` with the workaround active: the logout response's `Set-Cookie` headers clear
+only the `SimpleSAML` cookie, never the Drupal `SSESS*` cookie — the browser keeps
+presenting its original, still-valid authenticated session indefinitely, so clicking
+"Log out" any number of times has no effect.
+
+The workaround (`drupal/simplesamlphp-local/` + `.ddev/config.local.yaml`'s
+`SIMPLESAMLPHP_CONFIG_DIR`) has been **removed outright, 2026-10-06** — it was never
+actually load-bearing (only suppressed a cosmetic admin notice) and does carry this real
+logout-breaking side effect, so it's not worth keeping around. If you see the "There is a
+Simplesamlphp configuration problem... Missing configuration file" admin notice again,
+that's expected and harmless — do not re-add a local `config.php`/`authsources.php`
+workaround; it is not safe, per this note.
+
+**Update 2026-10-06, continued: removing the workaround did not fully fix local
+logout.** Further investigation (after deleting the workaround, a full `ddev poweroff` +
+restart, and testing from a fresh incognito window) showed logout *still* fails in this
+DDEV: the `/user/logout/confirm` form submits and gets a genuine `303` (not a cache or
+browser-extension artifact — ruled out via DevTools Network inspection and an incognito
+retest), but the post-redirect homepage, even with a **fresh, uncached** render
+(`x-drupal-dynamic-cache: MISS`), still shows the user as logged in. Apache's log shows
+`simplesamlphp_auth`/the vendored SimpleSAMLphp library is *still* calling
+`session_start()` under a competing session name on every request ("There is already a
+PHP session with the same name as SimpleSAMLphp's session...") even with no local
+workaround config present at all — a real, independent signal that the library is
+interfering with Drupal's native PHP session handling regardless of whether the specific
+`CriticalConfigurationError` path is hit. This was **not root-caused** before the
+investigation was tabled — **confirmed live on `mandala-dev.internal.lib.virginia.edu`
+(dev-0) that logout works correctly there**, so this is a DDEV-local-only problem, not an
+application defect, and not release-blocking. Do not spend further time on it without a
+specific need; if picked back up, start from the `session_start()` collision warning in
+`ddev logs -s web`, not from the already-ruled-out cache/cookie/browser-extension
+theories above.
 
 ## Cross-references
 
