@@ -70,16 +70,63 @@ else
 fi
 echo
 
-# ── 3a. Local DDEV config:status ───────────────────────────────────────────
-echo "=== 3a. Local DDEV config:status ==="
+# ── 3a-pre. stage_file_proxy (DDEV-only dev convenience, never exported) ───
+# Runs BEFORE config:status below so that module's expected, permanent
+# "Only in DB" drift is already present when that check runs and can be
+# discounted in one pass, rather than appearing as a fresh surprise.
+echo "=== 3a-pre. stage_file_proxy (local-only, not part of config/sync) ==="
 if ! ddev describe >/dev/null 2>&1; then
   warn "ddev project not found/started -- starting it now"
 fi
 ddev start >/dev/null 2>&1
+if ddev drush pm:list --status=enabled --no-core --field=name 2>/dev/null | grep -qx stage_file_proxy; then
+  pass "stage_file_proxy already enabled locally"
+elif ddev drush pm:list --field=name 2>/dev/null | grep -qx stage_file_proxy; then
+  warn "stage_file_proxy available but not enabled -- enabling locally now (DDEV-only, never exported)"
+  ddev drush pm:enable stage_file_proxy -y >/dev/null
+else
+  warn "stage_file_proxy not installed (run: ddev composer require --dev drupal/stage_file_proxy)"
+fi
+echo
+
+# ── 3a. Local DDEV config:status ───────────────────────────────────────────
+# stage_file_proxy is deliberately enabled locally (above) but never part of
+# config/sync (see settings.php's IS_DDEV_PROJECT block) -- it would
+# otherwise make this gate fail permanently on every DDEV. Discount exactly
+# that expected drift (stage_file_proxy.settings "Only in DB", and
+# core.extension "Different" when the module-list diff is precisely
+# {stage_file_proxy}), not core.extension drift in general -- a real,
+# unrelated module left enabled locally should still fail this check.
+echo "=== 3a. Local DDEV config:status ==="
 LOCAL_CONFIG_STATUS="$(ddev drush config:status 2>&1)"
 echo "$LOCAL_CONFIG_STATUS"
-if echo "$LOCAL_CONFIG_STATUS" | grep -q "No differences between DB and sync directory"; then
+
+STATUS_JSON="$(ddev drush config:status --format=json 2>/dev/null)"
+REMAINING_DIFF_COUNT="$(echo "$STATUS_JSON" | jq 'to_entries | length' 2>/dev/null || echo "")"
+
+if [ "$REMAINING_DIFF_COUNT" = "0" ] || echo "$LOCAL_CONFIG_STATUS" | grep -q "No differences between DB and sync directory"; then
   pass "local config:status clean"
+elif [ -n "$STATUS_JSON" ] && command -v jq >/dev/null 2>&1; then
+  DB_MODULES="$(ddev drush pm:list --status=enabled --type=module --field=name 2>/dev/null | sort)"
+  SYNC_MODULES="$(ddev drush php:eval "echo implode(PHP_EOL, array_keys(\Drupal::service('config.storage.sync')->read('core.extension')['module'] ?? []));" 2>/dev/null | sort)"
+  MODULE_ONLY_IN_DB="$(comm -23 <(echo "$DB_MODULES") <(echo "$SYNC_MODULES"))"
+
+  # Build the set of entity names we're allowed to discount.
+  DISCOUNT_NAMES="stage_file_proxy.settings"
+  if [ "$MODULE_ONLY_IN_DB" = "stage_file_proxy" ]; then
+    DISCOUNT_NAMES="$DISCOUNT_NAMES
+core.extension"
+  fi
+
+  UNEXPLAINED="$(echo "$STATUS_JSON" | jq -r --arg discount "$DISCOUNT_NAMES" '
+    ($discount | split("\n")) as $d | to_entries | map(select(.key as $k | ($d | index($k)) | not)) | .[].key
+  ' 2>/dev/null)"
+
+  if [ -z "$UNEXPLAINED" ]; then
+    pass "local config:status clean (stage_file_proxy's local-only enablement discounted -- deliberately never in config/sync)"
+  else
+    fail "local config:status shows drift beyond the expected stage_file_proxy state -- see output above"
+  fi
 else
   fail "local config:status shows drift -- see output above"
 fi
