@@ -16,11 +16,17 @@
 # cannot live in config/sync, and how this check identifies them).
 #
 # Usage:
-#   ./scripts/config-check.sh            # drift and unexported config FAIL;
-#                                        # comments and formatting WARN
-#   ./scripts/config-check.sh --strict   # comments and formatting FAIL too
-#                                        # (use after the existing comments
-#                                        # have been relocated)
+#   ./scripts/config-check.sh            # drift, unexported config, comments and
+#                                        # formatting differences all FAIL
+#   ./scripts/config-check.sh --lenient  # comments and formatting only WARN
+#                                        # (drift and unexported config still FAIL)
+#
+# The local-only `stage_file_proxy` module is expected on every DDEV and never
+# belongs in config/sync, so its settings and its core.extension entry are
+# discounted (scripts/lib/local-only-config.sh, shared with
+# session-start-check.sh). Anything else still fails.
+#
+# Also run by scripts/session-close-check.sh when config/sync has changed.
 #
 # Requires DDEV running with the local DB in step with config/sync. Writes the
 # export to a temp dir inside the container and removes it afterwards; it does
@@ -33,10 +39,11 @@ set -uo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-STRICT=0
+STRICT=1
 for arg in "$@"; do
   case "$arg" in
-    --strict) STRICT=1 ;;
+    --lenient) STRICT=0 ;;
+    --strict) STRICT=1 ;;   # kept for old callers; strict is now the default
     -h|--help) sed -n '2,29p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "Unknown argument: $arg (try --help)" >&2; exit 2 ;;
   esac
@@ -51,6 +58,9 @@ cleanup() {
   rm -f "$DIFF_FILE"
 }
 trap cleanup EXIT
+
+# shellcheck source=lib/local-only-config.sh
+. "$REPO_ROOT/scripts/lib/local-only-config.sh"
 
 OVERALL_FAIL=0
 fail() { echo "FAIL: $*"; OVERALL_FAIL=1; }
@@ -74,9 +84,14 @@ STATUS="$(ddev drush config:status 2>&1)"
 if echo "$STATUS" | grep -q "No differences between DB and sync directory"; then
   pass "no differences between DB and sync directory"
 else
-  echo "$STATUS"
-  fail "DB and config/sync disagree -- resolve this first (the export diff below would be polluted by it)"
-  exit 1
+  UNEXPLAINED="$(config_status_unexplained)"; UNEXPLAINED_RC=$?
+  if [ "$UNEXPLAINED_RC" -eq 0 ] && [ -z "$UNEXPLAINED" ]; then
+    pass "no differences between DB and sync directory (local-only $LOCAL_ONLY_MODULE discounted)"
+  else
+    echo "$STATUS"
+    fail "DB and config/sync disagree -- resolve this first (the export diff below would be polluted by it)"
+    exit 1
+  fi
 fi
 
 # ── 2. Export to a temp dir and diff ────────────────────────────────────
@@ -115,6 +130,14 @@ SUMMARY="$(awk -v tmp="$TMP_DIR" '
   END { for (k in c)   print "COMMENTS " k " " c[k]
         for (k in fmt) print "FORMAT " k }
 ' "$DIFF_FILE" | sort)"
+
+# Discount the local-only module: its settings file is "only in the export", and
+# core.extension differs by exactly its one module line. Both are expected on any DDEV.
+SUMMARY="$(echo "$SUMMARY" | grep -vxF "ONLY_EXPORT ${LOCAL_ONLY_MODULE}.settings.yml")"
+if echo "$SUMMARY" | grep -qxF "FORMAT core.extension.yml" \
+   && ddev exec "grep -v '^  ${LOCAL_ONLY_MODULE}: 0\$' '$TMP_DIR/core.extension.yml' | diff -q '$SYNC_DIR/core.extension.yml' - >/dev/null"; then
+  SUMMARY="$(echo "$SUMMARY" | grep -vxF "FORMAT core.extension.yml")"
+fi
 
 ONLY_EXPORT="$(echo "$SUMMARY" | awk '$1=="ONLY_EXPORT"{print "  " $2}')"
 ONLY_SYNC="$(echo "$SUMMARY"   | awk '$1=="ONLY_SYNC"{print "  " $2}')"

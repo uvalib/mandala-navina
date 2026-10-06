@@ -28,13 +28,13 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 
 | File | Area | Raised | Priority |
 |---|---|---|---|
-| [config-export-drift-hand-edited-yaml.md](config-export-drift-hand-edited-yaml.md) | deployment / CMI / config sync / DX | Session 2026-09-02 (PR #177/#179) | Medium — how should hand-edited config YAML be validated before `main`, not just at deploy time? **Update 2026-10-05:** Option 1 (change in a live Drupal, then export) stated as the working practice, plus a no-comments-in-config rule with an inventory; **2026-10-06:** the practice is now in CLAUDE.md; the CI-check question (Option 2) is still open; the 296 `config/sync` comment lines were relocated to `docs/dev-notes/migration-config-rationale.md` (PR pending) |
 | [local-dev-files-provisioning-mechanism.md](local-dev-files-provisioning-mechanism.md) | local dev environment / DX / infrastructure | Session 2026-09-23 | **Medium-High — no mechanism populates local `sites/default/files` on any DDEV. Plan agreed 2026-10-05, deferred to the next session: report-only audit step in the session-start check, plus a short `stage_file_proxy` trial on Xiaoming's DDEV.** Confirmed independently missing on two developers' machines; on Xiaoming's, 3 fields (`field_transcript`, `field_thumbnail_image`, `field_featured_image`) are ~100% missing, 8,413 files total. Needs a team decision on source + mechanism, not implementation |
 
 ## Open items
 
 | File | Area | Raised | Priority |
 |---|---|---|---|
+| [config-export-drift-hand-edited-yaml.md](config-export-drift-hand-edited-yaml.md) | deployment / CMI / config sync / DX | Session 2026-09-02 (PR #177/#179) | **Low — DECIDED 2026-10-06: no CI check.** Practice (export from a live Drupal, never hand-edit) is in CLAUDE.md; `scripts/config-check.sh` (strict by default, discounts local-only `stage_file_proxy`) runs from `session-close-check.sh` when `config/sync` changed; the deploy guard is the backstop. Revisit only if it recurs; a 2026-10-06 relocation also moved the 296 `config/sync` comment lines to `docs/dev-notes/migration-config-rationale.md` |
 | [solr-sync-architecture-d11.md](solr-sync-architecture-d11.md) | solr / kmassets / kmterms | Session 2026-06-12 | High |
 | [solr-pipeline-cost-discussion.md](solr-pipeline-cost-discussion.md) | solr / infrastructure | Session 2026-06-12 | **High — ASSIGNED to Yuji, 2026-09-02 (group decision).** Original cost question is largely moot (no always-on ECS to right-size); what's left is closing the loop with Dave on the still-open items in `kmasset-solr-doc-contract.md` §3 — the direct-to-master sink already shipped (1a.8) ahead of confirming those |
 | [tibetan-search-quality.md](tibetan-search-quality.md) | solr / search / i18n | Session 2026-06-15 | Low (post-MVP) |

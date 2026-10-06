@@ -148,6 +148,8 @@ files across (no hand-editing). The only non-comment differences were serializat
 shows no difference between the DB and the sync directory (other than the local-only
 `stage_file_proxy`). The four Solr field-type files were left alone; their `#` lines are string data.
 
-What remains: turning `scripts/config-check.sh --strict` on by default, and teaching it to
-discount the local-only `stage_file_proxy` the way `session-start-check.sh` already does (today it
-reports that module's expected drift as a FAIL).
+Follow-up, same day: `scripts/config-check.sh` is now strict by default (`--lenient` downgrades), it
+discounts the local-only `stage_file_proxy` (shared helper with `session-start-check.sh`), and
+`session-close-check.sh` runs it when `config/sync` changed. Five more files an export would only
+reformat (four Solr field types, `views.view.collection_gallery`) were brought to canonical form so
+strict passes on `main`. See [config-export-drift-hand-edited-yaml.md](config-export-drift-hand-edited-yaml.md).

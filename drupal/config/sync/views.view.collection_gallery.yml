@@ -13,7 +13,7 @@ dependencies:
 id: collection_gallery
 label: 'Collection gallery'
 module: views
-description: 'Masonry grid of shanti_image nodes scoped to one collection + its subcollections -- embedded on a collection''s own page (shanti_collections_view). Reuses B3''s shanti_grid_view style plugin, filtered via a group-membership contextual filter rather than the site-wide image_gallery view. See docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md (Workstream B5 planning).'
+description: "Masonry grid of shanti_image nodes scoped to one collection + its subcollections -- embedded on a collection's own page (shanti_collections_view). Reuses B3's shanti_grid_view style plugin, filtered via a group-membership contextual filter rather than the site-wide image_gallery view. See docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md (Workstream B5 planning)."
 tag: ''
 base_table: node_field_data
 base_field: nid
