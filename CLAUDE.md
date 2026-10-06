@@ -91,6 +91,27 @@ ddev drush cache:rebuild      # Clear caches
 
 Site URL: https://mandala.ddev.site
 
+## Config changes: export from live Drupal, never hand-edit
+
+`drupal/config/sync` is the shared contract, and the deploy guard compares it to
+Drupal's own serialization by exact value. Hand-edited YAML has twice failed the
+pipeline (PRs #177, #209) because Drupal reorders keys on save. The practice
+(stated by Yuji 2026-10-05; details in
+`docs/deferred/config-export-drift-hand-edited-yaml.md`):
+
+1. Make the change in a live Drupal (DDEV or dev-0), then export it.
+2. `git diff drupal/config/sync` afterward and revert anything unexplained —
+   a bare `drush config:export` is not scoped. **`--diff` is not a preview**: it
+   still writes. To inspect without writing, use `./scripts/config-check.sh` or
+   `--destination=<temp dir>`.
+3. Require `ddev drush config:status` to say "No differences between DB and sync
+   directory" before pushing.
+4. The only hand-edit allowed is changing a single scalar value in an existing
+   file. Anything structural (a view display's `content` order, adding a
+   component or key) must come from a live Drupal save.
+5. No `#` comments in `config/sync` — an export strips them. Put the explanation
+   in `docs/` instead.
+
 ## Content identity across environments
 
 **Never hardcode a raw D11 node/entity id in application code.** Each
