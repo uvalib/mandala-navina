@@ -81,7 +81,7 @@ merge, not just after.
 
 Yuji stated the practice in the group session: **make the change in DDEV (or dev-0) Drupal and
 export it, in lieu of hand-editing config YAML.** That is Option 1. The practice, as
-written up (not yet added to CLAUDE.md, which needs Xiaoming's and Than's agreement):
+written up (**added to CLAUDE.md 2026-10-06**, with Yuji, Xiaoming and Than present; see "Config changes: export from live Drupal, never hand-edit"):
 
 1. Make the change in a live Drupal (DDEV or dev-0), then export it.
 2. Run `git diff` on `config/sync` afterward and revert anything unexplained -- a bare
