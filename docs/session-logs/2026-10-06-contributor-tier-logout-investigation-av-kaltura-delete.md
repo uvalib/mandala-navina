@@ -1,8 +1,8 @@
-# Session Log: Authenticated contributor tier, local DDEV logout investigation, AV delete-from-Kaltura feature
+# Session Log: Authenticated contributor tier, local DDEV logout investigation, AV delete-from-Kaltura feature, transcript Solr tier analyzers
 
 **Date:** 2026-10-06  
 **Participants:** Than Grove (driving solo, except a mid-session group meeting with Yuji Shinozaki and Xiaoming Wang), Claude Code  
-**Outcome:** Four PRs merged (#276 core/contrib update, #277 contributor tier, #278 SimpleSAML workaround correction, #280/#281 from the group session's own config-workflow closeout); PR #279 (AV delete-from-Kaltura checkbox) open, end-to-end verified live, ready for review. See [`authenticated-contributor-crud-not-wired-in-d11.md`](../deferred/authenticated-contributor-crud-not-wired-in-d11.md), [`simplesamlphp-never-configured-in-ddev.md`](../deferred/simplesamlphp-never-configured-in-ddev.md), and [`av-delete-kaltura-checkbox-admin-session-verification.md`](../deferred/av-delete-kaltura-checkbox-admin-session-verification.md).
+**Outcome:** Eight PRs merged (#276 core/contrib update, #277 contributor tier, #278 SimpleSAML workaround correction, #280/#281 config-workflow closeout, #279 AV delete-from-Kaltura checkbox, #282 transcript English stemming, #283 transcript Chinese/Nepali/Dzongkha/Wylie analyzers). No PRs left open at session end. See [`authenticated-contributor-crud-not-wired-in-d11.md`](../deferred/authenticated-contributor-crud-not-wired-in-d11.md), [`simplesamlphp-never-configured-in-ddev.md`](../deferred/simplesamlphp-never-configured-in-ddev.md), [`av-delete-kaltura-checkbox-admin-session-verification.md`](../deferred/av-delete-kaltura-checkbox-admin-session-verification.md), and [`transcript-tier-analyzers-and-language-fields.md`](../deferred/transcript-tier-analyzers-and-language-fields.md).
 
 ---
 
@@ -1094,5 +1094,730 @@ Now let's commit these doc updates, then run the session log script.
 ## Claude — 2026-10-06 17:23
 
 Now let's generate the session log.
+
+---
+
+## Claude — 2026-10-06 17:23
+
+Let's check the top of the generated log and fix the Participants/Outcome header lines.
+
+---
+
+## Claude — 2026-10-06 17:23
+
+Good, self-updating — no manual indexing needed. Let's commit the session log and push.
+
+---
+
+## Claude — 2026-10-06 17:23
+
+Now let's update PR #279's description to reflect the confirmed end-to-end verification.
+
+---
+
+## Claude — 2026-10-06 17:23
+
+All done:
+
+- **Deferred note updated** — `av-delete-kaltura-checkbox-admin-session-verification.md` now marked DONE, with the real watchdog evidence (`Deleted Kaltura entry 1_lt1vkuxc.`) recorded, and the open question narrowed to a non-blocking curiosity (whether USER would also work, not just ADMIN).
+- **Session log written** — `docs/session-logs/2026-10-06-contributor-tier-logout-investigation-av-kaltura-delete.md`, covering the contributor-tier PR, the logout investigation (tabled, DDEV-only), and this feature.
+- **PR #279 updated and pushed** — https://github.com/uvalib/mandala-navina/pull/279 — description now reflects the confirmed end-to-end test, status is clean/mergeable, ready for Yuji/Xiaoming's review.
+
+---
+
+## User — 2026-10-06 17:23
+
+what else is left for me to do?
+
+---
+
+## Claude — 2026-10-06 17:24
+
+Mechanically, everything from today is clean — session log written, docs indexed, nothing uncommitted. Here's what's actually left:
+
+**Immediate — this session's work:**
+1. **PR #279** (AV delete-from-Kaltura checkbox) is open, clean, end-to-end verified — just needs Yuji/Xiaoming's review and merge.
+
+**Explicitly punted to you by the group (2026-10-05, no date set):**
+2. The `ts_*` tier analyzer design for the transcript Solr core (stemming per tier, separate language fields)
+3. Whether English stemming matters for transcript search
+
+**From your earlier solo TODO list, still open if you want to keep going:**
+4. Texts footnotes production build (`texts-footnotes-production-transform.md`) — feasibility proven, just needs building
+5. Per-collection "group editor" tier design (`d7-editor-permissions-og-group-scoped-not-migrated.md`) — now that the contributor tier (#277) is in, this is the natural next access-model layer
+6. One-line `Searcher.php` fix — session id leaking into Solr logs
+7. Deliver the AV14 media-less-nodes cleanup list to AV staff
+8. Images node authorship fix (migrated nodes all owned by Anonymous)
+
+Nothing is blocking you — #279 is the only loose end from today specifically. Want me to refresh the project-state memory now, or keep going on one of these?
+
+---
+
+## User — 2026-10-06 17:24
+
+Ok elaborate on #2
+
+---
+
+## Claude — 2026-10-06 17:25
+
+Here's the full picture on #2 — the per-collection "group editor" tier.
+
+## What the gap actually is
+
+D7 had three editorial roles, but only one was real:
+
+| D7 role | Real users | Status in D11 today |
+|---|---|---|
+| `shanti editor` (sitewide) | **0** | ✅ Built — this is `content_editor` (ADR 015) |
+| `workflow editor` | 2, AV-only, one narrow field | Vestigial, not blocking |
+| OG **`editor`** (per-collection, rid 31/51) | **142** | ❌ **Not built at all** |
+
+The 142-user role is the one that matters, and it's structurally different from `content_editor`: D7 granted it **per collection** (OG `og_users_roles` — "Than is an editor of Collection A," not editor sitewide). A single global D11 role can't represent that faithfully — an editor of Collection A having edit rights on Collection B would be a real regression, not a neutral simplification.
+
+## Why it's not done yet
+
+ADR 015 explicitly deferred this as "Phase B" when it built `content_editor` in August — by design, not oversight. I confirmed today that the gap is still completely open: `d7_images_collection_memberships` (the migration that creates Group memberships from OG data) only creates plain `group_membership` relationships — it **never reads or carries forward which members were OG `editor`s vs. plain members**. So right now, after PR #277 lands, every migrated user — including the 142 real D7 editors — gets only the contributor tier (CRUD on their *own* content). Their actual D7 capability (edit *any* content within their collections) is silently dropped.
+
+## What building it looks like
+
+This is the same pattern as PR #277, one layer up:
+
+1. **New Group role per group type** — `group.role.collection-editor.yml` / `group.role.subcollection-editor.yml`, modeled on the existing `collection-content_editor_insider.yml` (same permission shape: `create`/`update any`/`delete any` `group_node:X entity`) but **not** synchronized to a global Drupal role like `content_editor` is — this one has to be individually assignable per membership (Group 3.x's "individual" role scope), since it's per-collection, not sitewide.
+2. **A migration to populate it** — read D7's `og_users_roles` for rid 31/51 (the Images `editor` role) and grant the new Group role on the matching membership. No such migration exists yet.
+3. **Scope check** — the deferred note flags this explicitly: OG `editor` data was only confirmed for Images. Sources/Texts/AV/Home likely have their own `og_role`/`og_users_roles` data that's never been checked.
+4. **Connects to 1b.3/1b.4** — the deferred note ties this to the still-open Solr-proxy visibility coherence and paragraph-access-inheritance tasks; worth checking their current status before scoping this, since it may be the same underlying gap from a different angle.
+
+Want me to start on this, or check 1b.3/1b.4's status first so we don't duplicate work?
+
+---
+
+## User — 2026-10-06 17:26
+
+Actually I meant elaborate on: The ts_* tier analyzer design for the transcript Solr core (stemming per tier, separate language fields)
+
+---
+
+## Claude — 2026-10-06 17:26
+
+Here's the full picture on the `ts_*` tier analyzer question.
+
+## What exists today
+
+The schema (`solr/mandala-av-transcripts/conf/schema.xml`) has a single `text_tier` field type applied to **every** `ts_*` dynamic field (17 language-tier names in the real D7 data: `ts_content_eng`, `ts_content_wylie`, `ts_content_und`, plus ~10 smaller languages), all sharing one analyzer:
+
+```xml
+<fieldType name="text_tier" class="solr.TextField" positionIncrementGap="100">
+  <analyzer>
+    <tokenizer class="solr.ICUTokenizerFactory"/>
+    <filter class="solr.ICUFoldingFilterFactory"/>
+  </analyzer>
+</fieldType>
+```
+
+That's a deliberate, labeled **placeholder** — "DEFAULT FOR NOW, analyzer choice deferred" is right in the schema comment. (Tibetan-script tiers, `content_bod`/`dzo_bod`, are separate and already settled — ICU tokenizer only, matching D7 exactly, not in question here.)
+
+## What it costs, concretely
+
+D7 used a single English analyzer (whitespace tokenizer + English stemming + stop words + Latin-1 accent mapping) across all non-Tibetan tiers — appropriate for English, poor for everything else. The new ICU default flips that trade:
+
+| | D7 (English analyzer) | D11 default (ICU) |
+|---|---|---|
+| English stemming | Yes (`chant` matches `chanting`) | **No** — confirmed, tested live in a throwaway Solr |
+| English stop words | Yes | No |
+| Synonyms | Yes (file exists, unknown if used) | No |
+| Latin-1 accent folding | Yes | Yes (via ICU folding) |
+| Chinese/Nepali/Wylie tokenization | Poor — whitespace tokenizer likely treats a run of Chinese as one token (not verified live) | Better — ICU splits on script boundaries |
+
+So: real volume breakdown is English 71,873 tier values, Wylie 30,497, Nepali 13,625, Chinese 5,191, gloss 3,491, plus ~10 smaller languages — English is by far the largest, and it's the one language that got *worse* under the new default (no stemming), while everything else likely got better (real tokenization instead of whitespace-splitting non-space-delimited scripts).
+
+## Two genuinely separate decisions bundled in this one deferred item
+
+1. **Which analyzer per tier.** Three live options: exact D7 parity (port the English analyzer + its stop-word/synonym/accent files), ICU for everything (current default), or a split — English keeps the legacy analyzer, everything else stays ICU. The third is cheap to do (an explicit `<field>` override beats the `ts_*` dynamic-field pattern) if you want English stemming back without touching the other 16 tiers.
+2. **Whether tiers should become separate per-language fields** instead of one analyzer applied by naming pattern. Yuji's stated view (10-02) is yes, eventually — but the design itself (and how it maps onto the React client's existing tier field names, which it still reads directly) is undecided.
+
+## What actually closes this out
+
+The deferred note names three concrete unknowns, all pointing back to you:
+1. **Do users rely on English stemming?** Do they actually search Chinese/Nepali/Wylie transcripts? Is D7's synonyms file even populated, or dead weight?
+2. Optionally, compare real hit counts under each candidate analyzer against a sample of real units from the `d7_av` dump, in a throwaway Solr — evidence rather than a guess.
+3. Decide the per-language field design and its mapping onto the client's existing tier names.
+
+Given it's explicitly a data/usage question only you can answer (not a technical unknown), the fastest path is just answering #1 from your own knowledge of how THL/editors actually use transcript search today — that alone would probably settle whether this is "ship the ICU default as final" or "add the English-analyzer override."
+
+---
+
+## User — 2026-10-06 17:30
+
+Answers are 1. Yes users use English stemping and do search on other languages and wylie. Not sure about the synonyms.
+
+---
+
+## Claude — 2026-10-06 17:31
+
+Good, that's enough to act on. Let's implement the "mix" option — give English back real stemming via an explicit field override, leave everything else on the ICU default, and record the decision. First let's see if there's a way to verify this against a live Solr instance.
+
+---
+
+## Claude — 2026-10-06 17:31
+
+Understood — skipping the hit-count comparison, going straight to implementing based on your answers.
+
+---
+
+## Claude — 2026-10-06 17:31
+
+Now add the explicit field override, which Solr matches before falling back to the `ts_*` dynamic field pattern.
+
+---
+
+## Claude — 2026-10-06 17:31
+
+Good catch from the linter — XML comments can't contain `--`. Let me fix those (switching to em dashes, consistent with the project's prose style anyway).
+
+---
+
+## Claude — 2026-10-06 17:31
+
+Fix lines 56 and 61 (end-of-line `--` with no trailing space).
+
+---
+
+## Claude — 2026-10-06 17:31
+
+Let's also load this into a real Solr instance quickly to catch any config typos — not comparing results, just confirming the filter chain actually loads.
+
+---
+
+## Claude — 2026-10-06 17:32
+
+Now let's create a core with our schema, matching the project's documented setup (techproducts base + ICU libs + our schema).
+
+---
+
+## Claude — 2026-10-06 17:33
+
+Now swap in our real schema (as a managed-schema replacement) plus the ICU analysis-extras lib lines, matching the README's documented setup.
+
+---
+
+## Claude — 2026-10-06 17:33
+
+Now reload the core and check for errors.
+
+---
+
+## Claude — 2026-10-06 17:33
+
+Clean reload — schema is valid, all filter classes resolved. Let's do one quick functional check of the actual stemming behavior.
+
+---
+
+## Claude — 2026-10-06 17:33
+
+Both work: `chant` correctly matches `chanting` (English stemming restored), and the Wylie tier still tokenizes and searches correctly (ICU default untouched). Let's clean up the test container.
+
+---
+
+## Claude — 2026-10-06 17:33
+
+Now let's update the deferred note and README to record the decision and verification.
+
+---
+
+## Claude — 2026-10-06 17:33
+
+Now update the README summary row and the solr core's own README.
+
+---
+
+## Claude — 2026-10-06 17:34
+
+Now let's check and update Spike 11's own reference to this decision.
+
+---
+
+## Claude — 2026-10-06 17:34
+
+Now let's review the full diff and run the close-check before committing.
+
+---
+
+## Claude — 2026-10-06 17:34
+
+This work is unrelated to PR #279's branch — let's put it on its own branch off `main`.
+
+---
+
+## Claude — 2026-10-06 17:34
+
+Clean stash apply onto fresh `main`. Let's verify the diff is exactly what's expected, then commit and push.
+
+---
+
+## Claude — 2026-10-06 17:35
+
+**Done — PR #282**: https://github.com/uvalib/mandala-navina/pull/282
+
+Built the "mix" option from the deferred note: `ts_content_eng` gets its own field with real Solr English stemming restored, every other `ts_*` tier (Wylie, Chinese, Nepali, etc.) keeps the ICU default — confirmed the right call for those since there's no Solr stemmer for Wylie anyway and ICU tokenizes non-space-delimited scripts better than D7's old whitespace tokenizer did.
+
+Verified live in a throwaway Solr 7.7.3 core (same method Spike 11 used, skipped the hit-count comparison as you said): schema loads clean, `chant` now matches `chanting`, Wylie search still works correctly.
+
+Updated the deferred note, the solr core's own README, and Spike 11's doc to record the decision. Left open: separate per-language fields (lower priority now), and whether D7's synonyms file is even in use — you weren't sure, so I didn't guess.
+
+Back on the `feat/av-delete-kaltura-confirm-checkbox` branch (PR #279). Three PRs now open: #279 (Kaltura delete), #282 (this one), plus whatever's pending from the group session.
+
+---
+
+## User — 2026-10-06 17:39
+
+Ok boht PR's have been manually merged and the remote branch deleted. Switch to main pull the latest and delete the local branches for those PR. Then tell me what is next for me to handle alone.
+
+---
+
+## Claude — 2026-10-06 17:39
+
+Confirmed — #279 and #282 both merged. Let's switch to `main`, pull, and clean up.
+
+---
+
+## Claude — 2026-10-06 17:39
+
+`main` is fast-forwarded with both PRs. Now let's delete the local branches and clean up tracking refs.
+
+---
+
+## Claude — 2026-10-06 17:39
+
+Let's sync DDEV's config to match, and confirm there are no other open PRs or loose ends.
+
+---
+
+## Claude — 2026-10-06 17:40
+
+Clean — only the expected dev-only `stage_file_proxy` drift, and **no open PRs**. Everything from today is merged.
+
+## What's next for you, solo
+
+With #279 and #282 merged, the group-assigned items are closed out. What's left is your standing solo list:
+
+1. **Per-collection "group editor" tier (Phase B)** — `d7-editor-permissions-og-group-scoped-not-migrated.md`. We elaborated on this earlier: D7's real, actively-used editor role (142 users) was per-collection via OG, and nothing migrates it today — those 142 users currently get only the contributor tier from #277. Natural next step after today's work.
+2. **Texts footnotes production build** — `texts-footnotes-production-transform.md`. Feasibility already proven (Spike 4b), this is pure build-out.
+3. **One-line `Searcher.php` fix** — session id leaking into Solr logs (`solr-proxy-session-id-forwarded-to-solr.md`).
+4. **Deliver the AV14 media-less-nodes cleanup list** to AV staff — the list exists, just needs to actually be handed off.
+5. **Images node authorship fix** — migrated Images nodes are all owned by Anonymous, not their real D7 authors.
+
+Still open, not urgent, lower priority than the above:
+- Separate per-language transcript Solr fields (explicitly deferred again today)
+- Whether D7's transcript synonyms file is even in use (you weren't sure — worth a quick check if you get a free moment)
+
+Want me to start on #1 (group editor tier), since it's the direct follow-on to today's contributor-tier work?
+
+---
+
+## User — 2026-10-06 17:41
+
+Didn't we just deal with eparate per-language transcript Solr field and we gave Engl its own but kept the rest as ICU. What's the remaining question?
+
+---
+
+## Claude — 2026-10-06 17:42
+
+Good catch to double check — they're two different questions, and it's easy to conflate them since we touched the same file.
+
+**What we did today (question 1 — "which analyzer per tier"):** We carved **one exception** out of the generic pattern. Before: all 17 `ts_*` tier field names shared a single `dynamicField name="ts_*"` pattern, so they all got the *exact same* ICU-tokenizer-plus-folding analysis regardless of language. Now: English (`ts_content_eng`) is pulled out as its own explicit field with real stemming; the other **16** tier names (Wylie, Chinese, Nepali, gloss, and ~10 smaller languages) still all share that one generic `ts_*` pattern and get identical ICU treatment.
+
+**What's still open (question 2 — "separate per-language fields"):** Whether each of those remaining 16 tiers should *also* get its own dedicated field + analyzer tuned to that specific language, instead of all of them sharing one generic pattern just because they're "not English, not Tibetan." Concretely, that would mean things like:
+
+- Chinese getting a CJK-aware analyzer (e.g. `CJKBigramFilterFactory` — bigram-based segmentation, since ICU's generic tokenizer isn't really a Chinese word-segmenter)
+- Nepali (Devanagari script) potentially getting its own analyzer rather than generic ICU
+- Wylie staying on ICU regardless — it's a romanization scheme, not a language with its own linguistic analyzers, so there's nothing to tune
+
+Today's answers from you (English stemming matters, other languages/Wylie are searched) told us ICU is *correct enough* for those 16 as a baseline — that's why we didn't block the English fix on this. But "correct enough" isn't the same as "as good as it could be per-language." Nobody's asked whether, say, Chinese search quality specifically needs improving beyond what generic ICU gives it — that's the still-open question, and it's a real design/build task (one fieldType + field def per language that warrants it), not just a decision.
+
+Given today's fix already addressed the one confirmed real problem (English stemming), this one's genuinely low urgency unless you have reason to think Chinese/Nepali search is currently underperforming for real users.
+
+---
+
+## User — 2026-10-06 17:43
+
+What are all 16 tiers? Give me a simple list.
+
+---
+
+## Claude — 2026-10-06 17:44
+
+Let me get this from the actual source data rather than stitching together scattered doc mentions.
+
+---
+
+## Claude — 2026-10-06 17:44
+
+There's a real `d7_av` source DB loaded locally. Let's query it directly for the authoritative list.
+
+---
+
+## Claude — 2026-10-06 17:44
+
+Pulled directly from the real `d7_av.tcu_tier` source table — 17 distinct tier codes total. English is now split out; these are the remaining **16** that share the ICU default:
+
+| Tier code | Tier value count | Language (best reading) |
+|---|---|---|
+| `content_bod` | 173,764 | Tibetan (own dedicated `text_bod` field, not `ts_*`) |
+| `dzo_bod` | 35,525 | Dzongkha (same, dedicated `text_bod` field) |
+| `ts_content_wylie` | 30,497 | Wylie (Tibetan romanization scheme) |
+| `ts_content_nep` | 13,625 | Nepali |
+| `ts_content_und` | 7,424 | Undetermined/unspecified |
+| `ts_content_zho` | 5,191 | Chinese |
+| `ts_content_gyal` | 4,607 | likely rGyalrongic (Sino-Tibetan minority language) |
+| `ts_content_gloss` | 3,491 | Interlinear gloss (not a language — linguistic annotation tier) |
+| `ts_content_nmm` | 2,661 | likely Manangba |
+| `ts_content_xkf` | 1,879 | likely Khengkha |
+| `ts_content_tsum` | 1,828 | likely Tsum (Nepal dialect) |
+| `ts_content_kjz` | 1,374 | likely Bumthangkha |
+| `ts_content_npa` | 727 | likely Nepal Bhasa (Newar) |
+| `ts_content_gvr` | 599 | likely Gurung |
+| `ts_content_tsj` | 279 | likely Tshangla |
+| `ts_content_kte` | 192 | likely Kagate |
+
+`content_bod` and `dzo_bod` are the 2 Tibetan-script ones already on their own settled `text_bod` analyzer (not part of the question at all). The other 14 `ts_content_*` codes (everything below Chinese in the table, plus Wylie/Nepali/Chinese/und/gloss) all currently share the single generic ICU fieldType.
+
+Flagging honestly: I'm confident on `eng`/`wylie`/`nep`/`zho`/`und`/`gloss`; the smaller ones (`gyal`, `nmm`, `xkf`, `tsum`, `kjz`, `npa`, `gvr`, `tsj`, `kte`) are my best reading of what look like ISO 639-3-style codes for Himalayan minority languages, not verified against any documented mapping in this project — worth confirming with you or David Germano if it ever matters which is which.
+
+---
+
+## User — 2026-10-06 17:52
+
+Ok we should give Dzongkha, Nepali, and Chinese their own distinct settings in terms of tokenizer etc. Can you do research and recommend what the best settings are for these? The rest can just remain under a general ICU tokenizer without needing specific fields, though maybe Wylie should have it's own very simple one since it's a transliteration. You can make a suggestion on that one too.
+
+---
+
+## Claude — 2026-10-06 17:53
+
+I've kicked off research into the best Solr analyzer settings for Chinese, Nepali, Dzongkha, and Wylie — this needs real sourcing (especially around EWTS orthographic conventions for Wylie, which I don't want to guess at), so I forked a research pass rather than answer from memory. I'll report back with concrete recommendations once it completes.
+
+---
+
+## User — 2026-10-06 17:57
+
+<task-notification>
+<task-id>aeba90b47604af14c</task-id>
+<tool-use-id>toolu_01EDha7ctdY1zd6Mkc6qN6BZ</tool-use-id>
+<output-file>/private/tmp/claude-503/-Users-ndg8f-Sandbox-Mandala-mandala-navina/484b60b2-255f-4e3d-9cd5-9e574e4e3f85/tasks/aeba90b47604af14c.output</output-file>
+<status>completed</status>
+<summary>Agent "Research Solr analyzers for Chinese, Nepali, Dzongkha, Wylie" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Research directive
+Recommend concrete Solr analyzer configurations (schema.xml fieldType chains) for Chinese, Nepali, and Dzongkha tiers in the mandala-av-transcripts core, plus a suggestion for Wylie.
+
+All four recommendations below were checked against **real content** from the actual `d7_av.tcu_tier` source table (not assumed), and the Wylie recommendation is additionally grounded in THL's own canonical EWTS specification (texts.mandala.library.virginia.edu — this project's own parent institution).
+
+---
+
+## 1. Chinese (`ts_content_zho`, 5,191 values)
+
+Real sample data confirmed: **Simplified Chinese** (e.g. 简单, not 簡單).
+
+Findings: Solr's `analysis-extras` contrib — already loaded by this project's two `&lt;lib&gt;` lines — bundles **both** `lucene-analyzers-icu` and `lucene-analyzers-smartcn` in the same lib directories. No extra module install needed for either option.
+
+- **ICU Tokenizer alone** (current default) already does dictionary-based HMM word segmentation for Chinese per Solr's own docs ("uses a dictionary to segment Chinese words"), and handles both Simplified and Traditional.
+- **`SmartChineseSentenceTokenizerFactory` + `SmartChineseWordTokenFilterFactory`** is Lucene's dedicated, large-dictionary HMM segmenter — generally regarded as higher precision for Chinese word boundaries, but Simplified-only (fine here, confirmed Simplified).
+- **CJKBigramFilter** (bigram overlap) is the oldest/coarsest option — explicitly documented as worst recall/precision tradeoff of the three. Not recommended.
+
+**Recommendation:** SmartCN, since it's purpose-built, already available, and this is exactly the kind of targeted per-language upgrade being asked for.
+
+```xml
+&lt;fieldType name="text_tier_zho" class="solr.TextField" positionIncrementGap="100"&gt;
+  &lt;analyzer&gt;
+    &lt;tokenizer class="solr.SmartChineseSentenceTokenizerFactory"/&gt;
+    &lt;filter class="solr.SmartChineseWordTokenFilterFactory"/&gt;
+  &lt;/analyzer&gt;
+&lt;/fieldType&gt;
+```
+
+---
+
+## 2. Nepali (`ts_content_nep`, 13,625 values — Devanagari)
+
+Confirmed: **no dedicated Nepali analyzer/stemmer exists in Lucene/Solr** — only research-paper-level Nepali stemmers exist outside the ecosystem (not usable here without a custom plugin).
+
+Solr's own documented canonical Hindi chain (from the official reference guide):
+```xml
+&lt;tokenizer name="standard"/&gt;
+&lt;filter name="indicNormalization"/&gt;
+&lt;filter name="hindiNormalization"/&gt;
+&lt;filter name="hindiStem"/&gt;
+```
+`IndicNormalizationFilterFactory` and `HindiNormalizationFilterFactory` are both in Lucene's core `analyzers-common` module (no extra install) and operate at the **script/encoding level** — Unicode variant normalization for Devanagari generally, not Hindi-specific morphology. `IndicNormalizationFilter` is documented as used across multiple Indic-script analyzers (even Tamil), confirming it's meant as a general script-normalization building block, safe to apply to any Devanagari-script language including Nepali.
+
+`HindiStemFilterFactory`, by contrast, is a real **morphological** stemmer tuned to Hindi's specific affix system — applying it to Nepali risks incorrect stemming since the two languages' morphology diverges despite sharing script and much Sanskrit-derived vocabulary.
+
+**Recommendation:** take the script-normalization layers, drop the Hindi-specific stemmer.
+
+```xml
+&lt;fieldType name="text_tier_nep" class="solr.TextField" positionIncrementGap="100"&gt;
+  &lt;analyzer&gt;
+    &lt;tokenizer class="solr.StandardTokenizerFactory"/&gt;
+    &lt;filter class="solr.IndicNormalizationFilterFactory"/&gt;
+    &lt;filter class="solr.HindiNormalizationFilterFactory"/&gt;
+  &lt;/analyzer&gt;
+&lt;/fieldType&gt;
+```
+
+---
+
+## 3. Dzongkha (`dzo_bod`, 35,525 values — Tibetan script)
+
+Real sample confirmed: standard Tibetan-script Unicode with tsheg (`་`) syllable separators, same as Classical Tibetan.
+
+No dedicated Dzongkha (or Tibetan) analyzer exists in Lucene/Solr. One correction to flag: the premise that this project's ADR 004 or Spike 4a already settled Tibetan search-tokenization doesn't hold up — ADR 004 is about Solr-as-source-of-truth generally, Spike 4a is about Unicode round-trip fidelity (encoding), and there's no dedicated Tibetan `search_api_solr` field type config in this repo's kmassets setup either. The `text_bod` choice (ICU tokenizer, no filters) looks like it was decided directly in Spike 11 for this core, not inherited from an earlier settled project decision.
+
+That said, the reasoning holds on its own merits: ICU Tokenizer follows Unicode UAX#29 segmentation, which splits correctly at the tsheg for any Tibetan-script text — Dzongkha and Classical Tibetan share the script and this syllable-boundary convention even though their morphology/vocabulary differ. No stemming exists for either, so there's nothing to add.
+
+**Recommendation:** identical filter chain to `text_bod`, but as its own named fieldType (your instinct is right) — purely for future independent tuning without touching the Tibetan field.
+
+```xml
+&lt;fieldType name="text_dzo" class="solr.TextField"&gt;
+  &lt;analyzer&gt;
+    &lt;tokenizer class="solr.ICUTokenizerFactory"/&gt;
+  &lt;/analyzer&gt;
+&lt;/fieldType&gt;
+```
+
+---
+
+## 4. Wylie (`ts_content_wylie`, 30,497 values) — simple suggestion
+
+This one has an authoritative source: **THL's own published EWTS specification** (texts.mandala.library.virginia.edu/text/thl-extended-wylie-transliteration-scheme — this project's parent institution), cross-checked against real `ts_content_wylie` sample rows.
+
+Three corrections to the premises in the original question:
+
+1. **Case IS phonemically meaningful** — capitals specifically encode Sanskrit-derived sounds (long vowels, retroflexes: T/Th/D/D+h/N/Sh). Lower-casing would conflate distinct phonemes. **Do not case-fold.**
+2. **EWTS deliberately has no diacritics** — the spec's own rationale is "diacritic marks are hard to type," so it substitutes capital letters instead (e.g., retroflex `ṭ` becomes `T`). **No accent-folding filter needed; there's nothing to fold.**
+3. **Hyphens aren't used in EWTS at all.** Syllable boundaries (tsheg) are plain spaces; underscores mark a literal space inside the original Tibetan (confirmed directly in real data: `cig_yum`, `'dra/_mtsho`); apostrophes represent a real Tibetan letter ('a-chung) and must be preserved, not stripped as punctuation.
+
+Given real sample rows use underscores as a second, equally-meaningful word-boundary character alongside spaces, the one adjustment worth making is converting underscores to spaces before tokenizing — otherwise `cig_yum` stays glued as one unsearchable token when a user should be able to find `yum` alone.
+
+**Recommendation — genuinely simple, two steps:**
+
+```xml
+&lt;fieldType name="text_tier_wylie" class="solr.TextField" positionIncrementGap="100"&gt;
+  &lt;analyzer&gt;
+    &lt;charFilter class="solr.PatternReplaceCharFilterFactory" pattern="_" replacement=" "/&gt;
+    &lt;tokenizer class="solr.WhitespaceTokenizerFactory"/&gt;
+  &lt;/analyzer&gt;
+&lt;/fieldType&gt;
+```
+
+`WhitespaceTokenizerFactory` over `StandardTokenizerFactory` deliberately — Standard's punctuation-aware tokenization isn't verified safe against EWTS's apostrophe-as-letter, slash-as-shad, and brace-as-editorial-annotation conventions. Whitespace splitting only on literal spaces is the minimal, defensibly-correct choice; refining further (stripping shad `/`, handling `{...}` editorial brackets) is a reasonable future step, not needed for a first pass.
+
+---
+
+**Sources:**
+- [Language Analysis — Apache Solr Reference Guide](https://solr.apache.org/guide/solr/latest/indexing-guide/language-analysis.html)
+- [LanguageAnalysis — Solr Wiki](https://cwiki.apache.org/confluence/display/solr/LanguageAnalysis)
+- [IndicNormalizationFilterFactory — Lucene API](https://lucene.apache.org/core/8_1_0/analyzers-common/org/apache/lucene/analysis/in/IndicNormalizationFilterFactory.html)
+- [Wylie transliteration — Wikipedia](https://en.wikipedia.org/wiki/Wylie_transliteration)
+- [THL Extended Wylie Transliteration Scheme](https://texts.mandala.library.virginia.edu/text/thl-extended-wylie-transliteration-scheme)
+- Real data: `d7_av.tcu_tier` (local DDEV source database, this repo)</result>
+<usage><subagent_tokens>559935</subagent_tokens><tool_uses>18</tool_uses><duration_ms>230146</duration_ms></usage>
+</task-notification>
+
+---
+
+## Claude — 2026-10-06 17:57
+
+Research came back — and it corrected a couple of my own assumptions along the way, cross-checked against real sample rows from `d7_av.tcu_tier` and THL's own published EWTS spec (your parent institution, so about as authoritative as it gets).
+
+## 1. Chinese (`ts_content_zho`) — SmartChineseAnalyzer
+Real sample data confirmed Simplified Chinese. Solr's `analysis-extras` (already loaded) bundles both ICU and SmartCN — no new install needed. SmartCN is a dedicated dictionary-based HMM word segmenter, generally higher precision than ICU's generic segmentation or the old CJK-bigram approach (which is explicitly the worst of the three).
+```xml
+<fieldType name="text_tier_zho" class="solr.TextField" positionIncrementGap="100">
+  <analyzer>
+    <tokenizer class="solr.SmartChineseSentenceTokenizerFactory"/>
+    <filter class="solr.SmartChineseWordTokenFilterFactory"/>
+  </analyzer>
+</fieldType>
+```
+
+## 2. Nepali (`ts_content_nep`) — Indic + Hindi script normalization, no Hindi stemmer
+No dedicated Nepali analyzer exists anywhere in Lucene. Solr's canonical Hindi chain has two layers that are genuinely script-level (safe for any Devanagari language) and one that's real Hindi *morphology* (not safe for Nepali). Recommendation keeps the first two, drops the stemmer:
+```xml
+<fieldType name="text_tier_nep" class="solr.TextField" positionIncrementGap="100">
+  <analyzer>
+    <tokenizer class="solr.StandardTokenizerFactory"/>
+    <filter class="solr.IndicNormalizationFilterFactory"/>
+    <filter class="solr.HindiNormalizationFilterFactory"/>
+  </analyzer>
+</fieldType>
+```
+
+## 3. Dzongkha (`dzo_bod`) — same mechanism as Tibetan, own field
+One correction: I'd implied this was already settled by ADR 004/Spike 4a — that doesn't actually hold up (those cover Unicode round-trip fidelity and Solr-as-source-of-truth, not tokenization choice). The `text_bod` choice was decided directly in Spike 11. That said, the reasoning still stands on its own: ICU correctly splits at the tsheg for any Tibetan-script text, Dzongkha included, and no stemmer exists for either language.
+```xml
+<fieldType name="text_dzo" class="solr.TextField">
+  <analyzer>
+    <tokenizer class="solr.ICUTokenizerFactory"/>
+  </analyzer>
+</fieldType>
+```
+
+## 4. Wylie — simple, but I had two things wrong
+- **Case is phonemically real** in EWTS (capitals encode Sanskrit-derived sounds — retroflexes, long vowels). Case-folding would be a real data-loss bug, not a convenience.
+- **EWTS has no diacritics at all** — that's the whole point of the scheme (capitals substitute for diacritics specifically because they're "hard to type"). So no accent-folding filter is needed.
+- **No hyphens** — real sample rows (`cig_yum`, `'dra/_mtsho`) show **underscores** mark word-internal spaces, and apostrophes are a real Tibetan letter, not punctuation to strip.
+```xml
+<fieldType name="text_tier_wylie" class="solr.TextField" positionIncrementGap="100">
+  <analyzer>
+    <charFilter class="solr.PatternReplaceCharFilterFactory" pattern="_" replacement=" "/>
+    <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+  </analyzer>
+</fieldType>
+```
+Whitespace tokenizer deliberately, not Standard — Standard's punctuation handling isn't verified safe against EWTS's apostrophe-as-letter and slash-as-shad conventions.
+
+Want me to implement all four, same pattern as the English fix (verify against a throwaway Solr, update the schema/docs)?
+
+---
+
+## User — 2026-10-06 17:59
+
+yes go ahead and implement it.
+
+---
+
+## Claude — 2026-10-06 17:59
+
+Now let's make the edits — update the `text_tier` comment, update `text_bod` comment, add the four new fieldTypes, and add the four new explicit field overrides.
+
+---
+
+## Claude — 2026-10-06 18:00
+
+Now add the explicit field overrides for the four newly-split tiers.
+
+---
+
+## Claude — 2026-10-06 18:00
+
+Now let's validate the XML and verify against a real Solr instance.
+
+---
+
+## Claude — 2026-10-06 18:00
+
+Same mistake again — forgot about the XML comment restriction I hit earlier. Let me fix all of these with the em-dash substitution script.
+
+---
+
+## Claude — 2026-10-06 18:00
+
+All remaining `--` are in XML declaration markers (`<!--`/`-->`) themselves, not inside comment text. Let's re-validate.
+
+---
+
+## Claude — 2026-10-06 18:00
+
+Now let's verify this against a real Solr instance, same method as before.
+
+---
+
+## Claude — 2026-10-06 18:01
+
+Found it — the research got the class names wrong. The actual Lucene 7.7.3 jar only has `HMMChineseTokenizerFactory` (a single tokenizer that does both sentence and HMM word segmentation internally), not the two-class pipeline the research described. Let me fix this with the verified, real class name.
+
+---
+
+## Claude — 2026-10-06 18:01
+
+Now let's re-verify the whole schema loads cleanly.
+
+---
+
+## Claude — 2026-10-06 18:01
+
+Let's pull real sample content for each language to test with, rather than invented text.
+
+---
+
+## Claude — 2026-10-06 18:02
+
+That's a URL-encoding mistake in my test query, not a schema problem — the analysis API confirms Dzongkha tokenizes correctly into proper syllables (e.g. `རྒྱལ`, script-tagged as Tibetan). Let me redo the search safely.
+
+---
+
+## Claude — 2026-10-06 18:02
+
+All four confirmed working correctly. Let's clean up the test container.
+
+---
+
+## Claude — 2026-10-06 18:02
+
+Now let's update the docs with the real, verified results (including the correction to the research's Chinese class names).
+
+---
+
+## Claude — 2026-10-06 18:02
+
+Now let's update the deferred note and the README summary line.
+
+---
+
+## Claude — 2026-10-06 18:03
+
+Now update the README summary row and Spike 11's reference.
+
+---
+
+## Claude — 2026-10-06 18:03
+
+Clean, correct diff. Now Spike 11's reference line.
+
+---
+
+## Claude — 2026-10-06 18:03
+
+Good, reads cleanly. Now let's do a final review of the full diff and run the session-close checks before committing.
+
+---
+
+## Claude — 2026-10-06 18:03
+
+All expected. Let's commit and push.
+
+---
+
+## Claude — 2026-10-06 18:04
+
+That's just the branch switch reverting these files to `main`'s pre-PR state (my changes live on PR #283), which is expected.
+
+**Done — PR #283**: https://github.com/uvalib/mandala-navina/pull/283
+
+Built and verified live against real `d7_av` sample data:
+- **Chinese** (`text_tier_zho`): `HMMChineseTokenizerFactory` — caught and fixed a real research error along the way (the class names it gave didn't exist in this Solr version; confirmed via `ClassNotFoundException` then found the real one by inspecting the jar directly)
+- **Nepali** (`text_tier_nep`): Devanagari script normalization, deliberately no Hindi-specific stemmer
+- **Dzongkha** (`text_dzo`): same ICU mechanism as Tibetan, split into its own field
+- **Wylie** (`text_tier_wylie`): simple underscore→space + whitespace tokenizer, no case-folding or diacritic folding — corrected two wrong assumptions (yours and mine) about EWTS along the way: case is phonemically meaningful, and EWTS has no diacritics by design
+
+Docs updated (deferred note, Spike 11, the core's own README) to record the decision and the research correction. Back on `main` — three PRs now open: #279... wait, those are merged. Just #283 is open from this round.
+
+---
+
+## User — 2026-10-06 18:17
+
+ok I merged the PR. UPdate everything here and in the notes, session logs, and memory.
+
+---
+
+## Claude — 2026-10-06 18:17
+
+Confirmed merged, `main` fast-forwarded. Let's clean up the local branch and check for any other loose ends.
+
+---
+
+## Claude — 2026-10-06 18:18
+
+Clean — no open PRs, only expected dev-only drift. Now let's regenerate the session log to cover everything through this PR, since it's all one continuous session.
 
 ---
