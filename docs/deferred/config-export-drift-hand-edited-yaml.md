@@ -3,12 +3,15 @@
 **Area:** deployment / CMI / config sync / DX
 **Raised during:** Session 2026-09-02, fixing the `uva-mandala-drupal-codepipeline` failure caused by PR #177
 **Jira:** (add when available)
-**Priority:** Medium — not blocking (worked around this time), but will recur for anyone who hand-edits a config YAML instead of exporting it from a live site
+**Priority:** Low — decided 2026-10-06 (no CI; practice in CLAUDE.md plus `config-check.sh` at session close). Originally Medium
 
-## Awaiting a team decision
+## Decided 2026-10-06: no CI check
 
-This item is blocked on a group conversation about workflow, not on implementation — do not
-start it solo. Put it on the next group-meeting agenda.
+Decided by Yuji, Xiaoming and Than: **no CI check for config.** The deploy's drift guard catches
+any bad config and we remediate then; a CI job (throwaway Drupal, fresh install from config) was
+judged heavy and wasteful for a failure that has happened twice in a month, both times from
+hand-edited structural YAML, which the practice below now rules out. See
+"Decision 2026-10-06" at the end of this note. Revisit only if it recurs despite the practice.
 
 ## What happened
 
@@ -104,6 +107,26 @@ relocated; not wired into CI or any hook); a scoped-export script wrapping the
 `config.storage.sync` technique (not built); and Option 2's CI check (not built). **Still open for the
 group:** whether the CI check is worth its cost. Until then this note stays in "Awaiting a team
 decision".
+
+## Decision 2026-10-06
+
+- **No CI check (Option 2 declined).** The deploy guard remains the backstop. Reasoning: a CI job
+  that boots Drupal and installs from config is cumbersome and heavy for a narrow class of failure
+  (hand-edited structure that Drupal would re-serialize); a fresh install would not catch wrong-but-
+  self-consistent config or anything about the migrated DB. Option 4 ("leave the deploy guard as
+  the backstop") plus Option 1 (the practice) is the chosen combination.
+- **The practice is in CLAUDE.md** ("Config changes: export from live Drupal, never hand-edit").
+- **`scripts/config-check.sh` is the local check**, now strict by default (`--lenient` downgrades
+  comment and formatting findings to warnings). It discounts the local-only `stage_file_proxy`
+  through `scripts/lib/local-only-config.sh`, shared with `session-start-check.sh`.
+- **`scripts/session-close-check.sh` runs it** whenever `drupal/config/sync` changed this session
+  (committed against `origin/main`, or uncommitted) and DDEV is running; otherwise it skips or warns.
+- **Comments in `config/sync`** were relocated 2026-10-06 (see
+  [config-export-not-scoped-strips-comments.md](config-export-not-scoped-strips-comments.md));
+  the five remaining files an export would reformat were brought to Drupal's canonical form, so
+  strict passes on `main`.
+- **Considered and not adopted:** a schema check (`config:inspect` from `config_inspector`). It
+  would not catch the serialization class that failed twice; revisit if a schema error ever bites.
 
 ## Related
 

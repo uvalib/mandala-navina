@@ -39,9 +39,10 @@ Development is driven collaboratively — team members take turns leading sessio
 
 - **One repo, one session.** Always open Claude Code from this directory. Never work on Mandala from a legacy repo directory.
 - **Session end ritual.** Run `./scripts/session-close-check.sh` first — it
-  checks the two mechanical traps (a doc that exists but never made it into
+  checks the mechanical traps (a doc that exists but never made it into
   its directory's `.pages` nav or `README.md` index; uncommitted or
-  unpushed work) and prints the remaining judgment steps as a reminder. It
+  unpushed work; and, if `drupal/config/sync` changed, that it matches a real
+  export, via `scripts/config-check.sh`) and prints the remaining judgment steps as a reminder. It
   does not replace the steps below, only catches the parts that are
   objectively checkable. **Kept in sync with this checklist deliberately —
   if you change one, update the other in the same PR.** Before closing a

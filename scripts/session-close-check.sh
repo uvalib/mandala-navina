@@ -11,6 +11,9 @@
 #     got added to that directory's .pages nav file (invisible in mkdocs
 #     until listed) or to its README.md index table
 #   - uncommitted or unpushed work left behind at session end
+#   - config/sync changed this session but not verified against what Drupal
+#     would export (runs scripts/config-check.sh; skipped if config/sync is
+#     untouched or DDEV is not running)
 #
 # ── KEEP IN SYNC WITH CLAUDE.md ──────────────────────────────────────────
 # This script is the executable form of CLAUDE.md's "Session end ritual".
@@ -102,8 +105,27 @@ if git rev-parse --verify -q main >/dev/null 2>&1; then
 fi
 echo
 
-# ── 3. Open PRs (reminder, not a failure) ───────────────────────────────
-echo "=== 3. Open PRs ==="
+# ── 3. config/sync verified ─────────────────────────────────────────────
+# Only when this session touched drupal/config/sync (committed on the branch
+# vs origin/main, or uncommitted). The deploy's drift guard is the backstop;
+# this catches the same class of problem before it merges (see
+# docs/deferred/config-export-drift-hand-edited-yaml.md -- no CI check by decision).
+echo "=== 3. config/sync verified against a real export ==="
+CONFIG_CHANGED="$( { git diff --name-only origin/main...HEAD -- drupal/config/sync 2>/dev/null; git diff --name-only HEAD -- drupal/config/sync 2>/dev/null; git ls-files --others --exclude-standard -- drupal/config/sync 2>/dev/null; } | sort -u)"
+if [ -z "$CONFIG_CHANGED" ]; then
+  pass "drupal/config/sync untouched this session -- nothing to verify"
+elif ! command -v ddev >/dev/null 2>&1 || ! ddev describe >/dev/null 2>&1; then
+  warn "drupal/config/sync changed but DDEV is not running -- start it and run ./scripts/config-check.sh before closing:"
+  echo "$CONFIG_CHANGED" | sed 's/^/  /'
+elif "$REPO_ROOT/scripts/config-check.sh"; then
+  pass "config-check.sh clean"
+else
+  fail "config-check.sh found problems in config/sync -- see its output above (export from a live Drupal; do not hand-edit)"
+fi
+echo
+
+# ── 4. Open PRs (reminder, not a failure) ───────────────────────────────
+echo "=== 4. Open PRs ==="
 if command -v gh >/dev/null 2>&1; then
   OPEN_PRS="$(gh pr list --state open 2>/dev/null)"
   if [ -n "$OPEN_PRS" ]; then
@@ -117,8 +139,8 @@ else
 fi
 echo
 
-# ── 4. Manual steps -- judgment calls, not scripted ─────────────────────
-echo "=== 4. Manual steps (per CLAUDE.md -- not automatable) ==="
+# ── 5. Manual steps -- judgment calls, not scripted ─────────────────────
+echo "=== 5. Manual steps (per CLAUDE.md -- not automatable) ==="
 cat <<'EOF'
   [ ] Flush decisions to docs/adr/, findings to docs/spikes/, deferred
       notes to docs/deferred/ (content, not just indexing -- section 1
