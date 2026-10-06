@@ -26,25 +26,27 @@
        identical (10.033, not 10.032999...) for the client. -->
   <fieldType name="float"  class="solr.FloatPointField" docValues="true"/>
 
-  <!-- Tibetan-script tiers (content_bod, dzo_bod, speaker_bod). Identical to the legacy
-       text_bod: ICU tokenizer, no filters. -->
+  <!-- Tibetan-script tiers (content_bod, speaker_bod). Identical to the legacy text_bod: ICU
+       tokenizer, no filters. dzo_bod (Dzongkha) is NOT included here as of 2026-10-06 — it
+       gets its own text_dzo fieldType below (same mechanism, separated for independent future
+       tuning; see that fieldType's comment). -->
   <fieldType name="text_bod" class="solr.TextField">
     <analyzer>
       <tokenizer class="solr.ICUTokenizerFactory"/>
     </analyzer>
   </fieldType>
 
-  <!-- Non-English, non-Tibetan language tiers (ts_content_wylie, ts_content_und, Chinese,
-       Nepali, and the other smaller-volume tiers). ICU tokenizer plus ICU folding (case and
-       accent folding, no stemming, no stop words) — confirmed better than D7's whitespace
-       tokenizer for languages not written with spaces between words (Chinese) and for Wylie,
-       which D7's English analyzer never handled correctly. Than confirmed 2026-10-06: these
-       tiers are actively searched, so correct tokenization matters here, but no stemmer exists
-       for Wylie (a Tibetan romanization scheme, not a language Solr has stemming support for),
-       so this is the right default for it, not a placeholder the way it was for English. See
-       docs/deferred/transcript-tier-analyzers-and-language-fields.md — per-language fields
-       (rather than one analyzer per naming pattern) remain deferred; synonyms status is also
-       still unconfirmed. -->
+  <!-- Remaining smaller-volume language tiers (ts_content_und, ts_content_gyal,
+       ts_content_gloss, ts_content_nmm, ts_content_xkf, ts_content_tsum, ts_content_kjz,
+       ts_content_npa, ts_content_gvr, ts_content_tsj, ts_content_kte — 11 names, mostly
+       Himalayan minority languages with no dedicated Lucene/Solr analyzer). ICU tokenizer plus
+       ICU folding (case and accent folding, no stemming, no stop words) — the sensible generic
+       default for a language Solr has no specific support for. English, Chinese, Nepali,
+       Dzongkha and Wylie have all since been carved out into their own fieldTypes below (see
+       each for why); this general-purpose default remains for everything else. See
+       docs/deferred/transcript-tier-analyzers-and-language-fields.md — separate fields for
+       these 11 remain deferred (lower priority, no specific Lucene support exists for any of
+       them regardless); synonyms status for English is also still unconfirmed. -->
   <fieldType name="text_tier" class="solr.TextField" positionIncrementGap="100">
     <analyzer>
       <tokenizer class="solr.ICUTokenizerFactory"/>
@@ -71,6 +73,87 @@
     </analyzer>
   </fieldType>
 
+  <!-- Chinese tier (ts_content_zho) only. DECIDED 2026-10-06 (Than), researched 2026-10-06:
+       real sample data from the D7 source confirms Simplified Chinese. Solr's bundled
+       analysis-extras contrib (already loaded by this core's two <lib> lines in solrconfig.xml)
+       ships lucene-analyzers-smartcn alongside ICU — no extra install needed. The initial
+       research draft of this fieldType named solr.SmartChineseSentenceTokenizerFactory plus
+       solr.SmartChineseWordTokenFilterFactory, which do not exist in this Lucene/Solr version
+       (confirmed by inspecting the actual jar after a ClassNotFoundException loading it into a
+       throwaway Solr 7.7.3 core) — lucene-analyzers-smartcn-7.7.3.jar registers exactly one
+       factory, solr.HMMChineseTokenizerFactory, which does both sentence and HMM-based word
+       segmentation internally as a single tokenizer (no separate word-token filter needed).
+       Generally higher precision for Chinese word boundaries than ICU's generic UAX#29
+       segmentation or the older CJK-bigram overlap approach (explicitly the weakest of the
+       three for both precision and recall). -->
+  <fieldType name="text_tier_zho" class="solr.TextField" positionIncrementGap="100">
+    <analyzer>
+      <tokenizer class="solr.HMMChineseTokenizerFactory"/>
+    </analyzer>
+  </fieldType>
+
+  <!-- Nepali tier (ts_content_nep) only — the second-largest non-English tier by volume
+       (13,625 values, more than Chinese). DECIDED 2026-10-06 (Than), researched 2026-10-06: no
+       dedicated Nepali analyzer or stemmer exists anywhere in Lucene/Solr. IndicNormalization and
+       HindiNormalization are script-level Devanagari normalization (Unicode variant folding),
+       not Hindi-specific morphology — safe to apply to any Devanagari-script language,
+       confirmed by Lucene's own docs describing IndicNormalizationFilter as a shared building
+       block across multiple Indic-script analyzers. HindiStemFilter, by contrast, applies real
+       Hindi morphological stemming rules and is deliberately NOT included here — Hindi and
+       Nepali diverge enough in morphology that using it would risk incorrect stemming rather
+       than a safe approximation. -->
+  <fieldType name="text_tier_nep" class="solr.TextField" positionIncrementGap="100">
+    <analyzer>
+      <tokenizer class="solr.StandardTokenizerFactory"/>
+      <filter class="solr.IndicNormalizationFilterFactory"/>
+      <filter class="solr.HindiNormalizationFilterFactory"/>
+    </analyzer>
+  </fieldType>
+
+  <!-- Dzongkha (dzo_bod) only — 35,525 values, the second-largest tier overall after
+       content_bod. DECIDED 2026-10-06 (Than), researched 2026-10-06: no Dzongkha-specific
+       analyzer exists in Lucene/Solr, same as Tibetan. Real sample data confirms standard
+       Tibetan-script Unicode with tsheg (་) syllable separators, the same orthographic
+       convention Classical Tibetan uses — so the ICU tokenizer (which correctly segments at
+       the tsheg per Unicode UAX#29) is the same defensible choice as text_bod's. Split into its
+       own fieldType, not literally sharing the text_bod instance, purely so Dzongkha can be
+       tuned independently later without touching the Tibetan field — the filter chain itself
+       is intentionally identical today. -->
+  <fieldType name="text_dzo" class="solr.TextField">
+    <analyzer>
+      <tokenizer class="solr.ICUTokenizerFactory"/>
+    </analyzer>
+  </fieldType>
+
+  <!-- Wylie tier (ts_content_wylie) only — a Tibetan transliteration scheme (EWTS), not a
+       natural language; 30,497 values, the third-largest tier overall. DECIDED 2026-10-06
+       (Than: "very simple"), researched 2026-10-06 against THL's own published EWTS
+       specification (this project's parent institution) and real ts_content_wylie sample rows.
+       Three things the simplest-possible approach must still get right:
+         1. Case is phonemically meaningful in EWTS — capitals specifically encode
+            Sanskrit-derived sounds (retroflexes, long vowels: T/Th/D/D+h/N/Sh). Case-folding
+            would conflate distinct phonemes, so there is deliberately no LowerCaseFilter here.
+         2. EWTS has no diacritics by design (the spec's own stated rationale: diacritics are
+            hard to type, so capitals substitute for them instead) — so there is nothing for an
+            accent-folding filter to usefully fold.
+         3. EWTS does not use hyphens for word/syllable boundaries. Real sample rows
+            (e.g. "cig_yum", "'dra/_mtsho") show underscores marking a literal space inside the
+            original Tibetan, and apostrophes represent a real Tibetan letter ('a-chung) that
+            must be preserved, not stripped as punctuation. The one adjustment worth making:
+            convert underscores to spaces before tokenizing, so underscore-joined words remain
+            independently searchable.
+       WhitespaceTokenizer, not StandardTokenizer, is deliberate — Standard's punctuation-aware
+       splitting is not verified safe against EWTS's apostrophe-as-letter and slash-as-shad
+       conventions. Splitting only on literal whitespace is the minimal, defensibly-correct
+       choice; refining further (stripping shad `/`, handling `{...}` editorial brackets) is a
+       reasonable future step, not needed for a first pass. -->
+  <fieldType name="text_tier_wylie" class="solr.TextField" positionIncrementGap="100">
+    <analyzer>
+      <charFilter class="solr.PatternReplaceCharFilterFactory" pattern="_" replacement=" "/>
+      <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+    </analyzer>
+  </fieldType>
+
   <!-- ===== Fields ===== -->
   <field name="id" type="string" indexed="true" stored="true" required="true"/>
   <field name="_version_" type="long" indexed="false" stored="false"/>
@@ -92,14 +175,19 @@
   <field name="ss_speaker_bod" type="string" indexed="true" stored="true"/>
   <field name="ss_language"    type="string" indexed="true" stored="true"/>
 
-  <!-- English tier: explicit field, not the ts_* dynamic pattern below — an explicit field
-       always wins over a dynamicField match in Solr, regardless of declaration order. See
-       text_tier_en above for why. -->
-  <field name="ts_content_eng" type="text_tier_en" indexed="true" stored="true" multiValued="false"/>
+  <!-- Per-tier explicit fields, each overriding the generic ts_* / *_bod dynamicField patterns
+       below — an explicit field always wins over a dynamicField match in Solr, regardless of
+       declaration order. See each fieldType above for why these five specifically are split
+       out. -->
+  <field name="ts_content_eng"   type="text_tier_en"    indexed="true" stored="true" multiValued="false"/>
+  <field name="ts_content_zho"   type="text_tier_zho"   indexed="true" stored="true" multiValued="false"/>
+  <field name="ts_content_nep"   type="text_tier_nep"   indexed="true" stored="true" multiValued="false"/>
+  <field name="ts_content_wylie" type="text_tier_wylie" indexed="true" stored="true" multiValued="false"/>
+  <field name="dzo_bod"          type="text_dzo"        indexed="true" stored="true" multiValued="false"/>
 
   <!-- ===== Dynamic fields (legacy names) ===== -->
-  <!-- Remaining language tiers: 16 names in the D7 data (ts_content_* other than English, plus
-       content_bod and dzo_bod below). -->
+  <!-- Remaining language tiers: 11 ts_content_* names plus content_bod. (16 total before
+       2026-10-06's four additional explicit-field splits above; now 12.) -->
   <dynamicField name="ts_*"   type="text_tier" indexed="true" stored="true" multiValued="false"/>
   <dynamicField name="*_bod"  type="text_bod"  indexed="true" stored="true" multiValued="false"/>
   <!-- Speaker tiers: ss_speaker, ss_speaker_{lang} (14 names in the D7 data). -->

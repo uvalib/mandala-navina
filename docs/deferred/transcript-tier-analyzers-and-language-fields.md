@@ -3,9 +3,11 @@
 **Area:** Solr / transcripts / multilingual search
 **Raised during:** Spike 11, schema draft 2026-10-02; deferred the same day (Yuji)
 **Jira:** (add when available)
-**Priority:** Medium. **Question 1 (analyzer choice) DECIDED and BUILT 2026-10-06** (Than).
-Question 2 (separate per-language fields) remains open, lower urgency now that the
-immediate regression is fixed.
+**Priority:** Medium. **Question 1 (analyzer choice) DECIDED and BUILT 2026-10-06** (Than),
+**in two passes**: English first, then Chinese/Nepali/Dzongkha/Wylie the same day.
+Question 2 (separate per-language fields) remains open, lower urgency now that both
+passes' regressions/gaps are closed — the ~11 tiers still on the generic default have
+no dedicated Lucene/Solr support to gain from a split anyway.
 
 ## What is deferred
 
@@ -58,19 +60,60 @@ tokenized Wylie text (confirms the ICU default for non-English tiers is untouche
 this change). Not tested: real D7 transcript data, a live comparison against D7's exact
 analyzer output, Solr 9.x.
 
+## Second pass (2026-10-06, same day): Chinese, Nepali, Dzongkha, and Wylie split out too
+
+After the English fix above, Than asked for Chinese, Nepali, and Dzongkha to each get
+their own tuned analyzer too (all three are among the four largest non-English tiers by
+volume), plus a recommendation for Wylie given it's a transliteration scheme, not a
+natural language.
+
+Researched (web research, cross-checked against real sample rows from `d7_av.tcu_tier`
+and, for Wylie, THL's own published EWTS specification), then built and verified live
+in a throwaway Solr 7.7.3 core against **real** D7 sample content (not synthetic text)
+for all four:
+
+| Tier | fieldType | Mechanism | Verified |
+|---|---|---|---|
+| `ts_content_zho` | `text_tier_zho` | `HMMChineseTokenizerFactory` (dictionary-based HMM word segmentation) | `石碑` ("stele") correctly segmented out of an unsegmented real sentence |
+| `ts_content_nep` | `text_tier_nep` | `StandardTokenizer` + `IndicNormalizationFilterFactory` + `HindiNormalizationFilterFactory`, deliberately no Hindi stemmer | `नाम` ("name") matches a real sample sentence |
+| `dzo_bod` | `text_dzo` | `ICUTokenizerFactory` only, same mechanism as Tibetan's `text_bod` but its own fieldType | real sample correctly tokenizes per-syllable, tagged `script: Tibetan` |
+| `ts_content_wylie` | `text_tier_wylie` | underscore→space char filter + `WhitespaceTokenizerFactory`, no lowercasing, no diacritic folding | `cig_yum` → independently searchable `yum`; apostrophe (`'phel`) preserved, not stripped |
+
+**A real error was caught by live verification, not assumed correct from research
+alone**: the research's initial Chinese recommendation named
+`solr.SmartChineseSentenceTokenizerFactory` + `solr.SmartChineseWordTokenFilterFactory`
+— neither class exists in this Lucene/Solr version (`ClassNotFoundException` on core
+reload). Inspecting `lucene-analyzers-smartcn-7.7.3.jar` directly showed it registers
+exactly one factory, `solr.HMMChineseTokenizerFactory`, which does sentence + HMM word
+segmentation as a single tokenizer. Fixed before merging.
+
+Why these three languages specifically, and why Nepali has no stemmer added: no
+dedicated Nepali analyzer/stemmer exists anywhere in Lucene — `IndicNormalizationFilter`
+and `HindiNormalizationFilter` are script-level Devanagari normalization (safe for any
+Devanagari language per Lucene's own docs), but `HindiStemFilter` applies real Hindi
+morphology, which risks incorrect stemming if applied to Nepali, so it was deliberately
+left out. Wylie's recommendation corrected two of Than's/Claude's own starting
+assumptions: EWTS case **is** phonemically meaningful (capitals encode Sanskrit-derived
+sounds — retroflexes, long vowels), so there's no case-folding; EWTS has **no**
+diacritics by design (capitals substitute for them specifically because diacritics are
+hard to type), so there's nothing for an accent-folding filter to do.
+
 ## Still open
 
-1. **Separate per-language fields** (question 2 from the original note) — not done; the
-   explicit-field-override approach above works per tier name but doesn't restructure
-   the schema into dedicated language fields. Lower urgency now that the one confirmed
-   real regression (English stemming) is fixed.
+1. **Separate per-language fields for the ~11 remaining smaller tiers** (`ts_content_und`,
+   `ts_content_gyal`, `ts_content_gloss`, `ts_content_nmm`, `ts_content_xkf`,
+   `ts_content_tsum`, `ts_content_kjz`, `ts_content_npa`, `ts_content_gvr`,
+   `ts_content_tsj`, `ts_content_kte`) — not done; these still share the generic
+   `text_tier` (ICU) default. Lower urgency: none of them have dedicated Lucene/Solr
+   language support to take advantage of even if split out, unlike the five tiers
+   already addressed.
 2. **Synonyms file**: still unconfirmed whether D7's synonyms file is populated or
    empty/unused. If confirmed populated and in real use, add a
    `SynonymGraphFilterFactory` to `text_tier_en`'s analyzer.
 3. Related, not part of this: Tibetan tokenization in kmassets is a separate topic (ADR
    004, Spike 4a).
 
-**Owner:** Than (built); unassigned for the two still-open items above.
+**Owner:** Than (built, both passes); unassigned for the three still-open items above.
 
 ## Related
 
