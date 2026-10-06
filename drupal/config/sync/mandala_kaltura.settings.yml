@@ -1,37 +1,6 @@
-# Site-level constants are the real, live production values (Sprint 3 design
-# note, `variable` table dump) — not secret, committed directly like every
-# other non-secret value in config/sync (see the AV10 scope note's "Secrets"
-# section for why partner_id/subp_id/server_url don't need settings.php
-# env-var plumbing the way the credential pair does).
 partner_id: '381832'
 subp_id: '38183200'
-server_url: '//www.kaltura.com'
-
-# AV13 (2026-09-17): traced D7's real primary-playback uiconf_id two ways --
-# (1) the live React app (mandala-om/kmaps-app's AudioVideo.DrawPlayer(),
-# the only reachable code path; its sibling Draw() is dead, starts with a
-# bare `return;`) hardcodes uiConfId='31832371' for BOTH field_video and
-# field_audio, no per-bundle branch; (2) D7 Drupal's own field_video
-# instance display (field_config_instance) independently configures the
-# same 31832371 for its full/default view. Two independent confirmations,
-# no per-bundle split needed.
-#
-# 24762821 (this preset's value before this fix) is NOT primary playback --
-# it's MB_MAIN_PLAYER_ID, consumed only by mb_services_node_player(), a
-# separate share/embed-redirect endpoint. AV4's migration constant borrowed
-# it by mistake; AV9/AV10 shipped it live on dev-0 before this correction.
-#
-# delivery is HTTP, never RTMP -- confirmed dead even in D7's own embed
-# builder (field_kaltura_build_embed() only ever passes targetId/wid/
-# uiconf_id/entry_id to kWidget.embed()) and RTMP is off the table per
-# team decision regardless.
-#
-# This file, config/sync/mandala_kaltura.settings.yml, is the live,
-# versioned value that governs the running site -- edit THIS one (then
-# config:import) to change a preset. config/install/'s copy is only the
-# starting default a fresh site install falls back to. Add more presets
-# under `presets` as new named entries -- nothing about this schema or
-# resolver limits it to one.
+server_url: //www.kaltura.com
 presets:
   default:
     uiconf_id: '31832371'

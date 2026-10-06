@@ -12,12 +12,6 @@ migration_tags:
   - 'Sprint 3 AV4'
 migration_group: mandala_av
 label: 'AV: D7 subcollection nodes → Group entities (subcollection bundle)'
-# 85 subcollections, each with exactly one parent collection (verified: zero
-# subcollections carry more than one field_og_parent_collection_ref row), so
-# the parent lookup below can never be ambiguous.
-#
-# `field_subcollection_root` is a collection-only field in D7 and is not
-# migrated here; see d7_av_collections.
 source:
   plugin: d7_image_subcollection
   key: migrate_av
@@ -44,10 +38,12 @@ process:
     plugin: default_value
     default_value: basic_html
   field_featured_image/target_id:
-    - plugin: skip_on_empty
+    -
+      plugin: skip_on_empty
       method: process
       source: field_general_featured_image/0/fid
-    - plugin: migration_lookup
+    -
+      plugin: migration_lookup
       migration: d7_av_files
       source: field_general_featured_image/0/fid
 destination:
