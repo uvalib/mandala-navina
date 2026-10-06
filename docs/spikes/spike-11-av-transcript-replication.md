@@ -236,12 +236,17 @@ shape.** Reasoning and the evidence behind it follow.
 > fields; the 41 / 19 / 3 transcript-file accounting; whether English stemming matters) were
 > put on Than's plate in the group session, with no date set.
 >
-> **2026-10-06:** the `ts_*` analyzer / English-stemming question is answered and built. Than
-> confirmed English stemming matters and other-language/Wylie transcripts are actively
-> searched; `ts_content_eng` now gets its own field with real Solr English analysis
-> (stemming restored, verified live), every other `ts_*` tier keeps the ICU default. See
+> **2026-10-06:** the `ts_*` analyzer / English-stemming question is answered and built, in two
+> passes same day. First pass: Than confirmed English stemming matters and other-language/Wylie
+> transcripts are actively searched; `ts_content_eng` got its own field with real Solr English
+> analysis (stemming restored, verified live). Second pass: Chinese, Nepali, Dzongkha and Wylie
+> each got their own tuned fieldType too (`HMMChineseTokenizerFactory` for Chinese; Indic/Hindi
+> Devanagari normalization, no stemmer, for Nepali; ICU same as Tibetan for Dzongkha, split into
+> its own field; an underscore-to-space char filter + whitespace tokenizer, no case-folding, for
+> Wylie), each verified live against real `d7_av` sample data. See
 > [`transcript-tier-analyzers-and-language-fields.md`](../deferred/transcript-tier-analyzers-and-language-fields.md).
-> Separate per-language fields and the synonyms-file question remain open; file accounting
+> Separate fields for the ~11 remaining smaller tiers and the synonyms-file question remain
+> open (lower priority); file accounting
 > (41/19/3) is untouched by this.
 
 ## Questions for Than (decisions are his; recorded 2026-10-01, answers 1-3 added 2026-10-02)

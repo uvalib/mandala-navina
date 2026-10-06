@@ -45,17 +45,49 @@ decision below): schema reloads cleanly with the `text_tier_en` override added;
 `ts_content_wylie:grwa` still matches tokenized Wylie text (confirms the ICU default
 for other tiers is unaffected).
 
-## Tier analyzers (2026-10-06, Than: decided and built)
+**2026-10-06, second follow-up check** (same method, after the English/Chinese/
+Nepali/Dzongkha/Wylie split below), tested against **real sample rows pulled directly
+from `d7_av.tcu_tier`**, not synthetic text:
 
-`ts_*` tiers use the ICU tokenizer plus ICU folding by default — confirmed, not just
-assumed, to be the right choice for non-English tiers (Wylie, Chinese, Nepali, etc. are
-actively searched, and no stemmer exists for Wylie anyway). **English
-(`ts_content_eng`) is the one exception**: an explicit field override
-(`text_tier_en`) restores real stemming (`chant` now matches `chanting`, confirmed
-live in a throwaway Solr 7.7.3 core) via standard Solr English analysis —
-`StandardTokenizer`, bundled `lang/stopwords_en.txt`, lowercasing,
-`EnglishPossessiveFilterFactory`, `PorterStemFilterFactory`. No synonyms filter yet —
-whether D7's synonyms file is even populated is still unconfirmed. Splitting every tier
-into its own dedicated language field (rather than one analyzer per naming pattern)
-remains deferred, lower urgency now that the one confirmed regression is fixed:
+- Chinese (`好。琼结藏王墓附近有三座石碑...`): `ts_content_zho:石碑` ("stele") matches —
+  `HMMChineseTokenizerFactory` correctly segments the real 2-character word out of
+  the unsegmented sentence.
+- Nepali (`मेरो नाम छिमि याङ्चे (हो)।`): `ts_content_nep:नाम` ("name") matches.
+- Dzongkha (`ད་འ་ནཱི་བྱ་ཅིག་... རྒྱལ་པོ་ཟེར་མི་འདི་`): `dzo_bod:རྒྱལ` matches, and
+  `analysis/field` confirms the ICU tokenizer correctly produces per-syllable
+  tokens tagged `script: Tibetan`.
+- Wylie (`...cig_yum chen khyed... g.yu mtsho 'dra/_mtsho la`): `ts_content_wylie:yum`
+  matches (confirms the underscore-to-space char filter correctly splits
+  `cig_yum` into independently searchable `cig` and `yum`), and
+  `ts_content_wylie:'phel` matches with the apostrophe intact (confirms it is
+  preserved, not stripped as punctuation).
+- **One real error caught by this check, not assumed-correct from research alone**:
+  the initial draft of the Chinese fieldType used
+  `solr.SmartChineseSentenceTokenizerFactory` + `solr.SmartChineseWordTokenFilterFactory`
+  — both `ClassNotFoundException` in this Lucene/Solr version. Inspecting
+  `lucene-analyzers-smartcn-7.7.3.jar` directly showed it registers exactly one
+  factory, `solr.HMMChineseTokenizerFactory`, which does sentence + HMM word
+  segmentation as a single tokenizer. Fixed before merging; see the schema
+  comment and the deferred note for detail.
+
+## Tier analyzers
+
+**2026-10-06, Than: decided and built, in two passes.** `ts_*` tiers use the ICU
+tokenizer plus ICU folding by default — confirmed, not just assumed, to be the right
+choice for the ~11 remaining smaller-volume tiers (mostly Himalayan minority languages
+with no dedicated Lucene/Solr support). Five tiers now have their own dedicated
+fieldType instead:
+
+| Tier | fieldType | Mechanism |
+|---|---|---|
+| `ts_content_eng` | `text_tier_en` | `StandardTokenizer`, bundled `lang/stopwords_en.txt`, lowercasing, `EnglishPossessiveFilterFactory`, `PorterStemFilterFactory` — restores real English stemming (`chant` matches `chanting`) |
+| `ts_content_zho` | `text_tier_zho` | `HMMChineseTokenizerFactory` — dictionary-based HMM word segmentation for Simplified Chinese |
+| `ts_content_nep` | `text_tier_nep` | `StandardTokenizer` + `IndicNormalizationFilterFactory` + `HindiNormalizationFilterFactory` — Devanagari script normalization only, deliberately no Hindi-specific stemmer (no dedicated Nepali analyzer exists in Lucene) |
+| `dzo_bod` | `text_dzo` | `ICUTokenizerFactory` only — same mechanism as Tibetan's `text_bod`, split into its own fieldType purely for independent future tuning |
+| `ts_content_wylie` | `text_tier_wylie` | Underscore-to-space char filter + `WhitespaceTokenizerFactory` — no lowercasing (EWTS case is phonemically meaningful) and no diacritic folding (EWTS has none by design) |
+
+No synonyms filter on any tier yet — whether D7's synonyms file is even populated is
+still unconfirmed. Separate per-language fields for the remaining ~11 smaller tiers
+remain deferred, lower priority now that the confirmed real gaps (English stemming,
+Chinese/Nepali/Dzongkha/Wylie each sharing one generic analyzer) are closed:
 [deferred note](../../docs/deferred/transcript-tier-analyzers-and-language-fields.md).
