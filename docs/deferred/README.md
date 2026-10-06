@@ -35,6 +35,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 
 | File | Area | Raised | Priority |
 |---|---|---|---|
+| [av-delete-kaltura-checkbox-admin-session-verification.md](av-delete-kaltura-checkbox-admin-session-verification.md) | AV / Kaltura / mandala_kaltura / content deletion | Group session 2026-10-06 | Low — built and working (checkbox on AV node delete confirm, deletes the Kaltura entry too); one real open item, whether `SessionType::ADMIN` is actually required for the delete call, not yet verified against a non-production Kaltura account |
 | [solr-sync-architecture-d11.md](solr-sync-architecture-d11.md) | solr / kmassets / kmterms | Session 2026-06-12 | High |
 | [solr-pipeline-cost-discussion.md](solr-pipeline-cost-discussion.md) | solr / infrastructure | Session 2026-06-12 | **High — ASSIGNED to Yuji, 2026-09-02 (group decision).** Original cost question is largely moot (no always-on ECS to right-size); what's left is closing the loop with Dave on the still-open items in `kmasset-solr-doc-contract.md` §3 — the direct-to-master sink already shipped (1a.8) ahead of confirming those |
 | [tibetan-search-quality.md](tibetan-search-quality.md) | solr / search / i18n | Session 2026-06-15 | Low (post-MVP) |

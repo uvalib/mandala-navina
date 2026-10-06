@@ -5,6 +5,85 @@
  * Primary module hooks for Mandala Kaltura Configuration.
  */
 
+use Drupal\Core\Entity\ContentEntityDeleteForm;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Adds a "Delete video on Kaltura" checkbox to the audio/video node delete
+ * confirmation, checked by default. Deliberately the generic hook_form_alter()
+ * rather than hook_form_FORM_ID_alter() -- the node delete confirmation form's
+ * id is bundle-specific (`node_video_delete_form`, `node_audio_delete_form`,
+ * ... one per content type, per EntityForm::getFormId()), so there is no
+ * single stable FORM_ID or base-form-id to hook off of; matching on the
+ * form object's class + the entity's bundle is the actually-stable approach.
+ *
+ * The Kaltura delete call happens in a submit handler appended below (see
+ * mandala_kaltura_node_delete_form_submit_kaltura()), not in
+ * hook_ENTITY_TYPE_predelete() -- that hook has no access to the
+ * confirmation form's submitted values, and this feature is scoped to the
+ * UI delete flow, not programmatic node deletion.
+ */
+function mandala_kaltura_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $form_object = $form_state->getFormObject();
+  if (!($form_object instanceof ContentEntityDeleteForm)) {
+    return;
+  }
+
+  $node = $form_object->getEntity();
+  if (!($node instanceof NodeInterface) || !in_array($node->bundle(), ['audio', 'video'], TRUE)) {
+    return;
+  }
+
+  $field_name = $node->bundle() === 'audio' ? 'field_audio' : 'field_video';
+  if (empty($node->get($field_name)->entry_id)) {
+    // No Kaltura entry on this node -- nothing to offer deleting. Checking
+    // entry_id directly, not the field item's isEmpty(): a Kaltura field
+    // item can have partner_id/uiconf_id/domain set with a NULL entry_id
+    // (confirmed live, node 116968), which the field type's own isEmpty()
+    // does not treat as empty.
+    return;
+  }
+
+  $form['delete_kaltura'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Delete video on Kaltura'),
+    '#default_value' => TRUE,
+    '#weight' => 10,
+  ];
+
+  $form['actions']['submit']['#submit'][] = 'mandala_kaltura_node_delete_form_submit_kaltura';
+}
+
+/**
+ * Submit handler: deletes the node's Kaltura entry if the checkbox is checked.
+ *
+ * Runs before core's own delete-the-node submit handler (appended, not
+ * replacing, the button's #submit array), so the node (and its field data)
+ * is still loadable here. A failed Kaltura delete is logged and surfaced as
+ * a warning but never blocks the Drupal-side node deletion from proceeding
+ * -- see KalturaSessionService::deleteEntry()'s docblock.
+ */
+function mandala_kaltura_node_delete_form_submit_kaltura(array &$form, FormStateInterface $form_state) {
+  if (!$form_state->getValue('delete_kaltura')) {
+    return;
+  }
+
+  $node = $form_state->getFormObject()->getEntity();
+  $field_name = $node->bundle() === 'audio' ? 'field_audio' : 'field_video';
+  $entry_id = $node->get($field_name)->entry_id ?? NULL;
+  if (empty($entry_id)) {
+    return;
+  }
+
+  $deleted = \Drupal::service('mandala_kaltura.session')->deleteEntry($entry_id);
+  if (!$deleted) {
+    \Drupal::messenger()->addWarning(t('The node was deleted, but its Kaltura entry (@entry_id) could not be deleted -- see the recent log messages.', ['@entry_id' => $entry_id]));
+  }
+}
+
 /**
  * Implements hook_theme().
  *
