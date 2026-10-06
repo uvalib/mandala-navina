@@ -44,6 +44,14 @@ class KalturaSessionService {
    */
   protected const SESSION_TTL_SECONDS = 3600;
 
+  /**
+   * How long a delete-scoped admin session stays valid, in seconds.
+   *
+   * One server-side API call, immediately discarded -- short on purpose,
+   * unlike the browser-facing upload session above.
+   */
+  protected const DELETE_SESSION_TTL_SECONDS = 60;
+
   public function __construct(
     protected readonly StateInterface $state,
     protected readonly KalturaConfigResolver $resolver,
@@ -112,6 +120,79 @@ class KalturaSessionService {
       'server_url' => (string) $resolved['server_url'],
       'expires' => $this->time->getRequestTime() + self::SESSION_TTL_SECONDS,
     ];
+  }
+
+  /**
+   * Deletes a Kaltura media entry.
+   *
+   * Server-side only -- unlike {@see self::mintUploadSession()}'s KS, this
+   * method's session string is never sent to the browser, so the
+   * browser-exposure risk that motivates that method's SESSION_TYPE_USER
+   * restriction does not apply here. `media.delete` is a partner-admin-type
+   * action (it can delete any entry under the partner, not just one the
+   * caller uploaded), so this mints a SESSION_TYPE_ADMIN session instead,
+   * scoped by the shortest practical TTL (one call, then discarded).
+   *
+   * **Open item, flagged not assumed**: whether ADMIN is actually required
+   * here (vs. USER with sufficient entitlement) has not been verified
+   * against a real Kaltura sandbox account -- confirm before relying on
+   * this in production, same caveat this class's own docblock already
+   * carries for upload sessions.
+   *
+   * @param string $entryId
+   *   The Kaltura entry id to delete (a node's `field_audio`/`field_video`
+   *   `entry_id` property).
+   *
+   * @return bool
+   *   TRUE if the delete call succeeded, FALSE if secrets/config are
+   *   missing or the API call failed -- callers must not block the
+   *   Drupal-side node deletion on a FALSE return; log and move on.
+   */
+  public function deleteEntry(string $entryId): bool {
+    $adminSecret = $this->state->get(KalturaSecretsForm::STATE_ADMIN_SECRET);
+    if (empty($adminSecret)) {
+      $this->logger->error('Kaltura entry delete requested (entry @entry_id) but no admin secret is configured. Set one at /admin/config/media/mandala-kaltura/secrets.', ['@entry_id' => $entryId]);
+      return FALSE;
+    }
+
+    $resolved = $this->resolver->resolve('default');
+    if ($resolved === NULL) {
+      $this->logger->error('Kaltura entry delete requested (entry @entry_id) but the "default" preset is not configured.', ['@entry_id' => $entryId]);
+      return FALSE;
+    }
+
+    $serverUrl = (string) $resolved['server_url'];
+    if (str_starts_with($serverUrl, '//')) {
+      $serverUrl = 'https:' . $serverUrl;
+    }
+
+    $config = new KalturaConfiguration();
+    $config->setServiceUrl($serverUrl);
+
+    $client = new KalturaClient($config);
+    $client->setPartnerId((int) $resolved['partner_id']);
+
+    try {
+      $ks = $client->getSessionService()->start(
+        $adminSecret,
+        '',
+        SessionType::ADMIN,
+        (int) $resolved['partner_id'],
+        self::DELETE_SESSION_TTL_SECONDS,
+      );
+      $client->setKs($ks);
+      $client->getMediaService()->delete($entryId);
+    }
+    catch (\Throwable $e) {
+      $this->logger->error('Kaltura entry delete failed (entry @entry_id): @message', [
+        '@entry_id' => $entryId,
+        '@message' => $e->getMessage(),
+      ]);
+      return FALSE;
+    }
+
+    $this->logger->info('Deleted Kaltura entry @entry_id.', ['@entry_id' => $entryId]);
+    return TRUE;
   }
 
 }

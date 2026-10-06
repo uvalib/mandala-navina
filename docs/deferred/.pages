@@ -128,3 +128,4 @@ nav:
   - "dev-0 /mnt/data on unbacked root volume": dev0-data-directory-on-unbacked-root-volume.md
   - "Carousel demo file churn on dev-0 (deferred)": carousel-demo-file-churn-on-dev0.md
   - "Cascade member-remove NULL account on user delete": mandala-group-inheritance-cascade-remove-null-account-on-user-delete.md
+  - "AV delete-Kaltura checkbox: admin session verification": av-delete-kaltura-checkbox-admin-session-verification.md
