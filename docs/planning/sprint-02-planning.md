@@ -2,8 +2,9 @@
 
 **Audience:** Yuji, Xiaoming, Than — for team review before Sprint 2 implementation starts
 **Date:** 2026-08-28
-**Status:** Planning draft — implementation has not started. This document is the deliverable
-of a planning session; workstreams below begin once the team has reviewed it.
+**Status:** Historical planning record — Sprint 2 was **completed 2026-09-04**. This document
+was the deliverable of the 2026-08-28 planning session; the closed backlog and outcomes live in
+the [Sprint 2 doc](../sprints/sprint-02-theme-images-ui-and-endpoint-access.md).
 **Relates to:** [D7 Theme / UI Commonalities Audit](theme-ui-commonalities-audit.md),
 [Images UI gaps](../deferred/images-missing-interactive-viewing-surfaces.md),
 [Uniform asset-endpoint access](../deferred/d11-asset-endpoints-uniform-access-and-authenticated-fetch.md),
