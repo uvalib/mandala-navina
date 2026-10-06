@@ -36,11 +36,17 @@ dependencies:
     - field.field.node.audio.field_transcript
     - field.field.node.audio.field_workflow
     - field.field.node.audio.field_year_published
+    - image.style.thumbnail
     - node.type.audio
   module:
+    - datetime
+    - entity_reference_revisions
+    - file
+    - image
     - mandala_kaltura
     - path
     - shanti_kmaps_fields
+    - text
 id: node.audio.default
 targetEntityType: node
 bundle: audio
@@ -58,6 +64,36 @@ content:
     region: content
     settings: {  }
     third_party_settings: {  }
+  field_available_from:
+    type: datetime_default
+    weight: 200
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_copyright_owner:
+    type: string_textfield
+    weight: 201
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_group_content_access:
+    type: options_select
+    weight: 202
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_kmap_annotation:
+    type: entity_reference_revisions_autocomplete
+    weight: 203
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
   field_kmap_terms:
     type: kmap_tree_picker
     weight: 121
@@ -70,11 +106,144 @@ content:
     region: content
     settings: {  }
     third_party_settings: {  }
+  field_license:
+    type: string_textfield
+    weight: 204
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
   field_location:
     type: kmap_tree_picker
     weight: 123
     region: content
     settings: {  }
+    third_party_settings: {  }
+  field_pbcore_contributor:
+    type: entity_reference_revisions_autocomplete
+    weight: 205
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_pbcore_coverage:
+    type: entity_reference_revisions_autocomplete
+    weight: 206
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_pbcore_creator:
+    type: entity_reference_revisions_autocomplete
+    weight: 207
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_pbcore_description:
+    type: entity_reference_revisions_autocomplete
+    weight: 208
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_pbcore_extension:
+    type: entity_reference_revisions_autocomplete
+    weight: 209
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_pbcore_identifier:
+    type: entity_reference_revisions_autocomplete
+    weight: 210
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_pbcore_instantiation:
+    type: entity_reference_revisions_autocomplete
+    weight: 211
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_pbcore_publisher:
+    type: entity_reference_revisions_autocomplete
+    weight: 212
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_pbcore_relation:
+    type: entity_reference_revisions_autocomplete
+    weight: 213
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_pbcore_rights_summary:
+    type: text_textarea
+    weight: 214
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_pbcore_sponsor:
+    type: entity_reference_revisions_autocomplete
+    weight: 215
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_pbcore_title:
+    type: entity_reference_revisions_autocomplete
+    weight: 216
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_rating:
+    type: number
+    weight: 217
+    region: content
+    settings:
+      placeholder: ''
     third_party_settings: {  }
   field_recording_location_new:
     type: kmap_tree_picker
@@ -93,6 +262,49 @@ content:
     weight: 125
     region: content
     settings: {  }
+    third_party_settings: {  }
+  field_tags:
+    type: entity_reference_autocomplete
+    weight: 218
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_thumbnail_image:
+    type: image_image
+    weight: 222
+    region: content
+    settings:
+      progress_indicator: throbber
+      preview_image_style: thumbnail
+    third_party_settings: {  }
+  field_transcript:
+    type: file_generic
+    weight: 219
+    region: content
+    settings:
+      progress_indicator: throbber
+    third_party_settings: {  }
+  field_workflow:
+    type: entity_reference_revisions_autocomplete
+    weight: 220
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_year_published:
+    type: string_textfield
+    weight: 221
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
     third_party_settings: {  }
   langcode:
     type: language_select
@@ -133,31 +345,8 @@ content:
       placeholder: ''
     third_party_settings: {  }
 hidden:
-  field_available_from: true
-  field_copyright_owner: true
-  field_group_content_access: true
   field_kaltura_duration: true
-  field_kmap_annotation: true
   field_legacy_nid: true
   field_legacy_site: true
-  field_license: true
-  field_pbcore_contributor: true
-  field_pbcore_coverage: true
-  field_pbcore_creator: true
-  field_pbcore_description: true
-  field_pbcore_extension: true
-  field_pbcore_identifier: true
-  field_pbcore_instantiation: true
-  field_pbcore_publisher: true
-  field_pbcore_relation: true
-  field_pbcore_rights_summary: true
-  field_pbcore_sponsor: true
-  field_pbcore_title: true
-  field_rating: true
-  field_tags: true
-  field_thumbnail_image: true
-  field_transcript: true
-  field_workflow: true
-  field_year_published: true
   promote: true
   sticky: true
