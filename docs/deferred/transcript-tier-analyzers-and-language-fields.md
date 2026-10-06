@@ -3,11 +3,12 @@
 **Area:** Solr / transcripts / multilingual search
 **Raised during:** Spike 11, schema draft 2026-10-02; deferred the same day (Yuji)
 **Jira:** (add when available)
-**Priority:** Medium. **Question 1 (analyzer choice) DECIDED and BUILT 2026-10-06** (Than),
+**Priority:** Low. **Question 1 (analyzer choice) DECIDED and BUILT 2026-10-06** (Than),
 **in two passes**: English first, then Chinese/Nepali/Dzongkha/Wylie the same day.
-Question 2 (separate per-language fields) remains open, lower urgency now that both
-passes' regressions/gaps are closed — the ~11 tiers still on the generic default have
-no dedicated Lucene/Solr support to gain from a split anyway.
+**Question 2 (separate per-language fields for the ~11 remaining smaller tiers) DECIDED
+2026-10-07 (Than): not doing it.** None of those tiers have dedicated Lucene/Solr
+language support to gain from a split, so there's nothing to build even if split out.
+This item is now fully resolved.
 
 ## What is deferred
 
@@ -98,22 +99,26 @@ sounds — retroflexes, long vowels), so there's no case-folding; EWTS has **no*
 diacritics by design (capitals substitute for them specifically because diacritics are
 hard to type), so there's nothing for an accent-folding filter to do.
 
+## Decided not to do (2026-10-07, Than)
+
+**Separate per-language fields for the ~11 remaining smaller tiers** (`ts_content_und`,
+`ts_content_gyal`, `ts_content_gloss`, `ts_content_nmm`, `ts_content_xkf`,
+`ts_content_tsum`, `ts_content_kjz`, `ts_content_npa`, `ts_content_gvr`,
+`ts_content_tsj`, `ts_content_kte`) — staying on the generic `text_tier` (ICU)
+default, permanently, not just for now. None of these have dedicated Lucene/Solr
+language support, so splitting them into their own fields would just be N copies of
+the same analyzer under different names — no actual behavior to gain.
+
 ## Still open
 
-1. **Separate per-language fields for the ~11 remaining smaller tiers** (`ts_content_und`,
-   `ts_content_gyal`, `ts_content_gloss`, `ts_content_nmm`, `ts_content_xkf`,
-   `ts_content_tsum`, `ts_content_kjz`, `ts_content_npa`, `ts_content_gvr`,
-   `ts_content_tsj`, `ts_content_kte`) — not done; these still share the generic
-   `text_tier` (ICU) default. Lower urgency: none of them have dedicated Lucene/Solr
-   language support to take advantage of even if split out, unlike the five tiers
-   already addressed.
-2. **Synonyms file**: still unconfirmed whether D7's synonyms file is populated or
+1. **Synonyms file**: still unconfirmed whether D7's synonyms file is populated or
    empty/unused. If confirmed populated and in real use, add a
    `SynonymGraphFilterFactory` to `text_tier_en`'s analyzer.
-3. Related, not part of this: Tibetan tokenization in kmassets is a separate topic (ADR
+2. Related, not part of this: Tibetan tokenization in kmassets is a separate topic (ADR
    004, Spike 4a).
 
-**Owner:** Than (built, both passes); unassigned for the three still-open items above.
+**Owner:** Than (built, both passes; decided not to split the remaining tiers).
+Unassigned for the synonyms-file question.
 
 ## Related
 

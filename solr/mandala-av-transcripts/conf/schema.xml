@@ -43,10 +43,12 @@
        ICU folding (case and accent folding, no stemming, no stop words) — the sensible generic
        default for a language Solr has no specific support for. English, Chinese, Nepali,
        Dzongkha and Wylie have all since been carved out into their own fieldTypes below (see
-       each for why); this general-purpose default remains for everything else. See
-       docs/deferred/transcript-tier-analyzers-and-language-fields.md — separate fields for
-       these 11 remain deferred (lower priority, no specific Lucene support exists for any of
-       them regardless); synonyms status for English is also still unconfirmed. -->
+       each for why); this general-purpose default remains for everything else. DECIDED
+       2026-10-07 (Than): these 11 stay on this shared default permanently, not a placeholder —
+       none of them have dedicated Lucene/Solr language support, so splitting them into their
+       own fieldTypes would just be 11 copies of the same analyzer under different names. See
+       docs/deferred/transcript-tier-analyzers-and-language-fields.md; synonyms status for
+       English is the one still-open item there. -->
   <fieldType name="text_tier" class="solr.TextField" positionIncrementGap="100">
     <analyzer>
       <tokenizer class="solr.ICUTokenizerFactory"/>
