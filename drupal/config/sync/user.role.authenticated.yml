@@ -9,6 +9,7 @@ dependencies:
     - contact
     - file
     - filter
+    - group
     - media
     - search
     - shortcut
@@ -26,6 +27,8 @@ permissions:
   - 'access shortcuts'
   - 'access site-wide contact form'
   - 'access user profiles'
+  - 'create collection group'
+  - 'create subcollection group'
   - 'delete own files'
   - 'grant simple_oauth codes'
   - 'post comments'
