@@ -4,7 +4,7 @@
 **Raised during:** Group session 2026-10-02 (Than)
 **Jira:** (add when available)
 **Priority:** High — raised as a direct observation against the live site, not a hypothetical.
-**Step 1 (edit form) DONE 2026-10-07 (Than).** Steps 2-5 (the full data/view-display audit)
+**Step 1 (edit form) DONE 2026-10-06 (Than).** Steps 2-5 (the full data/view-display audit)
 remain open and unstarted — see "Still open" below.
 
 ## What is deferred
@@ -39,7 +39,7 @@ source, not just the ones AV15 touched), not a point fix for the specific fields
 missing — the same kind of corpus-wide audit [Spike 11's corpus audit](../spikes/spike-11-av-transcript-replication.md)
 did for transcripts, and the content-model audit did at [C1](../planning/av-content-model-audit.md).
 
-## Step 1 — DONE 2026-10-07 (Than)
+## Step 1 — DONE 2026-10-06 (Than)
 
 Reworked `core.entity_form_display.node.{audio,video}.default` so every genuinely
 D7-equivalent editorial field is shown in the `content` region, using Drupal's own
@@ -77,6 +77,13 @@ confirmed no new watchdog errors from rendering the form; existing
 or whether each field is wired into the *view* display — those are steps 2-5 below,
 still open. A field showing (empty) on the edit form proves nothing about whether D11
 has real migrated data for it.
+
+**TODO, first thing next session:** PR #284 was only verified via `curl`/HTTP (not a
+real browser) and a single real video node. Load the actual edit form for both an
+audio and a video node in a browser before merging — confirm every widget renders
+sensibly (the `entity_reference_revisions_autocomplete` widgets on the PBCore fields
+in particular — these are Paragraphs-backed and were never visually checked), and that
+nothing looks broken/duplicated/mis-labeled.
 
 ## Still open (steps 2-5, unchanged from the original note)
 
