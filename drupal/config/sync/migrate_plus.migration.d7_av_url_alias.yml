@@ -13,14 +13,6 @@ migration_tags:
   - 'ADR 016'
 migration_group: mandala_av
 label: 'AV: url_alias rows for audio/video nodes → D11 path_alias entities'
-# 11,900 alias rows across all 11,583 AV nodes -- every AV node has at least
-# one, and 317 have more than one because D7 pathauto left the older alias in
-# place when a title changed. Each of those is a URL somebody may have saved,
-# so the source is keyed on `pid` (one row per ALIAS, not per node) and none
-# are deduplicated. See ADR 016 decision 7.
-#
-# D7's AV aliases are already namespaced `audio/...` and `video/...`, which is
-# the shape ADR 016 specifies for D11, so these carry over unchanged.
 source:
   plugin: d7_image_url_alias
   key: migrate_av

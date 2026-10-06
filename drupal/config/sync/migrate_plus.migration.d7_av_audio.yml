@@ -12,38 +12,14 @@ migration_tags:
   - 'Sprint 3 AV4'
 migration_group: mandala_av
 label: 'AV: D7 audio nodes -> D11 audio nodes (field_collections as paragraphs)'
-# 4,187 audio nodes. d7_av_video is identical apart from the media field
-# and field_thumbnail_image -- exactly the difference AV2 measured between the
-# two bundles, and nothing else. The two files are written out in full rather
-# than factored: migration config is read far more often than it is edited, and
-# Drupal's config exporter would flatten any YAML anchors anyway.
-#
-# WARNING: 1 audio node has no Kaltura entry ID (and 17 video nodes do too).
-# They migrate published, as-is, per AV14. D7 makes the media field required, so
-# they will be uneditable in the D11 node form until someone supplies a
-# reference; the nid list goes to AV staff as pre-cutover cleanup.
-#
-# field_thumbnail_image is AUDIO-ONLY and populated on 2,844 of 4,187 audio
-# nodes (68%). Kaltura generates a poster frame for video; audio has none, so
-# editors upload cover art. This is the AV2 audit correction.
 source:
   plugin: d7_av_node
   key: migrate_av
   node_type: audio
   constants:
-    # Site-level Kaltura identity, read from D7's `variable` table
-    # (kaltura_partner_id = 381832, kaltura_server_url = //www.kaltura.com) and
-    # mb_kaltura's MB_MAIN_PLAYER_ID = 24762821 -- the uiconf_id the live D7
-    # node-view embed actually uses (confirmed in Spike 6).
-    #
-    # These are CONFIGURATION, written per item only because kaltura_media
-    # stores them per item and its formatter reads them from there. AV10 builds
-    # the real configuration layer and AV13 migrates D7's per-view-mode player
-    # settings into it; at that point these three stop being the source of
-    # truth. Do not treat them as content.
     kaltura_partner_id: '381832'
     kaltura_uiconf_id: '24762821'
-    kaltura_domain: 'www.kaltura.com'
+    kaltura_domain: www.kaltura.com
 process:
   title: title
   status: status
@@ -51,41 +27,24 @@ process:
   changed: changed
   promote: promote
   sticky: sticky
-  # Real D7 author uid. Verified 2026-09-09: all 614 distinct audio/video author
-  # uids exist in D11, so no row falls back to anonymous.
-  # NOTE: d7_images_shanti_image does NOT map uid, which is why all 111,340
-  # migrated Images nodes are owned by Anonymous. That is a Sprint 1 fidelity
-  # gap, not a convention to copy.
   uid: node_uid
   field_legacy_nid: nid
   field_legacy_site:
     plugin: default_value
     default_value: audio-video
-
-  # --- Kaltura media ---
   field_audio/entry_id: field_audio/0/entryid
   field_audio/partner_id: constants/kaltura_partner_id
   field_audio/uiconf_id: constants/kaltura_uiconf_id
   field_audio/domain: constants/kaltura_domain
-
-  # --- Scalars ---
   field_copyright_owner: field_copyright_owner/0/value
   field_group_content_access: group_content_access/0/value
   field_license: field_license/0/value
   field_year_published: field_year_published/0/value
-  # D7 stores this with a NULL text format on all 2,340 rows (plain text);
-  # D11's field is text_long and needs one.
   field_pbcore_rights_summary/value: field_pbcore_rights_summary/0/value
   field_pbcore_rights_summary/format:
     plugin: default_value
     default_value: basic_html
-  # D7 fivestar, stored on a 0-100 scale. Two rows in the whole corpus, both 20.
-  # Migrated raw rather than rescaled -- rescaling would be a judgement about
-  # what the number means, and no D11 UI reads it yet.
   field_rating: field_rating/0/rating
-  # D7 datetime (Y-m-d H:i:s), max delta 0. D7's field is a RANGE
-  # (value/value2), D11's is a single datetime: 9 of the 595 rows carry a
-  # value2 that differs from value, and those end dates are NOT carried.
   field_available_from:
     -
       plugin: skip_on_empty
@@ -95,8 +54,6 @@ process:
       plugin: format_date
       from_format: 'Y-m-d H:i:s'
       to_format: 'Y-m-d\TH:i:s'
-
-  # --- Files (migrated by d7_av_files; inert, never parsed) ---
   field_thumbnail_image/target_id:
     -
       plugin: skip_on_empty
@@ -119,8 +76,6 @@ process:
       no_stub: true
   field_transcript/display: field_transcript/0/display
   field_transcript/description: field_transcript/0/description
-
-  # --- Taxonomy ---
   field_tags:
     plugin: sub_process
     source: field_tags
@@ -130,8 +85,6 @@ process:
         migration: d7_av_tags
         source: tid
         no_stub: true
-
-  # --- KMaps (6 fields; the sub_process shape Images proved in Sprint 1) ---
   field_kmap_terms:
     plugin: sub_process
     source: field_kmap_terms
@@ -240,13 +193,6 @@ process:
           - domain
           - path
           - defids
-
-  # --- Paragraphs (13 field_collection fields) ---
-  # Each *_items property is an ORDERED list of field_collection item_ids built
-  # by D7AvNode using the same en-preferred, archived-excluded rule
-  # D7AvFieldCollection uses to decide which items become paragraphs. The
-  # paragraph migrations are keyed on item_id alone -- unlike Images, whose
-  # satellites were keyed on (nid, delta).
   field_kmap_annotation:
     plugin: sub_process
     source: field_kmap_annotation_items
