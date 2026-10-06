@@ -34,17 +34,40 @@
     </analyzer>
   </fieldType>
 
-  <!-- All other language tiers (ts_content_*). DEFAULT FOR NOW, analyzer choice deferred (see
-       docs/deferred/transcript-tier-analyzers-and-language-fields.md). Legacy used an English
-       analyzer for these (whitespace tokenizer, English stemming and stop words, Latin-1 accent
-       mapping), which is poor for Chinese, Nepali, Wylie and other languages. This uses the ICU
-       tokenizer plus ICU folding (case and accent folding, no stemming, no stop words), so
-       phrase search per tier works but English loses stemming. The tiers should eventually be
-       separate language-specific fields; that discussion is deferred too. -->
+  <!-- Non-English, non-Tibetan language tiers (ts_content_wylie, ts_content_und, Chinese,
+       Nepali, and the other smaller-volume tiers). ICU tokenizer plus ICU folding (case and
+       accent folding, no stemming, no stop words) — confirmed better than D7's whitespace
+       tokenizer for languages not written with spaces between words (Chinese) and for Wylie,
+       which D7's English analyzer never handled correctly. Than confirmed 2026-10-06: these
+       tiers are actively searched, so correct tokenization matters here, but no stemmer exists
+       for Wylie (a Tibetan romanization scheme, not a language Solr has stemming support for),
+       so this is the right default for it, not a placeholder the way it was for English. See
+       docs/deferred/transcript-tier-analyzers-and-language-fields.md — per-language fields
+       (rather than one analyzer per naming pattern) remain deferred; synonyms status is also
+       still unconfirmed. -->
   <fieldType name="text_tier" class="solr.TextField" positionIncrementGap="100">
     <analyzer>
       <tokenizer class="solr.ICUTokenizerFactory"/>
       <filter class="solr.ICUFoldingFilterFactory"/>
+    </analyzer>
+  </fieldType>
+
+  <!-- English tier (ts_content_eng) only. DECIDED 2026-10-06 (Than): users rely on English
+       stemming ("chant" must match "chanting"), so the ICU default above — which dropped it —
+       was a real regression for the single largest tier by volume (71,873 of ~145k non-Tibetan
+       tier values). Standard Solr English analysis, matching the "text_en" shape every other
+       Solr/Lucene default schema ships (e.g. Drupal's own search_api_solr text_en field type):
+       StandardTokenizer, English possessive stripping, stopwords (Solr's bundled
+       lang/stopwords_en.txt, no local file needed), lowercasing, Porter stemming. No synonyms —
+       whether D7's synonyms file is even populated is still unconfirmed (see the deferred note);
+       add a SynonymGraphFilterFactory here if/when that's answered. -->
+  <fieldType name="text_tier_en" class="solr.TextField" positionIncrementGap="100">
+    <analyzer>
+      <tokenizer class="solr.StandardTokenizerFactory"/>
+      <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_en.txt"/>
+      <filter class="solr.LowerCaseFilterFactory"/>
+      <filter class="solr.EnglishPossessiveFilterFactory"/>
+      <filter class="solr.PorterStemFilterFactory"/>
     </analyzer>
   </fieldType>
 
@@ -69,8 +92,14 @@
   <field name="ss_speaker_bod" type="string" indexed="true" stored="true"/>
   <field name="ss_language"    type="string" indexed="true" stored="true"/>
 
+  <!-- English tier: explicit field, not the ts_* dynamic pattern below — an explicit field
+       always wins over a dynamicField match in Solr, regardless of declaration order. See
+       text_tier_en above for why. -->
+  <field name="ts_content_eng" type="text_tier_en" indexed="true" stored="true" multiValued="false"/>
+
   <!-- ===== Dynamic fields (legacy names) ===== -->
-  <!-- Language tiers: 17 names in the D7 data, ts_content_* plus content_bod and dzo_bod. -->
+  <!-- Remaining language tiers: 16 names in the D7 data (ts_content_* other than English, plus
+       content_bod and dzo_bod below). -->
   <dynamicField name="ts_*"   type="text_tier" indexed="true" stored="true" multiValued="false"/>
   <dynamicField name="*_bod"  type="text_bod"  indexed="true" stored="true" multiValued="false"/>
   <!-- Speaker tiers: ss_speaker, ss_speaker_{lang} (14 names in the D7 data). -->

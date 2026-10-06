@@ -39,10 +39,23 @@ schema swapped in, the two `<lib>` lines above added), then exercised with **syn
 
 **Not checked:** Solr 9.x, real data, the production `solrconfig.xml`, replication, the proxy.
 
-## Deferred: tier analyzers
+**2026-10-06 follow-up check** (same throwaway-core method, after the tier-analyzer
+decision below): schema reloads cleanly with the `text_tier_en` override added;
+`ts_content_eng:chant` matches a document containing "chanting" (stemming confirmed);
+`ts_content_wylie:grwa` still matches tokenized Wylie text (confirms the ICU default
+for other tiers is unaffected).
 
-`ts_*` tiers use the ICU tokenizer plus ICU folding as a **default for now**, not D7's English
-analyzer: no stemming (`chant` does not match `chanting`, as it did in D7) but sensible
-tokenization of Chinese, Nepali, Wylie and other languages. The analyzer per tier, and splitting
-the tiers into separate language fields, are deferred:
+## Tier analyzers (2026-10-06, Than: decided and built)
+
+`ts_*` tiers use the ICU tokenizer plus ICU folding by default — confirmed, not just
+assumed, to be the right choice for non-English tiers (Wylie, Chinese, Nepali, etc. are
+actively searched, and no stemmer exists for Wylie anyway). **English
+(`ts_content_eng`) is the one exception**: an explicit field override
+(`text_tier_en`) restores real stemming (`chant` now matches `chanting`, confirmed
+live in a throwaway Solr 7.7.3 core) via standard Solr English analysis —
+`StandardTokenizer`, bundled `lang/stopwords_en.txt`, lowercasing,
+`EnglishPossessiveFilterFactory`, `PorterStemFilterFactory`. No synonyms filter yet —
+whether D7's synonyms file is even populated is still unconfirmed. Splitting every tier
+into its own dedicated language field (rather than one analyzer per naming pattern)
+remains deferred, lower urgency now that the one confirmed regression is fixed:
 [deferred note](../../docs/deferred/transcript-tier-analyzers-and-language-fields.md).
