@@ -128,3 +128,28 @@ lists (`core.entity_{form,view}_display.group.{collection,subcollection}.{defaul
 rather than a second blind `config:export -y`. Confirms the pattern is reliably
 per-session, not a one-off — worth treating "run `config:export -y`, then diff and revert"
 as the default expectation for any future Group-entity field addition, not an edge case.
+
+## Update 2026-10-06: the 296 comment lines have been relocated
+
+All 16 files listed in the inventory above are now comment-free. Destination decided by Yuji:
+**one rationale doc keyed by config name**,
+[docs/dev-notes/migration-config-rationale.md](../dev-notes/migration-config-rationale.md), with
+sibling files merged and history-only remarks (for example the `uid: uid` correction, which
+survives as a short "check with `migrate:fields-source`" note) condensed.
+
+Comments that were really about data problems were checked against `docs/deferred/`; the two
+without a deferred note got one:
+[av-available-from-end-date-not-migrated.md](av-available-from-end-date-not-migrated.md) and
+[av-collection-memberships-dropped-for-deleted-d7-user.md](av-collection-memberships-dropped-for-deleted-d7-user.md).
+
+The files were rewritten by exporting from a live Drupal into a temp directory and copying the 16
+files across (no hand-editing). The only non-comment differences were serialization: quoting of
+`kaltura_domain` and `server_url`, and the list-item layout of `process` plugin entries. `config:status`
+shows no difference between the DB and the sync directory (other than the local-only
+`stage_file_proxy`). The four Solr field-type files were left alone; their `#` lines are string data.
+
+Follow-up, same day: `scripts/config-check.sh` is now strict by default (`--lenient` downgrades), it
+discounts the local-only `stage_file_proxy` (shared helper with `session-start-check.sh`), and
+`session-close-check.sh` runs it when `config/sync` changed. Five more files an export would only
+reformat (four Solr field types, `views.view.collection_gallery`) were brought to canonical form so
+strict passes on `main`. See [config-export-drift-hand-edited-yaml.md](config-export-drift-hand-edited-yaml.md).

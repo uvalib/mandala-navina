@@ -116,6 +116,8 @@ nav:
   - "AV private/UVA collection content was not enforced in Drupal (fixed 2026-09-25)": av-private-uva-content-not-enforced-in-drupal.md
   - "Collection visibility not enforced in listings (nodes or collections) -- awaiting a team decision": collection-visibility-not-enforced-in-listings.md
   - "Hand AV staff the 18 media-less AV nodes for cleanup (deferred)": av14-media-less-nodes-staff-handoff.md
+  - "AV available-from end date not migrated (9 rows)": av-available-from-end-date-not-migrated.md
+  - "AV memberships skipped for deleted D7 user": av-collection-memberships-dropped-for-deleted-d7-user.md
   - "Audit AV node fields D7 vs D11 -- technical metadata fields missing on D11": av-field-audit-d7-vs-d11-technical-metadata.md
   - "Transcript bad timecodes: investigate and fix": transcript-bad-timecodes-investigate-and-fix.md
   - "Transcript source files: account for every original": transcript-source-file-accounting.md

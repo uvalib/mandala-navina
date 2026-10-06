@@ -39,9 +39,10 @@ Development is driven collaboratively — team members take turns leading sessio
 
 - **One repo, one session.** Always open Claude Code from this directory. Never work on Mandala from a legacy repo directory.
 - **Session end ritual.** Run `./scripts/session-close-check.sh` first — it
-  checks the two mechanical traps (a doc that exists but never made it into
+  checks the mechanical traps (a doc that exists but never made it into
   its directory's `.pages` nav or `README.md` index; uncommitted or
-  unpushed work) and prints the remaining judgment steps as a reminder. It
+  unpushed work; and, if `drupal/config/sync` changed, that it matches a real
+  export, via `scripts/config-check.sh`) and prints the remaining judgment steps as a reminder. It
   does not replace the steps below, only catches the parts that are
   objectively checkable. **Kept in sync with this checklist deliberately —
   if you change one, update the other in the same PR.** Before closing a
@@ -90,6 +91,27 @@ ddev drush cache:rebuild      # Clear caches
 ```
 
 Site URL: https://mandala.ddev.site
+
+## Config changes: export from live Drupal, never hand-edit
+
+`drupal/config/sync` is the shared contract, and the deploy guard compares it to
+Drupal's own serialization by exact value. Hand-edited YAML has twice failed the
+pipeline (PRs #177, #209) because Drupal reorders keys on save. The practice
+(stated by Yuji 2026-10-05; details in
+`docs/deferred/config-export-drift-hand-edited-yaml.md`):
+
+1. Make the change in a live Drupal (DDEV or dev-0), then export it.
+2. `git diff drupal/config/sync` afterward and revert anything unexplained —
+   a bare `drush config:export` is not scoped. **`--diff` is not a preview**: it
+   still writes. To inspect without writing, use `./scripts/config-check.sh` or
+   `--destination=<temp dir>`.
+3. Require `ddev drush config:status` to say "No differences between DB and sync
+   directory" before pushing.
+4. The only hand-edit allowed is changing a single scalar value in an existing
+   file. Anything structural (a view display's `content` order, adding a
+   component or key) must come from a live Drupal save.
+5. No `#` comments in `config/sync` — an export strips them. Put the explanation
+   in `docs/` instead.
 
 ## Content identity across environments
 

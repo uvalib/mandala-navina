@@ -66,14 +66,10 @@ process:
     plugin: default_value
     default_value: basic_html
   field_pbcore_date_available: field_pbcore_date_available
-  # nested collection -> av_pbcore_format_id; resolved by the child migration's map
   field_pbcore_format_id:
     plugin: sub_process
     source: field_pbcore_format_id
     process:
-      # entity_reference_revisions needs BOTH ids. migration_lookup on a
-      # paragraph destination returns [id, revision_id], so mapping it
-      # straight onto target_id assigns the whole pair to one column.
       _para:
         plugin: migration_lookup
         migration: d7_av_pbcore_format_id

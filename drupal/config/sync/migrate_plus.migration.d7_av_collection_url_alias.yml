@@ -13,12 +13,6 @@ migration_tags:
   - 'ADR 016'
 migration_group: mandala_av
 label: 'AV: url_alias rows for collection/subcollection nodes → D11 path_alias entities'
-# 247 alias rows across all 237 AV collections and subcollections.
-#
-# The destination path is /group/{id}, not /node/{id}: AV collections became
-# Group entities, exactly as the Images collections did. Same source plugin as
-# d7_av_url_alias, different path construction -- which is why the node-type
-# filter lives in the source and the path shape lives here.
 source:
   plugin: d7_image_url_alias
   key: migrate_av
