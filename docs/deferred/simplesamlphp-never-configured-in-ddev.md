@@ -3,9 +3,11 @@
 **Area:** infrastructure / DDEV / local dev environment / SAML
 **Raised during:** Session 2026-08-06 (PR #75 DDEV-readiness check)
 **Jira:** (add when available)
-**Priority:** Medium — not breaking anything today, deliberately deferred; noted so it isn't
-rediscovered as a surprise outage in local dev, and so the eventual fix is designed rather
-than bolted on under pressure.
+**Priority:** Medium for the core gap (not breaking anything today, deliberately deferred;
+noted so it isn't rediscovered as a surprise outage in local dev, and so the eventual fix
+is designed rather than bolted on under pressure). **Medium-High, 2026-10-06, for the
+personal workaround specifically:** it breaks local logout entirely for anyone who has it
+enabled — see "Correction" below.
 
 ## What's true today
 
@@ -126,6 +128,47 @@ today" above. This is explicitly **not** the checked-in mechanism decision item 
 for — it is the kind of personal, never-committed local file that decision warns will let the
 gap silently re-form if mistaken for a real fix. Treat it as a cosmetic convenience for
 individual developers, not a step toward closing this note.
+
+**Correction (2026-10-06): this claim was wrong — it also breaks local logout.** Than
+reported being unable to log out of DDEV as `ShantiAdmin` (tokenized logout link "does
+nothing"). Root-caused live: the workaround changes `getSimpleSamlInstance()` from
+throwing (caught, returns `NULL`) to succeeding, which flips
+`simplesamlphp_auth_user_logout()`'s `isActivated() && isAuthenticated()` guard from
+false to true **even for a plain `drush user:login`/local-password session that never
+went through real SAML** — the `.dist` `authsources.php`'s `default-sp` example source
+registers as "authenticated" in SimpleSAMLphp's own local session store once anything
+has exercised it. That branch calls SimpleSAMLphp's own `Simple::logout()`, which (via
+`Utils\HTTP::redirect()`) sends a raw `header('Location: ...')` + echoes its own minimal
+HTML **directly**, bypassing Symfony's response pipeline entirely — and does so *before*
+Drupal's `user_logout()` (the caller, which runs all `hook_user_logout()` implementations
+first) reaches its own `session_manager->destroy()` + anonymous-account reset. Confirmed
+via `curl` with the workaround active: the logout response's `Set-Cookie` headers clear
+only the `SimpleSAML` cookie, never the Drupal `SSESS*` cookie — the browser keeps
+presenting its original, still-valid authenticated session indefinitely, so clicking
+"Log out" any number of times has no effect. Removing the workaround (or just not having
+it configured) restores normal logout, confirmed by the same `curl` reproduction.
+
+A related, not-fully-isolated observation from the same investigation: at least once,
+immediately after hitting this broken logout path, Drupal's Dynamic Page Cache served
+the **authenticated admin's rendered homepage to a brand-new request carrying no cookie
+at all** (`x-drupal-dynamic-cache: HIT`, `body` class including `user-logged-in`) — i.e.
+a real information-disclosure shape, not just a UX annoyance. A clean login→logout→
+anonymous cycle (workaround removed, cache rebuilt) did **not** reproduce this on repeat
+testing, so it's plausibly a side effect of the broken flow (headers already sent mid-
+request leaving Drupal's own cache-writing code running against stale request state)
+rather than a standing cache bug — but it was only observed once and not cleanly
+isolated. **Flag for whoever next touches SAML/logout locally: re-check this specifically
+with a real browser (not synthetic `curl` sessions) before assuming it's fully explained
+by the logout defect above.**
+
+**Practical takeaway:** if your local logout stops working, check whether
+`.ddev/config.local.yaml` sets `SIMPLESAMLPHP_CONFIG_DIR` — remove it (or comment it out)
+and `ddev restart` to get working logout back; you'll see the cosmetic admin notice
+again as the tradeoff. This is not something to "fix" by patching the vendored
+`simplesamlphp_auth` module — the real fix is the checked-in mechanism decision item 3
+above still calls for, which wouldn't have this failure mode (a correctly-configured
+local SP wouldn't report a phantom authenticated session for a non-SAML login in the
+first place).
 
 ## Cross-references
 
