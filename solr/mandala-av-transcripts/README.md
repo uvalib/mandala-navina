@@ -48,7 +48,11 @@ Two things the prototype **found that would have broken the build**:
    | `point_dv` (committed) | give kmassets `trid_i` `docValues="true"` | a kmassets schema change on master + replica; nothing carries `trid_i` yet, so no existing values to reindex, but the kmassets writer must still be built |
    | `trie_to` | make this core's `is_trid` a `TrieIntField` | no kmassets change; Trie fields are gone in Solr 9.x, so it undoes the "portable to 9.x" choice |
 
-   **Open, needs the VPN:** whether the *deployed* dev-0 kmassets `trid_i` already has docValues
+   **DECIDED 2026-10-07 (Yuji, with Xiaoming and Than): `point_dv`.** kmassets `trid_i` gets
+   `docValues="true"`; `is_trid` stays a Point int. Reason: nothing carries `trid_i` yet so there
+   is nothing to reindex, and it keeps this core portable to Solr 9, which `trie_to` would not.
+
+   **Still open, needs the VPN:** whether the *deployed* dev-0 kmassets `trid_i` already has docValues
    (the legacy file was used here, the deployed one was not inspected). If it does, `point_dv`
    needs nothing at all.
 
