@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  STAND-IN for the deployed kmassets schema, only for the cross-core join prototype.
+  Carries just the fields the visibility filter and the join touch. int is TrieIntField, copied from the legacy kmassets schema (solr6.4.x/kmassets).
+  The DEPLOYED dev-0 kmassets schema was NOT inspected, so that is an assumption (README).
+-->
+<schema name="kmassets-stub" version="1.6">
+  <fieldType name="string" class="solr.StrField" sortMissingLast="true" docValues="true"/>
+  <fieldType name="int"    class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0"/>
+  <fieldType name="long"   class="solr.LongPointField" docValues="true"/>
+  <field name="id"            type="string" indexed="true" stored="true" required="true"/>
+  <field name="_version_"     type="long"   indexed="false" stored="false"/>
+  <field name="uid"           type="string" indexed="true" stored="true"/>
+  <field name="asset_type"    type="string" indexed="true" stored="true"/>
+  <field name="visibility_i"  type="int"    indexed="true" stored="true"/>
+  <field name="node_user_i"   type="int"    indexed="true" stored="true"/>
+  <field name="members_uid_ss"  type="string" indexed="true" stored="true" multiValued="true"/>
+  <field name="collection_uid_s" type="string" indexed="true" stored="true"/>
+  <field name="trid_i"        type="int"    indexed="true" stored="true"/>
+  <uniqueKey>id</uniqueKey>
+</schema>

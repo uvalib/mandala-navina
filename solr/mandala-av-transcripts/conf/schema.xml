@@ -22,6 +22,7 @@
   <!-- ===== Field types ===== -->
   <fieldType name="string" class="solr.StrField" sortMissingLast="true" docValues="true"/>
   <fieldType name="long"   class="solr.LongPointField"  docValues="true"/>
+  <fieldType name="int"    class="solr.IntPointField"   docValues="true"/>
   <!-- float, not double: D7 stored single-precision floats, and a float keeps the JSON output
        identical (10.033, not 10.032999...) for the client. -->
   <fieldType name="float"  class="solr.FloatPointField" docValues="true"/>
@@ -166,7 +167,10 @@
   <!-- Parent AV node (D11 nid). Ours, not in D7 documents. -->
   <field name="nid" type="long" indexed="true" stored="true"/>
   <!-- Transcript id (D7's trid, preserved). The client's one query key. -->
-  <field name="is_trid" type="long" indexed="true" stored="true"/>
+  <!-- int, not long, on purpose: the access filter joins this field against kmassets'
+       trid_i (an int), and Solr 7.7.3 fails the join with "bytesPerDim=8 but this query has
+       bytesPerDim=4" if the two point types differ. See prototype/join-check.sh. -->
+  <field name="is_trid" type="int" indexed="true" stored="true"/>
 
   <field name="fts_start"    type="float" indexed="true" stored="true"/>
   <field name="fts_end"      type="float" indexed="true" stored="true"/>

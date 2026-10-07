@@ -437,7 +437,13 @@ to carry the facet):
   dev/staging Solr instance (Yuji, 2026-10-02), so Dave is not needed for dev. Production
   creation and the Solr 7.x versus 9.x target are still to be confirmed. Creating the core on
   dev has not been done.
-- **Still open for question 6:** the `solrconfig.xml` and the join prototype.
+- **`solrconfig.xml` written and the join prototype run, 2026-10-07** (lean config, loads on
+  Solr 7.7.3; see `solr/mandala-av-transcripts/README.md`). The cross-core join works on 7.7.3
+  with synthetic data, but only after two fixes the prototype found: `is_trid` must be an int
+  (not long) to match kmassets' `trid_i`, and joining into a Point field needs docValues on
+  `trid_i` (or `is_trid` as a Trie field). **Still open for question 6:** whether the deployed
+  kmassets `trid_i` has docValues (check on dev-0), the proxy change, join cost at real scale,
+  and creating the core on dev.
 7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
    viable.** Its UI is still not part of this spike's build, but D11 must keep the
    `mandala-av` index (or an equivalent the client can be pointed at through
