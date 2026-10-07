@@ -37,6 +37,7 @@
         "drupal/devel": "^5.0",
         "drupal/entity_reference_revisions": "^1.12",
         "drupal/facets": "^3.0",
+        "drupal/field_group": "^3.6",
         "drupal/footnotes": "^4.0",
         "drupal/group": "^3.3",
         "drupal/kaltura_media": "1.0.4",
