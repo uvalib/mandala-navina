@@ -60,6 +60,23 @@ for dir in docs/adr docs/spikes docs/deferred; do
 done
 echo
 
+# ── 1b. Deferred notes without an Issue header (advisory) ───────────────
+# docs/deferred/README.md: every note carries an '**Issue:**' line (a GitHub
+# Issue number, or 'none'). Existing notes are backfilled as touched, so this
+# only checks notes added or modified vs origin/main plus uncommitted ones.
+echo "=== 1b. Deferred notes missing an **Issue:** header ==="
+CHANGED_DEFERRED="$( { git diff --name-only origin/main...HEAD -- docs/deferred 2>/dev/null; git status --porcelain -- docs/deferred 2>/dev/null | awk '{print $NF}'; } | sort -u | grep '\.md$' | grep -v '/README\.md$')"
+NOISSUE=0
+for f in $CHANGED_DEFERRED; do
+  [ -f "$f" ] || continue
+  if ! grep -qE '^\*\*Issue:\*\*' "$f"; then
+    warn "$f has no '**Issue:**' header (add '#N' or 'none')"
+    NOISSUE=1
+  fi
+done
+[ "$NOISSUE" -eq 0 ] && pass "touched deferred notes all carry an Issue header"
+echo
+
 # ── 2. Working tree / push status ───────────────────────────────────────
 echo "=== 2. Uncommitted or unpushed work ==="
 DIRTY="$(git status --short)"
@@ -147,6 +164,9 @@ cat <<'EOF'
       above only catches docs that exist but aren't linked).
   [ ] For long planning/spike sessions: run scripts/save-session-log.py
       against this session's own transcript.
+  [ ] Deferrals: new/changed deferred note has its GitHub Issue (label
+      'deferred') opened, updated or closed -- public repo, so no detail
+      of anything tracked privately in the issue title/body.
   [ ] Refresh local Claude memory: update project-mandala-state (sprint/
       spike/ADR status, dates) and add/revise topic memories for anything
       decided this session. Memory is per-machine/per-driver -- committed

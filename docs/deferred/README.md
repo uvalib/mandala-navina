@@ -1,8 +1,34 @@
 # Deferred Notes
 
 Items noted during spike work or development that need to be addressed in downstream
-implementation. Each file is one logical issue. When Jira is available, each file
-should map to a ticket (add the ticket key to the file's header at that time).
+implementation. Each file is one logical issue.
+
+## Tracking: GitHub Issues (decided 2026-10-08)
+
+Deferrals are **internal developer project tracking**, not user-facing work, so they are
+tracked as **GitHub Issues** in this repo (Jira stays for user-facing work; this supersedes the
+earlier "each note maps 1:1 to a Jira ticket" intent). A practical second reason: not everyone on the team has developer Jira access (Than does not), while everyone already works in this repo. The note and the issue split the job:
+
+- **The note** (this directory) holds the *why* — context, findings, options. It is reviewed in
+  PRs and is what session startup reads. Never edit history away; add a dated section.
+- **The issue** holds *status* — owner, blocked/not, discussion, linked PRs.
+
+Rules:
+
+1. Every note with an owner or a start trigger gets one issue, labelled `deferred`. The issue
+   links to the note; the note's `**Issue:**` header links back. Notes with neither owner nor
+   trigger stay doc-only (header: `**Issue:** none`).
+2. Close the issue when the work ships or the deferral is dropped, and add a dated *Resolved*
+   section to the note.
+3. **This repo is public, and so are its issues.** Titles and bodies follow the same rule as
+   notes: say that a problem exists and who to ask, never what it is. Anything tracked in the
+   private docs repos (see [non-public-documentation](../non-public-documentation.md)) gets no
+   public issue, or a stub that names no detail.
+4. If a deferral turns into something users will notice, move the tracking to Jira.
+
+`session-start-check.sh` lists open `deferred` issues; `session-close-check.sh` warns about
+notes missing an `**Issue:**` header. Existing notes get the header as they are next touched —
+there is no bulk backfill.
 
 ## Naming convention
 
@@ -16,7 +42,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 # Title
 **Area:** module / feature area
 **Raised during:** Spike N / Phase N
-**Jira:** (add when available)
+**Issue:** #N (GitHub Issue, label `deferred`) — or `none`
 **Priority:** High / Medium / Low
 ```
 

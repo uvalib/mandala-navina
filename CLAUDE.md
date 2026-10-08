@@ -22,7 +22,7 @@ At the start of every session, before doing any work:
 2. Read these files to orient yourself:
    1. `docs/adr/README.md` — index of all architectural decisions; read any ADR that seems relevant to the task
    2. `docs/spikes/README.md` — spike status; read the doc for any spike being continued or referenced
-   3. `docs/deferred/README.md` — known gaps and deferred work
+   3. `docs/deferred/README.md` — known gaps and deferred work; open items are tracked as GitHub Issues labelled `deferred` (`gh issue list --label deferred`, also printed by the startup script)
    4. `docs/session-logs/` — scan for the most recent log in particular; it may be an agenda or handoff (e.g. drafted by one driver for another to pick up) with open decisions or context not yet reflected elsewhere
 3. **Check the local database against dev-0**, and check that config is in sync. dev-0 is the canonical shared state; a local DB that has quietly drifted from it produces work that passes locally and fails for everyone else. Three checks, cheap enough to run every time:
    1. `ddev drush config:status` — must say *"No differences between DB and sync directory."* Anything else means your local DB is behind (or ahead of) the committed config. One expected exception: `stage_file_proxy` (a dev-only file-proxy convenience, `composer require --dev`'d, never in `config/sync` — see `docs/deferred/local-dev-files-provisioning-mechanism.md`) is enabled locally by `session-start-check.sh`'s own step 3a-pre and discounted by step 3a's drift check; it never reaches dev-0/staging/production since the module itself is absent from the production image.
@@ -40,14 +40,14 @@ Development is driven collaboratively — team members take turns leading sessio
 - **One repo, one session.** Always open Claude Code from this directory. Never work on Mandala from a legacy repo directory.
 - **Session end ritual.** Run `./scripts/session-close-check.sh` first — it
   checks the mechanical traps (a doc that exists but never made it into
-  its directory's `.pages` nav or `README.md` index; uncommitted or
+  its directory's `.pages` nav or `README.md` index; a touched deferred note with no `**Issue:**` header; uncommitted or
   unpushed work; and, if `drupal/config/sync` changed, that it matches a real
   export, via `scripts/config-check.sh`) and prints the remaining judgment steps as a reminder. It
   does not replace the steps below, only catches the parts that are
   objectively checkable. **Kept in sync with this checklist deliberately —
   if you change one, update the other in the same PR.** Before closing a
   significant session:
-  1. Flush any decisions to `docs/adr/`, findings to `docs/spikes/`, and deferred notes to `docs/deferred/`.
+  1. Flush any decisions to `docs/adr/`, findings to `docs/spikes/`, and deferred notes to `docs/deferred/`. A deferred note with an owner or start trigger also gets a GitHub Issue labelled `deferred` (note = the why, issue = status; issues are public, so same "say that it exists, never what" rule). Convention: `docs/deferred/README.md`.
   2. Update the corresponding `.pages` file for every directory you added a doc to (`docs/adr/.pages`, `docs/spikes/.pages`, `docs/deferred/.pages`). New files are invisible in mkdocs until listed there. `docs/session-logs/.pages` uses `...` and self-updates.
   3. Run `scripts/save-session-log.py` for long planning or spike sessions.
   4. Refresh your local Claude memory so the next session doesn't start stale: update `project-mandala-state` (sprint/spike/ADR status, dates) and add or revise topic memories for anything decided this session, marking superseded framings as superseded. Note: memory is **per-machine and per-driver** — each lead refreshes their own; the committed `docs/` tree remains the team source of truth, and memory only mirrors it.
