@@ -79,6 +79,12 @@ if command -v gh >/dev/null 2>&1; then
     echo "$DEFERRED_ISSUES" | sed 's/^/    /'
     echo "  -> Review their status before starting: newly assigned, blocked, stale,"
     echo "     or relevant to today's task? Don't start one another person owns without asking."
+    UNASSIGNED="$(gh issue list --label deferred --state open --search 'no:assignee' --limit 50 2>/dev/null)"
+    if [ -n "$UNASSIGNED" ]; then
+      echo "  Unassigned (free to pick up -- assign yourself and say so -- unless the issue"
+      echo "  says it needs a group decision; then raise it for the next group meeting):"
+      echo "$UNASSIGNED" | sed 's/^/    /'
+    fi
   else
     echo "  (no open 'deferred' issues, or gh unavailable)"
   fi
