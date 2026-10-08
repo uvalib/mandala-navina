@@ -10,6 +10,7 @@
  * planning subsection.
  */
 
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\group\Entity\GroupInterface;
 use Drupal\node\NodeInterface;
@@ -158,11 +159,19 @@ function _shanti_collections_view_preprocess_full(array &$variables, GroupInterf
   // Action links, shown only to accounts with the underlying route access --
   // "Add Item" opens Group's own add-content dashboard (lists every
   // group_node bundle the account can create here, or jumps straight to the
-  // form when there's only one), available on both bundles. "Add
-  // Subcollection" is collection-only; it is not scoped to this specific
-  // collection (the new subcollection's parent is set on its own form, via
-  // field_parent_collection), since 'create subcollection group' is a
-  // site-wide permission, not a per-group one.
+  // form when there's only one), available on both bundles. Creating the
+  // entity there automatically adds it to this group -- confirmed live, not
+  // assumed: Group's own group_form_alter()/group_relationship_entity_submit()
+  // wires that up for any form reached through the create_form route, which
+  // is what this link points at.
+  //
+  // "Add Subcollection" is collection-only. The new subcollection's parent
+  // isn't implied by the create route the way group content's group is --
+  // 'create subcollection group' is a site-wide permission, not scoped to
+  // this collection -- so the link instead carries this group's id as a
+  // ?parent= query parameter, and
+  // shanti_collections_view_form_group_subcollection_add_form_alter() below
+  // pre-fills field_parent_collection from it.
   $account = \Drupal::currentUser();
   $variables['add_item_link'] = NULL;
   if (\Drupal::accessManager()->checkNamedRoute('entity.group_relationship.group_node_create_page', ['group' => $group->id()], $account)) {
@@ -172,7 +181,7 @@ function _shanti_collections_view_preprocess_full(array &$variables, GroupInterf
   $variables['add_subcollection_link'] = NULL;
   if ($group->bundle() === 'collection'
     && \Drupal::accessManager()->checkNamedRoute('entity.group.add_form', ['group_type' => 'subcollection'], $account)) {
-    $variables['add_subcollection_link'] = Url::fromRoute('entity.group.add_form', ['group_type' => 'subcollection'])->toString();
+    $variables['add_subcollection_link'] = Url::fromRoute('entity.group.add_form', ['group_type' => 'subcollection'], ['query' => ['parent' => $group->id()]])->toString();
   }
 
   // Both checks above depend on this specific account's permissions *and*,
@@ -304,4 +313,30 @@ function _shanti_collections_view_parent_link(GroupInterface $group): ?array {
   }
   $parent = $group->get('field_parent_collection')->entity;
   return $parent instanceof GroupInterface ? ['title' => $parent->label(), 'url' => $parent->toUrl()->toString()] : NULL;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for group_subcollection_add_form.
+ *
+ * Pre-fills Parent collection when reached via a collection page's own "Add
+ * Subcollection" link, which carries this group's id as a ?parent= query
+ * parameter (see _shanti_collections_view_preprocess_full()). Falls back to
+ * leaving the field empty -- same as reaching the form any other way -- if
+ * the parameter is missing, not numeric, or doesn't resolve to a real
+ * collection.
+ */
+function shanti_collections_view_form_group_subcollection_add_form_alter(array &$form, FormStateInterface $form_state) {
+  $parent_id = \Drupal::request()->query->get('parent');
+  if (!is_numeric($parent_id)) {
+    return;
+  }
+
+  $parent = \Drupal::entityTypeManager()->getStorage('group')->load($parent_id);
+  if (!$parent instanceof GroupInterface || $parent->bundle() !== 'collection') {
+    return;
+  }
+
+  if (isset($form['field_parent_collection']['widget'][0]['target_id'])) {
+    $form['field_parent_collection']['widget'][0]['target_id']['#default_value'] = $parent;
+  }
 }
