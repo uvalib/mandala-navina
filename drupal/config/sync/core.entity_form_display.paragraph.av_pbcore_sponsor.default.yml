@@ -1,0 +1,30 @@
+uuid: 83ab52b8-851c-4710-8e74-6718a8db03ab
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.av_pbcore_sponsor.field_sponser_role
+    - field.field.paragraph.av_pbcore_sponsor.field_sponsor_name
+    - paragraphs.paragraphs_type.av_pbcore_sponsor
+id: paragraph.av_pbcore_sponsor.default
+targetEntityType: paragraph
+bundle: av_pbcore_sponsor
+mode: default
+content:
+  field_sponser_role:
+    type: options_select
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_sponsor_name:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true

@@ -1,0 +1,37 @@
+uuid: 3b944cc1-6435-4a43-8dfd-105d562604e1
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.av_pbcore_title.field_pbcore_language
+    - field.field.paragraph.av_pbcore_title.field_title
+    - field.field.paragraph.av_pbcore_title.field_title_type
+    - paragraphs.paragraphs_type.av_pbcore_title
+id: paragraph.av_pbcore_title.default
+targetEntityType: paragraph
+bundle: av_pbcore_title
+mode: default
+content:
+  field_pbcore_language:
+    type: options_select
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_title:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_title_type:
+    type: options_select
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true

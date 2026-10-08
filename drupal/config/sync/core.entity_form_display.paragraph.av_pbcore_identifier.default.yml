@@ -1,0 +1,32 @@
+uuid: ebf3f514-5798-48f5-ae17-3eef609abf12
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.av_pbcore_identifier.field_identifier
+    - field.field.paragraph.av_pbcore_identifier.field_identifier_source
+    - paragraphs.paragraphs_type.av_pbcore_identifier
+id: paragraph.av_pbcore_identifier.default
+targetEntityType: paragraph
+bundle: av_pbcore_identifier
+mode: default
+content:
+  field_identifier:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_identifier_source:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true

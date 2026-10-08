@@ -1,0 +1,30 @@
+uuid: df441701-ff59-4097-8ae1-410f68633db7
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.av_pbcore_publisher.field_publisher
+    - field.field.paragraph.av_pbcore_publisher.field_publisher_rome
+    - paragraphs.paragraphs_type.av_pbcore_publisher
+id: paragraph.av_pbcore_publisher.default
+targetEntityType: paragraph
+bundle: av_pbcore_publisher
+mode: default
+content:
+  field_publisher:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_publisher_rome:
+    type: options_select
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true

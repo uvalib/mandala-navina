@@ -1,0 +1,34 @@
+uuid: 262385b9-8f7c-479f-b400-e8fe9c148f8d
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.av_pbcore_extension.field_extension
+    - field.field.paragraph.av_pbcore_extension.field_extension_authority
+    - paragraphs.paragraphs_type.av_pbcore_extension
+  module:
+    - text
+id: paragraph.av_pbcore_extension.default
+targetEntityType: paragraph
+bundle: av_pbcore_extension
+mode: default
+content:
+  field_extension:
+    type: text_textarea
+    weight: 0
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_extension_authority:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true
