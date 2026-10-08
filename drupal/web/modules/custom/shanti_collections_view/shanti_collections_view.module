@@ -10,6 +10,7 @@
  * planning subsection.
  */
 
+use Drupal\Core\Url;
 use Drupal\group\Entity\GroupInterface;
 use Drupal\node\NodeInterface;
 use Drupal\views\ViewExecutable;
@@ -153,6 +154,38 @@ function _shanti_collections_view_preprocess_full(array &$variables, GroupInterf
   $variables['owner'] = $owner ? ['name' => $owner->getDisplayName(), 'url' => $owner->toUrl()->toString()] : NULL;
 
   $variables['parent_link'] = _shanti_collections_view_parent_link($group);
+
+  // Action links, shown only to accounts with the underlying route access --
+  // "Add Item" opens Group's own add-content dashboard (lists every
+  // group_node bundle the account can create here, or jumps straight to the
+  // form when there's only one), available on both bundles. "Add
+  // Subcollection" is collection-only; it is not scoped to this specific
+  // collection (the new subcollection's parent is set on its own form, via
+  // field_parent_collection), since 'create subcollection group' is a
+  // site-wide permission, not a per-group one.
+  $account = \Drupal::currentUser();
+  $variables['add_item_link'] = NULL;
+  if (\Drupal::accessManager()->checkNamedRoute('entity.group_relationship.group_node_create_page', ['group' => $group->id()], $account)) {
+    $variables['add_item_link'] = Url::fromRoute('entity.group_relationship.group_node_create_page', ['group' => $group->id()])->toString();
+  }
+
+  $variables['add_subcollection_link'] = NULL;
+  if ($group->bundle() === 'collection'
+    && \Drupal::accessManager()->checkNamedRoute('entity.group.add_form', ['group_type' => 'subcollection'], $account)) {
+    $variables['add_subcollection_link'] = Url::fromRoute('entity.group.add_form', ['group_type' => 'subcollection'])->toString();
+  }
+
+  // Both checks above depend on this specific account's permissions *and*,
+  // for the 'member' group role, membership in this specific group -- not
+  // just the account's site-wide roles. 'user.group_permissions' (Group's
+  // own cache context) varies by calculated permissions, not membership
+  // identity, and would leak one member's "Add Item" visibility onto another
+  // member of a different group with the same roles (the exact trap
+  // CollectionMembershipsCacheContext's docblock warns about). Plain 'user'
+  // is blunt but correct, and group pages are low-volume enough (hundreds,
+  // not the 111k-image gallery that context was built to protect) that the
+  // cache fragmentation cost is acceptable.
+  $variables['#cache']['contexts'][] = 'user';
 
   // Direct-children subcollections only, matching D7's Subcollections pane
   // (shanti_collections.views_default.inc) -- subcollections don't nest

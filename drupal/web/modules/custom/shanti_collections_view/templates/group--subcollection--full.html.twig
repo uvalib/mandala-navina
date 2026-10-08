@@ -2,8 +2,9 @@
 /**
  * @file
  * Subcollection group, default/full view mode -- same shape as the
- * collection page, plus a parent-collection breadcrumb link and no
- * Subcollections sidebar section (subcollections don't nest further in
+ * collection page, plus a Parent collection sidebar section (listed the
+ * same way the collection page lists its Subcollections) and no
+ * Subcollections section of its own (subcollections don't nest further in
  * this data model).
  */
 #}
@@ -13,11 +14,6 @@
 {% set featured_image_markup = content.field_featured_image|render|trim %}
 {% set overview_markup = content.field_overview|render|trim %}
 <article{{ attributes.addClass('shanti-collection-page') }}>
-  {% if parent_link %}
-    <a href="{{ parent_link.url }}" class="shanti-collection-page-back">
-      <span class="icon shanticon-arrow-left_2" aria-hidden="true"></span> {{ parent_link.title }}
-    </a>
-  {% endif %}
   <div class="shanti-collection-page-main">
     {% if featured_image_markup %}
       <div class="shanti-collection-page-image">{{ featured_image_markup|raw }}</div>
@@ -30,6 +26,11 @@
     <div class="shanti-thumbnail-grid">{{ content_gallery_av }}</div>
   </div>
   <aside class="shanti-collection-page-sidebar">
+    {% if add_item_link %}
+      <div class="shanti-collection-page-actions">
+        <a href="{{ add_item_link }}" class="shanti-collection-page-action">{{ 'Add Item'|t }}</a>
+      </div>
+    {% endif %}
     {% if owner %}
       <h5>{{ 'Owner'|t }}</h5>
       <p><a href="{{ owner.url }}">{{ owner.name }}</a></p>
@@ -37,6 +38,12 @@
     {% if accessibility_statement %}
       <h5>{{ 'Accessibility'|t }}</h5>
       <p>{{ accessibility_statement }}</p>
+    {% endif %}
+    {% if parent_link %}
+      <h5>{{ 'Parent collection'|t }}</h5>
+      <ul>
+        <li><a href="{{ parent_link.url }}">{{ parent_link.title }}</a></li>
+      </ul>
     {% endif %}
     {% if members %}
       <h5>{{ 'Members'|t }}</h5>

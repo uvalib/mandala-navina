@@ -36,6 +36,16 @@
     <div class="shanti-thumbnail-grid">{{ content_gallery_av }}</div>
   </div>
   <aside class="shanti-collection-page-sidebar">
+    {% if add_item_link or add_subcollection_link %}
+      <div class="shanti-collection-page-actions">
+        {% if add_item_link %}
+          <a href="{{ add_item_link }}" class="shanti-collection-page-action">{{ 'Add Item'|t }}</a>
+        {% endif %}
+        {% if add_subcollection_link %}
+          <a href="{{ add_subcollection_link }}" class="shanti-collection-page-action">{{ 'Add Subcollection'|t }}</a>
+        {% endif %}
+      </div>
+    {% endif %}
     {% if owner %}
       <h5>{{ 'Owner'|t }}</h5>
       <p><a href="{{ owner.url }}">{{ owner.name }}</a></p>
