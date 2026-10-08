@@ -1,8 +1,34 @@
 # Deferred Notes
 
 Items noted during spike work or development that need to be addressed in downstream
-implementation. Each file is one logical issue. When Jira is available, each file
-should map to a ticket (add the ticket key to the file's header at that time).
+implementation. Each file is one logical issue.
+
+## Tracking: GitHub Issues (decided 2026-10-08)
+
+Deferrals are **internal developer project tracking**, not user-facing work, so they are
+tracked as **GitHub Issues** in this repo (Jira stays for user-facing work; this supersedes the
+earlier "each note maps 1:1 to a Jira ticket" intent). A practical second reason: not everyone on the team has developer Jira access (Than does not), while everyone already works in this repo. The note and the issue split the job:
+
+- **The note** (this directory) holds the *why* — context, findings, options. It is reviewed in
+  PRs and is what session startup reads. Never edit history away; add a dated section.
+- **The issue** holds *status* — owner, blocked/not, discussion, linked PRs.
+
+Rules:
+
+1. Every note with an owner or a start trigger gets one issue, labelled `deferred`. The issue
+   links to the note; the note's `**Issue:**` header links back. Notes with neither owner nor
+   trigger stay doc-only (header: `**Issue:** none`).
+2. Close the issue when the work ships or the deferral is dropped, and add a dated *Resolved*
+   section to the note.
+3. **This repo is public, and so are its issues.** Titles and bodies follow the same rule as
+   notes: say that a problem exists and who to ask, never what it is. Anything tracked in the
+   private docs repos (see [non-public-documentation](../non-public-documentation.md)) gets no
+   public issue, or a stub that names no detail.
+4. If a deferral turns into something users will notice, move the tracking to Jira.
+
+`session-start-check.sh` lists open `deferred` issues; `session-close-check.sh` warns about
+notes missing an `**Issue:**` header. Existing notes get the header as they are next touched —
+there is no bulk backfill.
 
 ## Naming convention
 
@@ -16,7 +42,7 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 # Title
 **Area:** module / feature area
 **Raised during:** Spike N / Phase N
-**Jira:** (add when available)
+**Issue:** #N (GitHub Issue, label `deferred`) — or `none`
 **Priority:** High / Medium / Low
 ```
 
@@ -104,12 +130,12 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 | [drupal-image-missing-mysql-client.md](drupal-image-missing-mysql-client.md) | deployment / packaging / drush / DX | Session 2026-08-25 (1a.9 acceptance run); documented 2026-08-28 | **Medium — fix implemented and locally verified 2026-08-28 on branch `fix/drupal-image-drush-path-and-mysql-client`, not yet merged/deployed.** `package/Dockerfile` has no `mysql`/MariaDB client, so any in-container `drush sql:*` silently no-ops (already caused one real incident: a silently-empty `drush sql:dump` backup, 2026-08-25). Host-side dumps already route around it via a `mysql:8.0` sidecar (`scripts/db-checkpoint.sh`) and don't need to change. Fix: add `default-mysql-client` to the existing `apt-get install` line. One shared image serves dev-0 + staging today, so the fix reaches both on the next deploy; **production should get it too** (Yuji, 2026-08-28) but has no D11 pipeline yet to deploy through, so it's covered by construction once that pipeline exists. Separately noted: `drush` itself being "unavailable" is very likely just a PATH issue (no `/usr/local/bin/drush` symlink), not a real gap |
 | [av15-avinfo-abandoned-fields-review-with-than.md](av15-avinfo-abandoned-fields-review-with-than.md) | migration / AV / content model | Session 2026-09-17/18 (auditing D7's `avinfo` block for AV15 parity) | **Low, not blocking — a content-model question for Than.** `avuploader`/`avrating` confirmed empty/unbacked across every real example checked: `avuploader` has no backing field anywhere anonymous view can find, `avrating` has real data on only 2 of ~11,583 AV nodes. (`avduration`, the third field originally filed here, is **RESOLVED 2026-09-18** — see below) |
 | [av15-pbcore-duration-vs-kaltura-duration.md](av15-pbcore-duration-vs-kaltura-duration.md) | migration / AV / content model / data fidelity | Session 2026-09-18, wiring up AV15's duration row | **Low-Medium, not blocking — D11's display already uses the correct source.** Full-corpus check (5,299 AV hosts): PBCore's own `field_duration` is populated on only 17% of hosts, and of those, 41% disagree with `node_kaltura.kaltura_duration` (some by only a second, some by minutes). D7's own UI only ever shows `kaltura_duration`, which D11 now mirrors (`field_kaltura_duration`); whether/how to reconcile the disagreeing `field_duration` catalog values is a data-cleanup question for AV cataloging staff/Than, not a D11 defect |
-| [av-field-audit-d7-vs-d11-technical-metadata.md](av-field-audit-d7-vs-d11-technical-metadata.md) | migration / AV / content model / data fidelity | Group session 2026-10-02 (Than) | **High — step 1 DONE 2026-10-06 (Than).** AV node **edit form** now shows all 22-23 genuinely D7-equivalent fields (PBCore metadata, workflow, rating, tags, transcript, etc.), verified live; three D11-only/non-editable fields deliberately kept hidden (legacy ids, synced Kaltura duration). **Still open (steps 2-5):** whether each field's *data* actually migrated and whether each is wired into the *view* display — a field showing empty on the form proves neither. AV15 (PR #222) did one prior parity pass; needs reconciling against |
+| [av-field-audit-d7-vs-d11-technical-metadata.md](av-field-audit-d7-vs-d11-technical-metadata.md) | migration / AV / content model / data fidelity | Group session 2026-10-02 (Than) | **High — step 1 DONE and browser-verified 2026-10-08 (Than), PR #284 ready to merge.** AV node **edit form** now shows all 22-23 genuinely D7-equivalent fields (PBCore metadata, workflow, rating, tags, transcript, etc.), grouped and verified live in a real browser on both bundles, including the 11 nested `av_pbcore_*` Paragraphs bundles (a follow-on form-display bug found and fixed during that test). Three D11-only/non-editable fields deliberately kept hidden (legacy ids, synced Kaltura duration). **Still open (steps 2-5):** whether each field's *data* actually migrated and whether each is wired into the *view* display — a field showing empty on the form proves neither. AV15 (PR #222) did one prior parity pass; needs reconciling against |
 | [transcript-bad-timecodes-investigate-and-fix.md](transcript-bad-timecodes-investigate-and-fix.md) | migration / AV / transcripts / data fidelity | Spike 11 audit (2026-10-01); deferred 2026-10-02 | **Medium.** 4,269 of 245,158 transcript units have zero-length or inverted timecodes; carried as found with a status flag, fix deferred. Owner unassigned |
 | [transcript-source-file-accounting.md](transcript-source-file-accounting.md) | migration / AV / transcripts / data fidelity | Spike 11 reconciliation (2026-10-02); deferred 2026-10-02 | **Medium.** Account for every original transcript file before revert-to-upload (Sprint 4 T7): 41 unprocessed, 19 orphan ids, 3 with no file, 68 replaced, on-disk existence unchecked. Owner unassigned |
 | [transcript-core-replica-lag-review.md](transcript-core-replica-lag-review.md) | Solr / transcripts / search freshness | Spike 11 write path (2026-10-02) | **Low to Medium.** Some replica lag is expected and accepted; measure it and find the replication interval once the transcript core exists. Owner unassigned |
 | [transcript-index-queue-triage.md](transcript-index-queue-triage.md) | Solr / transcripts / operations | Spike 11 write path (2026-10-02) | **Medium, before production.** Failed transcript index writes go to a retry queue; visibility, retry policy, alerting and a reconcile command are deferred. Owner unassigned |
-| [transcript-tier-analyzers-and-language-fields.md](transcript-tier-analyzers-and-language-fields.md) | Solr / transcripts / multilingual search | Spike 11 schema (2026-10-02) | **Low — both questions now resolved.** Analyzer choice DECIDED and BUILT 2026-10-06 (Than): English, Chinese, Nepali, Dzongkha and Wylie each have their own tuned fieldType (verified live against real `d7_av` sample data); the ~11 remaining smaller tiers keep the ICU default. **Separate per-language fields for those ~11 DECIDED AGAINST 2026-10-07 (Than)** — permanent, no dedicated Lucene/Solr support exists for any of them. Only remaining open thread: whether D7's synonyms file is in use |
+| [transcript-tier-analyzers-and-language-fields.md](transcript-tier-analyzers-and-language-fields.md) | Solr / transcripts / multilingual search | Spike 11 schema (2026-10-02) | **Low — both questions now resolved.** Analyzer choice DECIDED and BUILT 2026-10-06 (Than): English, Chinese, Nepali, Dzongkha and Wylie each have their own tuned fieldType (verified live against real `d7_av` sample data); the ~11 remaining smaller tiers keep the ICU default. **Separate per-language fields for those ~11 DECIDED AGAINST 2026-10-06 (Than)** — permanent, no dedicated Lucene/Solr support exists for any of them. Only remaining open thread: whether D7's synonyms file is in use |
 | [av4-field-pbcore-language-iso639-conversion.md](av4-field-pbcore-language-iso639-conversion.md) | migration / AV / content model / search quality | Session 2026-09-09, recommendation never acted on; re-surfaced 2026-09-18 | **Medium — a real, currently-live gap is plausible, not just a someday task.** Converting `field_pbcore_language` to ISO 639 codes was recommended *before* AV8 so Tibetan/Chinese AV content (~3,600 items) would route into Solr's `*_bo`/`*_tibt` schema; AV8 shipped without it, and confirmed 2026-09-18 that D11 still stores raw language names with zero kmassets code referencing the field. May mean AV's Tibetan/Chinese content isn't getting the tokenization treatment built for it elsewhere in the index — unconfirmed either way, needs Than/whoever owns the kmassets schema |
 | [av4-paragraph-ordering-ties.md](av4-paragraph-ordering-ties.md) | migration / AV / content model | Session 2026-09-08, carried unresolved since | **Low — data-preserving either way, but an unconfirmed fallback that's been drifting across sessions.** 42 hosts still have two field_collection items resolving to the same delta after the `en`-preferred ordering rule; migration falls back to `item_id` order, never confirmed with AV cataloguing staff as the intended answer |
 | [av4-84-und-en-content-differences.md](av4-84-und-en-content-differences.md) | migration / AV / content model / data fidelity | Session 2026-09-09, flagged then never revisited | **Low — a D7 source-data quality question, not a D11 defect.** 84 hosts have genuine content differences (not just ordering) between D7's `und`/`en` storage layers; the migration's `en`-preferred default is the right general rule, but nobody has confirmed `en`'s value is actually correct for these specific 84. The original host list isn't preserved anywhere — needs re-deriving before AV staff can review it |

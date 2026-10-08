@@ -6,7 +6,7 @@
 **Priority:** Low. **Question 1 (analyzer choice) DECIDED and BUILT 2026-10-06** (Than),
 **in two passes**: English first, then Chinese/Nepali/Dzongkha/Wylie the same day.
 **Question 2 (separate per-language fields for the ~11 remaining smaller tiers) DECIDED
-2026-10-07 (Than): not doing it.** None of those tiers have dedicated Lucene/Solr
+2026-10-06 (Than): not doing it.** None of those tiers have dedicated Lucene/Solr
 language support to gain from a split, so there's nothing to build even if split out.
 This item is now fully resolved.
 
@@ -99,7 +99,7 @@ sounds — retroflexes, long vowels), so there's no case-folding; EWTS has **no*
 diacritics by design (capitals substitute for them specifically because diacritics are
 hard to type), so there's nothing for an accent-folding filter to do.
 
-## Decided not to do (2026-10-07, Than)
+## Decided not to do (2026-10-06, Than)
 
 **Separate per-language fields for the ~11 remaining smaller tiers** (`ts_content_und`,
 `ts_content_gyal`, `ts_content_gloss`, `ts_content_nmm`, `ts_content_xkf`,

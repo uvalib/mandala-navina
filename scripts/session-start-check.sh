@@ -9,8 +9,8 @@
 #      D11 id drift between environments -- see step 3d's own comment)
 #
 # Step 2 (reading docs/adr, docs/spikes, docs/deferred, docs/session-logs)
-# is a judgment task -- this script only prints pointers to make that faster,
-# it does not attempt to replace the reading.
+# is a judgment task -- this script only prints pointers to make that faster
+# (plus the open 'deferred' GitHub Issues), it does not attempt to replace the reading.
 #
 # ── KEEP IN SYNC WITH CLAUDE.md ──────────────────────────────────────────
 # This script is the executable form of CLAUDE.md's "Session startup"
@@ -70,6 +70,24 @@ if [ -n "$LATEST_LOG" ]; then
   echo "  Most recent session log: $LATEST_LOG"
 else
   echo "  (no session logs found)"
+fi
+# Open deferral issues (advisory only -- a missing/unauthenticated gh must not fail the check)
+if command -v gh >/dev/null 2>&1; then
+  DEFERRED_ISSUES="$(gh issue list --label deferred --state open --limit 50 2>/dev/null)"
+  if [ -n "$DEFERRED_ISSUES" ]; then
+    echo "  Open deferral issues (label 'deferred'):"
+    echo "$DEFERRED_ISSUES" | sed 's/^/    /'
+    echo "  -> Review their status before starting: newly assigned, blocked, stale,"
+    echo "     or relevant to today's task? Don't start one another person owns without asking."
+    UNASSIGNED="$(gh issue list --label deferred --state open --search 'no:assignee' --limit 50 2>/dev/null)"
+    if [ -n "$UNASSIGNED" ]; then
+      echo "  Unassigned (free to pick up -- assign yourself and say so -- unless the issue"
+      echo "  says it needs a group decision; then raise it for the next group meeting):"
+      echo "$UNASSIGNED" | sed 's/^/    /'
+    fi
+  else
+    echo "  (no open 'deferred' issues, or gh unavailable)"
+  fi
 fi
 echo
 

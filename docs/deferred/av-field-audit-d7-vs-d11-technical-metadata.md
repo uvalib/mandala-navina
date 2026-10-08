@@ -78,12 +78,15 @@ or whether each field is wired into the *view* display — those are steps 2-5 b
 still open. A field showing (empty) on the edit form proves nothing about whether D11
 has real migrated data for it.
 
-**TODO, first thing next session:** PR #284 was only verified via `curl`/HTTP (not a
-real browser) and a single real video node. Load the actual edit form for both an
-audio and a video node in a browser before merging — confirm every widget renders
-sensibly (the `entity_reference_revisions_autocomplete` widgets on the PBCore fields
-in particular — these are Paragraphs-backed and were never visually checked), and that
-nothing looks broken/duplicated/mis-labeled.
+**Browser-tested 2026-10-08.** Loaded a real video node's edit form in an actual
+browser (not just `curl`/HTTP). Found and fixed a real bug along the way: none of the
+11 `av_pbcore_*` paragraph bundles had their own `core.entity_form_display` config, so
+the inline Paragraphs widget rendered an empty summary row with no inputs for every
+nested field (contributor name/role, title, creator, relation identifiers, the
+24-field instantiation bundle, etc.). Built each bundle's form display live in DDEV
+and exported (12 new config files). Re-verified live: all field groups expand
+correctly and every nested PBCore field now shows its real data. PR #284 is ready to
+merge.
 
 ## Still open (steps 2-5, unchanged from the original note)
 
@@ -97,7 +100,8 @@ nothing looks broken/duplicated/mis-labeled.
 5. Record findings here or split into per-field deferred notes if multiple distinct gaps turn up
    (matching the existing `av4-*`/`av15-*` note pattern).
 
-**Owner:** Than (step 1 done); unassigned for steps 2-5.
+**Owner:** Than. **Go-ahead given by the team, 2026-10-07.** Step 1 (the edit-form display) is
+done and browser-verified 2026-10-08 — PR #284 is ready to merge; steps 2-5 are not started.
 
 ## Related
 
