@@ -48,7 +48,7 @@ Development is driven collaboratively — team members take turns leading sessio
   objectively checkable. **Kept in sync with this checklist deliberately —
   if you change one, update the other in the same PR.** Before closing a
   significant session:
-  1. Flush any decisions to `docs/adr/`, findings to `docs/spikes/`, and deferred notes to `docs/deferred/`. A deferred note with an owner or start trigger also gets a GitHub Issue labelled `deferred` (note = the why, issue = status; issues are public, so same "say that it exists, never what" rule). Convention: `docs/deferred/README.md`.
+  1. Flush any decisions to `docs/adr/`, findings to `docs/spikes/`, and deferred notes to `docs/deferred/`. A deferred note with an owner or start trigger also gets a GitHub Issue labelled `deferred` — and any deferral can be promoted even with no owner yet (`./scripts/promote-deferral.sh <note>`) (note = the why, issue = status; issues are public, so same "say that it exists, never what" rule). Convention: `docs/deferred/README.md`.
      **Review issue status** before closing: for every `deferred` issue this session touched or affected, comment the current state, reassign if ownership moved, or close it (with a dated *Resolved* section in the note) when the work shipped or was dropped. Re-check the unassigned issues too: does any now have an owner, is it ready to be picked up, or does it belong on the next group-meeting agenda?
   2. Update the corresponding `.pages` file for every directory you added a doc to (`docs/adr/.pages`, `docs/spikes/.pages`, `docs/deferred/.pages`). New files are invisible in mkdocs until listed there. `docs/session-logs/.pages` uses `...` and self-updates.
   3. Run `scripts/save-session-log.py` for long planning or spike sessions.
