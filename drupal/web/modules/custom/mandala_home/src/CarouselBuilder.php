@@ -6,6 +6,7 @@ namespace Drupal\mandala_home;
 
 use Drupal\block_content\BlockContentInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Url;
 use Drupal\image\Entity\ImageStyle;
 
@@ -30,6 +31,7 @@ class CarouselBuilder {
 
   public function __construct(
     private readonly EntityTypeManagerInterface $entityTypeManager,
+    private readonly FileUrlGeneratorInterface $fileUrlGenerator,
   ) {}
 
   public function build(BlockContentInterface $block): ?array {
@@ -51,7 +53,11 @@ class CarouselBuilder {
       $link_item = $slide->get('field_slide_link')->isEmpty() ? NULL : $slide->get('field_slide_link')->first();
       $link_url = $link_item ? $link_item->getUrl() : NULL;
       $slides[] = [
-        'image_url' => $image_style ? $image_style->buildUrl($file->getFileUri()) : $file->createFileUrl(),
+        // buildUrl() is absolute and takes its host/scheme from the request as
+        // the container sees it; behind a TLS-terminating proxy that is the
+        // internal address over http, which browsers block as mixed content.
+        // A root-relative URL always resolves against the page's own origin.
+        'image_url' => $image_style ? $this->fileUrlGenerator->transformRelative($image_style->buildUrl($file->getFileUri())) : $file->createFileUrl(),
         'image_alt' => $image_item->alt ?? '',
         'caption' => $slide->get('field_slide_caption')->value ?? '',
         'link_url' => $link_url ? $link_url->toString() : NULL,
