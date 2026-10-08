@@ -77,6 +77,8 @@ if command -v gh >/dev/null 2>&1; then
   if [ -n "$DEFERRED_ISSUES" ]; then
     echo "  Open deferral issues (label 'deferred'):"
     echo "$DEFERRED_ISSUES" | sed 's/^/    /'
+    echo "  -> Review their status before starting: newly assigned, blocked, stale,"
+    echo "     or relevant to today's task? Don't start one another person owns without asking."
   else
     echo "  (no open 'deferred' issues, or gh unavailable)"
   fi
