@@ -3,6 +3,7 @@ services:
     class: Drupal\mandala_home\CarouselBuilder
     arguments:
       - '@entity_type.manager'
+      - '@file_url_generator'
   mandala_home.carousel_seeder:
     class: Drupal\mandala_home\CarouselSeeder
     arguments:
