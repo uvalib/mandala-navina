@@ -2,7 +2,7 @@
 
 **Area:** solr / D7 legacy / environment isolation / production risk
 **Raised during:** Session 2026-08-13 (Solr index inventory across dev / staging / production)
-**Jira:** (add when available)
+**Issue:** #296
 **Priority:** **HIGH (new item, 2026-09-24): D11 DDEV writes to the shared staging Solr master by default and had already polluted it — see "D11: DDEV writes..." below. The guardrail is merged (PR #250) and the pollution is CLEANED UP (2026-09-24); a local Solr container, the ADR/CLAUDE.md/start-check follow-ups and a reusable cleanup command remain.** The original D7 items: **Medium — the two staging→production write paths are FIXED (2026-09-02, group
 decision).** `mandala-sources-staging`'s `solr` search_api server is disabled
 (`search-api-server-disable`, verified via `search-api-server-list`). `mandala-av-staging`'s
