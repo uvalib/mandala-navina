@@ -164,7 +164,7 @@ if command -v gh >/dev/null 2>&1; then
     echo "$OPEN_DEFERRED" | sed 's/^/  /'
     UNASSIGNED_DEFERRED="$(gh issue list --label deferred --state open --search 'no:assignee' --limit 50 2>/dev/null)"
     if [ -n "$UNASSIGNED_DEFERRED" ]; then
-      echo "  Unassigned (owner needed, or group-meeting agenda item):"
+      echo "  Unassigned (free to pick up, or a group-meeting agenda item):"
       echo "$UNASSIGNED_DEFERRED" | sed 's/^/    /'
     fi
   else
@@ -189,7 +189,7 @@ cat <<'EOF'
   [ ] Review issue status (list above): for each 'deferred' issue this
       session touched or affected, comment current state, reassign if
       ownership moved, or close it (add a dated Resolved section to the note).
-      Re-check the unassigned ones: owner now? group-meeting agenda?
+      Re-check the unassigned ones: owner now? ready to pick up? group-meeting agenda?
   [ ] Refresh local Claude memory: update project-mandala-state (sprint/
       spike/ADR status, dates) and add/revise topic memories for anything
       decided this session. Memory is per-machine/per-driver -- committed

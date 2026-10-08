@@ -81,8 +81,8 @@ if command -v gh >/dev/null 2>&1; then
     echo "     or relevant to today's task? Don't start one another person owns without asking."
     UNASSIGNED="$(gh issue list --label deferred --state open --search 'no:assignee' --limit 50 2>/dev/null)"
     if [ -n "$UNASSIGNED" ]; then
-      echo "  Unassigned (awaiting an owner or a group decision -- raise for the next"
-      echo "  group-meeting agenda, don't pick up unprompted):"
+      echo "  Unassigned (free to pick up -- assign yourself and say so -- unless the issue"
+      echo "  says it needs a group decision; then raise it for the next group meeting):"
       echo "$UNASSIGNED" | sed 's/^/    /'
     fi
   else
