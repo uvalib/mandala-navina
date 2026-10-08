@@ -1,7 +1,7 @@
 # Solr Ingest Pipeline Cost & Architecture Discussion with Cloud Infrastructure
 **Area:** solr / infrastructure / kmassets
 **Raised during:** Session 2026-06-12
-**Jira:** (add when available)
+**Issue:** #294
 **Priority:** High. **ASSIGNED directly to Yuji, 2026-09-02 (group decision)** — the original
 cost/architecture question is largely moot (see the 2026-06-26 update below: no always-on ECS
 to right-size). What remains is closing the loop with Dave on the still-open items in

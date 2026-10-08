@@ -2,7 +2,7 @@
 
 **Area:** migration / Group / content model / access
 **Raised during:** ADR 015 Q2 decision, 2026-08-07 (Than, team present)
-**Jira:** (add when available)
+**Issue:** #289
 **Priority:** **Medium–High — direction CONFIRMED 2026-09-28 (Than, Yuji); open specifics RESOLVED 2026-10-02 (Than); BUILT and the AV exposure FIXED on local DDEV 2026-10-02; MERGED to `main` 2026-10-05 ([PR #275](https://github.com/uvalib/mandala-navina/pull/275)).** Applies to **every** per-site asset migration. Confirmed 2026-10-02: the current Images membership migration genuinely drops orphans today, not just a theoretical risk. AV orphans are quantified and carry a live access consequence — see "Confirmed 2026-09-28" below. **Still needed: run the sweep on dev-0** (its own review group(s) must be created there first); **Texts/Sources sweeps wait on those sites' migrations**, not yet run.
 
 ## Context

@@ -2,7 +2,7 @@
 
 **Area:** reindeer_x / infrastructure / IAM
 **Raised during:** Spike 8 (Part A — file watcher)
-**Jira:** (add when available)
+**Issue:** #295
 **Priority:** High — blocks deployed use of the Node file watcher
 **Owner:** Yuji Shinozaki (has Terraform infra access)
 **Approval gate:** requires sign-off from Dave Goldstein (Director, Cloud

@@ -5,7 +5,7 @@
 slides on Xiaoming's DDEV; see
 [collection-featured-images-missing-on-production.md](collection-featured-images-missing-on-production.md)
 for the incident this generalizes from)
-**Jira:** (add when available)
+**Issue:** #298
 **Priority:** Medium-High -- cosmetic today (default-thumbnail/blank-image
 fallbacks mean nothing is functionally broken), but confirmed to independently
 affect every developer's local environment, and gets worse as more
