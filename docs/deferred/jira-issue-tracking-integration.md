@@ -3,6 +3,7 @@
 **Area:** process / project tooling / tracking
 **Raised during:** PM session 2026-06-25 (documentation hosting & access-control discussion)
 **Jira:** (this item bootstraps the project — add the key once the project exists)
+**Issue:** none (superseded for deferrals; see the 2026-10-08 update below)
 **Priority:** Medium now, rising to High as the implementation phase deepens
 **Start trigger:** Kick off **when Sprint 1 (Images pilot) closes** — i.e. at the Sprint 1 acceptance gate. Not before; Sprint 1 keeps using the git deferred-note workflow. (PM decision 2026-06-25.)
 **Owner:** Yuji Shinozaki
@@ -57,3 +58,10 @@ submodule question. It can proceed now while the hosting spike waits.
 
 - [Spike 9 — Documentation hosting & access control](../spikes/spike-09-docs-hosting-confluence.md)
 - [docs/deferred/README.md](README.md) — deferred-note → ticket mapping convention
+
+## Update 2026-10-08: deferrals track in GitHub Issues, not Jira
+
+The 1:1 "deferred note → Jira ticket" backfill described above is **superseded**. Deferrals are
+internal developer tracking, not user-facing work, so they go to GitHub Issues (label
+`deferred`); Jira is for user-facing work. See the *Tracking* section of
+[README.md](README.md).
