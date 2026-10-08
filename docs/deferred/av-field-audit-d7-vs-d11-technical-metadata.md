@@ -55,7 +55,7 @@ did for transcripts, and the content-model audit did at [C1](../planning/av-cont
 5. Record findings here or split into per-field deferred notes if multiple distinct gaps turn up
    (matching the existing `av4-*`/`av15-*` note pattern).
 
-**Owner:** unassigned. **Not started** — explicitly deferred, do not begin without the team's go-ahead.
+**Owner:** Than. **Go-ahead given by the team, 2026-10-07.** Step 1 (the edit-form display) is in progress as PR #284, which Than closed on 2026-10-07 as not yet ready and is reworking; steps 2–5 are not started.
 
 ## Related
 
