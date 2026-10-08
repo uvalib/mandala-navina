@@ -7,7 +7,7 @@ implementation. Each file is one logical issue.
 
 Deferrals are **internal developer project tracking**, not user-facing work, so they are
 tracked as **GitHub Issues** in this repo (Jira stays for user-facing work; this supersedes the
-earlier "each note maps 1:1 to a Jira ticket" intent). The note and the issue split the job:
+earlier "each note maps 1:1 to a Jira ticket" intent). A practical second reason: not everyone on the team has developer Jira access (Than does not), while everyone already works in this repo. The note and the issue split the job:
 
 - **The note** (this directory) holds the *why* — context, findings, options. It is reviewed in
   PRs and is what session startup reads. Never edit history away; add a dated section.
