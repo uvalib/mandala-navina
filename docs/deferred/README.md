@@ -15,9 +15,14 @@ earlier "each note maps 1:1 to a Jira ticket" intent). A practical second reason
 
 Rules:
 
-1. Every note with an owner or a start trigger gets one issue, labelled `deferred`. The issue
-   links to the note; the note's `**Issue:**` header links back. Notes with neither owner nor
-   trigger stay doc-only (header: `**Issue:** none`).
+1. **Any deferral can be promoted to an issue at any time, with or without an owner.** An
+   unassigned issue is a normal state: it means *free for any of us to pick up* or *needs a group
+   decision* (the first line says which), and session start/close list unassigned issues so they
+   get seen. Use `./scripts/promote-deferral.sh <note> [--assignee LOGIN] [--decision]`; it opens
+   the issue (labelled `deferred`, body is a link and status only), and writes `**Issue:** #N`
+   into the note's header. A note with an owner or a start trigger should be promoted. A note
+   with neither can stay doc-only (`**Issue:** none`); doc-only notes are reviewed periodically
+   and promoted when someone wants to track them.
 2. Close the issue when the work ships or the deferral is dropped, and add a dated *Resolved*
    section to the note.
 3. **This repo is public, and so are its issues.** Titles and bodies follow the same rule as
