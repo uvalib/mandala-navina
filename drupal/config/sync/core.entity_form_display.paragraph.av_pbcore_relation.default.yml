@@ -1,0 +1,32 @@
+uuid: 17a9b133-52a6-49d5-b01d-c06bcd6afc23
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.av_pbcore_relation.field_relation_identifier
+    - field.field.paragraph.av_pbcore_relation.field_relation_type
+    - paragraphs.paragraphs_type.av_pbcore_relation
+id: paragraph.av_pbcore_relation.default
+targetEntityType: paragraph
+bundle: av_pbcore_relation
+mode: default
+content:
+  field_relation_identifier:
+    type: entity_reference_autocomplete
+    weight: 0
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_relation_type:
+    type: options_select
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true

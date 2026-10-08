@@ -1,0 +1,23 @@
+uuid: 6a103562-7746-4a29-a2b7-34226194cd8f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.av_pbcore_coverage.field_time
+    - paragraphs.paragraphs_type.av_pbcore_coverage
+id: paragraph.av_pbcore_coverage.default
+targetEntityType: paragraph
+bundle: av_pbcore_coverage
+mode: default
+content:
+  field_time:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true

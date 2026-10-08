@@ -1,0 +1,30 @@
+uuid: c496e89e-39f6-47b2-9a5b-dc4e8b58b93b
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.av_pbcore_creator.field_creator
+    - field.field.paragraph.av_pbcore_creator.field_creator_role
+    - paragraphs.paragraphs_type.av_pbcore_creator
+id: paragraph.av_pbcore_creator.default
+targetEntityType: paragraph
+bundle: av_pbcore_creator
+mode: default
+content:
+  field_creator:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_creator_role:
+    type: options_select
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true
