@@ -156,6 +156,20 @@ else
 fi
 echo
 
+# ── 4b. Open deferral issues (reminder, feeds the manual 'review issue status' step)
+echo "=== 4b. Open deferral issues (label 'deferred') ==="
+if command -v gh >/dev/null 2>&1; then
+  OPEN_DEFERRED="$(gh issue list --label deferred --state open --limit 50 2>/dev/null)"
+  if [ -n "$OPEN_DEFERRED" ]; then
+    echo "$OPEN_DEFERRED" | sed 's/^/  /'
+  else
+    echo "  (none open, or gh unavailable)"
+  fi
+else
+  warn "gh not available -- skipped deferral-issue listing"
+fi
+echo
+
 # ── 5. Manual steps -- judgment calls, not scripted ─────────────────────
 echo "=== 5. Manual steps (per CLAUDE.md -- not automatable) ==="
 cat <<'EOF'
@@ -167,6 +181,9 @@ cat <<'EOF'
   [ ] Deferrals: new/changed deferred note has its GitHub Issue (label
       'deferred') opened, updated or closed -- public repo, so no detail
       of anything tracked privately in the issue title/body.
+  [ ] Review issue status (list above): for each 'deferred' issue this
+      session touched or affected, comment current state, reassign if
+      ownership moved, or close it (add a dated Resolved section to the note).
   [ ] Refresh local Claude memory: update project-mandala-state (sprint/
       spike/ADR status, dates) and add/revise topic memories for anything
       decided this session. Memory is per-machine/per-driver -- committed
