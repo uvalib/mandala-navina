@@ -1,0 +1,5 @@
+name: 'Mandala File Hygiene'
+type: module
+description: 'Normalizes file entity filenames/URIs to Unicode NFC on save, so Unicode-named uploads never drift from the stable form used by file-fetch tooling (stage_file_proxy, mandala:missing-file-audit). See docs/deferred/local-dev-files-provisioning-mechanism.md.'
+package: Mandala
+core_version_requirement: ^10 || ^11
