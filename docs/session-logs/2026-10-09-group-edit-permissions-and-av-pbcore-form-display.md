@@ -1,8 +1,8 @@
-# Session Log: AV PBCore form-display browser test, group entity editing fully unwired, and My/All Collections navigation fixes
+# Session Log: Group entity editing, AV PBCore form display, My/All Collections nav, and stage_file_proxy/Unicode filename fix
 
 **Date:** 2026-10-08 / 2026-10-09  
 **Participants:** Than Grove, Claude Code  
-**Outcome:** PR #284 merged (AV edit-form grouping/Paragraphs widget browser-tested; found and fixed a real bug along the way — the 11 `av_pbcore_*` paragraph bundles had no form-display config). Reviewed open GitHub issues (the team's new `deferred`-label tracking convention) and confirmed the Images orphan sweep (issue #289) is done locally. Found, documented ([`group-entity-editing-unwired.md`](../deferred/group-entity-editing-unwired.md), issue #301, PR #302), and fixed (PR #308, five commits, merged) that no one — including the site administrator role — could edit a group through the UI, that a subcollection's parent field was hidden, and added the view-page affordances (Add Item/Add Subcollection links, parent-collection sidebar listing, parent pre-fill, and a node-level "Collection" field letting owners and administrators move existing content between collections) the fix makes meaningful. Than tested and approved merging #308 along with the two in-flight docs PRs (#310, #311); all three merged to `main`. Then found, live-testing rather than trusting an old sprint doc's "verified live" claim, that the pre-existing "My Collections"/"All Collections" views had real link bugs and were completely unreachable from site navigation (the main menu had zero links in it at all) — fixed both and added/reordered the hamburger menu (PR #312, open, Than tested locally and approved). Also hit and diagnosed a self-inflicted local incident: switching this session's git branch to write docs reverted the live DDEV site's PHP files out from under Than's active testing, throwing a stale-hook-cache error — resolved by switching back and rebuilding cache; all further docs-only work moved to a separate `git worktree` to avoid repeating it.
+**Outcome:** PR #284 merged (AV edit-form grouping/Paragraphs widget browser-tested; found and fixed a real bug along the way — the 11 `av_pbcore_*` paragraph bundles had no form-display config). Reviewed open GitHub issues (the team's new `deferred`-label tracking convention) and confirmed the Images orphan sweep (issue #289) is done locally. Found, documented ([`group-entity-editing-unwired.md`](../deferred/group-entity-editing-unwired.md), issue #301, PR #302), and fixed (PR #308, five commits, merged) that no one — including the site administrator role — could edit a group through the UI, that a subcollection's parent field was hidden, and added the view-page affordances (Add Item/Add Subcollection links, parent-collection sidebar listing, parent pre-fill, and a node-level "Collection" field letting owners and administrators move existing content between collections) the fix makes meaningful. Than tested and approved merging #308 along with the two in-flight docs PRs (#310, #311); all three merged to `main`. Then found, live-testing rather than trusting an old sprint doc's "verified live" claim, that the pre-existing "My Collections"/"All Collections" views had real link bugs and were completely unreachable from site navigation (the main menu had zero links in it at all) — fixed both and added/reordered the hamburger menu (PR #312, merged, Than tested locally and approved). Hit and diagnosed a self-inflicted local incident: switching this session's git branch to write docs reverted the live DDEV site's PHP files out from under Than's active testing, throwing a stale-hook-cache error — resolved by switching back and rebuilding cache; all further docs-only work moved to a separate `git worktree` to avoid repeating it. Later in the same session, joined by Yuji and Xiaoming: live-trialed `stage_file_proxy` against dev-0 as origin (issue #298) — confirmed it works for ASCII subdirectory files, and found/root-caused a real bug where dev-0's existing Unicode-named files are stored NFD while D11's database expects NFC, causing exact-path fetches to 404. Decided (group) that `stage_file_proxy` is the adopted dev-DX mechanism, no on-demand sync script needed. Shipped `mandala_file_hygiene` (PR #314, merged) to normalize file entity filenames to NFC on save, preventing recurrence from future uploads. Wrote up the existing dev-0 NFD files as a separate deferred note ([`dev0-unicode-filenames-need-nfc-normalization.md`](../deferred/dev0-unicode-filenames-need-nfc-normalization.md)) pending a group decision on the one-time rename, rather than acting on shared infrastructure unilaterally.
 
 ---
 
@@ -2098,5 +2098,625 @@ We're already on the right branch (same one DDEV is serving) — no branch switc
 ## Claude — 2026-10-09 14:18
 
 Now let's write the session log using a worktree, so I don't touch this live checkout.
+
+---
+
+## Claude — 2026-10-09 14:18
+
+Now let's fix the header with the full, accurate outcome summary.
+
+---
+
+## Claude — 2026-10-09 14:19
+
+Let's remove the worktree now that it's pushed.
+
+---
+
+## Claude — 2026-10-09 14:19
+
+Clean. Let's confirm final state.
+
+---
+
+## Claude — 2026-10-09 14:19
+
+## Summary
+
+Documented, committed, and pushed:
+
+- **Sprint doc correction** (on PR #312's branch): B5 had claimed "verified live 2026-09-03" for My/All Collections — corrected with what was actually found broken and the fix, so the next person doesn't trust a stale claim.
+- **Session log extended** through the PR #308 merge and the My/All Collections work — **PR #313**, docs-only, written in a separate `git worktree` this time so your live DDEV testing wasn't disturbed.
+
+**Open PRs now:**
+| PR | What | Status |
+|---|---|---|
+| **#312** | My/All Collections link fixes + nav menu (AV Items, Images, reorder) | You tested locally, approved — ready to merge |
+| **#313** | Session log extension | Docs-only, ready to merge |
+| #285 | Yuji's unrelated Spike 11 work | Not yours |
+
+Let me know when you'd like me to merge #312 and #313.
+
+---
+
+## User — 2026-10-09 14:27
+
+Yes merge the two
+
+---
+
+## Claude — 2026-10-09 14:27
+
+Before merging #312 (it touches `drupal/**`, triggering the deploy webhook) — same check as before: anything long-running on dev-0 right now?
+
+---
+
+## Claude — 2026-10-09 14:27
+
+Clear. Merging both.
+
+---
+
+## Claude — 2026-10-09 14:28
+
+Both merged. Let's sync the local checkout and confirm DDEV is still healthy.
+
+---
+
+## Claude — 2026-10-09 14:28
+
+Confirmed — local `main` is at the latest merge, DDEV cache rebuilt, config clean (only the expected dev-only drift). Let's clean up the now-merged local branch.
+
+---
+
+## Claude — 2026-10-09 14:29
+
+Everything's healthy. **Both merged into `main`:**
+
+- **#312** — My/All Collections link fixes, nav menu reorder (AV Items, Images, Home → All Collections → My Collections → AV Items → Images → My Account → Log Out)
+- **#313** — Session log
+
+Local `main` synced, DDEV cache rebuilt, config clean, site verified working post-merge. Only remaining open PR is Yuji's unrelated #285.
+
+---
+
+## User — 2026-10-09 14:31
+
+Ok pull any changes to the repo. And assess where we are. We are now in session with Yuji, Xiaoming, and myself.
+
+---
+
+## Claude — 2026-10-09 14:32
+
+Let's check whether that extra video node is a stray test artifact before reporting.
+
+---
+
+## Claude — 2026-10-09 14:32
+
+## Pulled and assessed — here's where things stand for the group session.
+
+**Repo sync:** Clean. `git pull` was already up to date, local config/sync matches `origin/main` exactly, nothing uncommitted.
+
+**One real but expected drift (3b content counts):** Local is *ahead* of dev-0 — 415 groups vs 410 (the 5 orphan-content review groups built locally, not yet created on dev-0), and a few more `group_relationship` rows from that. Confirmed no stray test content of mine is involved (checked the newest video nodes — all pre-date this session). Not a problem, just means dev-0 hasn't caught up on the review-group work yet.
+
+**What landed since the last group session (all merged to `main`):**
+
+1. **PR #284** — AV edit form shows all D7-equivalent fields, grouped with Paragraphs widgets. Found and fixed a real bug during browser testing: the 11 `av_pbcore_*` paragraph bundles had no form-display config, so the nested fields were invisible.
+2. **PR #308** (5 commits) — Group entity editing was completely unwired: nobody, including the site administrator, could edit or delete a collection/subcollection. Fixed, plus administrators now get a full permission superset (Group's own admin-flagged-role mechanism), view-page Add Item/Add Subcollection links, parent-collection pre-fill, and a new node-edit-form "Collection" field so owners/admins can move existing content between collections.
+3. **PR #312** — The pre-existing "My Collections"/"All Collections" pages had real bugs (broken links, bogus admin-page links) and were **completely unreachable from site navigation** — the hamburger menu had zero links in it. Fixed both; added All Collections/My Collections/AV Items/Images to the main menu in the requested order.
+4. Several docs PRs recording all of the above, plus one from another session (`fix/carousel-relative-image-urls`, #306) I didn't drive.
+
+**Issue #301** (group editing unwired) is closed. **Issue #289** (orphan sweep) — Images done locally, still needs dev-0 groups created + AV/Images swept there, Texts/Sources pending their own migrations.
+
+**Only remaining open PR:** #285, Yuji's Spike 11 transcript work — not blocked on anything from this list.
+
+**One thing for the room:** I can't check the CodePipeline deploy status myself — no `aws-vault` in this session. If dev-0 needs today's `drupal/**` changes (PR #284/#308/#312 all touch it), whoever has AWS access should confirm the deploy actually landed, or trigger it per the usual "merge already triggers the webhook, don't call `start-pipeline-execution` manually" rule.
+
+**Open agenda items** (unassigned, need the group):
+- **#298** — local `sites/default/files` provisioning mechanism, explicitly needs a group decision
+- **#300** — periodic deferred-notes review, free for anyone to pick up
+
+---
+
+## User — 2026-10-09 14:35
+
+What is the status of the Stage File Proxy config? Yuji is getting a warning that SFP is not in config.
+
+---
+
+## Claude — 2026-10-09 14:37
+
+Checked directly — here's the real status, and the likely source of Yuji's warning:
+
+**It's expected drift, by design — not a bug.** `stage_file_proxy.settings` is deliberately **never** exported to `config/sync` (confirmed in composer.json: `drupal/stage_file_proxy: ^4.0` is a real, committed `--dev` dependency, so it installs for everyone via `composer install`). `session-start-check.sh`'s own step 3a-pre auto-enables the module locally and discounts exactly this drift. If Yuji ran a bare `drush config:status` directly (not through the script), he'd correctly see:
+
+```
+stage_file_proxy.settings   Only in DB
+core.extension              Different
+```
+
+That's the documented, permanent state on every developer's DDEV — not something to "fix" by exporting it.
+
+**But there's a real gap worth telling him about**: I checked the module's actual config on this machine, and **`origin` is blank**:
+
+---
+
+## Claude — 2026-10-09 14:37
+
+The module is enabled but has no `origin` set — so it isn't actually fetching anything from anywhere. Per `docs/deferred/local-dev-files-provisioning-mechanism.md`, the **2026-10-05 plan explicitly agreed to trial `stage_file_proxy` with dev-0 as origin "as the next session," and that trial was never actually run** — it's recorded as "deferred to the next session (not started)." So the module sitting there inert, with the config-drift warning being the only visible sign of it, matches exactly what's documented — nothing has silently broken.
+
+**Summary for the room:**
+1. The config-drift warning itself is expected/by-design — document it as such to Yuji if he hasn't seen that context.
+2. The actual file-provisioning gap (`local-dev-files-provisioning-mechanism.md` / issue #298) is still open and **needs the group decision** it's already flagged for — specifically: configure an origin and trial it, or decide on-demand-script vs. automatic-trigger instead. This is exactly the agenda item from session-start-check.sh's "unassigned, needs a group decision" list.
+
+---
+
+## User — 2026-10-09 14:40
+
+What is the group decision we need to make?
+
+---
+
+## Claude — 2026-10-09 14:40
+
+Here's the precise decision, pulled from `docs/deferred/local-dev-files-provisioning-mechanism.md` (issue #298):
+
+## The core problem
+Nothing in this project's local-dev tooling ever populates `sites/default/files` binaries. Config and DB sync fine via `git pull`/`config:import` and `update-db-from-remote.sh`, but file bytes are pure per-machine state — confirmed independently missing on two different developers' DDEVs (99.8% missing on one, concentrated in `field_transcript`, `field_thumbnail_image`, `group.field_featured_image`). dev-0 is confirmed as a complete, correct source for all of it.
+
+## Two sub-decisions needed
+
+**1. Scope — full parity or just what features render?**
+Only ~0.5% of `shanti_image` nodes even carry a local `field_image` (display is IIIF-driven, not local-file-driven). The real need might be much narrower than "sync the whole historical corpus" — e.g., only the fields actual local features touch (like the carousel's slide images), not everything.
+
+**2. Mechanism — pick one (or a combination):**
+- **`stage_file_proxy`** — lazy, fetch-on-request, nothing to run. Installed and enabled locally already, but **never actually configured** (origin is blank) — the 2026-10-05 session agreed to trial it with dev-0 as origin (testing a subdirectory file and a Unicode-named file specifically) and that trial was never done.
+- **An on-demand script** — mirroring `update-db-from-remote.sh`'s pattern (pull, land locally, destructive-warning).
+- **`mandala:missing-file-audit --fix`**, already built and validated against the full corpus — wire it into `session-start-check.sh` as a report-only step (no `--fix`), the way config/content drift already report there.
+
+The 2026-10-05 plan explicitly punted both of these to "next session" and nobody's picked it up since. With all three of you here now is exactly the point this was deferred to.
+
+Want me to drive the `stage_file_proxy` trial live right now while you three talk through scope, or is this purely a discussion item for today?
+
+---
+
+## User — 2026-10-09 14:43
+
+Let's trial stage_file_proxy now while we talk. We don't need an on-demand script. As for the missing-file-audit script can it be limited in scope to Images, AV, etc.?
+
+---
+
+## User — 2026-10-09 14:46
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   This is a long multi-part Drupal 11 development session in the Mandala D11 monorepo (`/Users/ndg8f/Sandbox/Mandala/mandala-navina`), driven by Than Grove (CSC software engineer). The session covered many sequential user requests:
+   - Pull latest code, check open GitHub issues (new team convention as of 2026-10-08: deferrals tracked as GitHub Issues with label `deferred`), and summarize actionable work.
+   - Browser-test PR #284 (AV edit form grouping/Paragraphs widgets) before merging, per a TODO from a prior session.
+   - Check whether the Images orphan-content sweep (issue #289) was done locally.
+   - Investigate and fix a finding that "an admin should be able to edit a group/content" — expanded into: no group role grants `edit group`/`delete group` permission at all; administrators specifically need a full permission superset ("administrators should have all the permission of content_editors plus the admin permissions normally granted in Drupal").
+   - "A few tweaks": subcollection pages should show Parent Collection in the sidebar like Subcollections are shown on parent pages; Add Item / Add Subcollection links should appear based on permission.
+   - "The add item link should appear for both collections and subcollections" (clarification).
+   - Fix: creating a subcollection from a group should auto-fill the parent collection field (pre-fill via query param); confirm node creation via "Add Item" already auto-links to the group.
+   - "An admin should be able to change the collection of any node" (extending the node Collection field to give admins a site-wide collection-move capability, not just their own memberships).
+   - "In existing nodes there is no way to change or set the collection... a field in the edit form that owners can edit... a drop down listing all the collections the owner belongs to" (the node-level Collection field feature).
+   - Test everything locally, merge PR #308 along with the two docs PRs (#310, #311) once reviewed and approved.
+   - Diagnose and fix a self-inflicted incident where switching git branches broke the live DDEV site mid-testing.
+   - "I would like a view for 'My Collections' like av.mandala.library.virginia.edu/mycontent/collections. And I would like links to that page and to the all collections page, /collections added to the main dropdown hamburger menu." — discovered and fixed real bugs in the pre-existing `/my_collections`/`/collections` views (broken links) and total absence from site navigation.
+   - "I want to add a couple of more links and rearrange. The order of the menu items should be: Home, All Collections, My Collections, AV Items, Images, My Account, Log out." — added AV Items/Images links and reordered via block-weight swap.
+   - "Test locally" (browser-verify the nav changes).
+   - "Ok document, write session log, commit and push. I tested it personally and it is correct and works." — wrote sprint-doc correction + extended session log via a git worktree (to avoid repeating the earlier branch-switch incident).
+   - "Yes merge the two" (merge PR #312 and #313).
+   - "Ok pull any changes to the repo. And assess where we are. We are now in session with Yuji, Xiaoming, and myself." — full status briefing for a group session.
+   - "What is the status of the Stage File Proxy config? Yuji is getting a warning that SFP is not in config." — investigate and explain.
+   - "What is the group decision we need to make?" — explain the two sub-decisions needed per the deferred note (issue #298).
+   - **Most recent request (where work was interrupted):** "Let's trial stage_file_proxy now while we talk. We don't need an on-demand script. As for the missing-file-audit script can it be limited in scope to Images, AV, etc.?" — this has two parts: (a) actively trial stage_file_proxy right now (configure origin=dev-0, test a subdirectory file and a Unicode-named file), and (b) answer/investigate whether `mandala:missing-file-audit` can be scoped to specific sites (Images, AV, etc.) rather than auditing all file/image fields site-wide.
+
+2. Key Technical Concepts:
+   - Drupal 11 (11.4.8), DDEV local dev environment, Drush CLI
+   - Group module 3.x: `GroupInterface`, `GroupAccessControlHandler`, `GroupPermissionChecker::hasPermissionInGroup()`, `GroupPermissionCalculator::calculateFullPermissions()`, `PermissionScopeInterface` (OUTSIDER_ID/INSIDER_ID/INDIVIDUAL_ID scopes), group roles with `admin: true` flag (Group's own equivalent of Drupal's `is_admin`), `group_relationship_entity_submit()` (auto-links new content to a group when created via the `create_form` route)
+   - Views module: field link configuration ("Link to the Group" / "Link label to the referenced entity" checkboxes), entity_reference_label formatter, route generation (`view.{view_id}.{display_id}`)
+   - Menu system: `hook_form_alter`, module-defined `*.links.menu.yml` (chosen over `menu_link_content` entities for deploy portability — these are code-based and deploy automatically vs. content entities that would need per-environment recreation)
+   - Block layout: theme block weight ordering (`shanti_sarvaka_main_menu` vs `shanti_sarvaka_account_menu`, both in `header` region, rendering order determined by weight)
+   - Cache contexts: the `'user'` cache context chosen deliberately over `'user.group_permissions'` for permission-dependent render output (documented gotcha: `user.group_permissions` varies by calculated permissions, not membership identity, which can leak one user's visibility onto another with identical roles but different memberships — same trap `CollectionMembershipsCacheContext`'s docblock warns about)
+   - `CollectionVisibility` service (`Drupal\mandala_group_inheritance\Access\CollectionVisibility`): `GROUP_BUNDLES` const, `groupNodeBundles()` (discovers bundles dynamically via `group_relationship_type` config, not hardcoded), `groupNodePluginIds()`, `owningGroup($node)` (resolves a node's single collection/subcollection)
+   - Config management convention: "build live in Drupal admin UI, then `drush config:export`, never hand-edit YAML" (except single scalar values) — followed rigorously throughout for every config change
+   - `stage_file_proxy` contrib module: lazy on-request file-fetching proxy; `^4.0` committed as `--dev`-only composer dependency; `stage_file_proxy.settings` config is **deliberately and permanently never exported to `config/sync`** (local-DDEV-only convenience); `session-start-check.sh` step 3a-pre auto-enables it and discounts its known config drift
+   - `mandala:missing-file-audit` Drush command (`MissingFileAuditCommands.php`, module `mandala_migrations`): discovers real file/image fields dynamically via `field_storage_config`, finds missing `file_managed` rows, checks `dev-0` then D7 production as recovery sources, supports `--check-remote-source` and `--fix` flags; currently has **no scoping option** by site/bundle/field
+   - Unicode NFD/NFC filename mismatch gotcha (`Rangdrol-Rinpoché.jpg` stored decomposed on disk, composed in DB URI) — a known risk for any strict-path-matching fetch mechanism like `stage_file_proxy`
+   - git worktrees (`git worktree add`/`git worktree remove`) used deliberately to isolate docs-only branch work from the live DDEV-mounted working directory, after a real incident where switching branches broke live testing
+   - GitHub Issues as the new deferred-item tracking convention (label `deferred`; issue holds status/owner, the `docs/deferred/*.md` note holds the why)
+   - PHPUnit kernel test suite: `mandala_group_inheritance` module's test suite, run via `ddev exec "cd /var/www/html/drupal && SIMPLETEST_DB=mysql://db:db@db/db SIMPLETEST_BASE_URL=https://mandala.ddev.site BROWSERTEST_OUTPUT_DIRECTORY=/tmp vendor/bin/phpunit --configuration web/core web/modules/custom/mandala_group_inheritance/tests"` — stayed at 11/11 passing throughout all changes
+   - Deploy pipeline: merging to `main` auto-triggers the `uva-mandala-drupal-codepipeline` webhook only for paths matching `drupal/**`, `package/**`, `pipeline/**`; neither Than nor Claude has `aws-vault` access in this session to check deploy status directly
+
+3. Files and Code Sections:
+
+   - **`drupal/web/modules/custom/shanti_collections_view/shanti_collections_view.module`**
+     - Central file for most of this session's feature work. Added imports: `Drupal\Core\Entity\EntityFormInterface`, `Drupal\Core\Form\FormStateInterface`, `Drupal\Core\Session\AccountInterface`, `Drupal\Core\Url`, `Drupal\group\PermissionScopeInterface`, `Drupal\mandala_group_inheritance\Access\CollectionVisibility`.
+     - Added `shanti_collections_view_form_alter()` — generic hook_form_alter adding a "Collection" select to any existing group_node bundle's node edit form, with options built from (a) the node's current group always included, (b) every collection/subcollection the account literally belongs to via `group.membership_loader`, (c) every collection/subcollection of a bundle where the account has a blanket (non-membership-scoped) create permission, computed via a new helper `_shanti_collections_view_blanket_create_bundles()`.
+     - Added `_shanti_collections_view_blanket_create_bundles(AccountInterface $account, string $plugin_id): array` — checks `PermissionScopeInterface::OUTSIDER_ID` item per bundle via `\Drupal::service('group_permission.calculator')->calculateFullPermissions($account)`.
+     - Added `shanti_collections_view_node_form_collection_validate()` and `shanti_collections_view_node_form_collection_submit()` — server-side re-validation against real Group permissions (not just rendered options), and the actual move logic (delete old `group_node:{bundle}` relationship, call `$new_group->addRelationship($node, $plugin_id)`).
+     - Added `shanti_collections_view_form_group_subcollection_add_form_alter()` — reads `?parent=` query param, pre-fills `field_parent_collection` default value on the Add Subcollection form.
+     - Modified `_shanti_collections_view_preprocess_full()` to compute `$variables['add_item_link']` (route `entity.group_relationship.group_node_create_page`) and `$variables['add_subcollection_link']` (route `entity.group.add_form` with `['query' => ['parent' => $group->id()]]`), both gated via `\Drupal::accessManager()->checkNamedRoute(...)`, plus added `$variables['#cache']['contexts'][] = 'user';` with a detailed comment explaining why `user.group_permissions` would be wrong.
+
+   - **`drupal/web/modules/custom/shanti_collections_view/templates/group--collection--full.html.twig`**
+     - Added an `.shanti-collection-page-actions` block rendering `add_item_link`/`add_subcollection_link` at the top of the sidebar.
+
+   - **`drupal/web/modules/custom/shanti_collections_view/templates/group--subcollection--full.html.twig`**
+     - Removed the old top "back to parent" breadcrumb link (`.shanti-collection-page-back`).
+     - Added `add_item_link` action block in the sidebar.
+     - Added a "Parent collection" sidebar section in the same `<h5>`+`<ul><li>` shape as the collection page's "Subcollections" section.
+
+   - **`drupal/web/modules/custom/shanti_collections_view/css/shanti-collections-view.css`**
+     - Replaced `.shanti-collection-page-back` rule with `.shanti-collection-page-actions`/`.shanti-collection-page-action` button-style CSS.
+
+   - **`drupal/web/modules/custom/shanti_collections_view/shanti_collections_view.info.yml`**
+     - Added dependency: `mandala_group_inheritance:mandala_group_inheritance` (to use `CollectionVisibility`).
+
+   - **`drupal/web/modules/custom/shanti_collections_view/shanti_collections_view.links.menu.yml`** (new file)
+     - Final content:
+     ```yaml
+     shanti_collections_view.collections:
+       title: 'All Collections'
+       route_name: view.collections.page_1
+       menu_name: main
+       weight: 10
+
+     shanti_collections_view.my_collections:
+       title: 'My Collections'
+       route_name: view.my_collections.page_1
+       menu_name: main
+       weight: 20
+
+     shanti_collections_view.av_gallery:
+       title: 'AV Items'
+       route_name: view.av_gallery.page_1
+       menu_name: main
+       weight: 30
+
+     shanti_collections_view.image_gallery:
+       title: 'Images'
+       route_name: view.image_gallery.page_1
+       menu_name: main
+       weight: 40
+     ```
+
+   - **`drupal/config/sync/group.role.collection-content_editor_insider.yml`, `group.role.collection-content_editor_outsider.yml`, `group.role.subcollection-content_editor_insider.yml`, `group.role.subcollection-content_editor_outsider.yml`**
+     - Added `'edit group'` and `'delete group'` permissions (built live via `/admin/group/types/manage/{collection|subcollection}/permissions`, exported).
+
+   - **`drupal/config/sync/group.role.collection-administrator_member.yml`, `group.role.collection-administrator_non_mem.yml`, `group.role.subcollection-administrator_memb.yml`, `group.role.subcollection-administrator_non.yml`** (new files)
+     - Four new group roles, each `admin: true`, `global_role: administrator`, scope insider/outsider, `permissions: {}` (empty — admin flag grants everything automatically). Built via `/admin/group/types/manage/{type}/roles/add`.
+
+   - **`drupal/config/sync/core.entity_form_display.group.subcollection.default.yml`**
+     - `field_parent_collection` moved from `hidden` to `content` region with `entity_reference_autocomplete` widget.
+
+   - **`drupal/config/sync/views.view.my_collections.yml`**
+     - Fixed: "Group: Title" field's `Link to the Group` formatter setting enabled (`settings: {link_to_entity: true, link_rel: canonical}`, `type: string`). "Group: Group type" field's `Link label to the referenced entity` disabled (`settings: {link: false}`, `type: entity_reference_label`). Both fixed via live Views UI at `/admin/structure/views/view/my_collections`.
+
+   - **`drupal/config/sync/block.block.shanti_sarvaka_account_menu.yml`** — weight changed from `-4` to `0`.
+   - **`drupal/config/sync/block.block.shanti_sarvaka_main_menu.yml`** — weight changed from `0` to `-4`. (Swap achieves: main navigation menu block now renders before account menu block.)
+
+   - **`docs/deferred/group-entity-editing-unwired.md`** (new file, later heavily updated)
+     - Documents Finding 1 (no `edit group`/`delete group` permission anywhere, Group's permission system never consults `is_admin`) and Finding 2 (`field_parent_collection` hidden). Later updated with a "Status (2026-10-09)" section and "What was built (PR #308, five commits)" listing all five commits including the administrator superset and the node Collection field. Header: `**Issue:** [#301](https://github.com/uvalib/mandala-navina/issues/301)`.
+
+   - **`docs/deferred/README.md`** — added/updated the summary row for `group-entity-editing-unwired.md`.
+
+   - **`docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md`**
+     - Added a "Correction 2026-10-09" paragraph after the B5 workstream table, documenting that B5's "verified live 2026-09-03" claim for `/my_collections`/`/collections` didn't hold up — both had real link bugs and were completely unreachable from navigation. References PR #312.
+
+   - **`docs/session-logs/2026-10-09-group-edit-permissions-and-av-pbcore-form-display.md`**
+     - Generated/regenerated multiple times via `python3 scripts/save-session-log.py <jsonl-path> <slug>`, with the header's Outcome line manually rewritten each time to accurately summarize cumulative progress. Final header (as of last edit) covers: PR #284 merge, GitHub Issues review, orphan sweep confirmation, PR #308 (5 commits, merged), PR #312 (My/All Collections fixes + nav), and the branch-switch incident.
+
+   - **`drupal/web/modules/custom/mandala_migrations/src/Drush/Commands/MissingFileAuditCommands.php`** — **currently being read (in progress, only first ~150 lines seen)**. Key facts: `DEV0_FILES_BASE = 'https://mandala-dev.internal.lib.virginia.edu/sites/default/files/'`; `D7_SOURCE_BASES = ['images' => '...', 'av' => '...']`; the `audit()` command method has options `check-remote-source` and `fix` only, no scoping option; uses `realFileFields()` (not yet read) to dynamically discover file/image fields via `field_storage_config`.
+
+   - **`docs/deferred/local-dev-files-provisioning-mechanism.md`** — read extensively (not modified). Key facts carried forward: issue #298; three gapped fields (`node.field_transcript` 5,379, `node.field_thumbnail_image` 2,843, `group.field_featured_image` 206); dev-0 confirmed fully complete source in both directions; stage_file_proxy evaluated 2026-10-05 as a candidate, "Plan agreed 2026-10-05, deferred to the next session (not started)": (1) wire `mandala:missing-file-audit` into `session-start-check.sh` as report-only, (2) trial `stage_file_proxy` on a DDEV with dev-0 as origin, testing a subdirectory file and the Unicode-named thumbnail (`Rangdrol-Rinpoché.jpg`, NFD-vs-NFC mismatch). Two open questions: (1) full parity or narrower scope; (3) on-demand script vs. automatic trigger — **user has now explicitly said no on-demand script needed**.
+
+4. Errors and fixes:
+   - **`PluginNotFoundException: The "hidden" plugin does not exist`** when bulk-enabling all 24 fields on `av_pbcore_instantiation` via JS: the nested paragraph field `field_pbcore_format_id`'s widget type reset to empty when its region changed via JS `dispatchEvent`. Fixed by explicitly setting its widget to `paragraphs` (matching the widget used by every other PBCore field at the node level), verified by checking all `[type]` select values against the list of valid plugin IDs from the exception message before saving.
+   - **Chrome extension transient failures** (`Cannot access a chrome-extension:// URL of different extension`) — recurred several times; worked around by closing and recreating tabs, or using `javascript_tool`/direct `curl` with cookie jars instead of browser automation for access-control testing.
+   - **Local DDEV session/logout confusion when testing as different users** — browser tabs share cookies within the same Chrome profile, and local DDEV's known tabled SimpleSAML/session quirk (documented memory from 2026-10-06) made programmatic logout-then-relogin unreliable (a fresh login link silently resolved back to the previous account). **Fix/established pattern: use `curl` with a fresh, empty cookie jar** (`rm -f /tmp/x_cookies.txt; curl -c /tmp/x_cookies.txt -b /tmp/x_cookies.txt ...`) instead of browser-based account switching. This was saved as a new memory file `feedback-test-as-different-user-via-curl-not-browser-tabs.md`.
+   - **Self-inflicted incident: switching git branches broke the live DDEV site mid-testing.** The user hit `InvalidArgumentException: Class "shanti_collections_view_form_alter" does not exist"` while visiting a real collection page. Root cause: I had run `git checkout main` then created a new branch off main (to write docs), which reverted the live, DDEV-mounted working directory's PHP files out from under the user's active browser testing — Drupal's cached hook-implementation registry still referenced a function that momentarily didn't exist on disk. **Fix:** switched back to the correct feature branch (`git checkout fix/group-entity-edit-permission-and-parent-field`) and ran `ddev drush cr`. **User feedback/lesson (self-imposed, confirmed working):** for all subsequent docs-only work, used `git worktree add /tmp/mandala-docs-worktree...` to create an isolated checkout, so the live DDEV-mounted directory's branch is never touched while the user might be testing. This was done successfully twice (once for the session log at `/tmp/mandala-docs-worktree`, once for `/tmp/mandala-docs-worktree2`), each time removed via `git worktree remove` after pushing.
+   - **Unrelated 500 error found during testing** (`ArgumentCountError: Too few arguments to function Drupal\mandala_home\CarouselBuilder::__construct()`) — traced to a different, unrelated PR (`fix/carousel-relative-image-urls`, #306) merged to `main` by another session driver; fixed simply by running `ddev drush cr` to rebuild the service container cache after the `git pull`. Not caused by my work.
+   - **PR #310's session log was written before later work happened** — regenerated/extended twice total as the session progressed, each time via `scripts/save-session-log.py` re-run against the same session JSONL file, with manual correction of the auto-generated title/Participants/Outcome header fields each time (the script defaults "Participants" from `git config user.name` as a GitHub-style username like "ThanGrove" — manually corrected to "Than Grove" for readability).
+   - **Earlier tamper-test false assumption**: initially assumed moving a node into a review-holding group (gid 416) should fail permission validation, but it succeeded — turned out review-holding groups are just normal `subcollection`-type groups with a flag, so they legitimately accept `group_node:video` content per the group type's installed plugins; this was not a bug, just an incorrect test assumption, corrected by choosing a different test group (gid 180) that the test account genuinely wasn't a member of, which did correctly get rejected by the validate handler.
+
+5. Problem Solving:
+   - Solved: AV PBCore paragraph form-display gap (12 new config files, all 12 `av_pbcore_*` bundles).
+   - Solved: Group entity editing completely unwired (edit/delete group permission gap, root-caused precisely via reading `GroupAccessControlHandler::checkAccess()` and `GroupPermissionChecker::hasPermissionInGroup()` source code).
+   - Solved: Administrator permission superset via Group's own `admin: true` role-flag mechanism (chosen over a custom bypass hook as cleaner/more maintainable).
+   - Solved: Subcollection parent field hidden; parent pre-fill via query param + form alter.
+   - Solved: Node-level Collection field (view, change) with proper scoping (literal memberships + blanket-access accounts) and server-side re-validation against real permissions (defense in depth, confirmed empirically that core's own select-element validation blocks fully bogus options, and the custom validator catches a group-level-valid-but-unauthorized target).
+   - Solved: My/All Collections view link bugs and complete absence from site navigation.
+   - Ongoing/in-progress at interruption: (a) determining whether `mandala:missing-file-audit` can be scoped to a specific site (Images, AV, etc.) — requires reading more of `MissingFileAuditCommands.php`, specifically `realFileFields()`, to see what metadata is available to filter on (field name, entity type, bundle) and designing a new CLI option (e.g., `--site=images` or `--bundle=audio,video` or `--field=field_transcript,field_thumbnail_image`) that would need to be implemented as actual code changes to this Drush command, then tested; (b) the `stage_file_proxy` live trial itself (setting origin, testing a subdirectory file fetch, testing the Unicode-filename fetch) had not yet begun.
+
+6. All user messages (non-tool-result, verbatim where short enough; paraphrased only where noted):
+   - "In existing nodes there is no way to change or set the collection. Needs to be a field in the edit form that owner's can edit. It should show the current collection or subcollection of the node if there is one and have a drop down listing all the collections the owner belongs to."
+   - "The add item link should appear for both collections and subcollections" (sent mid-turn as a system-surfaced message)
+   - "But adminstrators should be able to edit any group. They should be able to edit any content."
+   - "Administrators should have all the permission of content_editors plus the admin permissions normally granted in Drupal etc." (sent mid-turn)
+   - "Ok when you create a subcollection from a group, it doesn't automatically fill in the parent collection. Can't tell if it automatically fills in the collection when you create a node from the link within a collection but it should do that too."
+   - "ok go ahead and write the documentation and session log, commit and push it." (an earlier instance, before the nav-links work)
+   - "In existing nodes there is no way to change or set the collection..." [see above, duplicate concept — this was the actual trigger for the Collection field feature]
+   - "Great. That works locally. Are we in a PR branch?"
+   - "ok go ahead and write the documentation and session notes, commit and push it." (second instance)
+   - "I tested 308 some locally. It's good to merge along with 310 and 311 which are also both mine."
+   - "check deploy status but I don't have access to aws-vault because I don't have the permissions"
+   - "Ok a couple of minor changes I would like a view for 'My Collections' like https://av.mandala.library.virginia.edu/mycontent/collections. And I would like links to that page and to the all collections page, /collections added to the main drop down hamburger menu."
+   - "The add item link should appear for both collections and subcollections" (this specific quote appears to have been the clarification during the group-edit work, listed above)
+   - "Ok there's a bug. When I go to 'https://mandala.ddev.site/collection/import-test' I get an error 'InvalidArgumentException: Class "shanti_collections_view_form_alter" does not exist. in Drupal\Core\DependencyInjection\ClassResolver->getInstanceFromDefinition() (line 32 of core/lib/Drupal/Core/DependencyInjection/ClassResolver.php).'"
+   - "gotcha thank you. Is everything documented, committed and pushed?"
+   - "Ok I've tested 308 some locally. It's good to merge along with 310 and 311 which are also both mine." (duplicate of above, this was the actual merge-approval message)
+   - "Ok when you create a subcollection from a group, it doesn't automatically fill in the parent collection..." (duplicate, already listed)
+   - "An admin should be able to change the collection of any node" (sent mid-turn)
+   - "Yes merge the two"
+   - "Ok pull any changes to the repo. And assess where we are. We are now in session with Yuji, Xiaoming, and myself."
+   - "What is the status of the Stage File Proxy config? Yuji is getting a warning that SFP is not in config."
+   - "What is the group decision we need to make?"
+   - **Most recent:** "Let's trial stage_file_proxy now while we talk. We don't need an on-demand script. As for the missing-file-audit script can it be limited in scope to Images, AV, etc.?"
+
+7. Pending Tasks:
+   - **Trial `stage_file_proxy` live right now**: set `origin` config to dev-0's base URL, test fetching a known-missing subdirectory file (e.g., an AV transcript under `field_transcript`), test fetching the known Unicode-named file (`Rangdrol-Rinpoché.jpg` or similar thumbnail under `field_thumbnail_image`/`group.field_featured_image`) to check the NFD/NFC mismatch doesn't break it, and report findings back to the group — explicitly do NOT export `stage_file_proxy.settings` to `config/sync` afterward (per the established, repeatedly-documented convention that this config is local-DDEV-only, permanent, and must never reach `config/sync`/dev-0/production).
+   - **Determine and likely implement scoping for `mandala:missing-file-audit`**: investigate the rest of `MissingFileAuditCommands.php` (especially `realFileFields()`) to see what's filterable, then design/implement a CLI option (e.g., `--site=images|av` or `--bundle=`/`--field=`) to limit the audit to specific sites' fields (Images, AV, etc.) as the user asked.
+   - No on-demand sync script should be built (explicitly declined by the user: "We don't need an on-demand script").
+   - Depending on how the live trial goes, there may be a follow-up decision/documentation update to `docs/deferred/local-dev-files-provisioning-mechanism.md` and/or issue #298 recording the group's decision and the trial's outcome.
+
+8. Current Work:
+   Immediately before this summary request, I had just begun investigating the user's two-part request ("Let's trial stage_file_proxy now while we talk... can [missing-file-audit] be limited in scope to Images, AV, etc.?") by reading `drupal/web/modules/custom/mandala_migrations/src/Drush/Commands/MissingFileAuditCommands.php` via:
+   ```
+   find drupal/web/modules/custom/mandala_migrations -iname "MissingFileAuditCommands.php" -exec cat {} \; | head -150
+   ```
+   This returned the class docblock, the two source-base constants (`DEV0_FILES_BASE`, `D7_SOURCE_BASES` — the latter keyed only by `'images'` and `'av'`, confirming the module already has a notion of "site" for D7 fallback purposes, which is a promising hook for scoping), the constructor, and the start of the `audit()` command method (its `#[CLI\Command]`/`#[CLI\Option]` attributes showing only `check-remote-source` and `fix` as existing options — no scoping flag), through the beginning of the `foreach ($missing as $fid => $row)` loop. I had not yet seen `realFileFields()`, `findMissingFiles()`, `findUsages()`, `findRemoteSource()`, or the rest of the reporting/summary logic in this file. I also had not yet taken any action toward the `stage_file_proxy` trial (no config changes, no admin UI navigation, no test fetches attempted).
+
+9. Optional Next Step:
+   Continue reading the remainder of `MissingFileAuditCommands.php` (particularly `realFileFields()`) to determine the cleanest way to add site/bundle scoping, since the user's most recent message directly asked: "As for the missing-file-audit script can it be limited in scope to Images, AV, etc.?" In parallel/immediately after, begin the live `stage_file_proxy` trial the user asked for ("Let's trial stage_file_proxy now while we talk") — locate its admin settings form (likely under Configuration > System, seen earlier as "Stage File Proxy settings" in the admin toolbar), set `origin` to `https://mandala-dev.internal.lib.virginia.edu` (dev-0's base), and test fetching both a subdirectory file (a transcript) and the known Unicode-named file, explicitly without exporting `stage_file_proxy.settings` to `config/sync` afterward. This directly continues the in-progress, not-yet-completed work from the user's latest instruction, which was cut off mid-file-read.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/ndg8f/.claude/projects/-Users-ndg8f-Sandbox-Mandala-mandala-navina/b3111ff8-ea81-4140-98ed-1881b5315b6e.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+---
+
+## Claude — 2026-10-09 14:47
+
+Origin is set. Now let's confirm VPN reachability to dev-0, then pick two real missing-file candidates (a subdirectory transcript, and a Unicode-named thumbnail) to test the proxy against.
+
+---
+
+## Claude — 2026-10-09 14:49
+
+Both exist locally. I'll back them up, remove the local copies to simulate the missing-file state, and request them via HTTP to see whether stage_file_proxy fetches them from dev-0.
+
+---
+
+## Claude — 2026-10-09 14:51
+
+Good — grep found no matches, confirming both files are genuinely absent inside the container. Let me check Drupal's logs for what the subscriber saw during the request.
+
+---
+
+## Claude — 2026-10-09 14:53
+
+Good — only the expected local-only drift, nothing in `config/sync` changed or staged. Trial results:
+
+**stage_file_proxy trial — works, with one real gap confirmed:**
+- **Origin set** to `https://mandala-dev.internal.lib.virginia.eduundefined` (dev-0), locally only, never exported — `config:status` shows only the expected `stage_file_proxy.settings: Only in DB` drift.
+- **Baseline (ASCII, subdirectory file)**: removed `transcripts/t991.xml` from local disk, requested it through the site, stage_file_proxy fetched it from dev-0 and wrote it back byte-identical (checksum match). Subdirectories work fine — no root-level blind spot like the D7 fallback has.
+- **Unicode filenames — confirmed broken**, exactly as the deferred doc predicted: tested `transcripts/Tenpé Gyeltsen on the History of Sangdrok Monastery.xml` and a Tibetan-script filename (`transcripts/ཞིང་ཁམས།.xml`). Both are stored **NFC** in our D11 `file_managed` table (confirmed via `Normalizer::isNormalized`), but dev-0's filesystem has them **NFD** (decomposed). A literal fetch of the NFC-encoded path 404s; only a manually NFD-normalized URL succeeds. stage_file_proxy does no normalization — it fetches the literal DB-stored path — so **it will silently fail (fall through to a normal 404) for every Unicode-named file whose normalization form differs between environments**, with no error logged beyond the usual 404.
+- Both test files were backed up before removal and restored afterward with matching checksums — no content was lost.
+
+This means stage_file_proxy is good for the bulk ASCII case but can't be treated as a full substitute for fixing the underlying NFD/NFC mismatch — any Unicode-named file (we know of at least `field_thumbnail_image`/`field_transcript` entries) would keep 404ing for new developers even with the proxy on, until something normalizes the path (either a fork of the module, a pre-proxy rewrite, or a one-time rsync fixing dev-0's filenames to NFC).
+
+Now for the `missing-file-audit` scoping question — I read the full command. `realFileFields()` only discovers `entity_type` + `field name` via `field_storage_config`; bundle only shows up later, per-row, in `findUsages()`'s SQL result (`SELECT entity_id, bundle, ...`). So real scoping has to happen post-usage-lookup, filtering by bundle, not by hardcoding a "site" name onto a field (your team's `images`/`av` hardcoding defect class applies here too). Cleanest option: add a `--bundle=` CLIOption (comma-separated, e.g. `--bundle=video,audio,shanti_image`), and after `findUsages()` runs, drop any `$fid` whose usage bundles don't intersect the requested set before counting/reporting — orphaned rows (no usage at all) would need an explicit `--include-orphans` carve-out since they can't be bundle-matched. Want me to implement that now, or save it as a deferred follow-up note for the group to decide the exact flag shape?
+
+---
+
+## User — 2026-10-09 14:59
+
+What do you suggest we do about the broken paths because of Unicode normalization? Which is the most robust solution?
+
+---
+
+## Claude — 2026-10-09 14:59
+
+Normalize dev-0's filenames to NFC (matching the D11 DB) rather than patching every consumer. It's a one-time, scriptable walk of dev-0's public files tree (rename any path whose basename isn't already NFC) — once done, `stage_file_proxy` and the existing `findRemoteSource()` literal-match logic both "just work" with no code changes, since the mismatch only exists on dev-0's disk, not in our DB.
+
+The alternative — teaching `stage_file_proxy` and the audit script to try NFD/NFC variants on every fetch — fixes nothing for future consumers (a plain `rsync`/`scp` from dev-0 would still hit the same wall) and means maintaining a workaround in a third-party module indefinitely. The main tradeoff with the rename approach: it's a one-time write to shared dev-0 state, so it should be dry-run first (diff the rename list) before executing, and we'd want to confirm nothing else relies on the current NFD paths before doing it.
+
+---
+
+## User — 2026-10-09 15:00
+
+How do we prevent this from happening in the future if someone uploads a file with a name in NFD?
+
+---
+
+## Claude — 2026-10-09 15:00
+
+Normalize filenames at the point they enter Drupal, not after. Drupal's `file_munge_filename()`/`FileSystem` upload path runs the filename through `\Drupal\Component\Transliteration` but doesn't normalize Unicode form on its own — so the fix is a `hook_file_validate()` or a `hook_file_copy()`/`hook_ENTITY_TYPE_presave()` on `file` entities that runs `Normalizer::normalize($filename, Normalizer::NFC)` before the file is saved, rejecting or rewriting any non-NFC name at upload/migration time. That covers both the file-upload widget and any future migration process that writes files.
+
+---
+
+## User — 2026-10-09 15:01
+
+So what would the user experience be if the filename gets changed on upload?
+
+---
+
+## Claude — 2026-10-09 15:02
+
+No visible difference. NFC and NFD render identically in every modern font/browser/OS — a user uploading a file named `Rinpoché.jpg` sees `Rinpoché.jpg` in the file widget, in search results, and in the downloaded filename, whether Drupal stored it composed or decomposed. The normalization only changes the underlying byte sequence, not the displayed glyphs.
+
+Two minor edge cases worth knowing:
+- If two already-uploaded files happen to have the same visible name but different normalization forms (rare), normalizing one on save could make Drupal see a collision — that's handled by Drupal's existing dedup logic (`_0`, `_1` suffix), the same as any other filename collision today.
+- NFC is also the form nearly every non-macOS system already produces, so for the common case (most uploaders aren't on HFS+/APFS paths that decompose), this changes nothing at all — it's specifically macOS-originated uploads of accented/Tibetan-script filenames that would get silently rewritten, invisibly, to the form everything else already expects.
+
+---
+
+## User — 2026-10-09 15:02
+
+Go ahead and implement this fix and finish the SFP set up.
+
+---
+
+## Claude — 2026-10-09 15:04
+
+Now let's enable it locally and verify it actually works with a live upload test.
+
+---
+
+## Claude — 2026-10-09 15:06
+
+Now let's confirm `config:status` returns to only the expected drift, and run `config-check.sh` to validate the export matches a real Drupal save.
+
+---
+
+## Claude — 2026-10-09 15:06
+
+The config export is clean — `core.extension.yml` correctly picks up `mandala_file_hygiene` only, and `stage_file_proxy` stays local-only as it should. Now let's run the existing kernel test suite to confirm nothing's broken, then write a quick kernel test for the new hook.
+
+---
+
+## Claude — 2026-10-09 15:09
+
+Both pass. Let's fix the deprecated `FileExists` constant usage and confirm the existing module suite still passes clean.
+
+---
+
+## Claude — 2026-10-09 15:09
+
+Existing convention uses the attribute — let's match it to keep this test suite deprecation-clean.
+
+---
+
+## Claude — 2026-10-09 15:10
+
+Clean. Now let's check the earlier background run of the existing `mandala_group_inheritance` suite confirmed no regressions, then update the documentation to record the SFP trial + the upload-time fix.
+
+---
+
+## Claude — 2026-10-09 15:10
+
+Good — 11/11 still passing (the deprecations are pre-existing, unrelated to this change). Now let's update the deferred doc with the trial findings and the adopted fix.
+
+---
+
+## Claude — 2026-10-09 15:10
+
+Now I'll append a dated trial-results section resolving the two open sub-decisions.
+
+---
+
+## Claude — 2026-10-09 15:11
+
+Now let's check issue #298 and update it, then commit everything.
+
+---
+
+## Claude — 2026-10-09 15:11
+
+Now let's commit the code change and docs on a feature branch and open a PR.
+
+---
+
+## Claude — 2026-10-09 15:11
+
+This is test-run cruft from the background functional test run, not from my change — just leaving it untracked (won't add it to the commit).
+
+---
+
+## Claude — 2026-10-09 15:12
+
+Done. Summary of what shipped:
+
+**Code (PR #314, open — held for review, not merged):**
+- New module `mandala_file_hygiene` with `hook_file_presave()`: normalizes every file entity's filename to NFC on save and renames the physical file on disk to match, so DB and filesystem can never disagree. Covers uploads, migrations, and Drush uniformly.
+- Kernel test (`FilenameNormalizationTest`) covering the NFD→NFC rename and the already-NFC no-op case — both pass; existing `mandala_group_inheritance` suite still 11/11.
+- `config/sync` export clean — only `mandala_file_hygiene` added to `core.extension.yml`; confirmed `stage_file_proxy` did **not** leak into the export (caught it trying to, reverted it).
+
+**stage_file_proxy setup — finished:**
+- `origin` set to dev-0 locally (never exported, confirmed via `config:status`).
+- Live-trialed: ASCII subdirectory fetch verified byte-identical; Unicode NFC/NFD mismatch reproduced and root-caused (dev-0's disk has these files NFD, our DB has them NFC).
+
+**Docs/tracking:**
+- `docs/deferred/local-dev-files-provisioning-mechanism.md` updated with the trial, root cause, and decision (stage_file_proxy adopted, no sync script).
+- Commented the findings/decision on issue #298 (left open — one item remains).
+
+**Left undone, deliberately:** dev-0's *existing* NFD-named files weren't renamed — that's a write to shared infrastructure, so I stopped short of doing it without explicit sign-off. I confirmed SSH reachability to dev-0; if you want to proceed, I'd do a dry run (list every rename it would make) first before touching anything.
+
+---
+
+## User — 2026-10-09 15:14
+
+WRite up a deferred not about the file renaming on dev-0. We will discuss that separately. Add that to the PR with documentation, commit and push.
+
+---
+
+## Claude — 2026-10-09 15:15
+
+Now add it to `.pages`, `README.md`'s nothing-else-needed (README is generic, not a per-item list besides nav), and link it from the related doc's "Not yet done" section.
+
+---
+
+## Claude — 2026-10-09 15:15
+
+Pushed to PR #314. Added `docs/deferred/dev0-unicode-filenames-need-nfc-normalization.md` — a standalone, unassigned note (left `**Issue:** none`, doc-only, for the group to discuss) covering the dev-0 rename question separately from the already-resolved sync-mechanism decision. Linked it both ways with `local-dev-files-provisioning-mechanism.md` and added it to `docs/deferred/.pages`.
+
+---
+
+## User — 2026-10-09 15:15
+
+Go ahead and merge the PR 314.
+
+---
+
+## Claude — 2026-10-09 15:15
+
+GitGuardian's still running but the PR is open, mergeable, and this merge touches `drupal/**`, which will trigger the deploy webhook — let me check for active long-running jobs on dev-0 before merging, per the established practice.
+
+---
+
+## Claude — 2026-10-09 15:16
+
+No active migration/kmassets jobs found on dev-0. Merging now.
+
+---
+
+## Claude — 2026-10-09 15:16
+
+Local `main` is up to date at `9833dea`. Let's check deploy status since this merge touches `drupal/**`.
+
+---
+
+## Claude — 2026-10-09 15:16
+
+PR #314 is merged into `main`. Since the merge touches `drupal/**`, it will auto-trigger the deploy webhook — but I don't have `aws-vault` access in this session to check the pipeline execution status directly (same limitation as earlier in the session). You or Yuji/Xiaoming would need to check `./scripts/deploy-status.sh drupal` or watch the triggered execution.
+
+Summary: `mandala_file_hygiene` (NFC filename normalization) and the stage_file_proxy trial docs/deferred notes are now on `main`; the feature branch was deleted after merge.
+
+---
+
+## User — 2026-10-09 15:16
+
+Let's end the session for now.
+
+---
+
+## Claude — 2026-10-09 15:16
+
+Need to fix one real gap: the new deferred note isn't linked from `docs/deferred/README.md`. Let me check its structure.
+
+---
+
+## Claude — 2026-10-09 15:17
+
+Let's commit this README update directly to main (docs-only, no deploy impact) and push.
+
+---
+
+## Claude — 2026-10-09 15:17
+
+All mechanical checks pass now. PR #285 (not from this session) remains open, which is just a WARN, not something to act on here. Let's generate the session log.
 
 ---
