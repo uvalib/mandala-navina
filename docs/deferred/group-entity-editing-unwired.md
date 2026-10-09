@@ -6,6 +6,57 @@ orphaned-content sweep, issue #289)
 **Issue:** [#301](https://github.com/uvalib/mandala-navina/issues/301)
 **Priority:** High — blocks managing any collection/subcollection, including the review-holding
 groups issue #289 needs.
+**Status (2026-10-09):** Built, verified live, **open for review in
+[PR #308](https://github.com/uvalib/mandala-navina/pull/308) — Than's explicit instruction is to
+hold it, not merge without asking.** All three findings below are fixed, plus two follow-on asks
+from the same conversation (an administrator superset, and a node-level "Collection" field) — see
+"What was built" below.
+
+## What was built (PR #308, five commits)
+
+1. **Findings 1 and 2 below, fixed as designed**: `edit group`/`delete group` granted to
+   `content_editor_insider`/`content_editor_outsider` on both group types;
+   `field_parent_collection` un-hidden on the subcollection form display with its already-resolved
+   default widget.
+2. **Than's follow-up: "an administrator should be able to edit any group, they should be able to
+   edit any content... all the permission of content_editors plus the admin permissions normally
+   granted in Drupal."** Granting `content_editor` the permission didn't cover `administrator` —
+   they're different site roles, and Group's permission system never consults `is_admin` (see
+   Finding 1). Fixed with Group's own equivalent of `is_admin`: four new group roles
+   (`collection`/`subcollection` × insider/outsider), each flagged `admin: true` and synced to the
+   site `administrator` role. An admin-flagged group role gets every group permission
+   automatically, present and future — no permission list to maintain.
+3. **View-page affordances**, now that editing works: a subcollection's "Parent collection" moved
+   into the sidebar in the same list shape the collection page uses for "Subcollections"; an "Add
+   Item" link (Group's own add-content dashboard) on both bundles; an "Add Subcollection" link on
+   collections only — both gated on real route access via the access manager, not a hardcoded
+   permission string.
+4. **The Add Subcollection link pre-fills its parent.** It carries the originating collection's id
+   as a `?parent=` query parameter; a `hook_form_FORM_ID_alter()` reads it and defaults
+   `field_parent_collection`. (Separately confirmed, no code needed: creating a node via "Add Item"
+   already auto-links it to the group — that's Group's own `group_relationship_entity_submit()`,
+   wired whenever a form is reached through the `create_form` route.)
+5. **Than: "In existing nodes there is no way to change or set the collection... a field in the
+   edit form that owners can edit... a drop down listing all the collections the owner belongs
+   to." Then: "An admin should be able to change the collection of any node."** Group membership is
+   a relationship row, not a node field, so there was no edit-form UI at all for this. Added a
+   "Collection" select to the edit form of any existing `group_node` bundle (discovered via
+   `CollectionVisibility::groupNodeBundles()`, not hardcoded). Defaults to the node's current
+   collection; lists every collection the editing account is a literal member of, **plus** — for
+   accounts with a membership-independent create permission (the new admin-flagged roles, and
+   `content_editor`'s outsider-scope role) — every collection/subcollection on the site, computed
+   once per bundle via the outsider-scope permission item rather than once per group. Moving is
+   delete-old-relationship + add-new-relationship (a node belongs to exactly one collection in
+   practice). Submitted values are re-validated server-side against real Group permissions, not
+   just the rendered options list, so a tampered POST naming an unauthorized or
+   bundle-incompatible group is rejected.
+
+**Verified live** for every piece above: a real non-superuser `content_editor` test account; a
+fresh `administrator` account with **zero** group memberships (saw and could use all 415
+collections/subcollections on the site); a real node move (confirmed via
+`group_relationship_field_data`, reverted after); a tamper attempt against an unauthorized
+collection, correctly rejected with no DB change. `mandala_group_inheritance` kernel suite 11/11
+throughout, no regressions. Test accounts and test content cleaned up after each check.
 
 ## What's broken
 
@@ -96,16 +147,16 @@ subcollection otherwise needs) a parent collection, there's no way to set it.
 
 ## What needs doing
 
-1. Grant `edit group` (and likely `delete group`) on the appropriate group role(s) — almost
-   certainly `collection-content_editor_insider`/`subcollection-content_editor_insider` at
-   minimum, since those are the "real editor" roles; whether `-outsider` variants or `-member`
-   should also get it is a design question, not just a config flip. Build live in DDEV and
-   export, per the repo's config convention.
-2. Un-hide `field_parent_collection` on `core.entity_form_display.group.subcollection.default`
-   (same "build live, export" convention) and pick a sensible widget/weight.
-3. Verify live: a non-superuser account with the fixed role can edit a real collection and a
-   real subcollection, and can set/change a subcollection's parent, without the admin bypass
-   ShantiAdmin has been inadvertently relying on not needing.
+All three items below are **done** (see "What was built" above) — only merging PR #308 remains,
+and that is explicitly Than's call, not automatic once review finishes.
+
+1. ~~Grant `edit group` (and likely `delete group`) on the appropriate group role(s)~~ — done:
+   `content_editor_insider`/`content_editor_outsider` on both group types, plus the new
+   admin-flagged roles for `administrator`.
+2. ~~Un-hide `field_parent_collection`~~ — done, with the default `entity_reference_autocomplete`
+   widget.
+3. ~~Verify live~~ — done, with both a real `content_editor` account and a zero-membership
+   `administrator` account, not just ShantiAdmin's pre-existing session.
 
 ## Related
 
