@@ -272,17 +272,16 @@ upload widget, migrations, and Drush uniformly, since all of them save a
 `tests/src/Kernel/FilenameNormalizationTest.php`.
 
 **Not done, needs explicit sign-off before running (shared infrastructure):**
-dev-0's *existing* NFD-named files were not renamed. The robust fix for
-already-existing Unicode filenames is a one-time rename pass on dev-0 itself
-(walk its public files tree, rename any path whose basename isn't already
-NFC) -- confirmed we have SSH reachability to `mandala-drupal-dev-0.internal.lib.virginia.edu`
-to do this, but it is a write to shared state and should be dry-run
-(diff the rename list) before executing, not done opportunistically mid-session.
+dev-0's *existing* NFD-named files were not renamed. Written up separately as
+its own deferred note, since it's a distinct decision (whether/when/how to
+touch dev-0's filesystem) from this one (which sync mechanism to use):
+[dev0-unicode-filenames-need-nfc-normalization.md](dev0-unicode-filenames-need-nfc-normalization.md).
 
 ## Not yet done
 
-- **dev-0 NFD-to-NFC filename rename** (see above) -- needs a dry run and
-  explicit go-ahead, not yet scheduled.
+- **dev-0 NFD-to-NFC filename rename** -- see
+  [dev0-unicode-filenames-need-nfc-normalization.md](dev0-unicode-filenames-need-nfc-normalization.md),
+  needs a dry run and explicit go-ahead, not yet scheduled.
 - Question 1 (full parity vs. narrower scope) is still open -- orthogonal to
   the mechanism decision above, since stage_file_proxy fetches whatever is
   requested regardless of how much of the corpus that turns out to be.
