@@ -1,4 +1,4 @@
-# dev-0's existing Unicode filenames are NFD, D11 expects NFC -- needs a team decision
+# dev-0's existing Unicode filenames were NFD, D11 expects NFC -- resolved 2026-10-09
 
 **Area:** dev-0 infrastructure / file storage
 **Raised during:** Session 2026-10-09, while trialing `stage_file_proxy` (see
@@ -10,6 +10,35 @@ the corpus), and only the subset whose normalization form happens to differ
 between dev-0's disk and the D11 database. Not known to be user-visible yet
 (nothing has reported a 404 in the wild), but it silently breaks any tool
 that fetches dev-0 files by exact path.
+
+## Resolved -- 2026-10-09 (Than Grove, session with Xiaoming Wang + Yuji Shinozaki)
+
+Ran `./scripts/normalize-dev0-filenames-nfc.sh` against dev-0 live (team decided
+this was safe -- disk-only rename, no `file_managed` DB rows touched, no
+maintenance window needed):
+
+- **Dry run first**, reviewed by the group: **37 paths** affected, all under
+  `sites/default/files/transcripts/` plus one top-level file
+  (`Rangdrol-Rinpoché.jpg`). This is the real, measured scope referenced as
+  "unmeasured" below.
+- **Executed**, all 37 renamed successfully. Re-running in dry-run mode
+  afterward confirms 0 remaining non-NFC paths on dev-0.
+- **Correction to the original two examples above:** the Tibetan-script case,
+  `ཞིང་ཁམས།.xml`, was **not** actually part of this bug -- its NFC and NFD
+  forms normalize to byte-identical strings (most Tibetan combining sequences
+  don't have a distinct precomposed form the way Latin diacritics do), so it
+  was never in the affected set. Whatever caused that file's earlier 404 was
+  something else, not discovered in this session. Only the Latin-diacritic
+  case (`Tenpé Gyeltsen...`) generalized.
+- Runs on the dev-0 **host**, not the app container: the files tree is a bind
+  mount (host `/mnt/data/mandala-drupal-0/sites/default/files` ->
+  container's `.../web/sites/default/files`), and the container image has
+  neither `python3` nor PHP's `intl`/`Normalizer` extension. The host has
+  `python3` and passwordless `sudo` (needed since files are owned by uid 33
+  in the container, not the SSH login user).
+- **Production migration:** this same normalization step is now planned as
+  part of the production cutover -- see
+  [production-migration-planning.md](production-migration-planning.md).
 
 ## The gap
 
@@ -77,14 +106,15 @@ the 2026-10-09 session.
 - **Needs a dry run first.** The rename list should be reviewed (diffed)
   before any file is actually touched, not executed opportunistically.
 
-## Open questions for the team
+## Open questions for the team (answered 2026-10-09)
 
-1. Who owns running this, and when -- is it worth a short maintenance
-   window, or safe to do live?
-2. Should the dry-run / rename logic be a one-off script, or a flag on
-   `mandala:missing-file-audit` (which already discovers file paths) --
-   see the scoping discussion in
-   [local-dev-files-provisioning-mechanism.md](local-dev-files-provisioning-mechanism.md)?
-3. Does staging/production (once they exist) need the same check before
-   their own first file-population pass, or is dev-0 the only place this
-   history exists?
+1. **Who owns running this, and when?** Than Grove, live in the 2026-10-09
+   session -- the group judged a disk-only rename (no DB writes) safe to run
+   live, no maintenance window needed.
+2. **One-off script or a `mandala:missing-file-audit` flag?** Standalone
+   script (`scripts/normalize-dev0-filenames-nfc.sh`) -- kept separate since
+   it's a one-time pass, not a standing check.
+3. **Does staging/production need the same check?** Yes -- folded into
+   [production-migration-planning.md](production-migration-planning.md) as a
+   pre-cutover step, since production has its own independent upload/
+   migration history and can't be assumed already NFC-clean.

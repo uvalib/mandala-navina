@@ -40,6 +40,20 @@ must not be forgotten. Planning items:
   production Solr topology; confirm the prod write path (ADR 014).
 - **Freeze / delta strategy** — decide whether cutover is a single freeze-and-migrate
   or a bulk-migrate-then-catch-up-delta, given prod keeps changing during prep.
+- **Unicode filename normalization (NFD -> NFC) pass, before file population
+  goes live.** dev-0's files tree had 37 paths with NFD-form Unicode
+  filenames while D11's `file_managed` rows store NFC -- a byte-level
+  mismatch invisible to a human but fatal to any exact-path fetch. Fixed on
+  dev-0 2026-10-09 via `scripts/normalize-dev0-filenames-nfc.sh` (full
+  writeup: [dev0-unicode-filenames-need-nfc-normalization.md](dev0-unicode-filenames-need-nfc-normalization.md)).
+  Production has its own independent upload/migration history and cannot be
+  assumed clean just because dev-0 now is -- run the same dry-run/execute
+  pass against production's files tree as part of cutover prep, before
+  traffic is cut over, and re-verify with a dry run afterward (should report
+  0 affected paths). `mandala_file_hygiene` (PR #314) prevents *new* NFD
+  uploads going forward on any environment that has it installed, but does
+  not touch files already on disk, so this one-time pass is still required
+  even once that module is live everywhere.
 - **Binary-file integrity verification worth keeping as a standing check
   (added 2026-09-21, scope corrected same day).** Found via `drush
   mandala:missing-file-audit` (new command, `mandala_migrations`): 126 of

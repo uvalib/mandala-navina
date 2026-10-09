@@ -130,4 +130,4 @@ nav:
   - "Carousel demo file churn on dev-0 (deferred)": carousel-demo-file-churn-on-dev0.md
   - "Cascade member-remove NULL account on user delete": mandala-group-inheritance-cascade-remove-null-account-on-user-delete.md
   - "AV delete-Kaltura checkbox: admin session verification": av-delete-kaltura-checkbox-admin-session-verification.md
-  - "dev-0 Unicode filenames need NFC normalization": dev0-unicode-filenames-need-nfc-normalization.md
+  - "dev-0 Unicode filenames needed NFC normalization (RESOLVED 2026-10-09)": dev0-unicode-filenames-need-nfc-normalization.md
