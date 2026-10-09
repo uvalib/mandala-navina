@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-08 / 2026-10-09  
 **Participants:** Than Grove, Claude Code  
-**Outcome:** PR #284 merged (AV edit-form grouping/Paragraphs widget browser-tested; found and fixed a real bug along the way — the 11 `av_pbcore_*` paragraph bundles had no form-display config). Reviewed open GitHub issues (the team's new `deferred`-label tracking convention) and confirmed the Images orphan sweep (issue #289) is done locally. Found, documented ([`group-entity-editing-unwired.md`](../deferred/group-entity-editing-unwired.md), issue #301, PR #302), and fixed (PR #308) that no one — including the site administrator role — could edit a group through the UI, that a subcollection's parent field was hidden, and added the view-page affordances (Add Item/Add Subcollection links, parent-collection sidebar listing, parent pre-fill) the fix makes meaningful.
+**Outcome:** PR #284 merged (AV edit-form grouping/Paragraphs widget browser-tested; found and fixed a real bug along the way — the 11 `av_pbcore_*` paragraph bundles had no form-display config). Reviewed open GitHub issues (the team's new `deferred`-label tracking convention) and confirmed the Images orphan sweep (issue #289) is done locally. Found, documented ([`group-entity-editing-unwired.md`](../deferred/group-entity-editing-unwired.md), issue #301, PR #302), and fixed (PR #308, five commits) that no one — including the site administrator role — could edit a group through the UI, that a subcollection's parent field was hidden, and added the view-page affordances (Add Item/Add Subcollection links, parent-collection sidebar listing, parent pre-fill) the fix makes meaningful. Extended PR #308 twice more per live follow-up requests: an administrator permission superset (Group's own admin-flagged-role mechanism), and a new node-edit-form "Collection" field letting owners — and, site-wide, administrators — move existing content between collections (there was no such UI at all before). PR #308 stays open, held for Than's review per his explicit instruction, not merged without asking. Also hit and diagnosed a self-inflicted local incident: switching this session's git branch to write docs reverted the live DDEV site's PHP files out from under Than's active testing (DDEV serves the working directory live), throwing a stale-hook-cache error on a collection page — resolved by switching back and rebuilding cache; follow-on docs work moved to a separate `git worktree` to avoid repeating it.
 
 ---
 
@@ -1424,5 +1424,271 @@ Both things fixed/confirmed, added as a fourth commit to **PR #308** (still held
 ## User — 2026-10-09 13:12
 
 write up the memory and session log, commit and push.
+
+---
+
+## Claude — 2026-10-09 13:14
+
+Good — the only FAIL is simply the uncommitted session log, which I'm about to commit. Everything else passes. Let's commit and push it on the PR branch (since that's the current branch).
+
+---
+
+## Claude — 2026-10-09 13:15
+
+Let me reconsider — bundling this into PR #308 (which you're holding for review) would delay the session log from reaching `main`. I'll move it to its own branch instead.
+
+---
+
+## Claude — 2026-10-09 13:15
+
+Now let's update memory. First, let's check the existing project-state and editorial-access-model memories to update accurately.
+
+---
+
+## Claude — 2026-10-09 13:17
+
+Now let's add this to the memory index.
+
+---
+
+## Claude — 2026-10-09 13:18
+
+That's already accurate enough (modified timestamp auto-updated). Memory and session log are done. Let's do a final sanity check on repo state.
+
+---
+
+## Claude — 2026-10-09 13:18
+
+Clean working tree, nothing uncommitted. Done.
+
+## Summary
+
+- **Session log**: `docs/session-logs/2026-10-09-group-edit-permissions-and-av-pbcore-form-display.md`, committed and pushed on its own branch, **PR #310** opened (docs-only, separate from your held PR #308 so it isn't blocked).
+- **Memory updated**: `project-mandala-state` got a full new entry for this session (PR #284 merged, GitHub Issues tracking, orphan sweep confirmed, the group-editing fix in detail); `project-editorial-access-model` got a note distinguishing this fix from the still-open "Group editor Phase B" gap; added a new reusable technique memory for testing as a different user locally via `curl` instead of browser tabs.
+- Your PR #308 remains **open and un-merged**, exactly as instructed.
+
+---
+
+## User — 2026-10-09 13:22
+
+In existing nodes there is no way to change or set the collection. Needs to be a field in the edit form that owner's can edit. It should show the current collection or subcollection of the node if there is one and have a drop down listing all the collections the owner belongs to.
+
+---
+
+## Claude — 2026-10-09 13:25
+
+This is exactly what I expected (matches what I wrote last session). Now let's append the new node-collection-field feature at the end of the file.
+
+---
+
+## Claude — 2026-10-09 13:27
+
+The "Collection" select appears. Let's check the full options list and confirm the current group (172) is present and selected.
+
+---
+
+## Claude — 2026-10-09 13:28
+
+Current group (172, "Tibetan and Himalayan Library") is correctly pre-selected, out of 184 options (ShantiAdmin's own memberships). Now let's test actually moving the node to group 41 and verify it in the DB.
+
+---
+
+## Claude — 2026-10-09 13:28
+
+Saved successfully. Let's verify the group relationship actually moved in the database.
+
+---
+
+## Claude — 2026-10-09 13:28
+
+Moved cleanly, no duplicate relationships left behind. Let's test the server-side validation by trying to tamper the POST with an unauthorized group id, then move the node back to 172.
+
+---
+
+## Claude — 2026-10-09 13:29
+
+Good, a real collection ShantiAdmin is not a member of. Let's first move the node back to a sane test group, then attempt the tamper test against 180.
+
+---
+
+## Claude — 2026-10-09 13:30
+
+Good catch — let's extend this so administrators (and anyone else with the site-wide group bypass) can move any node into any collection, not just their own memberships.
+
+---
+
+## Claude — 2026-10-09 13:30
+
+Now let's rewrite this to add blanket-access support, and add the helper function.
+
+---
+
+## Claude — 2026-10-09 13:31
+
+Now let's add the helper function and the `PermissionScopeInterface` import.
+
+---
+
+## Claude — 2026-10-09 13:31
+
+Now add the helper function near the other new functions (before the validate handler).
+
+---
+
+## Claude — 2026-10-09 13:31
+
+Confirmed. Let's lint-check and rebuild.
+
+---
+
+## Claude — 2026-10-09 13:32
+
+Let's test with a fresh `administrator`-role account that has zero group memberships, to confirm blanket access now works.
+
+---
+
+## Claude — 2026-10-09 13:32
+
+415 options (every collection/subcollection on the site) show up for this zero-membership administrator account, including group 180. Let's actually move the node to confirm it saves.
+
+---
+
+## Claude — 2026-10-09 13:32
+
+Administrator successfully moved the node into a collection they're not even a member of. Now let's restore the node to its original collection and clean up test artifacts.
+
+---
+
+## Claude — 2026-10-09 13:33
+
+Restored cleanly to the original group 172. Let's clean up the test accounts.
+
+---
+
+## Claude — 2026-10-09 13:33
+
+Let's run the kernel suite and confirm config is untouched (this is pure code, no config changes expected).
+
+---
+
+## Claude — 2026-10-09 13:33
+
+Clean — only the expected dev-only drift.
+
+---
+
+## Claude — 2026-10-09 13:35
+
+11/11, same baseline. Let's clean up and commit.
+
+---
+
+## Claude — 2026-10-09 13:36
+
+Let's update PR #308's description with this final piece.
+
+---
+
+## Claude — 2026-10-09 13:36
+
+## Summary
+
+Added a "Collection" field to the node edit form, as a fifth commit on **PR #308** (still held, not merged):
+
+- **Shows the current collection/subcollection** and lets you change it via dropdown
+- **Dropdown lists the editing account's own group memberships** — matching your original spec
+- **Per your follow-up**: administrators (and `content_editor`) now see **every** collection on the site, not just ones they've joined — verified with a fresh administrator account that had zero memberships, which correctly saw all 415 collections and could move a node into any of them
+- **Moving is a real move** (old relationship deleted, new one created) — verified live with a real video node, moved and moved back
+- **Tamper-resistant**: a crafted POST naming an unauthorized collection is rejected server-side, confirmed with no DB change
+
+All test accounts and test data were cleaned up afterward; kernel suite stayed 11/11.
+
+---
+
+## User — 2026-10-09 13:37
+
+Great. That works locally. Are we in a PR branch?
+
+---
+
+## Claude — 2026-10-09 13:38
+
+Yes — you're on `fix/group-entity-edit-permission-and-parent-field`, which is **PR #308** (open, still held per your instruction — not merged). All five commits from this session (group edit/delete permission, admin roles, view affordances, parent pre-fill, and the new node Collection field) are on this one branch/PR.
+
+---
+
+## User — 2026-10-09 13:38
+
+ok go ahead and write the documentation and session notes, commit and push it.
+
+---
+
+## Claude — 2026-10-09 13:39
+
+Clean. Let's update the deferred note first.
+
+---
+
+## Claude — 2026-10-09 13:39
+
+Let's update this note with a "Status" section covering everything built in PR #308 (still open).
+
+---
+
+## Claude — 2026-10-09 13:40
+
+Now let's also add a related-doc link for the node-collection-field feature's own documentation value, and check the README summary line.
+
+---
+
+## Claude — 2026-10-09 13:42
+
+Found it — that's my fault, not a real code bug. I switched this working directory to `main` (to write docs), which also reverted the actual DDEV site's PHP files out from under your live testing. Switching back now.
+
+---
+
+## Claude — 2026-10-09 13:43
+
+Function's back and caches rebuilt. Let's confirm the collection page loads cleanly now.
+
+---
+
+## Claude — 2026-10-09 13:43
+
+Confirmed fixed — page loads cleanly now (HTTP 200, no exception).
+
+**Root cause**: not a code bug — it was me. I had checked out `main` (and then a new docs branch) on this same working directory to write documentation, which immediately reverted the live DDEV site's PHP files out from under your testing (DDEV serves this directory live), so Drupal's cached hook registry referenced a function that had momentarily stopped existing on disk. Switching back to the feature branch and rebuilding cache fixed it.
+
+I'll be careful not to do that again while you're actively testing — I should use a separate git worktree for docs-only branch work instead of switching this shared working directory.
+
+---
+
+## Claude — 2026-10-09 13:43
+
+Only the expected dev-only drift — everything's back to normal. You're all set to keep testing on `fix/group-entity-edit-permission-and-parent-field` (PR #308). The two docs PRs (#310 for the session log, #311 for the deferred-note update) are already pushed and don't touch any code, so they're safe regardless of which branch is checked out here going forward — I'll use a separate worktree for any further docs work during this session to avoid repeating this.
+
+---
+
+## User — 2026-10-09 13:43
+
+gotcha thank you. Is everything documented, committed and pushed?
+
+---
+
+## Claude — 2026-10-09 13:43
+
+Clean, nothing uncommitted or unpushed on the current branch. Let's check all open PRs for full picture.
+
+---
+
+## Claude — 2026-10-09 13:44
+
+Let me check — PR #310's session log predates the node-collection-field work and the branch-switch incident. I should update it. Let's use a worktree this time instead of switching this directory.
+
+---
+
+## Claude — 2026-10-09 13:44
+
+Good, isolated worktree created without touching the live DDEV checkout. Let's regenerate the session log there with the full transcript.
 
 ---
