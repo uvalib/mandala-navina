@@ -1,0 +1,15 @@
+uuid: b3384393-8288-427f-b936-f0d5075646dd
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.subcollection
+    - user.role.administrator
+id: subcollection-administrator_non
+label: 'Administrator (non-member)'
+weight: 3
+admin: true
+scope: outsider
+global_role: administrator
+group_type: subcollection
+permissions: {  }

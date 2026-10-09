@@ -111,12 +111,26 @@
   padding: 1rem 0;
 }
 
-.shanti-collection-page-back {
-  flex-basis: 100%;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+.shanti-collection-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.shanti-collection-page-action {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #454fa4;
+  border-radius: 0.3rem;
+  color: #454fa4;
   text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.shanti-collection-page-action:hover {
+  background: #454fa4;
+  color: #fff;
 }
 
 .shanti-collection-page-main {

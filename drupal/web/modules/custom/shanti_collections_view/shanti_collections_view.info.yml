@@ -8,3 +8,4 @@ dependencies:
   - group:group
   - shanti_images_carousel:shanti_images_carousel
   - mandala_kaltura:mandala_kaltura
+  - mandala_group_inheritance:mandala_group_inheritance

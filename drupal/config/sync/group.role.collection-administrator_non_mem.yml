@@ -1,0 +1,15 @@
+uuid: 84ff1367-014b-4a9e-bc1b-468d3c9598ee
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.collection
+    - user.role.administrator
+id: collection-administrator_non_mem
+label: 'Administrator (non-member)'
+weight: 1
+admin: true
+scope: outsider
+global_role: administrator
+group_type: collection
+permissions: {  }

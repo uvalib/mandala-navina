@@ -1,0 +1,15 @@
+uuid: 08fdb3e7-e425-4695-88ac-45d35bd81be1
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.collection
+    - user.role.administrator
+id: collection-administrator_member
+label: 'Administrator (member)'
+weight: 2
+admin: true
+scope: insider
+global_role: administrator
+group_type: collection
+permissions: {  }
