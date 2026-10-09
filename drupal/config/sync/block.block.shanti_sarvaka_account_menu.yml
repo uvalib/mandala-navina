@@ -13,7 +13,7 @@ _core:
 id: shanti_sarvaka_account_menu
 theme: shanti_sarvaka
 region: header
-weight: -4
+weight: 0
 provider: null
 plugin: 'system_menu_block:account'
 settings:
