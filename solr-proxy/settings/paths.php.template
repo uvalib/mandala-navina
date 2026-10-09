@@ -34,10 +34,21 @@ $SOLR_BASE = getenv("SOLR_BASEURL")."/solr";
 $SOLR_URLS = array(
              "/solr/kmassets" => "$SOLR_BASE/kmassets",
              "/solr/kmterms" => "$SOLR_BASE/kmterms",
+             "/solr/mandala-av-transcripts" => "$SOLR_BASE/mandala-av-transcripts",
+);
+
+// Cores that carry no visibility fields of their own and inherit access from the kmassets
+// document of the parent node (Spike 11, access option C). The value is the Solr join
+// local-params body; Searcher wraps the per-user visibility fq in it, so a unit is admitted
+// only if its kmassets document (matched on trid_i = is_trid) passes the same fq.
+// A unit with no kmassets document matches nothing: it fails closed.
+$JOIN_ACCESS = array(
+             "/solr/mandala-av-transcripts" => "from=trid_i to=is_trid fromIndex=kmassets",
 );
 $STATUS_URLS = array(
 	     "/solr/kmassets" => "$SOLR_BASE/admin/cores?action=STATUS&core=kmassets&indexInfo=false",
 	     "/solr/kmterms" => "$SOLR_BASE/admin/cores?action=STATUS&core=kmterms&indexInfo=false",
+	     "/solr/mandala-av-transcripts" => "$SOLR_BASE/admin/cores?action=STATUS&core=mandala-av-transcripts&indexInfo=false",
 	     "/solr/all" => "$SOLR_BASE/admin/cores?action=STATUS&indexInfo=false",
 );
 
