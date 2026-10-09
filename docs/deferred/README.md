@@ -59,7 +59,8 @@ Examples: `kmaps-widget-ux.md`, `migration-tibetan-unicode.md`, `api-url-strateg
 
 | File | Area | Raised | Priority |
 |---|---|---|---|
-| [local-dev-files-provisioning-mechanism.md](local-dev-files-provisioning-mechanism.md) | local dev environment / DX / infrastructure | Session 2026-09-23 | **Medium-High — no mechanism populates local `sites/default/files` on any DDEV. Plan agreed 2026-10-05, deferred to the next session: report-only audit step in the session-start check, plus a short `stage_file_proxy` trial on Xiaoming's DDEV.** Confirmed independently missing on two developers' machines; on Xiaoming's, 3 fields (`field_transcript`, `field_thumbnail_image`, `field_featured_image`) are ~100% missing, 8,413 files total. Needs a team decision on source + mechanism, not implementation |
+| [local-dev-files-provisioning-mechanism.md](local-dev-files-provisioning-mechanism.md) | local dev environment / DX / infrastructure | Session 2026-09-23 | **Medium — mechanism decided 2026-10-09: `stage_file_proxy` adopted (no on-demand sync script), trialed live against dev-0, confirmed working for the common case.** Question 1 (full parity vs. narrower scope) is the only part still open |
+| [dev0-unicode-filenames-need-nfc-normalization.md](dev0-unicode-filenames-need-nfc-normalization.md) | dev-0 infrastructure / file storage | Session 2026-10-09 | **Low-Medium.** Found during the `stage_file_proxy` trial: dev-0's existing Unicode-named files are stored NFD while D11's DB expects NFC, so exact-path fetches 404. Future recurrence already prevented (PR #314, `mandala_file_hygiene`); this note is only about the existing NFD files on dev-0, and whether/how to do a one-time rename on shared infrastructure |
 
 ## Open items
 
