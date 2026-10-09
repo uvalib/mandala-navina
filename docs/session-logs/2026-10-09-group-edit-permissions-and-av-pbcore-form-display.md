@@ -1,8 +1,8 @@
-# Session Log: AV PBCore form-display browser test, orphan-sweep review, and group entity editing fully unwired
+# Session Log: AV PBCore form-display browser test, group entity editing fully unwired, and My/All Collections navigation fixes
 
 **Date:** 2026-10-08 / 2026-10-09  
 **Participants:** Than Grove, Claude Code  
-**Outcome:** PR #284 merged (AV edit-form grouping/Paragraphs widget browser-tested; found and fixed a real bug along the way — the 11 `av_pbcore_*` paragraph bundles had no form-display config). Reviewed open GitHub issues (the team's new `deferred`-label tracking convention) and confirmed the Images orphan sweep (issue #289) is done locally. Found, documented ([`group-entity-editing-unwired.md`](../deferred/group-entity-editing-unwired.md), issue #301, PR #302), and fixed (PR #308, five commits) that no one — including the site administrator role — could edit a group through the UI, that a subcollection's parent field was hidden, and added the view-page affordances (Add Item/Add Subcollection links, parent-collection sidebar listing, parent pre-fill) the fix makes meaningful. Extended PR #308 twice more per live follow-up requests: an administrator permission superset (Group's own admin-flagged-role mechanism), and a new node-edit-form "Collection" field letting owners — and, site-wide, administrators — move existing content between collections (there was no such UI at all before). PR #308 stays open, held for Than's review per his explicit instruction, not merged without asking. Also hit and diagnosed a self-inflicted local incident: switching this session's git branch to write docs reverted the live DDEV site's PHP files out from under Than's active testing (DDEV serves the working directory live), throwing a stale-hook-cache error on a collection page — resolved by switching back and rebuilding cache; follow-on docs work moved to a separate `git worktree` to avoid repeating it.
+**Outcome:** PR #284 merged (AV edit-form grouping/Paragraphs widget browser-tested; found and fixed a real bug along the way — the 11 `av_pbcore_*` paragraph bundles had no form-display config). Reviewed open GitHub issues (the team's new `deferred`-label tracking convention) and confirmed the Images orphan sweep (issue #289) is done locally. Found, documented ([`group-entity-editing-unwired.md`](../deferred/group-entity-editing-unwired.md), issue #301, PR #302), and fixed (PR #308, five commits, merged) that no one — including the site administrator role — could edit a group through the UI, that a subcollection's parent field was hidden, and added the view-page affordances (Add Item/Add Subcollection links, parent-collection sidebar listing, parent pre-fill, and a node-level "Collection" field letting owners and administrators move existing content between collections) the fix makes meaningful. Than tested and approved merging #308 along with the two in-flight docs PRs (#310, #311); all three merged to `main`. Then found, live-testing rather than trusting an old sprint doc's "verified live" claim, that the pre-existing "My Collections"/"All Collections" views had real link bugs and were completely unreachable from site navigation (the main menu had zero links in it at all) — fixed both and added/reordered the hamburger menu (PR #312, open, Than tested locally and approved). Also hit and diagnosed a self-inflicted local incident: switching this session's git branch to write docs reverted the live DDEV site's PHP files out from under Than's active testing, throwing a stale-hook-cache error — resolved by switching back and rebuilding cache; all further docs-only work moved to a separate `git worktree` to avoid repeating it.
 
 ---
 
@@ -1690,5 +1690,413 @@ Let me check — PR #310's session log predates the node-collection-field work a
 ## Claude — 2026-10-09 13:44
 
 Good, isolated worktree created without touching the live DDEV checkout. Let's regenerate the session log there with the full transcript.
+
+---
+
+## Claude — 2026-10-09 13:44
+
+Now let's check close-check mechanics inside the worktree and commit/push there.
+
+---
+
+## Claude — 2026-10-09 13:45
+
+Pushed to PR #310. Let's clean up the worktree.
+
+---
+
+## Claude — 2026-10-09 13:45
+
+Clean. Let's confirm the main checkout is still on the right branch and untouched.
+
+---
+
+## Claude — 2026-10-09 13:45
+
+## Yes — everything's documented, committed, and pushed.
+
+**Working directory**: still on `fix/group-entity-edit-permission-and-parent-field` (PR #308), untouched, clean, DDEV healthy.
+
+**Open PRs, all pushed:**
+| PR | What | Status |
+|---|---|---|
+| **#308** | The actual fix (5 commits: edit/delete group permission, admin roles, view affordances, parent pre-fill, node Collection field) | Held for your review, not merged |
+| **#311** | Deferred-note update reflecting everything PR #308 ended up covering | Open |
+| **#310** | Session log — just regenerated via a separate `git worktree` (not touching your live DDEV checkout this time) to include the node-collection-field work and the branch-switch incident I caused | Open, pushed |
+| #285 | Yuji's Spike 11 PR, unrelated to this work | Open |
+
+**Memory**: already updated earlier this session (project-mandala-state, project-editorial-access-model, and a new feedback memory). Nothing further needed there for the latest additions — they're all captured in the deferred note and session log, which is what memory points to.
+
+Nothing uncommitted, nothing unpushed. You're good to review #308 whenever you're ready.
+
+---
+
+## User — 2026-10-09 13:46
+
+Ok I've tested 308 some locally. It's good to merge along with 310 and 311 which are also both mine.
+
+---
+
+## Claude — 2026-10-09 13:46
+
+Before merging #308 (it touches `drupal/**`, which triggers the deploy webhook) — is there anything long-running on dev-0 right now (a migration, kmassets reindex) that a container restart would kill?
+
+---
+
+## Claude — 2026-10-09 13:46
+
+Clear. Merging all three now.
+
+---
+
+## Claude — 2026-10-09 13:47
+
+Both docs PRs merged. Now the main fix.
+
+---
+
+## Claude — 2026-10-09 13:47
+
+All three merged into `main`. Let's sync the local checkout and DDEV, and confirm everything's in order.
+
+---
+
+## Claude — 2026-10-09 13:48
+
+All three merged into `main`. Cleanup done:
+
+- **#308** (the fix, 5 commits, 17 files) — merged, fast-forwarded local `main`
+- **#310** (session log) — merged
+- **#311** (deferred-note update) — merged
+- **Issue #301** auto-closed on merge (via the "Fixes #301" link in #308's description)
+- Local `main` synced, DDEV config confirmed matching (only the expected dev-only `stage_file_proxy` drift)
+- Old merged local branches cleaned up
+- Only remaining open PR is **#285**, Yuji's unrelated Spike 11 work
+
+One thing worth knowing: merging #308 touched `drupal/**`, so per CLAUDE.md that triggers the auto-deploy webhook to dev-0 — you confirmed nothing long-running was at risk, but you may want to glance at `./scripts/deploy-status.sh drupal` yourself since `aws-vault` isn't configured in this session for me to check it directly.
+
+---
+
+## User — 2026-10-09 13:49
+
+check deploy status but I don't have access to aws-vault because I don't have the permissions
+
+---
+
+## Claude — 2026-10-09 13:50
+
+Confirmed — neither of us has AWS access from here (no `aws-vault`, no plain `aws` credentials in this shell either). I can't check the pipeline status myself.
+
+Since you don't have `aws-vault` access, you'd need someone who does (Yuji or Xiaoming) to run `./scripts/deploy-status.sh drupal`, or check the CodePipeline console directly in the AWS web UI if you have console access even without CLI/vault access. Want me to flag this for Yuji, or are you able to check via the AWS console?
+
+---
+
+## User — 2026-10-09 13:53
+
+Ok a couple of minor changes I would like a view for "My Collections" like https://av.mandala.library.virginia.edu/mycontent/collections. And I would like links to that page and to the all collections page, /collections added to the main drop down hamburger menu.
+
+---
+
+## Claude — 2026-10-09 13:54
+
+Good — `/collections` already exists too. Let's check both pages live.
+
+---
+
+## Claude — 2026-10-09 13:55
+
+Good — both `/my_collections` and `/collections` views already exist. But I found two real bugs in the My Collections view while checking it live: the collection name isn't actually a link, and the "Collection"/"Subcollection" type column links to the admin config page instead of anything useful. Let me look closer before fixing.
+
+---
+
+## Claude — 2026-10-09 13:56
+
+That 500 is unrelated to my work — it's from an earlier, different merge (`CarouselBuilder` service definition) that landed on `main` today from another session; the container cache just needs rebuilding after the pull.
+
+---
+
+## Claude — 2026-10-09 13:56
+
+Fixed. Let's check the hamburger menu content now.
+
+---
+
+## Claude — 2026-10-09 13:57
+
+Let's check the exact route names for the two views.
+
+---
+
+## Claude — 2026-10-09 13:57
+
+Now let's add the two menu links via module-defined YAML (so they deploy automatically everywhere, not just as local content).
+
+---
+
+## Claude — 2026-10-09 13:58
+
+Now let's fix the two real bugs in the My Collections view (broken link, bogus admin-page link) — first checking how the working "All Collections" view links its items, to mirror the same pattern.
+
+---
+
+## Claude — 2026-10-09 13:59
+
+Views UI is loaded. Let's click "(Group) Group: Title" to fix its link settings.
+
+---
+
+## Claude — 2026-10-09 13:59
+
+Now let's check the "Group type" field to fix the bogus admin-page link.
+
+---
+
+## Claude — 2026-10-09 13:59
+
+"You have unsaved changes." confirms it applied. Let's scroll to Fields and click "Group type" to fix its bogus link.
+
+---
+
+## Claude — 2026-10-09 14:00
+
+Now "Subcollection"/"Collection" are plain text (no bogus admin link), and the collection names are real links. Let's scroll back up and save.
+
+---
+
+## Claude — 2026-10-09 14:01
+
+Saved. Let's verify live and check config status.
+
+---
+
+## Claude — 2026-10-09 14:01
+
+Both bugs fixed: "Subcollection"/"Collection" now plain text, and the name is a real link to the collection page. Let's export the config.
+
+---
+
+## Claude — 2026-10-09 14:01
+
+Exactly the expected change.
+
+---
+
+## Claude — 2026-10-09 14:01
+
+Same dev-only noise as before. Let's revert it.
+
+---
+
+## Claude — 2026-10-09 14:02
+
+Clean. Let's verify the diff and run the config-check + kernel suite.
+
+---
+
+## Claude — 2026-10-09 14:02
+
+Clean. Let's close the browser tab and run the kernel suite before committing.
+
+---
+
+## Claude — 2026-10-09 14:04
+
+11/11, same baseline. Let's clean up and commit.
+
+---
+
+## Claude — 2026-10-09 14:05
+
+## Summary
+
+Both requests done, plus two real bugs found and fixed along the way — **PR #312**:
+
+1. **"My Collections" already existed** (`/my_collections`, a D7 port that was never finished) — but it was broken:
+   - Collection names weren't links at all
+   - The "Collection"/"Subcollection" label incorrectly linked to the admin config page for that bundle type
+   
+   Both fixed live via the Views UI and exported.
+
+2. **Added "All Collections" and "My Collections" to the main hamburger menu.** Turned out the main menu had **zero links in it at all** — nothing was reachable from navigation before this.
+
+Verified live: menu tree shows both entries, collection rows link correctly, type labels are plain text now. Kernel suite stayed 11/11.
+
+**Held for your review, not merged** — same pattern as before. Want me to merge it, or will you test locally first?
+
+---
+
+## User — 2026-10-09 14:06
+
+Test locally
+
+---
+
+## Claude — 2026-10-09 14:06
+
+Good, on the right branch, clean. Let's test visually in the browser — the hamburger menu, both pages, and clicking through an actual collection link.
+
+---
+
+## Claude — 2026-10-09 14:07
+
+Now let's open the hamburger menu and check its contents visually.
+
+---
+
+## Claude — 2026-10-09 14:07
+
+Hamburger icon is the ☰ at top-right. Let's click it.
+
+---
+
+## Claude — 2026-10-09 14:07
+
+The hamburger drilldown now shows "ALL COLLECTIONS" and "MY COLLECTIONS" under Main Menu, alongside Home/My Account/Log Out. Let's click "MY COLLECTIONS".
+
+---
+
+## Claude — 2026-10-09 14:07
+
+The page loads with real links, no admin-page links, type labels correctly plain text. Let's click one of the collection links to confirm it actually navigates correctly.
+
+---
+
+## Claude — 2026-10-09 14:08
+
+Navigated correctly to the real subcollection page ("1999 Provisional", with Parent Collection, Members, content gallery, and the "Add Item" affordance from PR #308 all rendering correctly). Let's check "All Collections" from the hamburger menu too.
+
+---
+
+## Claude — 2026-10-09 14:08
+
+Menu is consistent across pages too. Let's click "ALL COLLECTIONS".
+
+---
+
+## Claude — 2026-10-09 14:09
+
+Both routes confirmed working: `/av` (Audio & Video) and `/images` (Images). Let's add these two menu links and reorder the whole menu.
+
+---
+
+## Claude — 2026-10-09 14:09
+
+Now let's rebuild cache and verify the new menu links, then reorder the blocks via the Block Layout UI.
+
+---
+
+## Claude — 2026-10-09 14:10
+
+All five main-menu links registered correctly in order. Now let's reorder the blocks so the main menu renders before the account menu.
+
+---
+
+## Claude — 2026-10-09 14:10
+
+ref_32 = User account menu weight (-4), ref_36 = Main navigation weight (0). Let's swap them.
+
+---
+
+## Claude — 2026-10-09 14:10
+
+Now let's save the block layout.
+
+---
+
+## Claude — 2026-10-09 14:11
+
+Saved. Let's verify the hamburger menu shows the full correct order live.
+
+---
+
+## Claude — 2026-10-09 14:11
+
+Exactly the requested order: **Home, All Collections, My Collections, AV Items, Images, My Account, Log Out**. Let's click "AV Items" and "Images" to confirm both links actually work.
+
+---
+
+## Claude — 2026-10-09 14:12
+
+"AV Items" works correctly. Let's check "Images" too.
+
+---
+
+## Claude — 2026-10-09 14:12
+
+All five menu links work correctly. Let's check config status, run the kernel suite, and commit this to the same PR branch.
+
+---
+
+## Claude — 2026-10-09 14:12
+
+Exactly the two block weight changes. Let's export.
+
+---
+
+## Claude — 2026-10-09 14:13
+
+Same dev-only noise as before. Let's revert it.
+
+---
+
+## Claude — 2026-10-09 14:13
+
+Clean. Let's verify the block weight diff and run config-check + kernel suite.
+
+---
+
+## Claude — 2026-10-09 14:13
+
+Clean, exact swap.
+
+---
+
+## Claude — 2026-10-09 14:15
+
+Running in background. Let's commit while we wait.
+
+---
+
+## Claude — 2026-10-09 14:16
+
+11/11, same baseline. Let's clean up and push.
+
+---
+
+## Claude — 2026-10-09 14:16
+
+Let's update PR #312's description.
+
+---
+
+## Claude — 2026-10-09 14:16
+
+## Summary
+
+Added and verified live in the actual hamburger drilldown — menu now reads exactly: **Home, All Collections, My Collections, AV Items, Images, My Account, Log Out**.
+
+- **AV Items** (`/av`) and **Images** (`/images`) added alongside the existing two links
+- Reordering required swapping the two header-region **block** weights (main navigation vs. account menu), since those render as two separate menu blocks, not one list
+- Clicked through all five content links to confirm each lands on the right page
+
+Pushed as a second commit to **PR #312** (still held for your review, not merged).
+
+---
+
+## User — 2026-10-09 14:17
+
+ok document, write session log, commit and push. I tested it personally and it is correct and works.
+
+---
+
+## Claude — 2026-10-09 14:18
+
+We're already on the right branch (same one DDEV is serving) — no branch switch needed, safe to commit directly here.
+
+---
+
+## Claude — 2026-10-09 14:18
+
+Now let's write the session log using a worktree, so I don't touch this live checkout.
 
 ---
