@@ -44,7 +44,7 @@ must not be forgotten. Planning items:
   goes live.** dev-0's files tree had 37 paths with NFD-form Unicode
   filenames while D11's `file_managed` rows store NFC -- a byte-level
   mismatch invisible to a human but fatal to any exact-path fetch. Fixed on
-  dev-0 2026-10-09 via `scripts/normalize-dev0-filenames-nfc.sh` (full
+  dev-0 2026-10-09 via `scripts/normalize-unicode-filenames-nfc.sh` (full
   writeup: [dev0-unicode-filenames-need-nfc-normalization.md](dev0-unicode-filenames-need-nfc-normalization.md)).
   Production has its own independent upload/migration history and cannot be
   assumed clean just because dev-0 now is -- run the same dry-run/execute
@@ -53,7 +53,12 @@ must not be forgotten. Planning items:
   0 affected paths). `mandala_file_hygiene` (PR #314) prevents *new* NFD
   uploads going forward on any environment that has it installed, but does
   not touch files already on disk, so this one-time pass is still required
-  even once that module is live everywhere.
+  even once that module is live everywhere. **Not just a cutover-time step:**
+  the same dry-run check must run against dev-0 after every future site
+  migration (Texts, Sources) as soon as its track lands files there — see
+  the "Filename normalization check" step in
+  [migration-cycle-runbook.md](../planning/migration-cycle-runbook.md), which
+  all site tracks replicate per ADR 009.
 - **Binary-file integrity verification worth keeping as a standing check
   (added 2026-09-21, scope corrected same day).** Found via `drush
   mandala:missing-file-audit` (new command, `mandala_migrations`): 126 of

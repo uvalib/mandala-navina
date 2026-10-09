@@ -184,6 +184,43 @@ ddev drush migrate:rollback --group=mandala_images
 
 ---
 
+## Filename normalization check (run for every site track, not just Images)
+
+D11's `file_managed` rows always store Unicode filenames NFC (composed), but
+files can land on disk NFD (decomposed) if they ever passed through a
+macOS-backed path — same visible name, different bytes, and any exact-path
+fetch 404s on the literal NFC path. Full background:
+[dev0-unicode-filenames-need-nfc-normalization.md](../deferred/dev0-unicode-filenames-need-nfc-normalization.md).
+
+`mandala_file_hygiene` (installed, see `core.extension.yml`) normalizes every
+file entity to NFC at save time, and migrations create files through the same
+`entity:file` destination / `File::save()` path uploads do — so a migration
+running on an environment with this module enabled should never *introduce*
+a new mismatch. This check exists to **verify that holds**, not to replace
+the module:
+
+```bash
+REMOTE_HOST=<target host> FILES_DIR=<target files path> \
+  ./scripts/normalize-unicode-filenames-nfc.sh --dry-run
+```
+
+Run this against dev-0 after every site's `import` phase completes —
+**Texts and Sources included**, when their tracks are built (ADR 009 Phase
+2). Expect **0** affected paths on a freshly-imported site. A nonzero result
+means something bypassed `mandala_file_hygiene` (e.g. a bulk file copy
+outside the entity API) and is worth root-causing, not just re-running this
+script as a silent fix each time. Also run it once against production before
+cutover — see
+[production-migration-planning.md](../deferred/production-migration-planning.md)
+— since production has its own independent upload history and can't be
+assumed clean just because dev-0 is.
+
+The dev-0 backlog that predated this module was cleared 2026-10-09 (37
+paths, all asset types covered since the scan walks the whole files tree, not
+one bundle) — see the deferred note above for the full writeup.
+
+---
+
 ## Known caveats
 
 - **Full `--fix`/`audit` writes ~111k docs** to the shared staging Solr index.

@@ -13,7 +13,7 @@ that fetches dev-0 files by exact path.
 
 ## Resolved -- 2026-10-09 (Than Grove, session with Xiaoming Wang + Yuji Shinozaki)
 
-Ran `./scripts/normalize-dev0-filenames-nfc.sh` against dev-0 live (team decided
+Ran `./scripts/normalize-unicode-filenames-nfc.sh` against dev-0 live (team decided
 this was safe -- disk-only rename, no `file_managed` DB rows touched, no
 maintenance window needed):
 
@@ -112,7 +112,7 @@ the 2026-10-09 session.
    session -- the group judged a disk-only rename (no DB writes) safe to run
    live, no maintenance window needed.
 2. **One-off script or a `mandala:missing-file-audit` flag?** Standalone
-   script (`scripts/normalize-dev0-filenames-nfc.sh`) -- kept separate since
+   script (`scripts/normalize-unicode-filenames-nfc.sh`) -- kept separate since
    it's a one-time pass, not a standing check.
 3. **Does staging/production need the same check?** Yes -- folded into
    [production-migration-planning.md](production-migration-planning.md) as a
