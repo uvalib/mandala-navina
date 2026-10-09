@@ -10,9 +10,13 @@
  * planning subsection.
  */
 
+use Drupal\Core\Entity\EntityFormInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\group\Entity\GroupInterface;
+use Drupal\group\PermissionScopeInterface;
+use Drupal\mandala_group_inheritance\Access\CollectionVisibility;
 use Drupal\node\NodeInterface;
 use Drupal\views\ViewExecutable;
 
@@ -338,5 +342,179 @@ function shanti_collections_view_form_group_subcollection_add_form_alter(array &
 
   if (isset($form['field_parent_collection']['widget'][0]['target_id'])) {
     $form['field_parent_collection']['widget'][0]['target_id']['#default_value'] = $parent;
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Adds a "Collection" select to the edit form of any *existing* group_node
+ * bundle (audio/video/shanti_image today; Texts/Sources get it the moment
+ * their bundles install a group_node plugin --
+ * CollectionVisibility::groupNodeBundles() discovers this, not a hardcoded
+ * list -- see [[project-images-bundle-hardcode-defect-class]] for why that
+ * matters here specifically). There is currently no way to change, or even
+ * see, which collection a node belongs to from its own edit form: group
+ * membership is a relationship row (group_relationship_field_data), not a
+ * node field, so nothing shows up there by default.
+ *
+ * Deliberately scoped to the *current user's own* group memberships, not
+ * every collection on the site -- matches Than's spec ("a dropdown listing
+ * all the collections the owner belongs to") and keeps the set of groups a
+ * given edit can move content into bounded to places the editing account
+ * actually belongs. A consequence worth knowing: an account that edits via
+ * `content_editor`'s site-wide "any" permission without being a literal
+ * member of anything will see only the node's current collection, nothing
+ * to switch to -- true to the literal spec, flagged in the PR rather than
+ * silently widened.
+ *
+ * New nodes are skipped entirely: a brand-new node reaches this form only
+ * via Group's own create_form route (ADR 015 Q2: no content exists outside
+ * a group), which already sets the group automatically on save.
+ */
+function shanti_collections_view_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $form_object = $form_state->getFormObject();
+  if (!$form_object instanceof EntityFormInterface) {
+    return;
+  }
+
+  $node = $form_object->getEntity();
+  if (!$node instanceof NodeInterface || $node->isNew() || !in_array($node->bundle(), CollectionVisibility::groupNodeBundles(), TRUE)) {
+    return;
+  }
+
+  $plugin_id = 'group_node:' . $node->bundle();
+  $current_group = CollectionVisibility::owningGroup($node);
+  $account = \Drupal::currentUser();
+
+  $options = [];
+  if ($current_group) {
+    $options[$current_group->id()] = $current_group->label();
+  }
+
+  // Accounts with a blanket (non-member-scoped) create permission for this
+  // content type -- `administrator`'s admin-flagged group roles, and
+  // `content_editor`'s outsider-scope role, both added in #308 -- can see and
+  // move into *every* collection/subcollection of that bundle, not just the
+  // ones they happen to be a member of. Checked once per bundle via the
+  // outsider-scope calculation (membership-independent by definition), not
+  // once per group.
+  $blanket_bundles = _shanti_collections_view_blanket_create_bundles($account, $plugin_id);
+  if ($blanket_bundles) {
+    foreach (\Drupal::entityTypeManager()->getStorage('group')->loadByProperties(['type' => $blanket_bundles]) as $group) {
+      if ($group->getGroupType()->hasPlugin($plugin_id)) {
+        $options[$group->id()] = $group->label();
+      }
+    }
+  }
+
+  // Plain membership-scoped roles (e.g. 'member') only grant create within
+  // groups actually joined, so those still need checking individually.
+  foreach (\Drupal::service('group.membership_loader')->loadByUser($account) as $membership) {
+    $group = $membership->getGroup();
+    if (in_array($group->bundle(), CollectionVisibility::GROUP_BUNDLES, TRUE)
+      && $group->getGroupType()->hasPlugin($plugin_id)
+      && !isset($options[$group->id()])) {
+      $options[$group->id()] = $group->label();
+    }
+  }
+  asort($options);
+
+  $form['shanti_collection'] = [
+    '#type' => 'select',
+    '#title' => t('Collection'),
+    '#description' => $current_group
+      ? t('The collection or subcollection this item belongs to.')
+      : t('This item is not in a collection.'),
+    '#options' => $options,
+    '#default_value' => $current_group?->id(),
+    '#weight' => -40,
+  ];
+
+  $form['actions']['submit']['#submit'][] = 'shanti_collections_view_node_form_collection_submit';
+  $form['#validate'][] = 'shanti_collections_view_node_form_collection_validate';
+}
+
+/**
+ * Collection/subcollection bundles where $account's create permission for
+ * $plugin_id doesn't depend on membership -- an admin-flagged group role or
+ * an outsider-scope role (content_editor) grants it site-wide for every
+ * group of that bundle, not per-instance.
+ *
+ * One calculation per form load, two getItem() lookups (collection,
+ * subcollection) -- not one hasPermission() call per group on the site.
+ */
+function _shanti_collections_view_blanket_create_bundles(AccountInterface $account, string $plugin_id): array {
+  $permission = 'create ' . $plugin_id . ' entity';
+  $calculated = \Drupal::service('group_permission.calculator')->calculateFullPermissions($account);
+
+  $bundles = [];
+  foreach (CollectionVisibility::GROUP_BUNDLES as $bundle) {
+    $item = $calculated->getItem(PermissionScopeInterface::OUTSIDER_ID, $bundle);
+    if ($item && $item->hasPermission($permission)) {
+      $bundles[] = $bundle;
+    }
+  }
+  return $bundles;
+}
+
+/**
+ * Form validation handler for the "Collection" select added above.
+ *
+ * Re-checks the submitted group id server-side rather than trusting the
+ * options list the form was built with: a tampered POST could otherwise name
+ * any group id, including one the account isn't a member of or that doesn't
+ * even accept this node bundle as content.
+ */
+function shanti_collections_view_node_form_collection_validate(array &$form, FormStateInterface $form_state) {
+  $new_gid = $form_state->getValue('shanti_collection');
+  if (!$new_gid) {
+    return;
+  }
+
+  $node = $form_state->getFormObject()->getEntity();
+  $plugin_id = 'group_node:' . $node->bundle();
+  $new_group = \Drupal::entityTypeManager()->getStorage('group')->load($new_gid);
+
+  if (!$new_group instanceof GroupInterface
+    || !in_array($new_group->bundle(), CollectionVisibility::GROUP_BUNDLES, TRUE)
+    || !$new_group->getGroupType()->hasPlugin($plugin_id)
+    || !$new_group->hasPermission('create ' . $plugin_id . ' entity', \Drupal::currentUser())) {
+    $form_state->setErrorByName('shanti_collection', t("You don't have permission to move this item into that collection."));
+  }
+}
+
+/**
+ * Form submit handler for the "Collection" select added above.
+ *
+ * Moves the node by deleting its existing group_node relationship (if any)
+ * and creating a new one in the selected group -- a node belongs to exactly
+ * one collection in practice (see CollectionVisibility::owningGroup()'s own
+ * docblock), so this is a move, not an add.
+ */
+function shanti_collections_view_node_form_collection_submit(array $form, FormStateInterface $form_state) {
+  $new_gid = $form_state->getValue('shanti_collection');
+  if (!$new_gid) {
+    return;
+  }
+
+  $node = $form_state->getFormObject()->getEntity();
+  $plugin_id = 'group_node:' . $node->bundle();
+  $current_group = CollectionVisibility::owningGroup($node);
+
+  if ($current_group && (int) $current_group->id() === (int) $new_gid) {
+    return;
+  }
+
+  $rel_storage = \Drupal::entityTypeManager()->getStorage('group_relationship');
+  foreach ($rel_storage->loadByEntity($node) as $relationship) {
+    if ($relationship->getPluginId() === $plugin_id) {
+      $relationship->delete();
+    }
+  }
+
+  $new_group = \Drupal::entityTypeManager()->getStorage('group')->load($new_gid);
+  if ($new_group instanceof GroupInterface) {
+    $new_group->addRelationship($node, $plugin_id);
   }
 }
