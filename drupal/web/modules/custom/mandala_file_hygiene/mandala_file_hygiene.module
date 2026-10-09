@@ -1,0 +1,46 @@
+<?php
+
+/**
+ * @file
+ * Keeps file entity filenames in a single Unicode normalization form.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\File\FileExists;
+use Drupal\file\FileInterface;
+
+/**
+ * Implements hook_file_presave().
+ *
+ * By the time this fires, the physical bytes are already written at a URI
+ * derived from the ORIGINAL filename -- normalizing here means renaming the
+ * file on disk too, not just rewriting the entity's strings, or the DB and
+ * disk would disagree with each other (the exact dev-0/D11 mismatch this
+ * module exists to prevent; see docs/deferred/
+ * local-dev-files-provisioning-mechanism.md). Covers every path that saves
+ * a file entity -- upload widget, migrations, Drush -- since they all end
+ * up here.
+ */
+function mandala_file_hygiene_file_presave(FileInterface $file): void {
+  $filename = $file->getFilename();
+  if ($filename === NULL || \Normalizer::isNormalized($filename, \Normalizer::NFC)) {
+    return;
+  }
+
+  $normalized = \Normalizer::normalize($filename, \Normalizer::NFC);
+  if ($normalized === FALSE || $normalized === $filename) {
+    return;
+  }
+
+  $file_system = \Drupal::service('file_system');
+  $uri = $file->getFileUri();
+  $new_uri = $file_system->dirname($uri) . '/' . $normalized;
+
+  if ($uri !== $new_uri && $file_system->realpath($uri) && file_exists($file_system->realpath($uri))) {
+    $moved = $file_system->move($uri, $new_uri, FileExists::Rename);
+    $file->setFileUri($moved);
+  }
+
+  $file->setFilename($normalized);
+}

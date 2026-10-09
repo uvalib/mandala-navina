@@ -217,19 +217,75 @@ the fields features render) and the trigger question stay open until that trial.
    from the raw 99.8% number.
 2. ~~What should the canonical source be, if not D7 production?~~ **Answered
    above (2026-09-23): dev-0, confirmed complete for the affected fields.**
-3. **On-demand script, or automatic?** A files-sync script mirroring
-   `update-db-from-remote.sh`'s pattern (pull, land locally, destructive
-   warning) vs. wiring something into `session-start-check.sh` (detect drift,
-   like step 3a/3b already do for config/content) vs. into `ddev start`
-   itself.
+3. ~~On-demand script, or automatic?~~ **Answered below (2026-10-09):**
+   automatic, via `stage_file_proxy`; no on-demand sync script.
 4. ~~Does `mandala:missing-file-audit` become the mechanism, extended?~~
    **Done above (2026-09-23):** dev-0 added as the primary source, D7 kept
    as fallback, validated against the full local corpus.
 
+## `stage_file_proxy` trial (2026-10-09) -- resolves question 3
+
+Trialed live against dev-0 as origin (`origin` set via `drush config:set`,
+local-DB-only, never exported -- confirmed `config:status` shows only the
+expected `stage_file_proxy.settings: Only in DB` drift afterward).
+
+- **Baseline (ASCII, subdirectory file):** removed a transcript
+  (`transcripts/t991.xml`) from local disk, requested it through the site;
+  stage_file_proxy fetched it from dev-0 via a transparent redirect and wrote
+  it back byte-identical (checksum verified). Subdirectories are not a
+  problem for it -- unlike the D7 fallback source, it addresses files by
+  exact `uri`, not basename.
+- **Unicode filenames -- confirmed broken, root cause found.** Removed
+  `transcripts/Tenpé Gyeltsen on the History of Sangdrok Monastery.xml` and
+  a Tibetan-script filename (`transcripts/ཞིང་ཁམས།.xml`) and repeated the
+  test: both 404, proxy does nothing. Root cause: our D11 `file_managed` rows
+  store these filenames **NFC** (composed; confirmed via
+  `Normalizer::isNormalized()`), but **dev-0's disk has them NFD**
+  (decomposed) -- a literal fetch of the NFC path 404s on dev-0 itself; only
+  a manually NFD-normalized URL succeeds. stage_file_proxy does no
+  normalization, so it silently fails (falls through to an ordinary 404,
+  nothing logged) for every Unicode-named file whose normalization form
+  differs between environments. This generalizes the single
+  `Rangdrol-Rinpoché.jpg` example noted above -- it is a form, not an
+  isolated file.
+
+**Decision: stage_file_proxy is adopted, on-demand sync script rejected**
+(question 3, resolved 2026-10-09 by Than, Yuji, Xiaoming in session). No
+separate sync script will be built; `stage_file_proxy` already wired into
+`session-start-check.sh` step 3a-pre handles the common ASCII case
+automatically and lazily. This supersedes "wire `mandala:missing-file-audit`
+into `session-start-check.sh` as report-only" from the 2026-10-05 plan --
+the audit command remains useful for `--fix`/bulk-repair work and as a
+sitewide health check, but is no longer the dev-DX mechanism.
+
+**Prevention, shipped same session:** the NFC/NFD mismatch isn't just a
+dev-0 data problem -- nothing stopped a future upload (most likely from a
+macOS client, where HFS+/APFS paths can surface decomposed Unicode) from
+reintroducing it. Added `mandala_file_hygiene` module
+(`hook_file_presave()`): normalizes every file entity's filename to NFC on
+save, renaming the physical file on disk to match so the DB and the
+filesystem never disagree (physical bytes are already written under the
+pre-normalization name by the time this hook fires -- see the module's
+docblock for why the fix-up has to happen there, not before). Covers the
+upload widget, migrations, and Drush uniformly, since all of them save a
+`file` entity. Covered by
+`tests/src/Kernel/FilenameNormalizationTest.php`.
+
+**Not done, needs explicit sign-off before running (shared infrastructure):**
+dev-0's *existing* NFD-named files were not renamed. The robust fix for
+already-existing Unicode filenames is a one-time rename pass on dev-0 itself
+(walk its public files tree, rename any path whose basename isn't already
+NFC) -- confirmed we have SSH reachability to `mandala-drupal-dev-0.internal.lib.virginia.edu`
+to do this, but it is a write to shared state and should be dry-run
+(diff the rename list) before executing, not done opportunistically mid-session.
+
 ## Not yet done
 
-- The trigger question (3) -- on-demand vs. wired into `ddev start`/
-  `session-start-check.sh` -- still an open team decision, not started.
+- **dev-0 NFD-to-NFC filename rename** (see above) -- needs a dry run and
+  explicit go-ahead, not yet scheduled.
+- Question 1 (full parity vs. narrower scope) is still open -- orthogonal to
+  the mechanism decision above, since stage_file_proxy fetches whatever is
+  requested regardless of how much of the corpus that turns out to be.
 - The tool works and is validated, but **has not been run with `--fix`**
   against Xiaoming's full ~8,400-file backlog -- deliberately deferred
   pending the team's call on scope (question 1), not a forgotten step.

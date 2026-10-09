@@ -38,6 +38,7 @@ module:
   language: 0
   link: 0
   mandala_av_metadata: 0
+  mandala_file_hygiene: 0
   mandala_group_inheritance: 0
   mandala_home: 0
   mandala_kaltura: 0
