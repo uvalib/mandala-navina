@@ -1,0 +1,11 @@
+shanti_collections_view.collections:
+  title: 'All Collections'
+  route_name: view.collections.page_1
+  menu_name: main
+  weight: 10
+
+shanti_collections_view.my_collections:
+  title: 'My Collections'
+  route_name: view.my_collections.page_1
+  menu_name: main
+  weight: 20
