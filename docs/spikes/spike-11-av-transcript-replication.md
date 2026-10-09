@@ -224,6 +224,70 @@ shape.** Reasoning and the evidence behind it follow.
   next open question and depends on the Solr owner (see the Spike 2 relationship).
 - Unicode: normalise to NFC at migration per Spike 4a (933 Dzongkha values are not NFC).
 
+### Transcript-to-node cardinality (audited 2026-10-07, for T2)
+
+Question: can a node have more than one transcript? **No: it is one-to-one, and a node may have
+none.** Checked against the D7 AV dump (`d7_av` in DDEV), current data and revisions:
+
+| Check | Result |
+|---|---|
+| Tracked transcripts (`transcripts_apachesolr_transcript`) | 5,343 rows = 5,343 distinct nodes = 5,343 distinct `trid` |
+| Tracking rows pointing at a missing node | 0 |
+| Tracked nodes by type | 4,231 video, 1,112 audio |
+| Nodes with a second transcript file (`delta > 0`), current or in any revision | 0 |
+| AV nodes with no transcript | about 6,240 of 11,583 (normal) |
+| Tracked transcripts with zero units | 0 |
+| `trid`s in `tcu` with no tracking row (no node) | 19 (the known orphans) |
+| Nodes with a transcript file but no tracking row (never processed) | 41 (the known set) |
+| Tracked nodes with no `field_transcript` row | **4** (the notes above say 3; not reconciled, see the file-accounting note) |
+
+Revisions: `field_revision_field_transcript` has exactly one row per node (5,380, same as the
+current table), and no node has more than one distinct file across revisions. The 68 nodes whose
+tracking row names a different file than the one now attached (the "replaced file" set) have
+**no trace of the earlier file in any revision**, so it cannot be recovered from the database;
+that confirms the 2026-10-02 decision to treat the current attachment as the original of record.
+
+Consequences for T2: model `av_transcript` as one per node with a unique node reference, nullable
+from the node's side; the kmassets `trid_i` is single-valued; the 41 and 19 cases are
+file-accounting questions, not cardinality ones.
+
+### Revision history (DECIDED 2026-10-07, Yuji, with Xiaoming and Than)
+
+Transcripts get revision history. Supersedes the working assumption that the entities would be
+non-revisionable (D7 kept no pre-edit history, which is why revert-to-upload exists).
+
+- **Per-unit revisions.** `av_tcu` is revisionable: each save of a unit writes one new revision
+  row for that unit only, with revision metadata (who, when, optional log message). Cost scales
+  with edits, not transcript size. Migration writes one initial revision per unit (about 490k
+  rows in all). Whole-transcript snapshots were rejected: they would copy up to 2,760 rows per
+  edit, the Paragraphs problem again.
+- **Transcript-level log, metadata only.** `av_transcript` is revisionable too, but its revisions
+  carry no text: they record structural operations ("inserted 3 units", "deleted unit",
+  "reverted to upload") as an audit trail.
+- **Access: history follows edit permissions.** Whoever can edit the parent node's transcript can
+  see and revert its history; no separate permission.
+- **No retention limit.** Keep everything; storage is small.
+- **Search:** the transcript core indexes the current revision only. History never reaches Solr.
+- **Unchanged:** history starts at migration (nothing to migrate from D7; the 540 already-edited
+  transcripts have no earlier versions), and revert-to-upload (T7) is still required, since the
+  original upload is the base for everything. T6 (the editor) gains a history view and revert action.
+- **Deleted units** keep their history, so a deleted unit can be restored.
+
+### Entity kind and tier storage (DECIDED 2026-10-07, Yuji, with Xiaoming and Than)
+
+- **Entity kind:** `av_transcript` and `av_tcu` are **non-fieldable custom content entities**
+  (base fields only, no Field UI, no field-storage tables per unit). Chosen for the migrate
+  entity destination (row-count verification, 245,158 in and out), access that defers to the
+  parent node, entity hooks that drive the Solr sink and reindex, and the editor (T6). Combined
+  with the revision decision above, both are revisionable.
+- **Viewer reads:** a service does one indexed range read per transcript (about 29 ms for the
+  largest, against 189 ms and 49 MB to load 1,380 entities); the entity layer handles writes,
+  access and hooks. Loading a whole transcript as entities is not the read path.
+- **Tier and speaker maps:** a **JSON column on the unit** (not child rows like D7's `tcu_tier`
+  and `tcu_speaker`). A unit's revision row then holds all its tiers at once, so history and
+  revert stay simple, and one tier edit writes one revision row. Cost accepted: SQL cannot query
+  inside a tier; search goes through Solr.
+
 ### Still open before this can be called decided
 - ~~The authoring question.~~ Settled 2026-10-02: editing is kept, so Option B stands
   and B2 is out (see Questions for Than).
@@ -437,7 +501,14 @@ to carry the facet):
   dev/staging Solr instance (Yuji, 2026-10-02), so Dave is not needed for dev. Production
   creation and the Solr 7.x versus 9.x target are still to be confirmed. Creating the core on
   dev has not been done.
-- **Still open for question 6:** the `solrconfig.xml` and the join prototype.
+- **`solrconfig.xml` written and the join prototype run, 2026-10-07** (lean config, loads on
+  Solr 7.7.3; see `solr/mandala-av-transcripts/README.md`). The cross-core join works on 7.7.3
+  with synthetic data, but only after two fixes the prototype found: `is_trid` must be an int
+  (not long) to match kmassets' `trid_i`, and joining into a Point field needs docValues on
+  `trid_i` (or `is_trid` as a Trie field). **DECIDED 2026-10-07 (Yuji, with Xiaoming and Than): add
+  docValues to kmassets `trid_i`**, keep `is_trid` a Point int. **Still open for question 6:** whether the
+  deployed kmassets `trid_i` already has docValues (check on dev-0; if so, no change), the proxy change and the kmassets `trid_i` writer (**owner of both: Yuji, decided 2026-10-07**), join cost at real scale,
+  and creating the core on dev.
 7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
    viable.** Its UI is still not part of this spike's build, but D11 must keep the
    `mandala-av` index (or an equivalent the client can be pointed at through

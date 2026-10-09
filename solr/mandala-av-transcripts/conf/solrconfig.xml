@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  solrconfig.xml for the mandala-av-transcripts core (Spike 11, question 6).
+
+  Deliberately lean: this is a unit-document core read by the React transcript client and
+  written by a Drupal-side sink, so none of kmassets' extras (DataImportHandler, clustering,
+  velocity, spellcheck, elevation, update scripts) are carried over. What IS kept from
+  kmassets is the master/replica replication handler, switched by the same system properties
+  (solr.replication.master / .slave / .masterUrl / .pollInterval), so the core runs on this
+  instance's existing master/replica topology without a different mechanism.
+
+  Not yet exercised on the real dev/staging Solr instance. Prototyped on a throwaway
+  Solr 7.7.3 together with a kmassets-shaped core: see README.md.
+-->
+<config>
+  <luceneMatchVersion>7.7.3</luceneMatchVersion>
+
+  <!-- ICU tokenizer/folding (the default tier analyzer) and the Chinese HMM tokenizer. -->
+  <lib dir="${solr.install.dir:../../../..}/contrib/analysis-extras/lib" regex=".*\.jar" />
+  <lib dir="${solr.install.dir:../../../..}/contrib/analysis-extras/lucene-libs" regex=".*\.jar" />
+
+  <dataDir>${solr.data.dir:}</dataDir>
+  <directoryFactory name="DirectoryFactory"
+                    class="${solr.directoryFactory:solr.NRTCachingDirectoryFactory}"/>
+  <codecFactory class="solr.SchemaCodecFactory"/>
+  <schemaFactory class="ClassicIndexSchemaFactory"/>
+
+  <indexConfig>
+    <lockType>${solr.lock.type:native}</lockType>
+  </indexConfig>
+
+  <updateHandler class="solr.DirectUpdateHandler2">
+    <updateLog>
+      <str name="dir">${solr.ulog.dir:}</str>
+    </updateLog>
+    <!-- Hard commit for durability only. Visibility comes from the write path's own
+         commitWithin (per edit) or one explicit commit (bulk), per Spike 11 question 6. -->
+    <autoCommit>
+      <maxTime>${solr.autoCommit.maxTime:60000}</maxTime>
+      <openSearcher>false</openSearcher>
+    </autoCommit>
+  </updateHandler>
+
+  <query>
+    <maxBooleanClauses>${solr.max.booleanClauses:1024}</maxBooleanClauses>
+    <filterCache class="solr.FastLRUCache" size="512" initialSize="512" autowarmCount="0"/>
+    <queryResultCache class="solr.LRUCache" size="512" initialSize="512" autowarmCount="0"/>
+    <documentCache class="solr.LRUCache" size="512" initialSize="512" autowarmCount="0"/>
+    <enableLazyFieldLoading>true</enableLazyFieldLoading>
+    <queryResultWindowSize>20</queryResultWindowSize>
+    <queryResultMaxDocsCached>200</queryResultMaxDocsCached>
+    <useColdSearcher>false</useColdSearcher>
+  </query>
+
+  <requestDispatcher>
+    <requestParsers enableRemoteStreaming="false" multipartUploadLimitInKB="-1"
+                    formdataUploadLimitInKB="-1" addHttpRequestToContext="false"/>
+    <httpCaching never304="true"/>
+  </requestDispatcher>
+
+  <!-- The React client queries is_trid:N, rows up to 1000, sorted by fts_start. -->
+  <requestHandler name="/select" class="solr.SearchHandler">
+    <lst name="defaults">
+      <str name="echoParams">explicit</str>
+      <str name="wt">json</str>
+      <int name="rows">10</int>
+    </lst>
+  </requestHandler>
+
+  <requestHandler name="/query" class="solr.SearchHandler">
+    <lst name="defaults">
+      <str name="echoParams">explicit</str>
+      <str name="wt">json</str>
+      <str name="indent">true</str>
+    </lst>
+  </requestHandler>
+
+  <requestHandler name="/get" class="solr.RealTimeGetHandler">
+    <lst name="defaults">
+      <str name="omitHeader">true</str>
+      <str name="wt">json</str>
+    </lst>
+  </requestHandler>
+
+  <initParams path="/update/**">
+    <lst name="defaults">
+      <str name="update.chain">${update.chain:}</str>
+    </lst>
+  </initParams>
+  <requestHandler name="/update" class="solr.UpdateRequestHandler"/>
+
+  <!-- Same switches as kmassets, so one deploy mechanism covers both cores. -->
+  <requestHandler name="/replication" class="solr.ReplicationHandler">
+    <lst name="master">
+      <str name="enable">${solr.replication.master:false}</str>
+      <str name="replicateAfter">commit</str>
+      <str name="replicateAfter">startup</str>
+      <str name="confFiles">${solr.replication.confFiles:schema.xml,lang/stopwords_en.txt}</str>
+    </lst>
+    <lst name="slave">
+      <str name="enable">${solr.replication.slave:false}</str>
+      <str name="masterUrl">${solr.replication.masterUrl:http://localhost:8983/solr}/replication</str>
+      <str name="pollInterval">${solr.replication.pollInterval:00:00:60}</str>
+    </lst>
+  </requestHandler>
+
+  <requestHandler name="/analysis/field" startup="lazy" class="solr.FieldAnalysisRequestHandler"/>
+
+  <requestHandler name="/admin/ping" class="solr.PingRequestHandler">
+    <lst name="invariants">
+      <str name="q">*:*</str>
+    </lst>
+    <lst name="defaults">
+      <str name="echoParams">all</str>
+    </lst>
+  </requestHandler>
+
+  <queryResponseWriter name="json" class="solr.JSONResponseWriter">
+    <str name="content-type">text/plain; charset=UTF-8</str>
+  </queryResponseWriter>
+</config>

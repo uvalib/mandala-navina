@@ -12,17 +12,54 @@ trigger a deploy.
   language tiers `content_bod`, `dzo_bod`, `ts_content_*`), plus `id`, `entity_id`, `nid` and a
   `sm_*` dynamic field for the language facet.
 
+- `conf/solrconfig.xml` — lean config (2026-10-07): ICU/analysis-extras libs, `/select`,
+  `/query`, `/get`, `/update`, `/analysis/field`, `/admin/ping`, and the same
+  `/replication` master/slave system-property switches as kmassets. Not derived from the
+  1,572-line kmassets file on purpose; none of its extras apply. Loads cleanly on Solr 7.7.3.
+- `conf/lang/stopwords_en.txt` — Solr's bundled English list (the English tier references it).
+- `prototype/join-check.sh` — the cross-core join prototype (below).
+
 ## What is NOT here yet
 
-- **`solrconfig.xml`** and the other conf files. Base it on the `kmassets` config, which is
-  known to work with this instance's master/replica setup, and add the two lines the schema
-  needs for ICU analysis:
+- The core on the real dev/staging Solr (not created), and a run against the **deployed**
+  `solrconfig.xml`/replication.
+- The cross-core join access filter in `solr-proxy` (the prototype below proves the Solr side).
 
-  ```xml
-  <lib dir="${solr.install.dir:../../../..}/contrib/analysis-extras/lib" regex=".*\.jar" />
-  <lib dir="${solr.install.dir:../../../..}/contrib/analysis-extras/lucene-libs" regex=".*\.jar" />
-  ```
-- The cross-core join access filter (a `solr-proxy` change; prototype first).
+## Cross-core join prototype (2026-10-07, access option C)
+
+`prototype/join-check.sh` starts a throwaway Solr 7.7.3 with this core plus a **stand-in**
+kmassets core (`prototype/kmassets-stub-schema.xml`) and **synthetic** documents, then runs the
+proxy's stored fq shapes (pre-encoded `%20`, concatenated raw) wrapped in
+`{!join from=trid_i to=is_trid fromIndex=kmassets}`. Result: anonymous, a member user and a
+bypass user each admit exactly the right units; a unit with no kmassets document is never
+returned (fails closed). The join runs on a single node with both cores, as option C requires.
+
+Two things the prototype **found that would have broken the build**:
+
+1. **Int vs long.** With `is_trid` a `long` and `trid_i` an `int`, Solr 7.7.3 fails the join:
+   `field="is_trid" was indexed with bytesPerDim=8 but this query has bytesPerDim=4`. Fixed:
+   `is_trid` is now an `int` here (D7 trids fit easily).
+2. **docValues.** Joining *into* a Point field requires the *from* field to have docValues:
+   `join from field trid_i ... should have docValues to join with points field is_trid`. Legacy
+   kmassets defines `*_i` as a `TrieIntField` **without** docValues. Two ways out, both pass:
+
+   | Variant | Change | Cost |
+   |---|---|---|
+   | `point_dv` (committed) | give kmassets `trid_i` `docValues="true"` | a kmassets schema change on master + replica; nothing carries `trid_i` yet, so no existing values to reindex, but the kmassets writer must still be built |
+   | `trie_to` | make this core's `is_trid` a `TrieIntField` | no kmassets change; Trie fields are gone in Solr 9.x, so it undoes the "portable to 9.x" choice |
+
+   **DECIDED 2026-10-07 (Yuji, with Xiaoming and Than): `point_dv`.** kmassets `trid_i` gets
+   `docValues="true"`; `is_trid` stays a Point int. Reason: nothing carries `trid_i` yet so there
+   is nothing to reindex, and it keeps this core portable to Solr 9, which `trie_to` would not.
+
+   **Still open, needs the VPN:** whether the *deployed* dev-0 kmassets `trid_i` already has docValues
+   (the legacy file was used here, the deployed one was not inspected). If it does, `point_dv`
+   needs nothing at all.
+
+The fq also needs a proxy change: wrap the stored fq in the join prefix and encode `{`, `}`
+(`%7B`/`%7D`) since the proxy concatenates fq values into the query string unescaped.
+Not checked: Solr 9.x, real data, replication lag between the two cores, performance of the
+join over 122,923 kmassets documents (the stub had 5).
 
 ## How the schema was checked (2026-10-02)
 
