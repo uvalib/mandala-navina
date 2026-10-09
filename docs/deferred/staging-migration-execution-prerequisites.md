@@ -67,6 +67,25 @@ in [d11-dev-database-bootstrap-and-migration-source.md](d11-dev-database-bootstr
 
 **Owner:** DevOps / Yuji (deployment + AWS/IAM plumbing).
 
+## 3. Unicode filename normalization check, once staging exists
+
+Same check as dev-0 and production — see
+[dev0-unicode-filenames-need-nfc-normalization.md](dev0-unicode-filenames-need-nfc-normalization.md)
+and the "Filename normalization check" step in
+[migration-cycle-runbook.md](../planning/migration-cycle-runbook.md). A D11
+staging environment, once it exists, gets its own independent file
+population (whether by migration or by a copy from dev-0/production) and
+cannot be assumed NFC-clean just because another environment is. Run
+
+```bash
+REMOTE_HOST=<staging host> FILES_DIR=<staging files path> \
+  ./scripts/normalize-unicode-filenames-nfc.sh --dry-run
+```
+
+as part of standing up staging's files tree, and again after every site
+migration that lands new files there (Texts, Sources) — same as dev-0.
+Nothing to run today; no staging environment exists yet.
+
 ## Why tracked here
 
 Both are pre-cutover infrastructure gaps, not application bugs. Resolving them in parallel

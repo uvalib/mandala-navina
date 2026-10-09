@@ -209,10 +209,12 @@ Run this against dev-0 after every site's `import` phase completes —
 2). Expect **0** affected paths on a freshly-imported site. A nonzero result
 means something bypassed `mandala_file_hygiene` (e.g. a bulk file copy
 outside the entity API) and is worth root-causing, not just re-running this
-script as a silent fix each time. Also run it once against production before
-cutover — see
+script as a silent fix each time. Also run it once against **staging** (when
+a D11 staging environment exists — see
+[staging-migration-execution-prerequisites.md](../deferred/staging-migration-execution-prerequisites.md))
+and once against **production before cutover** — see
 [production-migration-planning.md](../deferred/production-migration-planning.md)
-— since production has its own independent upload history and can't be
+— since each environment has its own independent upload history and can't be
 assumed clean just because dev-0 is.
 
 The dev-0 backlog that predated this module was cleared 2026-10-09 (37

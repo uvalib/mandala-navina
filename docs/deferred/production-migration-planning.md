@@ -46,14 +46,17 @@ must not be forgotten. Planning items:
   mismatch invisible to a human but fatal to any exact-path fetch. Fixed on
   dev-0 2026-10-09 via `scripts/normalize-unicode-filenames-nfc.sh` (full
   writeup: [dev0-unicode-filenames-need-nfc-normalization.md](dev0-unicode-filenames-need-nfc-normalization.md)).
-  Production has its own independent upload/migration history and cannot be
-  assumed clean just because dev-0 now is -- run the same dry-run/execute
-  pass against production's files tree as part of cutover prep, before
-  traffic is cut over, and re-verify with a dry run afterward (should report
-  0 affected paths). `mandala_file_hygiene` (PR #314) prevents *new* NFD
-  uploads going forward on any environment that has it installed, but does
-  not touch files already on disk, so this one-time pass is still required
-  even once that module is live everywhere. **Not just a cutover-time step:**
+  Production -- and, once it exists, staging -- each have their own
+  independent upload/migration history and cannot be assumed clean just
+  because dev-0 now is -- run the same dry-run/execute pass against each
+  environment's files tree (staging as part of standing it up, see
+  [staging-migration-execution-prerequisites.md](staging-migration-execution-prerequisites.md);
+  production as part of cutover prep, before traffic is cut over), and
+  re-verify with a dry run afterward (should report 0 affected paths).
+  `mandala_file_hygiene` (PR #314) prevents *new* NFD uploads going forward
+  on any environment that has it installed, but does not touch files already
+  on disk, so this one-time pass is still required per environment even once
+  that module is live everywhere. **Not just a cutover-time step:**
   the same dry-run check must run against dev-0 after every future site
   migration (Texts, Sources) as soon as its track lands files there — see
   the "Filename normalization check" step in

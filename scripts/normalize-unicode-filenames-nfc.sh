@@ -19,10 +19,15 @@
 #     affected paths; a nonzero result on a freshly-migrated site means
 #     something bypassed mandala_file_hygiene and needs investigating, not
 #     silently re-running this script as the fix;
+#   - once against a D11 staging environment when one exists, as part of
+#     standing it up (see
+#     docs/deferred/staging-migration-execution-prerequisites.md) -- no
+#     staging environment exists yet (2026-10-09), so nothing to run there
+#     today;
 #   - once against production before cutover (see
-#     docs/deferred/production-migration-planning.md) -- production has its
-#     own independent upload history, never assume it's clean because dev-0
-#     is.
+#     docs/deferred/production-migration-planning.md).
+#   Each environment has its own independent upload history -- never assume
+#   one is clean because another one is.
 #
 # New file-entity saves are unaffected going forward on any environment with
 # PR #314's mandala_file_hygiene module installed -- it normalizes to NFC at
