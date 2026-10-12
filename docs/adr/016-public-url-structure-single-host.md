@@ -2,7 +2,7 @@
 
 **Status:** Proposed
 **Date:** 2026-08-25 (proposed)
-**Deciders:** Yuji Shinozaki (Lead Architect) — path grammar and redirect layer decided 2026-08-25; three items open below (item 2 decided 2026-10-12 by Than Grove and Yuji Shinozaki; items 1 and 3 remain open)
+**Deciders:** Yuji Shinozaki (Lead Architect) — path grammar and redirect layer decided 2026-08-25; three items open below (items 2 and 3 decided 2026-10-12 by Than Grove and Yuji Shinozaki; item 1 remains open, tracked as [issue #316](https://github.com/uvalib/mandala-navina/issues/316))
 **Corrected by:** Than Grove (2026-08-25) — real D7 URL forms; see the correction note under decision 2
 **Relates to:** [ADR 005](005-single-site.md) (single-site redesign), [ADR 008](008-mvp-migrate-not-improve.md) (migrate, not improve), [ADR 010](010-adr-008-scope-clarification.md) (scope clarification), [ADR 013](013-drupal-source-of-truth-solr-client-compatibility.md) (Drupal is source of truth; client compatibility is active)
 **Implements:** ADR 005's stated consequence — *"URL paths for each collection must be designed to preserve existing external links where possible (e.g. `/texts/...`, `/images/...`)"*
@@ -227,14 +227,26 @@ populating it during the migration that creates the rows.
    `/images/{nid}` (and its siblings `/texts/{nid}`, `/sources/{nid}`, `/audio/{nid}`,
    `/video/{nid}`), is canonical.** This is what D11 generates for links, emits as
    `url_html`, and canonicalises for search engines. The preserved D7 alias continues to
-   *resolve* per decision 7, but is not what the application generates going forward. This
-   directly feeds open item 3 below: `MandalaMarkup.js`'s reverse lookup must be built
-   against this form.
-3. **`mandala-om` coordination on `url_html`.** Per ADR 013 this is an active
-   compatibility requirement, not a courtesy. Needs Than, and needs to cover the
-   `MandalaMarkup.js` reverse lookup as well as the forward links — now scoped by item 2's
-   decision above: the reverse lookup (`q: url_html:"…"`) needs to match the
-   `/images/{nid}`-style canonical form, not the D7 alias.
+   *resolve* per decision 7, but is not what the application generates going forward.
+   Confirmed already matched by `mandala-om`'s own client-side expectations:
+   `MandalaMarkup.js`'s direct link-rewrite regex already matches this exact plural,
+   content-type + nid shape with no code change needed — it's the currently-committed
+   `mandala_kmassets_sync.settings.yml` template (singular `/image/__NID__`) that was
+   wrong, which this ADR already flagged.
+3. **`mandala-om` coordination on `url_html`. Resolved 2026-10-12 (Than Grove, Yuji
+   Shinozaki) — narrower than originally framed.** `MandalaMarkup.js` has two separate
+   link-handling paths: a direct regex rewrite for links already in `{content-type}/{nid}`
+   form (needs no change — see item 2), and a reverse Solr lookup
+   (`MandalaPathDecoder`, exact-match on `url_html`) for links that don't match that
+   pattern. That second path turned out to exist only to auto-correct **old D7 URLs
+   embedded directly in Drupal body/description HTML** (stale author-written links, not
+   anything the application generates) during migration. **Decision: this is not carried
+   forward as a permanent mechanism.** Old embedded links get fixed at the source in
+   Drupal content instead of compensated for via `url_html` matching — see
+   [`legacy-url-syntax-audit-drupal-content.md`](../deferred/legacy-url-syntax-audit-drupal-content.md)
+   for the follow-up audit, triggered once migration is complete. `url_html`'s contract
+   therefore only needs to support the canonical form from item 2, not arbitrary legacy
+   link shapes.
 
 ## Consequences
 
