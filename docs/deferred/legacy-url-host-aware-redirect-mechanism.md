@@ -1,9 +1,10 @@
-# Legacy URL bare-nid redirects: host-awareness mechanism undecided
+# Legacy URL bare-nid redirects: host-awareness mechanism (Option 2 chosen)
 
 **Area:** URL structure / migration / deployment / ADR 016
 **Raised during:** Session 2026-10-12 (Than, Yuji)
 **Issue:** #316
-**Priority:** High — blocks [ADR 016](../adr/016-public-url-structure-single-host.md) acceptance; ADR 016 itself says this must be settled **before the next collection migrates** (Texts/Sources/AV are next per [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md))
+**Status:** Option 2 (host-aware request subscriber) chosen 2026-10-12 by Yuji; precondition verified live. Implementation not started.
+**Priority:** High — [ADR 016](../adr/016-public-url-structure-single-host.md) is now Accepted (2026-10-12); the subscriber must be built **before the next collection migrates** (Texts/Sources/AV are next per [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md))
 
 ## Context
 
@@ -34,7 +35,7 @@ existing redirect logic anywhere in `drupal/web/modules/custom/`). Something
 has to turn `(host, path)` into a `(field_legacy_site, field_legacy_nid)`
 lookup before `redirect` (or equivalent) can act on it.
 
-## Options discussed, neither decided
+## Options discussed
 
 ### Option 1 — Edge-tag rewrite
 
@@ -66,7 +67,52 @@ itself for the bare-nid path shape before core routing resolves.
 - Needs a cheap early-exit (path regex check) so it doesn't add overhead to
   every request on a legacy host.
 
+## Resolved 2026-10-12: Option 2 chosen
+
+**Precondition verified live on dev-0** (Yuji, with Claude). The `Host` header reaches
+Drupal intact for every per-site hostname. The same `GET /user` through the ALB returns
+a 302 whose absolute `Location` names the requested host:
+
+| Request host | `Location` |
+|---|---|
+| `mandala-av-dev.internal…` | `https://mandala-av-dev.internal.lib.virginia.edu/user/login` |
+| `mandala-images-dev.internal…` | `https://mandala-images-dev.internal.lib.virginia.edu/user/login` |
+| `mandala-texts-dev.internal…` | `https://mandala-texts-dev.internal.lib.virginia.edu/user/login` |
+
+Sending SNI `av` with `Host: images` yields the `images` host, so Drupal reads the
+Host header, not the TLS name. Why it holds:
+
+- Each legacy-style hostname has its own ALB `host_header` listener rule forwarding to
+  the same target group (`terraform-infrastructure/mandala/drupal/*/alb-routing.tf`),
+  and the ALB does not rewrite Host.
+- `settings.php` deliberately does **not** trust `X-Forwarded-Host`, so
+  `$request->getHost()` is the raw Host header, the value the subscriber should read.
+- `trusted_host_patterns` already admits every per-site hostname.
+
+**Decision: Option 2.** Self-contained in this repo, no terraform change, no dependency
+on the ALB cleanup. Requirements for the implementation:
+
+- Subscriber on `KernelEvents::REQUEST` at early priority; host to `field_legacy_site`
+  token mapping lives in module config.
+- Cheap early-exit (path regex for the bare `/node/{nid}` shape) so requests that are
+  not legacy-shaped pay nothing.
+- Resolve via `field_legacy_site` + `field_legacy_nid` (ADR 017), never a raw D11 id.
+- Read `getHost()` only; keep `X-Forwarded-Host` untrusted.
+
+**Not verified:** only the internal dev hostnames were tested. If a CDN or other edge sits
+in front of the public names (`av.mandala.library.virginia.edu` etc.) at cutover,
+recheck that Host survives there. The production ALB rules have the same shape.
+
 ## What would close this
+
+1. ~~A live check of whether `Host`/`X-Forwarded-Host` reaches Drupal intact.~~ Done, see above.
+2. ~~A decision between the two options.~~ Option 2. Recorded in ADR 016 (now Accepted), 2026-10-12.
+3. ADR 016's open-item-1 text updated to drop the already-resolved discriminator question
+   and reference ADR 017 instead. (Partly done 2026-10-12; the Option 2 decision remains.)
+4. Implement the subscriber and the `redirect` wiring before the next collection migrates.
+
+### Original criteria (for reference)
+
 
 1. A live check of whether `Host`/`X-Forwarded-Host` reaches Drupal intact
    for a legacy domain under today's edge setup (~10 minutes — log
@@ -79,6 +125,6 @@ itself for the bare-nid path shape before core routing resolves.
 
 ## Cross-references
 
-- [ADR 016](../adr/016-public-url-structure-single-host.md) — the parent decision this blocks
+- [ADR 016](../adr/016-public-url-structure-single-host.md) — the parent decision (Accepted 2026-10-12)
 - [ADR 017](../adr/017-legacy-identity-composite-key.md) — resolves the discriminator half
 - [kmassets-uid-identity-across-migration.md](kmassets-uid-identity-across-migration.md) — step 6 at cutover ("wire redirect module to `field_legacy_nid`") assumes this is already decided
