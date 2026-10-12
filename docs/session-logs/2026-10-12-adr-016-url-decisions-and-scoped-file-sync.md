@@ -1084,3 +1084,15 @@ Yuji is here and aware of what he needs to do. Let's close out the session for t
 Running the session log save script, then I'll update memory.
 
 ---
+
+---
+
+## Addendum — session close (post-transcript-save)
+
+The transcript capture above ends mid-close, before the log was committed. Closing activity after that point, for the record:
+
+- **PR #317 merged** (squash not used; merge commit `dcbf419`), branch `feat/298-scoped-file-audit-fix` deleted. Merged at Than and Yuji's explicit request once Yuji confirmed he was briefed, rather than left open for a separate async review pass.
+- **`project-mandala-state.md` (local Claude memory) pruned and archived.** The file had grown to 257.6KB, over the read-size limit. Split at the 2026-09-25/2026-09-28 boundary: session-state entries from 2026-09-28 onward kept live; everything from 2026-07-07 through 2026-09-25 (including the static mid-2026-07 reference tables — ADR/spike/sprint/PR snapshots, long superseded by `docs/`) moved to a new `project-mandala-state-archive.md`. A dangling forward-reference in the live file (to the now-archived 09-25 section) was corrected to point at the archive. `MEMORY.md`'s index updated accordingly.
+- Session close-check re-run clean: only PR #315 (Yuji's own pre-existing draft, Spike 11 half (b)) remains open, which is expected and not ours to act on.
+
+**Final state at close:** ADR 016 at 1 of 3 open items remaining (issue #316, assigned Yuji). Issue #298 closed, PR #317 merged. Local dev memory refreshed and right-sized for next session.
