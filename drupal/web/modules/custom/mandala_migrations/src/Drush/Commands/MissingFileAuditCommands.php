@@ -45,6 +45,14 @@ use Drush\Commands\DrushCommands;
  * being addressable by exact `uri` rather than basename means it doesn't
  * inherit D7's root-level-only blind spot for subdirectories like AV's
  * `transcripts/`.
+ *
+ * Extended 2026-10-12 (Than Grove, Yuji Shinozaki) with `--field` to answer
+ * local-dev-files-provisioning-mechanism.md's open question 1 (does local
+ * dev need full file-binary parity, or only what real features render):
+ * neither, by default -- a developer pulls exactly the field(s) they're
+ * about to work with, on demand, via `--field=field_transcript --fix`,
+ * rather than paying for the whole corpus or relying solely on
+ * `stage_file_proxy`'s one-file-at-a-time lazy fetch.
  */
 class MissingFileAuditCommands extends DrushCommands {
 
@@ -114,20 +122,37 @@ class MissingFileAuditCommands extends DrushCommands {
   #[CLI\Command(name: 'mandala:missing-file-audit')]
   #[CLI\Option(name: 'check-remote-source', description: "For each missing file, try dev-0's own files root first (exact uri match), then known D7 production file roots (currently: Images, AV; basename match, root-level only) to see if it's still recoverable. See class docblock.")]
   #[CLI\Option(name: 'fix', description: 'For missing files confirmed recoverable at a known remote source, re-fetch the bytes and write them to the existing file entity in place (same fid/uri) -- restores the file, does not touch any entity reference, since those were never wrong. Implies --check-remote-source.')]
+  #[CLI\Option(name: 'field', description: "Only audit/fix the given field(s), comma-separated (e.g. 'field_transcript', or 'node.field_thumbnail_image' to disambiguate a name shared across entity types). Omit to cover every real file/image field, as today -- this is additive, for pulling a specific field's files on demand (e.g. before starting work on a feature that needs them) without paying for the full corpus. See docs/deferred/local-dev-files-provisioning-mechanism.md, question 1.")]
   #[CLI\Usage(name: 'drush mandala:missing-file-audit', description: 'Report every managed file whose physical file is missing from disk, and what references it.')]
   #[CLI\Usage(name: 'drush mandala:missing-file-audit --check-remote-source', description: 'Also check whether each missing file is still fetchable from dev-0 or its known D7 production source.')]
   #[CLI\Usage(name: 'drush mandala:missing-file-audit --fix', description: 'Re-fetch and restore every missing file confirmed recoverable, preferring dev-0 over D7 production.')]
-  public function audit(array $options = ['check-remote-source' => FALSE, 'fix' => FALSE]): void {
+  #[CLI\Usage(name: 'drush mandala:missing-file-audit --field=field_transcript --fix', description: 'Pre-fetch every missing field_transcript file before starting AV transcript work, without touching the rest of the corpus.')]
+  public function audit(array $options = ['check-remote-source' => FALSE, 'fix' => FALSE, 'field' => NULL]): void {
     $db = Database::getConnection();
 
     $fields = $this->realFileFields();
+    $scoped = !empty($options['field']);
+    if ($scoped) {
+      $fields = $this->filterFields($fields, $options['field']);
+    }
     if (!$fields) {
       $this->logger()->warning('No file/image-referencing fields found -- nothing to audit.');
       return;
     }
 
-    $total = (int) $db->query('SELECT COUNT(*) FROM {file_managed}')->fetchField();
-    $missing = $this->findMissingFiles($db);
+    // Unscoped: every file_managed row is in play, as before. Scoped: only
+    // fids actually referenced by the requested field(s) are -- otherwise
+    // --field would only have narrowed the *labels* in the report while
+    // --fix silently restored every missing file site-wide regardless of
+    // what was asked for.
+    $fidFilter = $scoped ? $this->referencedFids($db, $fields) : NULL;
+    if ($scoped && !$fidFilter) {
+      $this->logger()->success('No files referenced by the requested field(s).');
+      return;
+    }
+
+    $total = $fidFilter !== NULL ? count($fidFilter) : (int) $db->query('SELECT COUNT(*) FROM {file_managed}')->fetchField();
+    $missing = $this->findMissingFiles($db, $fidFilter);
 
     if (!$missing) {
       $this->logger()->success('No missing files -- every {total} file_managed row has a real file on disk.', ['total' => $total]);
@@ -229,11 +254,61 @@ class MissingFileAuditCommands extends DrushCommands {
   }
 
   /**
+   * Narrows realFileFields()'s discovery to an explicit, comma-separated
+   * list, for on-demand scoped pre-fetch (pull one field's worth of files
+   * right before a task that needs them, instead of the full corpus every
+   * time -- see docs/deferred/local-dev-files-provisioning-mechanism.md,
+   * question 1).
+   *
+   * Accepts either a bare field name ('field_transcript'), matched against
+   * any entity type since these names are unique in practice today, or an
+   * 'entity_type.field_name' pair to disambiguate a name that isn't. An
+   * unrecognised token is warned about and skipped, not silently dropped --
+   * a typo should not look like "no missing files."
+   *
+   * @param array<int, array{entity_type: string, field: string}> $fields
+   * @param string $requested
+   *   The raw --field option value, comma-separated.
+   *
+   * @return array<int, array{entity_type: string, field: string}>
+   */
+  private function filterFields(array $fields, string $requested): array {
+    $wanted = array_map('trim', explode(',', $requested));
+    $out = [];
+    foreach ($wanted as $token) {
+      if ($token === '') {
+        continue;
+      }
+      $matches = array_filter($fields, fn (array $f) =>
+        $token === $f['field'] || $token === "{$f['entity_type']}.{$f['field']}"
+      );
+      if (!$matches) {
+        $this->logger()->warning('--field "{token}" matches no real file/image field -- skipped. Run without --field to see the full list.', ['token' => $token]);
+        continue;
+      }
+      $out = [...$out, ...$matches];
+    }
+    return $out;
+  }
+
+  /**
+   * @param array<int, int>|null $fidFilter
+   *   When given, only these fids are checked -- used by a scoped --field
+   *   run so it checks disk presence for, and only for, files the requested
+   *   field(s) actually reference. NULL checks every file_managed row, as
+   *   an unscoped run always has.
+   *
    * @return array<int, object{fid: int, uri: string, filename: string, filesize: int, status: int}>
    *   Keyed by fid.
    */
-  private function findMissingFiles($db): array {
-    $rows = $db->query('SELECT fid, uri, filename, filesize, status FROM {file_managed} ORDER BY fid')->fetchAll();
+  private function findMissingFiles($db, ?array $fidFilter = NULL): array {
+    $query = 'SELECT fid, uri, filename, filesize, status FROM {file_managed}';
+    $args = [];
+    if ($fidFilter !== NULL) {
+      $query .= ' WHERE fid IN (:fids[])';
+      $args[':fids[]'] = $fidFilter;
+    }
+    $rows = $db->query($query . ' ORDER BY fid', $args)->fetchAll();
     $missing = [];
     foreach ($rows as $row) {
       $path = $this->fileSystem->realpath($row->uri);
@@ -242,6 +317,34 @@ class MissingFileAuditCommands extends DrushCommands {
       }
     }
     return $missing;
+  }
+
+  /**
+   * The distinct set of fids actually referenced by the given field(s),
+   * across both their base and revision tables -- the scoping findMissingFiles()
+   * needs so a --field run only checks (and --fix only restores) files the
+   * requested field(s) reference, not the whole corpus.
+   *
+   * @param array<int, array{entity_type: string, field: string}> $fields
+   *
+   * @return array<int, int>
+   */
+  private function referencedFids($db, array $fields): array {
+    $fids = [];
+    $schema = $db->schema();
+    foreach ($fields as $field) {
+      $col = $field['field'] . '_target_id';
+      foreach (["{$field['entity_type']}__{$field['field']}", "{$field['entity_type']}_revision__{$field['field']}"] as $table) {
+        if (!$schema->tableExists($table)) {
+          continue;
+        }
+        $hits = $db->query("SELECT DISTINCT {$col} AS fid FROM {{$table}}")->fetchCol();
+        foreach ($hits as $fid) {
+          $fids[(int) $fid] = (int) $fid;
+        }
+      }
+    }
+    return array_values($fids);
   }
 
   /**
