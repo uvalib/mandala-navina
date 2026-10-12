@@ -90,12 +90,15 @@ class LegacyHostRedirectSubscriber implements EventSubscriberInterface {
   /**
    * Resolves (site, legacy nid) to a canonical path via the ADR 017 key.
    *
-   * Nodes first, then groups (migrated collections). Access-checked, so an
-   * entity the requester cannot see is a 404, not a redirect that confirms it
-   * exists.
+   * Nodes first, then groups (migrated collections). Access-checked twice (query
+   * and loaded entity), so an entity the requester cannot see is a 404, not a
+   * redirect that confirms it exists.
    */
   protected function lookup(string $site, string $nid): ?string {
     foreach (['node', 'group'] as $type) {
+      if (!$this->entityTypeManager->hasDefinition($type)) {
+        continue;
+      }
       $ids = $this->entityTypeManager->getStorage($type)->getQuery()
         ->accessCheck(TRUE)
         ->condition('field_legacy_site', $site)
@@ -110,7 +113,9 @@ class LegacyHostRedirectSubscriber implements EventSubscriberInterface {
       }
       if ($ids) {
         $entity = $this->entityTypeManager->getStorage($type)->load(reset($ids));
-        return $entity->toUrl()->toString();
+        // The query's access check does not cover per-entity access such as
+        // unpublished status, so check the loaded entity as well.
+        return $entity && $entity->access('view') ? $entity->toUrl()->toString() : NULL;
       }
     }
     return NULL;
