@@ -4,7 +4,7 @@
 **Raised during:** Session 2026-10-12 (Than, Yuji)
 **Issue:** #316
 **Status:** Option 2 (host-aware request subscriber) chosen 2026-10-12 by Yuji; precondition verified live. Implementation not started.
-**Priority:** High — blocks [ADR 016](../adr/016-public-url-structure-single-host.md) acceptance; ADR 016 itself says this must be settled **before the next collection migrates** (Texts/Sources/AV are next per [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md))
+**Priority:** High — [ADR 016](../adr/016-public-url-structure-single-host.md) is now Accepted (2026-10-12); the subscriber must be built **before the next collection migrates** (Texts/Sources/AV are next per [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md))
 
 ## Context
 
@@ -106,8 +106,7 @@ recheck that Host survives there. The production ALB rules have the same shape.
 ## What would close this
 
 1. ~~A live check of whether `Host`/`X-Forwarded-Host` reaches Drupal intact.~~ Done, see above.
-2. ~~A decision between the two options.~~ Option 2. Still to do: record it in ADR 016
-   so it can move from Proposed to Accepted.
+2. ~~A decision between the two options.~~ Option 2. Recorded in ADR 016 (now Accepted), 2026-10-12.
 3. ADR 016's open-item-1 text updated to drop the already-resolved discriminator question
    and reference ADR 017 instead. (Partly done 2026-10-12; the Option 2 decision remains.)
 4. Implement the subscriber and the `redirect` wiring before the next collection migrates.
@@ -126,6 +125,6 @@ recheck that Host survives there. The production ALB rules have the same shape.
 
 ## Cross-references
 
-- [ADR 016](../adr/016-public-url-structure-single-host.md) — the parent decision this blocks
+- [ADR 016](../adr/016-public-url-structure-single-host.md) — the parent decision (Accepted 2026-10-12)
 - [ADR 017](../adr/017-legacy-identity-composite-key.md) — resolves the discriminator half
 - [kmassets-uid-identity-across-migration.md](kmassets-uid-identity-across-migration.md) — step 6 at cutover ("wire redirect module to `field_legacy_nid`") assumes this is already decided

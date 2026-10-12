@@ -1,8 +1,8 @@
 # ADR 016: D11 public URL structure — one host, asset-type-namespaced paths; legacy URLs redirected via `field_legacy_nid`
 
-**Status:** Proposed
-**Date:** 2026-08-25 (proposed)
-**Deciders:** Yuji Shinozaki (Lead Architect) — path grammar and redirect layer decided 2026-08-25; three items open below (items 2 and 3 decided 2026-10-12 by Than Grove and Yuji Shinozaki; item 1 remains open, tracked as [issue #316](https://github.com/uvalib/mandala-navina/issues/316))
+**Status:** Accepted
+**Date:** 2026-08-25 (proposed); 2026-10-12 (accepted)
+**Deciders:** Yuji Shinozaki (Lead Architect) — path grammar and redirect layer decided 2026-08-25; the three items left open were resolved 2026-10-12 (items 2 and 3 by Than Grove and Yuji Shinozaki; item 1 by Yuji Shinozaki, tracked as [issue #316](https://github.com/uvalib/mandala-navina/issues/316))
 **Corrected by:** Than Grove (2026-08-25) — real D7 URL forms; see the correction note under decision 2
 **Relates to:** [ADR 005](005-single-site.md) (single-site redesign), [ADR 008](008-mvp-migrate-not-improve.md) (migrate, not improve), [ADR 010](010-adr-008-scope-clarification.md) (scope clarification), [ADR 013](013-drupal-source-of-truth-solr-client-compatibility.md) (Drupal is source of truth; client compatibility is active)
 **Implements:** ADR 005's stated consequence — *"URL paths for each collection must be designed to preserve existing external links where possible (e.g. `/texts/...`, `/images/...`)"*
@@ -209,19 +209,31 @@ Whichever is chosen must be settled **before the next collection migrates**, sin
 retrofitting a discriminator across already-migrated content is materially harder than
 populating it during the migration that creates the rows.
 
-## Open — must be resolved before this ADR is Accepted
+## Items that were open at proposal — all resolved 2026-10-12
 
 1. **How host-awareness is implemented.** *That* it is required is settled above — the
-   legacy host carries half the identity. The discriminator half of this question is
-   now settled by [ADR 017](017-legacy-identity-composite-key.md) (accepted 2026-09-02):
-   `field_legacy_site` + `field_legacy_nid`, not a bundle-scoped lookup. What remains open
-   is the mechanism for getting host context into that lookup before the translation runs
-   — have the edge tag each legacy host onto a distinct internal prefix that Drupal then
-   translates, or use a host-aware request subscriber. Written up in detail, with both
-   options sketched, in
+   legacy host carries half the identity. The discriminator is settled by
+   [ADR 017](017-legacy-identity-composite-key.md) (accepted 2026-09-02):
+   `field_legacy_site` + `field_legacy_nid`, not a bundle-scoped lookup.
+   **Decided 2026-10-12 (Yuji Shinozaki): a host-aware request subscriber**, not an edge
+   rewrite. Drupal's `redirect` module matches on path only, so a custom subscriber on
+   `KernelEvents::REQUEST` at early priority reads `$request->getHost()`, maps it to a
+   `field_legacy_site` token via module config, and does the composite lookup for the
+   bare `/node/{d7nid}` shape before core routing resolves it. The precondition was
+   verified live on dev-0 the same day: the ALB forwards each legacy-style hostname to
+   the same target group with the `Host` header untouched, and Drupal sees it (a `GET
+   /user` returns a 302 whose absolute `Location` names the requested host; sending SNI
+   `av` with `Host: images` yields the `images` host). `X-Forwarded-Host` remains
+   deliberately untrusted (`settings.php`), so `getHost()` is the raw Host header.
+   Rationale over the edge-tag alternative: self-contained in this repo, no
+   `terraform-infrastructure` change, and no dependency on the still-unreconciled ALB
+   cleanup. Requirements: a cheap path-regex early exit so non-legacy requests pay
+   nothing; resolution only via the composite key, never a raw D11 id; and a recheck
+   that `Host` survives any CDN or edge placed in front of the public names at cutover
+   (only the internal dev hostnames were tested). Evidence and detail in
    [`legacy-url-host-aware-redirect-mechanism.md`](../deferred/legacy-url-host-aware-redirect-mechanism.md)
-   ([issue #316](https://github.com/uvalib/mandala-navina/issues/316), assigned Yuji) —
-   still must be decided **before the next collection migrates**.
+   ([issue #316](https://github.com/uvalib/mandala-navina/issues/316)). The subscriber
+   itself is not yet built; it must land **before the next collection migrates**.
 2. **Which path is *canonical* in D11 — the preserved D7 alias, or `/images/{nid}`?**
    **Decided 2026-10-12 (Than Grove, Yuji Shinozaki): the content-type + nid form,
    `/images/{nid}` (and its siblings `/texts/{nid}`, `/sources/{nid}`, `/audio/{nid}`,

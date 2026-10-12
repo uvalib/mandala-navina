@@ -67,7 +67,7 @@ point at the ones that exist.
   ADR 017's kmassets service vocabulary. Getting it wrong would fragment the `asset_type` facet
   against 8,579 already-live documents, so it is matched, not guessed.
 - **`url_html` / `url_ajax` / `url_json` are placeholders**, in exactly the same sense
-  `shanti_image`'s are. ADR 016 (Proposed, 3 open items) found the Images entry's URLs "known
+  `shanti_image`'s are. ADR 016 (since Accepted, 2026-10-12; its 3 open items resolved) found the Images entry's URLs "known
   wrong" (legacy host, D11 nid substituted into a route that takes a slug) and left them as an
   accepted placeholder rather than block indexing ("not blocking... known-wrong URLs, no worse
   than what's already indexed"). The AV values mirror that treatment, using values queried live

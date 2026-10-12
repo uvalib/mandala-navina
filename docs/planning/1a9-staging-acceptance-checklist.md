@@ -126,7 +126,7 @@ Tracked as a deferred item:
       run writes will carry known-wrong URLs; that is no worse than the 111,340 already
       indexed, they are namespaced `images-11-*` and cleanable, and **no acceptance
       criterion covers URL correctness**. The real fix is
-      [ADR 016](../adr/016-public-url-structure-single-host.md) (Proposed), which is a
+      [ADR 016](../adr/016-public-url-structure-single-host.md) (Accepted 2026-10-12), which is a
       coordinated change with `mandala-om` — deliberately not folded into this run.
 - [x] `solr_master_url` confirmed → staging kmassets master and reachable from the
       container. **Correction (2026-08-13):** this was NOT already the config default on
