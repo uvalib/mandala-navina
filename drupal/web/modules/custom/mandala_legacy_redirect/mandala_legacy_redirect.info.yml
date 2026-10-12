@@ -1,0 +1,8 @@
+name: 'Mandala Legacy Redirect'
+type: module
+description: 'Host-aware redirect of legacy D7 bare-nid URLs (/node/{d7nid} on a legacy hostname) to the migrated D11 entity, resolved by the ADR 017 composite key (field_legacy_site + field_legacy_nid). See ADR 016 and docs/deferred/legacy-url-host-aware-redirect-mechanism.md (#316).'
+package: Mandala
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - group:group

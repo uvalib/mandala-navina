@@ -1,0 +1,17 @@
+canonical_base_url: 'https://mandala.library.virginia.edu'
+hosts:
+  -
+    host: av.mandala.library.virginia.edu
+    site: audio-video
+  -
+    host: images.mandala.library.virginia.edu
+    site: images
+  -
+    host: sources.mandala.library.virginia.edu
+    site: sources
+  -
+    host: texts.mandala.library.virginia.edu
+    site: texts
+  -
+    host: visuals.mandala.library.virginia.edu
+    site: visuals
