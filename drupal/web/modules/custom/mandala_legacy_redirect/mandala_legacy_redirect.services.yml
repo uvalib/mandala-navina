@@ -1,0 +1,9 @@
+services:
+  mandala_legacy_redirect.subscriber:
+    class: Drupal\mandala_legacy_redirect\EventSubscriber\LegacyHostRedirectSubscriber
+    arguments: ['@config.factory', '@entity_type.manager', '@logger.channel.mandala_legacy_redirect']
+    tags:
+      - { name: event_subscriber }
+  logger.channel.mandala_legacy_redirect:
+    parent: logger.channel_base
+    arguments: ['mandala_legacy_redirect']

@@ -43,6 +43,7 @@ module:
   mandala_home: 0
   mandala_kaltura: 0
   mandala_kmassets_sync: 0
+  mandala_legacy_redirect: 0
   mandala_migrations: 0
   mandala_node_api: 0
   mandala_saml_oauth: 0
