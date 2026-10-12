@@ -2,7 +2,7 @@
 
 **Area:** URL structure / migration / deployment / ADR 016
 **Raised during:** Session 2026-10-12 (Than, Yuji)
-**Issue:** none
+**Issue:** #316
 **Priority:** High — blocks [ADR 016](../adr/016-public-url-structure-single-host.md) acceptance; ADR 016 itself says this must be settled **before the next collection migrates** (Texts/Sources/AV are next per [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md))
 
 ## Context
