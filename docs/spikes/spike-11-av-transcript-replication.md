@@ -506,9 +506,16 @@ to carry the facet):
   with synthetic data, but only after two fixes the prototype found: `is_trid` must be an int
   (not long) to match kmassets' `trid_i`, and joining into a Point field needs docValues on
   `trid_i` (or `is_trid` as a Trie field). **DECIDED 2026-10-07 (Yuji, with Xiaoming and Than): add
-  docValues to kmassets `trid_i`**, keep `is_trid` a Point int. **Still open for question 6:** whether the
-  deployed kmassets `trid_i` already has docValues (check on dev-0; if so, no change), the proxy change and the kmassets `trid_i` writer (**owner of both: Yuji, decided 2026-10-07**), join cost at real scale,
-  and creating the core on dev.
+  docValues to kmassets `trid_i`**, keep `is_trid` a Point int. **Answered 2026-10-12 ([#291](https://github.com/uvalib/mandala-navina/issues/291)):
+  the deployed kmassets `trid_i` has no docValues, so the schema change is needed.** It matches the
+  `*_i` dynamic rule, `int` = `TrieIntField precisionStep="0"`, indexed and stored (read from the
+  staging master's schema API; `solr-shanti-configsets` `solr7.3.x/{staging,production}/kmassets`
+  agrees). The fix is one explicit field with `docValues="true"`, tracked in
+  [#321](https://github.com/uvalib/mandala-navina/issues/321). No D11 AV document carries `trid_i`
+  (0 of 11,582), so the writer needs no reindex; about 5,300 legacy-form documents on the dev
+  replica do carry it and would not gain docValues without one. **Still open for question 6:** the
+  proxy change (PR #315, offline-checked only) and the kmassets `trid_i` writer (**owner of both:
+  Yuji, decided 2026-10-07**), join cost at real scale, and creating the core on dev.
 7. **React viewer. DECIDED 2026-10-02 (Yuji and Than): the current React client must remain
    viable.** Its UI is still not part of this spike's build, but D11 must keep the
    `mandala-av` index (or an equivalent the client can be pointed at through
