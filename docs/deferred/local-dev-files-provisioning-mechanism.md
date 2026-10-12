@@ -1,4 +1,4 @@
-# No mechanism populates local `sites/default/files` binaries -- needs a team decision
+# No mechanism populated local `sites/default/files` binaries -- resolved
 
 **Area:** local dev environment / DX / infrastructure
 **Raised during:** Session 2026-09-23 (diagnosing 4 blank Mandala Home carousel
@@ -6,10 +6,10 @@ slides on Xiaoming's DDEV; see
 [collection-featured-images-missing-on-production.md](collection-featured-images-missing-on-production.md)
 for the incident this generalizes from)
 **Issue:** #298
-**Priority:** Medium-High -- cosmetic today (default-thumbnail/blank-image
-fallbacks mean nothing is functionally broken), but confirmed to independently
-affect every developer's local environment, and gets worse as more
-file-referencing features (like the carousel) get built.
+**Priority:** Low -- all four open questions are resolved (mechanism:
+`stage_file_proxy`, automatic and lazy; scope: on-demand `--field` pre-fetch,
+2026-10-12). Cosmetic even when it recurs (default-thumbnail/blank-image
+fallbacks mean nothing is functionally broken).
 
 ## The gap
 
@@ -206,15 +206,9 @@ the fields features render) and the trigger question stay open until that trial.
 
 ## Open questions for the team (not decided, not started)
 
-1. **Does local dev need full file-binary parity at all?** Per
-   [images-field-image-binary-migration.md](images-field-image-binary-migration.md),
-   only 0.5% of `shanti_image` nodes even carry a local `field_image` by
-   design -- display is IIIF-driven, not local-file-driven, for the vast
-   majority of Images content. The real functional need may be much narrower
-   than "sync everything" -- e.g., only the fields actual features render
-   locally (like the carousel's slide images), not the full historical
-   corpus. Scoping this down could make the fix far cheaper than it looks
-   from the raw 99.8% number.
+1. ~~Does local dev need full file-binary parity at all?~~ **Answered below
+   (2026-10-12): neither full parity nor relying solely on stage_file_proxy's
+   lazy fetch -- on-demand, scoped bulk pre-fetch via a new `--field` filter.**
 2. ~~What should the canonical source be, if not D7 production?~~ **Answered
    above (2026-09-23): dev-0, confirmed complete for the affected fields.**
 3. ~~On-demand script, or automatic?~~ **Answered below (2026-10-09):**
@@ -271,20 +265,61 @@ upload widget, migrations, and Drush uniformly, since all of them save a
 `file` entity. Covered by
 `tests/src/Kernel/FilenameNormalizationTest.php`.
 
-**Not done, needs explicit sign-off before running (shared infrastructure):**
-dev-0's *existing* NFD-named files were not renamed. Written up separately as
-its own deferred note, since it's a distinct decision (whether/when/how to
-touch dev-0's filesystem) from this one (which sync mechanism to use):
+**dev-0's existing NFD-named files**, a distinct decision (whether/when/how
+to touch dev-0's filesystem) from this one, is tracked separately and is now
+fully resolved and executed -- see
 [dev0-unicode-filenames-need-nfc-normalization.md](dev0-unicode-filenames-need-nfc-normalization.md).
+
+## Scoped `--field` pre-fetch (2026-10-12) -- resolves question 1
+
+Decided 2026-10-12 (Than Grove, Yuji Shinozaki): **neither full-corpus parity
+nor relying solely on `stage_file_proxy`'s one-file-at-a-time lazy fetch.**
+Added a `--field` option to `mandala:missing-file-audit` (comma-separated
+field names, or `entity_type.field_name` to disambiguate) so a developer can
+pre-fetch exactly the field(s) they're about to work with in bulk, on demand
+-- e.g. `drush mandala:missing-file-audit --field=field_transcript --fix`
+before starting AV transcript work -- without paying for the full ~8,400-file
+corpus (Option A) or hitting cold, one-at-a-time latency the first time a
+whole category is touched (relying on Option B alone).
+
+Reuses every already-proven piece of the command unchanged (dev-0-first
+`findRemoteSource()`, byte-verified `restoreFile()`); the only new logic is
+field discovery scoping (`filterFields()`) and a corresponding fid-level
+scope for which files are actually checked and fixed (`referencedFids()`),
+so `--field` narrows both the report *and* what `--fix` touches, not just
+the usage labels in the output.
+
+**Verified live in DDEV, 2026-10-12** (full corpus clean going in, 8,447/8,447):
+- `--field=bogus_field_xyz` -- warns the field doesn't exist, audits nothing
+  (confirms a typo can't silently look like "no missing files").
+- Removed a real, referenced transcript (`t987.xml`, fid 8) and a real,
+  referenced featured image (`Tanimbar map from Shattered Sun.jpg`, fid 161)
+  simultaneously. `--field=field_transcript` reported only fid 8; separately,
+  `--field=group.field_featured_image` reported only fid 161 -- each scope
+  correctly excluded the other's gap.
+- `--field=field_transcript --fix` restored only fid 8 (confirmed via an
+  unscoped follow-up run: fid 161 still missing, fid 8 no longer listed) --
+  proving `--fix` under a field scope does not touch files outside it.
+- An orphaned `file_managed` row with no field reference at all (hit
+  incidentally during testing) is correctly excluded from every field-scoped
+  run, since it is referenced by nothing -- matching the intent: `--field`
+  restores what the named field references, not a broader "anything missing"
+  sweep.
+- Unscoped behavior (`drush mandala:missing-file-audit`, `--fix` with no
+  `--field`) is unchanged -- confirmed via before/after full-corpus runs.
+
+This does not change `stage_file_proxy`'s role: it remains the lazy safety
+net for anything not explicitly pre-fetched. `--field` is the escape hatch
+for "I know I need a whole category right now."
 
 ## Not yet done
 
-- **dev-0 NFD-to-NFC filename rename** -- see
-  [dev0-unicode-filenames-need-nfc-normalization.md](dev0-unicode-filenames-need-nfc-normalization.md),
-  needs a dry run and explicit go-ahead, not yet scheduled.
-- Question 1 (full parity vs. narrower scope) is still open -- orthogonal to
-  the mechanism decision above, since stage_file_proxy fetches whatever is
-  requested regardless of how much of the corpus that turns out to be.
-- The tool works and is validated, but **has not been run with `--fix`**
-  against Xiaoming's full ~8,400-file backlog -- deliberately deferred
-  pending the team's call on scope (question 1), not a forgotten step.
+- No standing trigger pulls a developer to run `--field` before starting a
+  task that needs a given field's files -- this is deliberately a manual,
+  developer-initiated step (documented in the command's own `--field`
+  description and `--usage` examples), not wired into `session-start-check.sh`
+  or `ddev start`. If this proves to need prompting in practice, that is a
+  separate, smaller follow-up.
+- The full-corpus `--fix` path (Option A) remains available
+  (`drush mandala:missing-file-audit --fix`, no `--field`) for anyone who
+  wants it, but is not recommended as the default per this decision.
