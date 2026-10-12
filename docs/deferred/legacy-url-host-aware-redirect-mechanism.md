@@ -3,7 +3,7 @@
 **Area:** URL structure / migration / deployment / ADR 016
 **Raised during:** Session 2026-10-12 (Than, Yuji)
 **Issue:** #316
-**Status:** Option 2 (host-aware request subscriber) chosen 2026-10-12 by Yuji; precondition verified live. Implementation not started.
+**Status:** Option 2 (host-aware request subscriber) chosen 2026-10-12 by Yuji; precondition verified live. Implemented in `mandala_legacy_redirect` (PR #319, merged and deployed to dev-0 2026-10-12; verified live there). Still open: public-edge `Host` recheck at cutover; `/images/{nid}` canonical routes (redirects target the alias until they exist); group lookup untested.
 **Priority:** High — [ADR 016](../adr/016-public-url-structure-single-host.md) is now Accepted (2026-10-12); the subscriber must be built **before the next collection migrates** (Texts/Sources/AV are next per [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md))
 
 ## Context
