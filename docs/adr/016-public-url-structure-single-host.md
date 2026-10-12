@@ -2,7 +2,7 @@
 
 **Status:** Proposed
 **Date:** 2026-08-25 (proposed)
-**Deciders:** Yuji Shinozaki (Lead Architect) — path grammar and redirect layer decided 2026-08-25; three items open below
+**Deciders:** Yuji Shinozaki (Lead Architect) — path grammar and redirect layer decided 2026-08-25; three items open below (item 2 decided 2026-10-12 by Than Grove and Yuji Shinozaki; items 1 and 3 remain open)
 **Corrected by:** Than Grove (2026-08-25) — real D7 URL forms; see the correction note under decision 2
 **Relates to:** [ADR 005](005-single-site.md) (single-site redesign), [ADR 008](008-mvp-migrate-not-improve.md) (migrate, not improve), [ADR 010](010-adr-008-scope-clarification.md) (scope clarification), [ADR 013](013-drupal-source-of-truth-solr-client-compatibility.md) (Drupal is source of truth; client compatibility is active)
 **Implements:** ADR 005's stated consequence — *"URL paths for each collection must be designed to preserve existing external links where possible (e.g. `/texts/...`, `/images/...`)"*
@@ -212,24 +212,29 @@ populating it during the migration that creates the rows.
 ## Open — must be resolved before this ADR is Accepted
 
 1. **How host-awareness is implemented.** *That* it is required is settled above — the
-   legacy host carries half the identity. What is open is the mechanism, since Drupal's
-   `redirect` module matches on path, not host: have the edge tag each legacy host onto a
-   distinct internal prefix that Drupal then translates, or use a host-aware request
-   subscriber. Paired with this: bundle-scoped lookup vs a new `field_legacy_site`, which
-   must be decided **before the next collection migrates**.
+   legacy host carries half the identity. The discriminator half of this question is
+   now settled by [ADR 017](017-legacy-identity-composite-key.md) (accepted 2026-09-02):
+   `field_legacy_site` + `field_legacy_nid`, not a bundle-scoped lookup. What remains open
+   is the mechanism for getting host context into that lookup before the translation runs
+   — have the edge tag each legacy host onto a distinct internal prefix that Drupal then
+   translates, or use a host-aware request subscriber. Written up in detail, with both
+   options sketched, in
+   [`legacy-url-host-aware-redirect-mechanism.md`](../deferred/legacy-url-host-aware-redirect-mechanism.md)
+   ([issue #316](https://github.com/uvalib/mandala-navina/issues/316), assigned Yuji) —
+   still must be decided **before the next collection migrates**.
 2. **Which path is *canonical* in D11 — the preserved D7 alias, or `/images/{nid}`?**
-   Decision 7 settles that legacy paths must **resolve**; it does not settle which path
-   D11 *generates* when it renders a link, emits `url_html`, or canonicalises for search
-   engines. Both can coexist (Drupal routinely serves a node at its alias and its
-   `/node/{nid}`), so this is not a conflict — but leaving it unstated means different
-   subsystems will pick differently. Note decision 2's `/images/{nid}` departs from the
-   D7 alias shape on **both** axes (plural vs singular, id vs slug), and that D7 itself
-   served both its forms without redirecting one to the other — so "which is canonical"
-   is a genuinely new choice, not an inherited one. It also interacts with open item 3:
-   whatever D11 emits as `url_html` is what `MandalaMarkup.js` will reverse-look-up.
+   **Decided 2026-10-12 (Than Grove, Yuji Shinozaki): the content-type + nid form,
+   `/images/{nid}` (and its siblings `/texts/{nid}`, `/sources/{nid}`, `/audio/{nid}`,
+   `/video/{nid}`), is canonical.** This is what D11 generates for links, emits as
+   `url_html`, and canonicalises for search engines. The preserved D7 alias continues to
+   *resolve* per decision 7, but is not what the application generates going forward. This
+   directly feeds open item 3 below: `MandalaMarkup.js`'s reverse lookup must be built
+   against this form.
 3. **`mandala-om` coordination on `url_html`.** Per ADR 013 this is an active
    compatibility requirement, not a courtesy. Needs Than, and needs to cover the
-   `MandalaMarkup.js` reverse lookup as well as the forward links.
+   `MandalaMarkup.js` reverse lookup as well as the forward links — now scoped by item 2's
+   decision above: the reverse lookup (`q: url_html:"…"`) needs to match the
+   `/images/{nid}`-style canonical form, not the D7 alias.
 
 ## Consequences
 
