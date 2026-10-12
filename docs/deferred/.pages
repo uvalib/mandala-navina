@@ -1,6 +1,7 @@
 title: Deferred Work
 nav:
   - Overview: README.md
+  - "Legacy URL host-aware redirect mechanism (ADR 016 open item 1)": legacy-url-host-aware-redirect-mechanism.md
   - "Group entity editing unwired (no edit permission, parent field hidden)": group-entity-editing-unwired.md
   - KMaps widget UX: kmaps-widget-ux.md
   - "Group nesting approach": group-subgroup-nesting-approach.md
