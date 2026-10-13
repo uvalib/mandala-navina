@@ -19,13 +19,14 @@
 
 - **Done:** #321 closed; #325 merged; configsets PR #32 merged.
 - **Open, new:** [mandala_drupal_docker#26](https://github.com/shanti-uva/mandala_drupal_docker/issues/26) (assigned to Yuji; needs input from Dave and Than).
-- **Not filed:** recurring `ArrayIndexOutOfBoundsException: Index -100` errors on the production replica's `kmterms` core (297 since 2026-09-29, still occurring). Unrelated to this change; cause not investigated. Candidate low-priority issue.
+- **Filed later the same day:** the recurring `ArrayIndexOutOfBoundsException: Index -100` errors on the production replica's `kmterms` core (297 since 2026-09-29, still occurring) are [mandala_drupal_docker#27](https://github.com/shanti-uva/mandala_drupal_docker/issues/27). Unrelated to this change; cause not investigated.
 - **Unchanged:** about 5,337 existing documents still have no docValues for `trid_i` until rewritten (belongs with the writer, #290a). PR #315 stays a draft, blocked on a transcript core on dev Solr.
 - **Not done:** `./scripts/update-db-from-remote.sh dev` (local DB rebase); `simplesamlphp_auth.settings` showing Different on dev-0 (noted 2026-10-12, not investigated).
 
 ## Pick up next
 
-1. Decide who owns mandala_drupal_docker#26 and whether the legacy sync should be revived before cutover or replaced by the D11 writer. Restarting it naively would push on the order of 120k files at once.
-2. #290(a): build T2 (transcript entity) first, then the `trid_i` writer; create the transcript core on dev Solr and verify #315 end to end.
-3. Decide whether to file the `kmterms` error issue.
-4. #316 leftovers (group lookup test, cutover `Host` recheck); #300 unassigned pickup.
+1. **First: draft the Spike 11 close-out** as a PR for Than to review (he leads the spike; do not mark it Done without him). Contents: the final recommendation and implementation sketch, the migration strategy, and updated status in the spike doc, `docs/spikes/README.md` and Sprint 4; leftovers stay as the existing deferred notes (analyzer tiers, transcript file accounting, bad timecodes). This is Sprint 4 task T1. Sequence behind it: T2 transcript entity; the transcript core on dev ([#327](https://github.com/uvalib/mandala-navina/issues/327), assigned to Yuji) and the PR #315 end-to-end check, which need only the schema; then T3, T9 (#290a writer), T5, T6, T7, T8.
+2. Decide who owns mandala_drupal_docker#26 and whether the legacy sync should be revived before cutover or replaced by the D11 writer. Restarting it naively would push on the order of 120k files at once.
+3. #290(a): build T2 (transcript entity) first, then the `trid_i` writer; create the transcript core on dev Solr and verify #315 end to end.
+4. `kmterms` errors are filed as [mandala_drupal_docker#27](https://github.com/shanti-uva/mandala_drupal_docker/issues/27) (assigned to Yuji); cause still unknown.
+5. #316 leftovers (group lookup test, cutover `Host` recheck); #300 unassigned pickup.
