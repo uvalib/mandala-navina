@@ -3,7 +3,16 @@
 **Area:** migration / DX / tooling
 **Raised during:** Session 2026-07-17 (first live `migrate:import` on dev-0, against the newly-loaded `mandala_d7_images`/`mandala_d7_shared` staging-RDS source — see `d11-dev-database-bootstrap-and-migration-source.md`)
 **Jira:** (add when available)
-**Priority:** Medium — not a correctness bug, but blocks a full `--group` run every time the known `d7_images_collection_memberships` partial failure occurs, which is every run until the user migration is unblocked
+**Priority:** Medium — not a correctness bug. **Update 2026-10-13:** the specific trigger
+described below (`d7_images_collection_memberships` failing because the user migration hadn't
+landed) no longer applies — the user migration completed on dev-0 on 2026-08-12 (see
+[user-migration-run-on-dev0.md](user-migration-run-on-dev0.md)), so that migration should no
+longer produce the 210 failed rows this note documents. **Not independently re-verified by
+running a fresh `--group` import.** The underlying defect this note is really about —
+`migrate_tools`' `--group` runner aborting the entire remaining sequence on *any* migration's
+partial failure, regardless of cause — is untouched by that and will recur the moment any future
+migration (Texts, Sources, or a future Images re-run) has its own legitimate partial failure. The
+three-option recommendation below was never decided and no related code change has landed since.
 
 ## Observation
 
