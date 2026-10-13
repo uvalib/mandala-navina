@@ -25,7 +25,17 @@ the whole Solr home and do **not** reload cores.
   files by replication (`confFiles` in `solrconfig.xml`), but only together with
   an index fetch. A config push does not change the master's index version, so
   the replica sits on the old schema until the master's index next changes
-  (a commit that writes something). Confirmed on staging 2026-10-13.
+  (a commit that writes something). Confirmed on staging and production
+  2026-10-13.
+- **A commit that changes nothing does not count.** A `deleteByQuery` that
+  matches no document, plus commit, leaves the generation where it was. An
+  add and delete of a throwaway document in one update request does move it
+  (see Deploy, step 5).
+- **Check that the index is receiving writes at all.** On 2026-10-13 the newest
+  production `kmassets` document was dated 2025-08-11: the D7 to S3 listener is
+  not running ([mandala_drupal_docker#26](https://github.com/shanti-uva/mandala_drupal_docker/issues/26)).
+  So "wait for the next write" or "resave a node in D7" does not work there;
+  trigger the write yourself.
 - **The replica core reloads itself when the config arrives.** A bad schema can
   therefore take the replica down; verify on the master first.
 - **`docValues` change on an existing field applies to new writes only.**
@@ -68,33 +78,34 @@ the whole Solr home and do **not** reload cores.
 
 ## Baseline (take before, repeat after, diff)
 
-Set `C` to the core URL, e.g.
-`C=http://mandala-solr-master-production-private.internal.lib.virginia.edu:8080/solr/kmassets`.
-Run against the master directly, and against the replica over SSH.
+Use `scripts/kmassets-baseline.py`. It records core status (counts, segments,
+`startTime`, index version), replication state, the field's schema attributes,
+a hash of the `uid,trid_i` list, and the hash of each canary query's response.
+It is read-only.
 
 ```bash
-# Index health and reload marker (startTime moves when the core reloads)
-curl -s "${C%/kmassets}/admin/cores?action=STATUS&core=kmassets&wt=json" |
-  python3 -I -c "import json,sys;s=json.load(sys.stdin)['status']['kmassets'];i=s['index'];print(s['startTime'],i['numDocs'],i['maxDoc'],i['deletedDocs'],i['version'],i['segmentCount'])"
-
-# Totals and facets
-curl -s -G "$C/select" --data-urlencode 'q=*:*' --data-urlencode rows=0 \
-  --data-urlencode facet=true --data-urlencode facet.field=asset_type \
-  --data-urlencode facet.field=service --data-urlencode wt=json
-
-# The data itself: every uid with the field, in a fixed order, hashed
-curl -s -G "$C/select" --data-urlencode 'q=trid_i:[* TO *]' \
-  --data-urlencode 'fl=uid,trid_i' --data-urlencode 'sort=uid asc' \
-  --data-urlencode rows=20000 --data-urlencode wt=csv > trid_baseline.csv
-wc -l trid_baseline.csv; shasum -a 256 trid_baseline.csv
+C=http://mandala-solr-master-production-private.internal.lib.virginia.edu:8080/solr/kmassets
+scripts/kmassets-baseline.py take prod-master-before $C > prod-master-before.json
+# replica: curl runs on the SSH target, so the VPC-only host name resolves
+scripts/kmassets-baseline.py take prod-replica-before \
+  http://mandala-solr-replica-production.private.production:8080/solr/kmassets \
+  "$(whoami)@mandala-drupal-0.internal.lib.virginia.edu" > prod-replica-before.json
+# repeat as "...-after" once the replica has followed, then:
+scripts/kmassets-baseline.py diff prod-master-before.json prod-master-after.json
 ```
 
-Add 5 to 10 **canary queries** that stand for real traffic (take them from the
-replica's request log), each with `sort=uid asc&fl=uid&rows=100`, and save a
-hash of each result.
+Take two baselines a few minutes apart first, so you know whether the index
+drifts on its own (production did not on 2026-10-13). The diff should show only
+the expected differences listed under Verify. The canaries in the script are the
+ones used for `trid_i`; replace them with queries for the field you are
+changing.
 
-Production baseline taken 2026-10-13, for orientation only (the numbers move
-as D7 writes): 557,483 docs, 5,337 with `trid_i`, core `startTime`
+The canary queries should stand for real traffic (take them from the replica's
+request log): text lookups, grouped lookups, a page of results that includes
+the field, and a facets/stats query. Use `sort=uid asc&fl=uid&rows=100` so the
+result order is stable.
+
+Production baseline taken 2026-10-13, for orientation only: 557,483 docs, 5,337 with `trid_i`, core `startTime`
 2026-09-26T12:25:03Z, `numDocs` 557,483, `maxDoc` 809,293, `deletedDocs`
 251,810, 19 segments, index size about 1.59 GB. Facets by `service`: images
 111,499, sources 28,461, audio-video 11,757, texts 5,440, visuals 960,
@@ -109,17 +120,27 @@ mandala 67.
    harmless but production, so announce it).
 4. **Verify the master** (section below) before touching the replica.
 5. **Get the replica to follow.** Cause one index change on the master and let
-   replication carry `conf/`. For `kmassets` use a one-node re-index from the
-   Drupal host that owns the documents:
+   replication carry `conf/`. Add and delete a throwaway document in a single
+   update request with a single commit (run it from any host that can reach the
+   master; on production the legacy host `mandala-drupal-0` works):
    ```bash
-   ssh <you>@mandala-drupal-dev-0.internal.lib.virginia.edu \
-     "sudo docker exec mandala-drupal-0 sh -c 'cd /opt/drupal/app/drupal && vendor/bin/drush kmassets:index <nid>'"
+   MASTER=http://mandala-solr-master-production-private.internal.lib.virginia.edu:8080
+   P=zz-noop-probe-$(date -u +%Y%m%d%H%M%S)
+   curl -s -m 60 -H 'Content-Type: application/json' \
+     "$MASTER/solr/kmassets/update?commit=true&wt=json" \
+     -d "{\"add\":{\"doc\":{\"uid\":\"$P\",\"id\":\"$P\",\"ids\":[\"$P\"]}},\"delete\":{\"id\":\"$P\"}}"
    ```
-   Pick a **D11 document** (`uid` like `audio-video-11-<nid>`), never a legacy
-   document, so legacy stored values stay untouched. On staging this took about
-   30 seconds from the index write to the replica showing the new schema. The
-   re-index changes only `_version_`, `timestamp` and `solrdoc_ts_i` on that
-   document.
+   `id`, `ids` and `uid` are required by the schema; `uid` is the unique key.
+   Check `replication?command=details` on the master: the generation and index
+   version must have moved, and `numFound` must be unchanged. The probe is never
+   visible to searches. The replica followed in about 25 seconds on staging and
+   15 seconds on production. This is a write to production Solr: announce it
+   and get approval first.
+
+   An alternative on staging is a one-node re-index from dev-0
+   (`drush kmassets:index <nid>` for a D11 document, never a legacy one). It
+   changes only `_version_`, `timestamp` and `solrdoc_ts_i` on that document,
+   but needs the D11 writer host, which production does not have.
 6. Verify the replica.
 
 ## Verify
@@ -129,8 +150,8 @@ Repeat the baseline and compare.
 - **Must not change:** total and per-facet counts, `numDocs`, the hash of the
   `uid,trid_i` list, the canary hashes. Index size and segment count may drift
   slightly with normal merges.
-- **May change:** `_version_`, `timestamp`, index version and generation (the
-  one-node re-index), and `field(trid_i)` returning 0 for documents that have
+- **May change:** index version, generation and replication timestamps (the
+  probe), index size by a few bytes, core `startTime` (the reload), and `field(trid_i)` returning 0 for documents that have
   no docValues yet.
 - **Config:** re-run the live-vs-repo diff of every `conf/` file on master and
   replica; the only difference from before is your change.
@@ -138,7 +159,13 @@ Repeat the baseline and compare.
 - **Replication:** `replication?command=details` on the replica shows the same
   generation as the master, polling enabled, and `timesFailed` not growing.
 - **Errors:** search the replica CloudWatch group for `ERROR`/`WARN` since the
-  deploy time, and compare `QTime` for the canaries before and after.
+  deploy time, and compare `QTime` for the canaries before and after. Expect
+  background noise: on 2026-10-13 the replica logged two `solrconfig.xml`
+  warnings at every reload (`Multiple defaults for : requestHandler`,
+  `masterUrl must be specified without the /replication suffix`) and recurring
+  `kmterms` errors unrelated to `kmassets`. Compare with the 14 days before.
+  Logs Insights results can contain raw control characters; parse them with
+  `json.loads(..., strict=False)`.
 
 ## Rollback
 
@@ -153,7 +180,7 @@ config revert, not a data repair.
    redeploy the commit before the merge (`18fd04d`). Git is the restore point.
 3. **Run the same TeamCity job** against the same environment and reload the
    master core.
-4. **Get the replica to follow:** one more one-node re-index (step 5 above). If
+4. **Get the replica to follow:** one more probe write (Deploy, step 5). If
    the replica core is down or will not accept the config, deploy to the
    replica directly instead of waiting.
 5. **Verify with the baseline.**
@@ -172,6 +199,13 @@ and is an AWS action for Yuji or Dave to approve.
   `docValues: true` immediately. The replica did not until a one-node re-index
   of `audio-video-11-111341` moved the master from generation 329701 to 329702,
   after which the replica matched in about 30 s. All 62 replica `conf/` files
-  matched the master's.
-- **Production:** not yet deployed. Live production master and replica `conf/`
-  were identical to the repo before the change (checked 2026-10-13).
+  matched the master's. A no-match `deleteByQuery` left the generation at
+  329702; an add-and-delete probe moved it to 329703 and the replica followed
+  in about 25 s.
+- **2026-10-13, production:** deployed `trid_i` docValues. Master core reloaded
+  (`startTime` moved), `docValues: true`. The replica followed after an
+  add-and-delete probe from the legacy host (master generation 21229 to 21230,
+  replica matched within about 15 s). Baseline before and after, master and
+  replica: counts, the `uid,trid_i` hash (5,337 pairs) and 9 canary hashes
+  unchanged; 62 replica `conf/` files identical to the master and the repo; no
+  new `kmassets` errors. No rollback. Pre-change config commit: `18fd04d`.
