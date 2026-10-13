@@ -511,7 +511,11 @@ to carry the facet):
   `*_i` dynamic rule, `int` = `TrieIntField precisionStep="0"`, indexed and stored (read from the
   staging master's schema API; `solr-shanti-configsets` `solr7.3.x/{staging,production}/kmassets`
   agrees). The fix is one explicit field with `docValues="true"`, tracked in
-  [#321](https://github.com/uvalib/mandala-navina/issues/321). No D11 AV document carries `trid_i`
+  [#321](https://github.com/uvalib/mandala-navina/issues/321). **Deployed 2026-10-13 to staging
+  and production (master and replica), verified unchanged by before/after baselines; #321 closed.**
+  Existing documents do not gain docValues until rewritten. See the
+  [session log](../session-logs/2026-10-13-kmassets-trid-docvalues-deploy-and-stale-production-index.md)
+  and the [runbook](../dev-notes/howto-deploy-kmassets-schema-change.md). No D11 AV document carries `trid_i`
   (0 of 11,582), so the writer needs no reindex; about 5,300 legacy-form documents on the dev
   replica do carry it and would not gain docValues without one. **Still open for question 6:** the
   proxy change (PR #315, offline-checked only) and the kmassets `trid_i` writer (**owner of both:
