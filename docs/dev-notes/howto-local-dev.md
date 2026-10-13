@@ -1,7 +1,7 @@
 # How-To: Local development with DDEV
 
 **Audience:** developers working in the monorepo
-**Last reviewed:** 2026-06-17
+**Last reviewed:** 2026-10-13
 
 ## Goal
 
@@ -88,6 +88,26 @@ Drupal config is tracked in git under `drupal/config/sync/`. The loop is:
 2. Export them: `ddev drush cex`.
 3. Review and commit the resulting diff in `drupal/config/sync/`.
 4. Teammates pull and run `ddev drush cim` to apply.
+
+## Local content vs. dev-0: divergence is expected
+
+Your local DB's *content* (nodes, groups, memberships, users you create while
+testing) is expected to diverge from dev-0 over time — that's just what
+exercising the site locally looks like, and it is **not** something to flag
+or clean up on its own. `session-start-check.sh` reports this as informational
+only, not a failure. *Config* is different: `ddev drush config:status` and
+`drupal/config/sync` matching `origin/main` remain hard gates, since config is
+the shared contract everyone deploys from.
+
+When **you** want your own local content back in line with dev-0, run:
+
+```bash
+./scripts/update-db-from-remote.sh dev
+```
+
+This is destructive (replaces your local DB with dev-0's), so `ddev snapshot`
+first if you have local-only content worth keeping. There's no team-wide
+obligation to run this — it's there for whenever an individual wants it.
 
 ## Verify
 

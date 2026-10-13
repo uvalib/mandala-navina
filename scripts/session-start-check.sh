@@ -4,9 +4,14 @@
 #
 # Implements CLAUDE.md's "Session startup" steps 1 and 3:
 #   1. git sync (status + pull --ff-only, stop if it doesn't fast-forward)
-#   3. local DDEV DB/config vs dev-0 parity (config:status, content/identity
-#      counts, config/sync pushed to GitHub, and an advisory spot-check for
-#      D11 id drift between environments -- see step 3d's own comment)
+#   3. local DDEV DB/config vs dev-0 parity: config:status and config/sync
+#      pushed to GitHub are gates; content/identity counts (3b) and the D11
+#      id spot-check (3d) are informational only -- local content is
+#      EXPECTED to diverge from dev-0 (test collections, draft nodes, etc.
+#      from exercising the site locally), so a nonzero diff there is not a
+#      failure to fix, just context. `update-db-from-remote.sh dev` is the
+#      on-demand resync anyone can run when THEY want their local content
+#      back in line with dev-0 -- there's no team-wide obligation to.
 #
 # Step 2 (reading docs/adr, docs/spikes, docs/deferred, docs/session-logs)
 # is a judgment task -- this script only prints pointers to make that faster
@@ -136,8 +141,15 @@ else
 fi
 echo
 
-# ── 3b. Local vs dev-0 content/identity counts ─────────────────────────────
-echo "=== 3b. Local vs dev-0 content/identity counts ==="
+# ── 3b. Local vs dev-0 content/identity counts (informational, not a gate) ──
+#        Local content is EXPECTED to diverge from dev-0 -- exercising the
+#        site locally means creating test groups, draft nodes, memberships,
+#        etc. A diff here is not drift to fix; skim it for something that
+#        would actually block today's task, or for content you recognize as
+#        real tracked work-in-progress (see CLAUDE.md step 3.2 for the
+#        policy and an example). Run update-db-from-remote.sh dev yourself,
+#        whenever you personally want to resync -- not because this prints.
+echo "=== 3b. Local vs dev-0 content/identity counts (informational) ==="
 
 # Single source of truth for the comparison query -- used against BOTH
 # environments so the two sides are guaranteed to be asking the same
@@ -193,10 +205,11 @@ else
       pass "local counts match dev-0 exactly:"
       echo "$LOCAL_COUNTS" | sed 's/^/  /'
     else
-      fail "local counts DIFFER from dev-0 (< local / > dev-0):"
+      echo "NOTE: local counts differ from dev-0 (< local / > dev-0) -- expected, not a failure:"
       echo "$DIFF_OUT" | sed 's/^/  /'
-      echo "  -> if local is behind, run: ./scripts/update-db-from-remote.sh dev"
-      echo "     (destructive -- snapshot first: ddev snapshot)"
+      echo "  -> skim for anything that blocks today's task or is real WIP worth following up on"
+      echo "  -> to resync your own local content to dev-0 whenever YOU want to:"
+      echo "     ./scripts/update-db-from-remote.sh dev (destructive -- snapshot first: ddev snapshot)"
     fi
   fi
   rm -f "$DEV0_ERR"
