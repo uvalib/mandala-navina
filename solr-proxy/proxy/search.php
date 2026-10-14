@@ -18,7 +18,7 @@ if (array_key_exists($path,$SOLR_URLS)) {
 // handle unknown path with a 404
 if ($SOLR_URL) {
     // Instantiate the Searcher class (Checks and loads session etc.)
-    $searcher = new Searcher(3600, false, $SOLR_URL);
+    $searcher = new Searcher(3600, false, $SOLR_URL, $JOIN_ACCESS[$path] ?? null);
 
     // Performs the actual search and handles the response
     $searcher->searchAPI();

@@ -27,9 +27,14 @@ class Searcher {
     public ?string $visibilityFq = null;
     public bool $echoParams = false;
     public bool $debug = false;
+    // Solr join local-params body (e.g. "from=trid_i to=is_trid fromIndex=kmassets") for cores
+    // whose documents have no visibility fields and inherit access from another core. NULL for
+    // kmassets/kmterms. See setVisibility().
+    public ?string $joinAccess = null;
     private ?\Redis $redis = null;
 
-    function __construct($slen = 3600, $dbug = false, $solr_url = null) {
+    function __construct($slen = 3600, $dbug = false, $solr_url = null, $join_access = null) {
+        $this->joinAccess = $join_access ?: null;
         $this->session_length = $slen;
         $this->debug = $dbug;
         $this->solrurl = $solr_url ?? 'https://fox.shanti.virginia.edu/cloud/solr/kmassets';
@@ -179,7 +184,7 @@ class Searcher {
             $fq = $this->getVisibilityToken();
             if ($fq !== null) {
                 $this->visibilityFq = $fq;
-                $this->params['fq'][] = $fq;
+                $this->params['fq'][] = $this->wrapJoin($fq);
                 return;
             }
             // No token in Redis (miss, or Redis down) -> fail closed to the
@@ -187,7 +192,20 @@ class Searcher {
         }
         // Anonymous users, or a logged-in user with no Redis token yet:
         // visibility must be public (1) or else asset must be a kmap.
-        $this->params['fq'][] = "(visibility_i:1%20OR%20asset_type:(places%20subjects%20terms))";
+        $this->params['fq'][] = $this->wrapJoin("(visibility_i:1%20OR%20asset_type:(places%20subjects%20terms))");
+    }
+
+    /**
+     * For a join-access core (the transcript core), turns a kmassets visibility fq into
+     * "units whose kmassets document passes it". Pre-encoded like the fq strings themselves
+     * ({ } and spaces as %7B %7D %20), because getQueryStr() concatenates them raw.
+     * Other cores get the fq unchanged.
+     */
+    public function wrapJoin(string $fq): string {
+        if ($this->joinAccess === null) {
+            return $fq;
+        }
+        return '%7B!join%20' . str_replace(' ', '%20', $this->joinAccess) . '%7D' . $fq;
     }
 
     public function endSession() {
