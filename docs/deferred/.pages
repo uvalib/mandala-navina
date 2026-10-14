@@ -135,3 +135,4 @@ nav:
   - "AV delete-Kaltura checkbox: admin session verification": av-delete-kaltura-checkbox-admin-session-verification.md
   - "dev-0 Unicode filenames needed NFC normalization (RESOLVED 2026-10-09)": dev0-unicode-filenames-need-nfc-normalization.md
   - "Production Solr kmassets not receiving D7 writes (S3 sync listener not running)": production-solr-not-receiving-d7-writes.md
+  - "solr-proxy runs on an end-of-life base image (PHP 7.4 / Debian 11)": solr-proxy-end-of-life-base-image.md
