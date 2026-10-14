@@ -1,9 +1,10 @@
 # D7 alias preservation covers only `shanti_image` — the other 68% needs a decision
 
-**Area:** migration / Images / URLs / ADR 016
+**Category:** migration-images, migration-general
 **Raised during:** Session 2026-08-25, DDEV verification of the `d7_images_url_alias` migration
 **Jira:** (add when available)
 **Priority:** Medium — collection aliases are done; the live item is a one-query check on dev-0
+**Owner:** unassigned
 
 [ADR 016](../adr/016-public-url-structure-single-host.md) decision 7 makes preserving D7's
 pathauto paths a **requirement**. The `d7_images_url_alias` migration delivers that for

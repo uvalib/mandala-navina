@@ -1,7 +1,6 @@
 # D11 asset endpoints: enforce node access uniformly, and let authenticated users fetch what they may see
 
-**Area:** `mandala_node_api` + per-site endpoint equivalents / SimpleSAMLphp + OAuth2 + Redis /
-ADR 014 / migration consistency
+**Category:** access-control, auth
 **Raised:** 2026-08-21 by Than Grove, following [Spike 6](../spikes/spike-06-api-compatibility.md)'s
 endpoint audit
 **Priority:** **High** — a required property of every asset endpoint D11 builds; the per-site
@@ -15,6 +14,7 @@ is done**: [Spike 12](../spikes/spike-12-authenticated-asset-fetch.md) (2026-09-
 direction (Redis-based `sid`→uid resolution, reusing ADR 014's shared Redis instance) but does not
 implement it — building it remains open, deliberately deferred as low-priority (see the spike's
 own recommendation).
+**Owner:** Than
 
 ## Decision and plan — 2026-08-26 (Than, confirmed with Yuji)
 

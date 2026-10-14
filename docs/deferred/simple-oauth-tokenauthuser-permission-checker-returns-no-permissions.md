@@ -1,10 +1,11 @@
 # OAuth2 tokens get zero effective permissions — the `openid` scope has no permission grant configured
 
-**Area:** simple_oauth / OAuth2 scope configuration / ADR 014 authenticated path
+**Category:** auth
 **Raised during:** Session 2026-08-19 (re-verifying the two 2026-08-18 OAuth2 defects after fixing both)
 **Jira:** (add when available)
 **Priority:** High — blocks the entire OAuth2-authenticated path (proxy UserInfo call, and by extension anything else that authenticates via a `simple_oauth` Bearer token) regardless of the two defects fixed this session
 **Status:** 🟡 The scope-permission fix itself is CONFIRMED CORRECT live on dev-0 (2026-08-19) — `TokenAuthUser->hasPermission('access content')` now YES, route access ALLOWED, both verified directly, not assumed. The live end-to-end call still failed for a **fourth** reason (a session-handling redirect loop) — **root-caused, fixed, and verified live on dev-0 2026-08-20 — the full chain now returns JSON.** Full detail in its own note: [simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md](simplesamlphp-checkauthstatus-forces-logout-oauth-and-maybe-browser.md)
+**Owner:** n/a (resolved)
 
 ## Issue
 

@@ -1,9 +1,10 @@
 # KMaps `raw` column must be rebuilt on migration, not copied
 
-**Area:** migration / KMaps / shanti_kmaps_fields
+**Category:** migration-general, solr-search
 **Raised during:** Sprint 1 (1a.7 — pattern-setting image migration)
 **Jira:** (add when available)
 **Priority:** High — applies to every site's KMaps migration, not just Images
+**Owner:** unassigned
 
 ## What we found
 

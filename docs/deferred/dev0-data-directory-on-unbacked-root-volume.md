@@ -1,11 +1,12 @@
 # dev-0's `/mnt/data` (uploaded files and deploy state) sits on the root volume, with no backup
 
-**Area:** infrastructure / terraform-infrastructure / dev-0 durability
+**Category:** infrastructure-deploy
 **Raised during:** Session 2026-10-05 (group session; checking where dev-0's files live)
 **Jira:** (add when available)
 **Priority:** Low-Medium. Read-only check of the host and terraform. Impact is limited
 because the contents turned out to be recoverable (below); this records the gap and its
 real, narrow cost.
+**Owner:** unassigned
 
 ## What was found
 

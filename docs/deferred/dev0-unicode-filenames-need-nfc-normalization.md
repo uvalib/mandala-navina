@@ -1,6 +1,6 @@
 # dev-0's existing Unicode filenames were NFD, D11 expects NFC -- resolved 2026-10-09
 
-**Area:** dev-0 infrastructure / file storage
+**Category:** infrastructure-deploy
 **Raised during:** Session 2026-10-09, while trialing `stage_file_proxy` (see
 [local-dev-files-provisioning-mechanism.md](local-dev-files-provisioning-mechanism.md)
 and issue #298)
@@ -10,6 +10,7 @@ the corpus), and only the subset whose normalization form happens to differ
 between dev-0's disk and the D11 database. Not known to be user-visible yet
 (nothing has reported a 404 in the wild), but it silently breaks any tool
 that fetches dev-0 files by exact path.
+**Owner:** n/a (resolved)
 
 ## Resolved -- 2026-10-09 (Than Grove, session with Xiaoming Wang + Yuji Shinozaki)
 

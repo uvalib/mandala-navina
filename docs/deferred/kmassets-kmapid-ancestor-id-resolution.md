@@ -1,9 +1,10 @@
 # kmapid ancestor-ID expansion needs resolved IDs the migrated field doesn't carry
 
-**Area:** solr / kmassets / KMaps / write path
+**Category:** solr-search, migration-general
 **Raised during:** Sprint 1 (1a.8 — doc-builder fixture validation)
 **Jira:** (add when available)
 **Priority:** High — affects KMaps faceting/discovery for every asset type
+**Owner:** unassigned
 
 ## What we found
 

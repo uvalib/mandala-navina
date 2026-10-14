@@ -1,8 +1,9 @@
 # load-staging-baseline.sh False "Clean Baseline" on a Non-D11 Schema
-**Area:** migration / tooling / DX / scripts
+**Category:** migration-general
 **Raised during:** Session 2026-07-07 (Sprint 1 1a.9, local rehearsal)
 **Jira:** (add when available)
 **Priority:** Medium — a real footgun; it actively misled a session
+**Owner:** unassigned
 
 ## What happened
 

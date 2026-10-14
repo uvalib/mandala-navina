@@ -1,9 +1,10 @@
 # `field_summary` was undersized (255); widened to 1024
 
-**Area:** migration / Images / paragraphs / content model
+**Category:** migration-images
 **Raised during:** Sprint 1 (1a.7 — pattern-setting image migration)
 **Jira:** (add when available)
 **Priority:** Low
+**Owner:** n/a (resolved)
 
 ## What we found
 

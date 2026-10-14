@@ -1,6 +1,6 @@
 # D11 Images has no interactive viewing surfaces — no deep-zoom viewer (RESOLVED 2026-09-01), no collection carousel, no mosaic/gallery view
 
-**Area:** Images / UI-UX / shanti_iiif / views
+**Category:** migration-images
 **Raised during:** Session 2026-08-19 — reviewing the live D7 site
 (`images.mandala.library.virginia.edu`) against the Sprint 1 acceptance criterion "Images
 render through the existing IIIF server with `i3fid` linkage intact"
@@ -13,6 +13,7 @@ audit](../planning/theme-ui-commonalities-audit.md) (2026-08-25) confirms this v
 Images-specific — it doesn't factor into the shared-base-theme question, since D7 delivered
 it as a per-site theme addition on top of a common `shanti_sarvaka` base, same as every
 other site's content-specific viewer (Kaltura for AV, etc.).
+**Owner:** unassigned
 
 ## What we found
 

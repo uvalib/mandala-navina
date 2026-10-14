@@ -1,6 +1,6 @@
 # Logging out of Drupal does not end the NetBadge IdP session (no SP-initiated SLO configured)
 
-**Area:** simplesamlphp_auth / SimpleSAMLphp SP configuration / NetBadge (Shibboleth)
+**Category:** auth, security
 **Raised during:** Session 2026-08-20 (re-rooting the "logout doesn't work" report)
 **Jira:** (add when available)
 **Priority:** Medium-High — user-visible, and it is the leading explanation for a real report
@@ -8,6 +8,7 @@ from Xiaoming. Config-only to fix, but needs one fact from UVA ITS we don't have
 **Status:** 🟡 Root cause **strongly indicated, not yet confirmed against the reported symptom** —
 identified by reading live SP config, not by reproducing Xiaoming's exact experience. Needs
 (a) the canonical NetBadge logout URL and (b) an interactive browser re-test.
+**Owner:** unassigned
 
 > ⚠ **Classification check pending — Yuji to confirm.** This note is written at the level of
 > mechanism and SP configuration only, which is the same level the upstream Drupal issue queue

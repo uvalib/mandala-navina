@@ -1,8 +1,9 @@
 # KMaps Autocomplete Widget UX
-**Area:** `shanti_kmaps_fields` — field widget  
+**Category:** solr-search
 **Raised during:** Spike 1  
 **Jira:** (add when available)  
 **Priority:** Medium
+**Owner:** unassigned
 
 ## Problem
 

@@ -1,6 +1,6 @@
 # `drush migrate:import --group` aborts the whole remaining group on any migration's partial failure
 
-**Area:** migration / DX / tooling
+**Category:** migration-general
 **Raised during:** Session 2026-07-17 (first live `migrate:import` on dev-0, against the newly-loaded `mandala_d7_images`/`mandala_d7_shared` staging-RDS source — see `d11-dev-database-bootstrap-and-migration-source.md`)
 **Jira:** (add when available)
 **Priority:** Medium — not a correctness bug. **Update 2026-10-13:** the specific trigger
@@ -13,6 +13,7 @@ running a fresh `--group` import.** The underlying defect this note is really ab
 partial failure, regardless of cause — is untouched by that and will recur the moment any future
 migration (Texts, Sources, or a future Images re-run) has its own legitimate partial failure. The
 three-option recommendation below was never decided and no related code change has landed since.
+**Owner:** unassigned
 
 ## Observation
 

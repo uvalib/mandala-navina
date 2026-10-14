@@ -1,8 +1,9 @@
 # AV collections missing from the D7-vs-D11 access comparison (nid 3, 9, 20, 23)
-**Area:** migration / AV / Group access / verification
+**Category:** migration-av, access-control
 **Raised during:** Sprint 3 AV7 (session 2026-09-24)
 **Jira:** (add when available)
 **Priority:** Low -- investigated, no exposure found; two small follow-ups remain
+**Owner:** unassigned
 
 ## Question
 Comparing every AV collection/subcollection's `group_access` between the 2026-09-01

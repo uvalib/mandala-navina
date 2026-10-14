@@ -1,6 +1,6 @@
 # IIIF URL prefix: `/mandala/` vs canonical `/iiif/2/`
 
-**Area:** IIIF / configuration / consistency
+**Category:** migration-images
 **Raised during:** Sprint 1 (Step 1a.5 — IIIF wiring, 2026-06-22)
 **Jira:** (add when available)
 **Priority:** Low — works either way; cosmetic alignment question

@@ -1,8 +1,9 @@
 # Migration overwrote subcollection access with the parent's value
-**Area:** migration / Group access / ADR 011 / mandala_group_inheritance
+**Category:** access-control, migration-general
 **Raised during:** Sprint 3 AV7 (session 2026-09-24)
 **Jira:** (add when available)
 **Priority:** Medium -- dev-0 repaired 2026-09-24; residual items below (search-reader check, UVA enumeration mismatch, other environments)
+**Owner:** unassigned
 
 ## What happened
 `mandala_group_inheritance_group_presave()` copies the parent collection's

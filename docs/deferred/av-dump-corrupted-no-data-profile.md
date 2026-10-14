@@ -1,9 +1,10 @@
 # AV production dump corrupted — content-model audit has no data profile (RESOLVED 2026-09-01)
 
-**Area:** migration / source data / AV
+**Category:** migration-av
 **Raised during:** Sprint 2 Workstream C1 (AV content-model audit), Session 2026-09-01
 **Jira:** (add when available)
 **Priority:** RESOLVED — was Medium/High before a fresh dump landed
+**Owner:** n/a (resolved)
 
 ## Resolution (2026-09-01, same day)
 

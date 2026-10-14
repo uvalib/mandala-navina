@@ -1,11 +1,12 @@
 # AV4: 42 hosts still have ambiguous paragraph ordering — tiebreak never confirmed with staff
 
-**Area:** migration / AV / content model
+**Category:** migration-av
 **Raised during:** Session 2026-09-08 (building AV4), carried unresolved since
 **Jira:** (add when available)
 **Priority:** Low — out of scope for D11 implementation as such (the
 migration already runs and is data-preserving either way), but a real
 open question worth a decision before it's forgotten entirely
+**Owner:** unassigned
 
 ## What happened
 

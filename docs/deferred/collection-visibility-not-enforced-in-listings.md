@@ -1,11 +1,12 @@
 # Collection visibility is not enforced in listings (nodes or collections)
 
-**Area:** access / Group / Views / node grants / ADR 011 / ADR 013 / ADR 015
+**Category:** access-control
 **Raised during:** Sprint 3 AV7 (session 2026-09-25, verifying the AV access fix in PR #255)
 **Jira:** (add when available)
 **Priority:** **High — RESOLVED 2026-09-28. Both halves decided and implemented; see
 "Decision and implementation" at the end. The gap and the options are kept below as the
 record of what was weighed.**
+**Owner:** n/a (resolved)
 
 ## The gap
 

@@ -1,9 +1,10 @@
 # kmassets `uid` identity must survive the D7→D11 nid reassignment
 
-**Area:** solr / kmassets / migration / document identity
+**Category:** solr-search, migration-general
 **Raised during:** Sprint 1 (1a.8 — doc-builder fixture validation)
 **Jira:** (add when available)
 **Priority:** High — affects every asset type's write path and all downstream consumers
+**Owner:** unassigned
 
 ## What we found
 

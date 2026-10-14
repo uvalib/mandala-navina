@@ -1,11 +1,12 @@
 # AV4: 84 hosts have genuine content differences between D7's `und`/`en` layers — never reviewed
 
-**Area:** migration / AV / content model / data fidelity
+**Category:** migration-av
 **Raised during:** Session 2026-09-09 (building AV4), never revisited since
 **Jira:** (add when available)
 **Priority:** Low — out of scope for D11 implementation (the migration
 already picks `en` as authoritative, per design, and that choice is sound);
 this is a data-quality question about the D7 source, not a D11 defect
+**Owner:** unassigned
 
 ## What happened
 

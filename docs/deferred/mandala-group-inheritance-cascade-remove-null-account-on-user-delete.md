@@ -1,9 +1,10 @@
 # `_mandala_group_inheritance_cascade_member_remove()` crashes when the member account itself is being deleted
 
-**Area:** mandala_group_inheritance / Group / user deletion
+**Category:** access-control
 **Raised during:** Implementing `authenticated-contributor-crud-not-wired-in-d11.md`, 2026-10-06 — functional smoke test of the new contributor-tier group permissions
 **Jira:** (add when available)
 **Priority:** Medium — real, reproducible, but narrow trigger (deleting a user account that is still a collection member); not yet known to have hit dev-0 or production
+**Owner:** unassigned
 
 ## Repro
 

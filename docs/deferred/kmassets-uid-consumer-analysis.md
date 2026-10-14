@@ -1,10 +1,11 @@
 # Audit all consumers that store or rely on D7 kmassets `uid` values
 
-**Area:** solr / kmassets / migration / identity / clients
+**Category:** solr-search, migration-general
 **Raised during:** Sprint 1 (1a.8 uid identity discussion, 2026-07-01)
 **Jira:** (add when available)
 **Priority:** High — must be completed before final cutover; determines redirect and
 compatibility scope
+**Owner:** unassigned
 
 ## Why this matters
 

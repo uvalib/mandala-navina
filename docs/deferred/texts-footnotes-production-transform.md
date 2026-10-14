@@ -1,9 +1,10 @@
 # Texts footnotes: production transform + Notes-list aggregation (downstream of Spike 4b)
 
-**Area:** migration / Texts / CKEditor 5 / footnotes
+**Category:** migration-texts
 **Raised during:** Spike 4b closeout, 2026-08-07 (spike marked Complete; this is its downstream implementation work, preserved so it isn't lost)
 **Jira:** (add when available)
 **Priority:** **Medium** — not current-phase; belongs to the **Texts-site migration**. No open technical risk (feasibility proven + prototype working in Spike 4b), so this is build-out, not investigation.
+**Owner:** unassigned
 
 ## Context
 

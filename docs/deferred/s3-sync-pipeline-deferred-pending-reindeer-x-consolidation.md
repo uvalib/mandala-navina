@@ -1,10 +1,11 @@
 # s3-sync's CI/CD pipeline is deferred, pending the reindeer_x consolidation decision
 
-**Area:** deployment / CI-CD / s3-sync / reindeer_x consolidation
+**Category:** infrastructure-deploy
 **Raised during:** Session 2026-08-11 (CI/CD pipeline inventory)
 **Jira:** (add when available)
 **Priority:** Low — no pipeline needed until/unless s3-sync ships standalone code
 **Status:** **DECIDED (2026-08-11, Yuji) — deferred.** Not scoping a pipeline now.
+**Owner:** n/a (resolved)
 
 ## What we found
 

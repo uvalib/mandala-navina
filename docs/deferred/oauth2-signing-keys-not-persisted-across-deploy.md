@@ -1,9 +1,10 @@
 # OAuth2 signing keypair isn't in any persistent bind mount — wiped on every `deploy_backend.yml` run
 
-**Area:** deployment / Ansible / simple_oauth / OAuth2 (dev environment)
+**Category:** auth, infrastructure-deploy
 **Raised during:** Session 2026-08-18 (first real browser walkthrough of SAML → OAuth2 → proxy)
 **Jira:** (add when available)
 **Priority:** High — silently breaks the entire OAuth2 authenticated path (Drupal `/oauth/*`, the solr-proxy, and anything else built on `simple_oauth`) on every normal CI/CD deploy to dev, until someone manually regenerates the keys
+**Owner:** n/a (resolved)
 
 ## Issue
 

@@ -1,10 +1,10 @@
 # Tibetan Search Quality (mixed-script, transliteration folding, analysis)
 
-**Area:** solr / search / i18n
+**Category:** solr-search
 **Raised during:** Session 2026-06-15 (roadmap planning)
 **Jira:** (add when available)
 **Priority:** Low — explicitly post-MVP
-**Owner:** (unassigned)
+**Owner:** unassigned
 
 ## Context
 

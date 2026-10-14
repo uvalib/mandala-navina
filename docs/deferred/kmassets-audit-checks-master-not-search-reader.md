@@ -1,9 +1,10 @@
 # `kmassets:audit` validates the write master, not the Solr host search actually reads from — a real 70-doc gap slipped through clean
 
-**Area:** solr / kmassets / mandala_kmassets_sync / search_api
+**Category:** solr-search
 **Raised during:** Session 2026-08-28, running the diacritic-fidelity Solr-side spot check after the dev-0 reindex (Sprint 1 close-out follow-up)
 **Jira:** (add when available)
 **Priority:** **High — ASSIGNED to Yuji.** The tool the team was relying on to certify "Solr retrievability" for Sprint 1 does not check retrievability; it checks write-success against the wrong host. **Team decision 2026-08-28 (Than, Yuji, Xiaoming): ruled a distinct infrastructure-replication issue, decoupled from Sprint 1 — does not block Sprint 1 close.** **Assignment confirmed 2026-09-02 (group decision): Yuji picks this up**, root-causing on his own timeline, starting with confirming what `mandala-index-dev` actually is (suggested action 1 below).
+**Owner:** Yuji
 
 ## What was found
 

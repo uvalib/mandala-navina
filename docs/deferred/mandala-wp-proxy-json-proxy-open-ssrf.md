@@ -1,9 +1,10 @@
 # mandala-wp-proxy's json_proxy route is an open proxy (SSRF)
 
-**Area:** mandala-wp-proxy (external repo `shanti-uva/mandala-wp-proxy`) / security / Spike 6
+**Category:** security
 **Raised during:** Spike 6 (2026-08-12) — URL-strategy decision (Option A)
 **Jira:** (add when available)
 **Priority:** High — blocks generalizing the proxy to all sites/apps
+**Owner:** n/a (resolved)
 
 ## What we found
 

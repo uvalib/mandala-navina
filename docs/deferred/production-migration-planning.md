@@ -1,9 +1,10 @@
 # Plan the production D7 → D11 migration (future, post-staging)
 
-**Area:** migration / deployment / data
+**Category:** migration-general, infrastructure-deploy
 **Raised during:** 2026-07-13 (1b.1 part 4 — D11 backend deploy scoping / dev-box audit)
 **Jira:** (add when available)
 **Priority:** Medium now (planning), High at cutover time
+**Owner:** unassigned
 
 ## Strategy assumption (Yuji, 2026-07-13)
 

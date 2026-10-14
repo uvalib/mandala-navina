@@ -1,9 +1,10 @@
 # Two AV collection memberships are skipped because their D7 user no longer exists
 
-**Area:** migration / AV / users / group membership
+**Category:** migration-av
 **Raised during:** Sprint 3 AV4 (2026-09-09); moved here from a `config/sync` comment 2026-10-06
 **Jira:** (add when available)
 **Priority:** Low — 2 rows, recorded as "no action needed" at AV4; filed so the decision is findable
+**Owner:** n/a (resolved)
 
 ## What was found
 

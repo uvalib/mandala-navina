@@ -1,11 +1,12 @@
 # dev-0 needs a test IdP wired up — real NetBadge login isn't practical for 1b.3 testing
 
-**Area:** infrastructure / SAML / SimpleSAMLphp / dev environment / 1b.3
+**Category:** auth
 **Raised during:** Session 2026-08-18 (predis/predis fix + first live NetBadge attempt)
 **Jira:** (add when available)
 **Priority:** **RESOLVED 2026-08-18** (same day, a second session). Was High — blocked
 the live end-to-end proof for
 [Sprint 1 task 1b.3](../sprints/sprint-01-images-implementation.md).
+**Owner:** n/a (resolved)
 
 ## ✅ Resolution (2026-08-18, later the same day)
 

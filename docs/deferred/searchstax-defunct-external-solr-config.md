@@ -1,12 +1,13 @@
 # SearchStax/Measured Search Solr is gone, but four D7 sites are still configured to use it
 
-**Area:** solr / D7 legacy / dead external dependency / credentials / cleanup
+**Category:** solr-search, security
 **Raised during:** Session 2026-08-13 (Solr index inventory across dev / staging / production)
 **Jira:** (add when available)
 **Priority:** **Medium — vestigial config to remove, plus one credential to burn.**
 Confirmed by Yuji 2026-08-13: **the SearchStax / Measured Search instances are long
 gone.** Every configuration pointing at them is therefore defunct. Nothing to migrate —
 this is cleanup, and one live symptom to stop.
+**Owner:** unassigned
 
 ## The configuration
 

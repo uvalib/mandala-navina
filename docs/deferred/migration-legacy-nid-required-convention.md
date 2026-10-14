@@ -1,9 +1,10 @@
 # `field_legacy_nid` is mandatory on every content-entity migration
 
-**Area:** migration / process / DX
+**Category:** migration-general
 **Raised during:** Session 2026-07-10 (post-1b.2, config-sync drift incident)
 **Jira:** (add when available)
 **Priority:** High — every future content migration (Texts, Sources, AV, Mandala Home) must follow this or repeat the incident below
+**Owner:** unassigned
 
 ## The convention
 

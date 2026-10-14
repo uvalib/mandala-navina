@@ -1,9 +1,10 @@
 # Group Access Inheritance: Collection → Subcollection
-**Area:** collections / access control
+**Category:** access-control
 **Raised during:** Spike 3
 **Jira:** (add when available)
 **Priority:** High
 **Status:** ✅ SUPERSEDED by [ADR 011](../adr/011-group-collections-inheritance.md) (Accepted 2026-06-18) — Option D (entity-ref + custom hooks) ratified; visibility + membership inheritance land in Sprint 1 Step 1b (task 1b.2). This note remains for historical context.
+**Owner:** n/a (resolved)
 
 ## Problem
 

@@ -1,11 +1,12 @@
 # Establish a canonical D7 dev source dump on dev-0
 
-**Area:** migration / source data / environments / DX
+**Category:** migration-general
 **Raised during:** Session 2026-08-25 (dev-0 vs DDEV baseline mismatch)
 **Jira:** (add when available)
 **Priority:** **Medium — direction DECIDED 2026-09-02 (Yuji, ratified by the group): re-cut,
 with a mandatory team alert on every re-cut.** Remaining work is the practical follow-ups below
 (dump identifier, refresh-path testing, alert mechanism), not a decision.
+**Owner:** unassigned
 
 ## The problem, measured
 

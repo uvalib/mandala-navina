@@ -1,10 +1,11 @@
 # AV2: `field_tags` is labeled "Tags Old" and hidden on `video`, but live "Tags" on `audio`
 
-**Area:** migration / AV / content model
+**Category:** migration-av
 **Raised during:** Session 2026-09-08/09 (building AV2/AV4), never revisited
 **Jira:** (add when available)
 **Priority:** Low — migrates as-is, nothing broken; a naming/intent question
 for AV staff, not an implementation gap
+**Owner:** unassigned
 
 ## What happened
 

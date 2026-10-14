@@ -1,10 +1,11 @@
 # AV: `field_pbcore_language` stores raw language names, not ISO 639 codes — may affect Solr tokenization
 
-**Area:** migration / AV / content model / search quality
+**Category:** migration-av, solr-search
 **Raised during:** Session 2026-09-09 (building AV4), recommendation never acted on
 **Jira:** (add when available)
 **Priority:** Medium — a real, currently-live gap is plausible, not just a
 someday task; needs confirmation, not more analysis
+**Owner:** unassigned
 
 ## What happened
 

@@ -1,11 +1,12 @@
 # Pre-deploy RDS snapshot gate for the unattended full updb + cim
 
-**Area:** deployment / Ansible / RDS / database safety
+**Category:** infrastructure-deploy
 **Raised during:** Session 2026-08-17 (following up on the config-sync deploy fix)
 **Jira:** (add when available)
 **Priority:** Medium now, **High before production rollout** — deliberately not
 solving this during active development; must be resolved before this deploy path
 is trusted against production data.
+**Owner:** unassigned
 
 ## What changed that makes this matter
 

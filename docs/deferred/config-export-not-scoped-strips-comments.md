@@ -1,9 +1,10 @@
 # `drush config:export` re-serializes the entire active config, not just what you changed — and silently strips comments
 
-**Area:** DX / config sync
+**Category:** infrastructure-deploy
 **Raised during:** Session 2026-09-14, building AV6's KMaps display config
 **Jira:** (add when available)
 **Priority:** Medium — recurring, cheap to work around once you know to look, expensive if you don't
+**Owner:** unassigned
 
 ## What happened
 

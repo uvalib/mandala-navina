@@ -246,6 +246,7 @@ None yet.
 | tibetan-search-quality.md | solr-search | unassigned |
 | transcript-core-replica-lag-review.md | solr-search | unassigned |
 | transcript-index-queue-triage.md | solr-search, infrastructure-deploy | unassigned |
+| production-solr-not-receiving-d7-writes.md | solr-search, infrastructure-deploy | Yuji |
 
 ### infrastructure-deploy
 | File | Categories | Owner |
@@ -270,14 +271,14 @@ None yet.
 | s3-sync-pipeline-deferred-pending-reindeer-x-consolidation.md | infrastructure-deploy | n/a (resolved) |
 | staging-migration-execution-prerequisites.md | infrastructure-deploy, migration-general | Xiaoming, Yuji, Dave |
 | terraform-infrastructure-full-clone-on-every-deploy.md | infrastructure-deploy | n/a (resolved) |
-| wp-kmaps-mandala-proxy-dependency.md | infrastructure-deploy | unassigned |
+| wp-kmaps-mandala-proxy-dependency.md | infrastructure-deploy | n/a (resolved) |
 | fail2ban-need-and-ownership.md | security, infrastructure-deploy | unassigned |
 | iiif-cantaloupe-404-information-disclosure.md | security, infrastructure-deploy | UVa Library DevOps |
 
 ### security
 | File | Categories | Owner |
 |---|---|---|
-| mandala-wp-proxy-json-proxy-open-ssrf.md | security | unassigned |
+| mandala-wp-proxy-json-proxy-open-ssrf.md | security | n/a (resolved) |
 
 ### miscellaneous
 | File | Categories | Owner |
@@ -285,9 +286,9 @@ None yet.
 | local-dev-files-provisioning-mechanism.md | miscellaneous | n/a (resolved) |
 | jira-issue-tracking-integration.md | miscellaneous | Yuji |
 
-**Count check:** that's 132 files total across the table above (migration-av 21, migration-images
+**Count check:** that's 133 files (132 classified 2026-10-13, plus `production-solr-not-receiving-d7-writes.md`, added to `main` by #326 after the plan was drafted and classified 2026-10-14) total across the table above (migration-av 21, migration-images
 14, migration-texts 1, migration-general 27 incl. subcollection-access note counted once, access-control
-10, auth 16, solr-search 17, infrastructure-deploy 23, security 1, miscellaneous 2 — some files
+10, auth 16, solr-search 18, infrastructure-deploy 23, security 1, miscellaneous 2 — some files
 appear once under their primary category heading even though they carry 2-3 category tags;
 cross-tagged files are listed once, under whichever heading was more natural while drafting, not
 duplicated).

@@ -1,11 +1,11 @@
 # No repeatable way to deliver app code/config to dev-0 — decide: manual rebuild/redeploy vs CI pipeline
 
-**Area:** deployment / CI-CD / dev-0 / ECR
+**Category:** infrastructure-deploy
 **Raised during:** Session 2026-07-21 (attempting to deliver the merged user-migration config to dev-0)
 **Jira:** (add when available)
 **Priority:** High — blocks the user-migration deploy and every future code/config change to dev-0
-**Owners:** Yuji / Dave (they own ECR, terraform, and the ansible/deploy estate)
 **Status:** **DECISION OPEN — deferred to Yuji/Dave; do not treat either option as chosen**
+**Owner:** n/a (resolved)
 
 ## What we found
 

@@ -1,5 +1,5 @@
 # Solr Ingest Pipeline Cost & Architecture Discussion with Cloud Infrastructure
-**Area:** solr / infrastructure / kmassets
+**Category:** solr-search, infrastructure-deploy
 **Raised during:** Session 2026-06-12
 **Issue:** #294
 **Priority:** High. **ASSIGNED directly to Yuji, 2026-09-02 (group decision)** — the original
@@ -9,7 +9,7 @@ to right-size). What remains is closing the loop with Dave on the still-open ite
 acceptability, batch cadence, regen-directory support, failure-log reliability, timestamp
 keying) — notably, the direct-to-master sink already **shipped** in 1a.8 ahead of confirming
 those, so this needs following up on, not opening fresh.
-**Owner:** Yuji Shinozaki (point of contact with Dave Goldstein)
+**Owner:** Yuji
 
 ## Context
 

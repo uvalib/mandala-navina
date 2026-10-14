@@ -1,9 +1,10 @@
 # Production Solr `kmassets` is not receiving D7 writes (S3 sync listener not running)
 
-**Area:** legacy D7 to Solr ingest / production Solr
+**Category:** solr-search, infrastructure-deploy
 **Raised during:** Spike 11 (kmassets `trid_i` docValues deploy, [#321](https://github.com/uvalib/mandala-navina/issues/321))
 **Issue:** [shanti-uva/mandala_drupal_docker#26](https://github.com/shanti-uva/mandala_drupal_docker/issues/26) (legacy repo, assigned to Yuji; needs input from Dave and Than)
 **Priority:** Medium (legacy production search is going stale; matters most if cutover is far off)
+**Owner:** Yuji
 
 ## Why this is here
 

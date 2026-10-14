@@ -1,9 +1,10 @@
 # `projects_ss` producer field not yet implemented in the D11 builder
 
-**Area:** solr / kmassets / Images / write path
+**Category:** migration-images, solr-search
 **Raised during:** Sprint 1 (1a.8 — doc-builder fixture validation)
 **Jira:** (add when available)
 **Priority:** Medium
+**Owner:** unassigned
 
 ## What we found
 

@@ -1,10 +1,11 @@
 # kmassets holds only D7-format uids, so the D11 authenticated path matches nothing
 
-**Area:** solr / kmassets / ADR 014 / migration / identity
+**Category:** solr-search, auth
 **Raised during:** Session 2026-08-12 (testing the authenticated case after the solr-proxy pipeline went live)
 **Jira:** (add when available)
 **Priority:** **RESOLVED 2026-08-13.** Was High — blocked the entire authenticated half of
 ADR 014. The public path was unaffected throughout.
+**Owner:** n/a (resolved)
 
 ## ✅ Resolution (2026-08-13)
 

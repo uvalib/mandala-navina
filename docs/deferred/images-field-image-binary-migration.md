@@ -1,9 +1,10 @@
 # Original `field_image` file binaries are not migrated (display is IIIF)
 
-**Area:** migration / Images / files
+**Category:** migration-images
 **Raised during:** Sprint 1 (1a.7 — pattern-setting image migration)
 **Jira:** (add when available)
 **Priority:** Low
+**Owner:** unassigned
 
 ## Context
 

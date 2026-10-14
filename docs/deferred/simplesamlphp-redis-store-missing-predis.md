@@ -1,9 +1,10 @@
 # SimpleSAMLphp Redis session store was missing predis/predis — every NetBadge login 500'd
 
-**Area:** infrastructure / SAML / SimpleSAMLphp / Composer dependencies / dev environment
+**Category:** auth, infrastructure-deploy
 **Raised during:** Session 2026-08-18 (attempted first live 1b.3 NetBadge login)
 **Jira:** (add when available)
 **Priority:** High — blocked all NetBadge login on dev-0.
+**Owner:** n/a (resolved)
 
 **Status: RESOLVED 2026-08-18.** [PR #119](https://github.com/uvalib/mandala-navina/pull/119),
 merged and deployed same day.

@@ -1,12 +1,13 @@
 # SAML session expires at 8h while the Drupal session lasts 23 days, force-logging-out users mid-session
 
-**Area:** simplesamlphp_auth / SimpleSAMLphp session config / Drupal session config
+**Category:** auth
 **Raised during:** Session 2026-08-20 (live session-config inspection while fixing the OAuth2 Bearer defect)
 **Jira:** (add when available)
 **Priority:** Medium-High — user-visible on every working day longer than eight hours, and it
 silently discards whatever the user was in the middle of. Not a blocker for any sprint item.
 **Status:** 🔴 **Open, not started.** Mechanism verified live on dev-0; no fix applied. An
 upstream merge request fixes the worst half of it and is RTBC against our exact branch.
+**Owner:** unassigned
 
 ## Symptom
 

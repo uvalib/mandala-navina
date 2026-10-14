@@ -1,10 +1,11 @@
 # kmassets collection docs, facets, and the "subscribable" visibility mapping
 
-**Area:** solr / kmassets / Group collections / write path
+**Category:** solr-search, access-control
 **Raised during:** Sprint 1 (1b.1 — CollectionFieldContributor implementation)
 **Jira:** (add when available)
 **Priority:** Medium — not required by Sprint 1's stated security acceptance
 criterion, but needed for D7 collection-browsing parity
+**Owner:** unassigned
 
 ## What's scoped vs. not
 

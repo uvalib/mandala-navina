@@ -1,9 +1,10 @@
 # IIIF thumb size segment: D7 `^!200,200` vs D11 `IiifUrlBuilder` `!200,200`
 
-**Area:** IIIF / kmassets / Images / write path
+**Category:** migration-images
 **Raised during:** Sprint 1 (1a.8 — doc-builder fixture validation)
 **Jira:** (add when available)
 **Priority:** Low
+**Owner:** unassigned
 
 ## What we found
 

@@ -1,10 +1,10 @@
 # Prod packaging needs a monorepo + D11 pass (Dockerfile / pipeline)
 
-**Area:** deployment / packaging / CI
+**Category:** infrastructure-deploy, migration-images
 **Raised during:** Sprint 1 (Step 1a — content-model build session, 2026-06-17)
 **Jira:** (add when available)
 **Priority:** High — blocks any deployed (non-local) environment
-**Owner:** Yuji Shinozaki / Xiaoming Wang (DevOps)
+**Owner:** Yuji, Xiaoming
 
 ## Context
 

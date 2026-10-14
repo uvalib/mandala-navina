@@ -1,6 +1,6 @@
 # `deployspec.yml` clones `terraform-infrastructure` in full on every deploy
 
-**Area:** deployment / CI-CD / pipeline performance
+**Category:** infrastructure-deploy
 **Raised during:** Session 2026-08-26 (watching the dev-0 deploy during the from-scratch rebuild)
 **Jira:** (add when available)
 **Priority:** Low-Medium — a real cost on every deploy, not a correctness bug
@@ -9,6 +9,7 @@
 `deployspec.yml` reads git history, tags, or other branches (only the current working tree, via
 `terraform init`/`apply` and the Ansible playbooks), matching the finding below. #162 and
 `dev0-from-scratch-rebuild-runbook.md` steps 7–10 remain separately scheduled.
+**Owner:** n/a (resolved)
 
 ## What was found
 

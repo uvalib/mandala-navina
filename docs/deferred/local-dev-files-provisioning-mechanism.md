@@ -1,6 +1,6 @@
 # No mechanism populated local `sites/default/files` binaries -- resolved
 
-**Area:** local dev environment / DX / infrastructure
+**Category:** miscellaneous
 **Raised during:** Session 2026-09-23 (diagnosing 4 blank Mandala Home carousel
 slides on Xiaoming's DDEV; see
 [collection-featured-images-missing-on-production.md](collection-featured-images-missing-on-production.md)
@@ -10,6 +10,7 @@ for the incident this generalizes from)
 `stage_file_proxy`, automatic and lazy; scope: on-demand `--field` pre-fetch,
 2026-10-12). Cosmetic even when it recurs (default-thumbnail/blank-image
 fallbacks mean nothing is functionally broken).
+**Owner:** n/a (resolved)
 
 ## The gap
 
