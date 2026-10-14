@@ -1,8 +1,17 @@
 FROM php:7.4-apache
 
+# php:7.4-apache is Debian 11 (bullseye), which Debian has ended support for: its
+# packages are no longer served from deb.debian.org (the 2026-10-14 build failed with
+# 404s there), so apt is pointed at archive.debian.org. The archive's Release files are
+# expired, hence Check-Valid-Until=false. This is a stopgap on an end-of-life base image;
+# the real fix is a newer PHP/Debian base (needs the proxy code checked on it).
+#
 # Redis extension (ADR 014: proxy reads Drupal-written visibility tokens
 # from Redis at mandala_solr_fq:{uid}) + composer for dependency install.
-RUN apt-get update \
+RUN sed -i -e 's|http://deb.debian.org/debian-security|http://archive.debian.org/debian-security|' \
+           -e 's|http://deb.debian.org/debian|http://archive.debian.org/debian|' /etc/apt/sources.list \
+    && echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99archive \
+    && apt-get update \
     && apt-get install -y --no-install-recommends libssl-dev unzip \
     && pecl install redis \
     && docker-php-ext-enable redis \
