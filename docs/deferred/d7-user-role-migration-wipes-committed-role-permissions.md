@@ -2,6 +2,7 @@
 
 **Category:** migration-general, access-control
 **Raised during:** Local synthetic user-migration smoke-test (2026-07-21, Xiaoming + Than)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **High — blocks the dev-0 user migration; running `d7_user_role` as-is strips editorial + authenticated-user access**
 **Status: RESOLVED + VERIFIED end-to-end 2026-07-24** (branch `fix/user-role-permission-wipe`) — candidate fix 1 implemented and proven twice: on Xiaoming's synthetic fixture (which caught a *second* bug, missing `handle_multiples`, now fixed on the same branch) and independently on the author's DDEV against the full 1,538-user scrubbed shared DB (0 failed, no wipe, roles correct). See "Resolution", "Verification handoff", and "Independent confirmation" below.

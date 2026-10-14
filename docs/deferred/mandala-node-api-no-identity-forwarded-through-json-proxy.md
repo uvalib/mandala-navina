@@ -2,6 +2,7 @@
 
 **Category:** auth, access-control
 **Raised during:** Spike 6 (2026-08-12) — after building the D11 node-JSON endpoint
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — Sprint 1 (Images) is mostly public collections, so low blast radius today;
 becomes real once private-collection content needs to be viewable via the React app's detail view

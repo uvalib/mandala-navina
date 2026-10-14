@@ -2,6 +2,7 @@
 
 **Category:** migration-av
 **Raised during:** Session 2026-09-09 (building AV4), never revisited since
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — out of scope for D11 implementation (the migration
 already picks `en` as authoritative, per design, and that choice is sound);

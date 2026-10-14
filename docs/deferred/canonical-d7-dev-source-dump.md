@@ -2,6 +2,7 @@
 
 **Category:** migration-general
 **Raised during:** Session 2026-08-25 (dev-0 vs DDEV baseline mismatch)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **Medium — direction DECIDED 2026-09-02 (Yuji, ratified by the group): re-cut,
 with a mandatory team alert on every re-cut.** Remaining work is the practical follow-ups below

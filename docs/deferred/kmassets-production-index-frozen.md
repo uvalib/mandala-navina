@@ -2,6 +2,7 @@
 
 **Category:** solr-search
 **Raised during:** Session 2026-08-13 (Solr index inventory across dev / staging / production)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **Medium–High — the "is kmterms actually changing" question is now
 answered (see 2026-08-17 update below); what remains is deciding with Andres what

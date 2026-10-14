@@ -2,6 +2,7 @@
 
 **Category:** migration-general
 **Raised during:** Session 2026-07-10 (post-1b.2, config-sync drift incident)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — every future content migration (Texts, Sources, AV, Mandala Home) must follow this or repeat the incident below
 **Owner:** unassigned

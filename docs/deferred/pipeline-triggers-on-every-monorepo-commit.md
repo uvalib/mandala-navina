@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy
 **Raised during:** Session 2026-07-15 (1b.1 part 4 — reviewing the pipeline before the first apply)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — noise and wasted deploys, not a correctness bug. Deliberately deferred until a green run.
 **Owner:** n/a (resolved)

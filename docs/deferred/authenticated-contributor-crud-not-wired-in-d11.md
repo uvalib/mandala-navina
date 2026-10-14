@@ -2,6 +2,7 @@
 
 **Category:** access-control, migration-general
 **Raised during:** ADR 015 Q1 follow-up, 2026-08-07 (Than clarified the D7 contributor model; verified against the Images per-site dump)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **High** — this is the baseline authoring capability for **all ~1,538 migrated users**, D11 grants none of it, and it is what makes the ADR 015 Q1(b) decision (142 rid-4 editors → plain authenticated) non-destructive rather than a total loss of authoring on cutover day.
 **Owner:** unassigned

@@ -2,6 +2,7 @@
 
 **Category:** migration-images
 **Raised during:** Sprint 1 (Step 1a — content-model build session, 2026-06-17)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — must be resolved before the 1a.7 migration is written
 **Owner:** group

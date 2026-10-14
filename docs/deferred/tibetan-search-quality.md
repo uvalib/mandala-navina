@@ -2,6 +2,7 @@
 
 **Category:** solr-search
 **Raised during:** Session 2026-06-15 (roadmap planning)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — explicitly post-MVP
 **Owner:** unassigned

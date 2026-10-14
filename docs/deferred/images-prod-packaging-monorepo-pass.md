@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy, migration-images
 **Raised during:** Sprint 1 (Step 1a — content-model build session, 2026-06-17)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — blocks any deployed (non-local) environment
 **Owner:** Yuji, Xiaoming

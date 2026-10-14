@@ -2,6 +2,7 @@
 
 **Category:** auth
 **Raised during:** Session 2026-08-06 (PR #75 DDEV-readiness check)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium for the core gap (not breaking anything today, deliberately deferred;
 noted so it isn't rediscovered as a surprise outage in local dev, and so the eventual fix

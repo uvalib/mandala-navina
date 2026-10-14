@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy, auth
 **Raised during:** Session 2026-07-14 (1b.1 part 4 — D11 backend deploy)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — not blocking dev/validation; blocks production cutover
 **Owner:** unassigned

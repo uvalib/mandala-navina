@@ -2,6 +2,7 @@
 
 **Category:** migration-images
 **Raised during:** Sprint 1 (1a.8 — doc-builder fixture validation)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium
 **Owner:** unassigned

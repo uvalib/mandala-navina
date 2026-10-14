@@ -2,6 +2,7 @@
 
 **Category:** solr-search, access-control
 **Raised during:** Sprint 1 (1b.1 — CollectionFieldContributor implementation)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — not required by Sprint 1's stated security acceptance
 criterion, but needed for D7 collection-browsing parity

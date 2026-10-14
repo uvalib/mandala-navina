@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy
 **Raised during:** Session 2026-09-02, fixing the `uva-mandala-drupal-codepipeline` failure caused by PR #177
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — decided 2026-10-06 (no CI; practice in CLAUDE.md plus `config-check.sh` at session close). Originally Medium
 **Owner:** n/a (resolved)

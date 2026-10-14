@@ -2,6 +2,7 @@
 
 **Category:** security, access-control
 **Raised during:** Spike 6 (2026-08-20) — generalizing the `/proxy/json` gate in `mandala-om`
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — no known break today, but it means the decided URL strategy covers only
 part of the deployment matrix, which matters at D11 cutover

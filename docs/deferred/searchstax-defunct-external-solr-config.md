@@ -2,6 +2,7 @@
 
 **Category:** solr-search, security
 **Raised during:** Session 2026-08-13 (Solr index inventory across dev / staging / production)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **Medium — vestigial config to remove, plus one credential to burn.**
 Confirmed by Yuji 2026-08-13: **the SearchStax / Measured Search instances are long

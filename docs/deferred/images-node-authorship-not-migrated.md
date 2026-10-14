@@ -2,6 +2,7 @@
 
 **Category:** migration-images
 **Raised during:** Sprint 3 AV4 (2026-09-09) — found while writing the AV node migration
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium
 **Owner:** unassigned

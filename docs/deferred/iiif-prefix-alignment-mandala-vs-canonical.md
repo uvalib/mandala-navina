@@ -2,6 +2,7 @@
 
 **Category:** migration-images
 **Raised during:** Sprint 1 (Step 1a.5 — IIIF wiring, 2026-06-22)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — works either way; cosmetic alignment question
 **Owner:** Than Grove

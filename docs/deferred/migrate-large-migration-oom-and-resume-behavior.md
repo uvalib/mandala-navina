@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy, migration-general
 **Raised during:** Session 2026-07-17/18 (dev-0's first live `migrate:import` — `d7_images_shanti_image`, 111,340 rows)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — will recur on every large (100k+ row) migration run outside DDEV until the CLI memory limit is raised persistently
 **Status:** SCHEDULED — Yuji, 2026-08-27: land recommendation 1 (persist the CLI `memory_limit`

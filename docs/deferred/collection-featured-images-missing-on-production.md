@@ -9,6 +9,7 @@ Workstream B5, and
 for the migration this surfaced during); **corrected, then fixed, 2026-09-21** via a
 proper full-corpus audit (`drush mandala:missing-file-audit`, new command in
 `mandala_migrations`), built after a manual demo-content check hit one missing file.
+**Issue:** none
 **Priority:** Low — cosmetic (affects the "All Collections" card grid's thumbnail and a
 collection's own page image), was never a functional/data-integrity blocker, and turned
 out to be **DDEV-local only, now fixed** (see below). `shanti_collections_view` already

@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy
 **Raised during:** Session 2026-08-12 (running the user migration on dev-0)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **Low — the headline finding no longer holds; config DOES reach dev-0.**
 One residual item remains (RDS snapshot gating, item 2), tracked in its own note at

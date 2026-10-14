@@ -2,6 +2,7 @@
 
 **Category:** solr-search, infrastructure-deploy, security
 **Raised during:** Session 2026-08-13 (checking what consumes the D11 kmassets Search API index)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **Low for the original demo-module issue (addressed); the residual below is now HIGH -- see the 2026-09-24 update.** One
 residual item is genuinely open: the connector host is environment-specific config

@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy
 **Raised during:** Session 2026-09-14, building AV6's KMaps display config
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — recurring, cheap to work around once you know to look, expensive if you don't
 **Owner:** unassigned

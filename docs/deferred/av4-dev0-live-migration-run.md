@@ -2,6 +2,7 @@
 
 **Category:** migration-av, infrastructure-deploy
 **Raised during:** Session 2026-09-09 (AV4 completion and dev-0 launch)
+**Issue:** none
 **Resolved:** 2026-09-10 — the migration finished clean (5h04m49s, 27/27
 stages, 0 failed) and was re-verified directly against dev-0 (24/24 checks
 match the D7 source). Full statistics:

@@ -2,6 +2,7 @@
 
 **Category:** migration-general
 **Raised during:** Session 2026-07-17 (PR sweep after the first live `migrate:import` on dev-0)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — blocks PR #45 (`feat/user-migration`) from being safely un-drafted/merged as-is; doesn't block anything else today
 **Owner:** n/a (resolved)

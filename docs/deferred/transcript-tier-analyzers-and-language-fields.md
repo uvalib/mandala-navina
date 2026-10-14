@@ -2,6 +2,7 @@
 
 **Category:** migration-av, solr-search
 **Raised during:** Spike 11, schema draft 2026-10-02; deferred the same day (Yuji)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low. **Question 1 (analyzer choice) DECIDED and BUILT 2026-10-06** (Than),
 **in two passes**: English first, then Chinese/Nepali/Dzongkha/Wylie the same day.

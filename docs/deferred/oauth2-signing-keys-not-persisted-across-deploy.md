@@ -2,6 +2,7 @@
 
 **Category:** auth, infrastructure-deploy
 **Raised during:** Session 2026-08-18 (first real browser walkthrough of SAML → OAuth2 → proxy)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — silently breaks the entire OAuth2 authenticated path (Drupal `/oauth/*`, the solr-proxy, and anything else built on `simple_oauth`) on every normal CI/CD deploy to dev, until someone manually regenerates the keys
 **Owner:** n/a (resolved)

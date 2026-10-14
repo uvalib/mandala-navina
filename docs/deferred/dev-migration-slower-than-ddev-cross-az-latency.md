@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy, migration-general
 **Raised during:** Session 2026-07-17/18 (dev-0's first live `migrate:import`)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — a known, understood limitation the team is consciously living with, not a blocker; revisit only if migration time becomes a recurring real problem
 **Owner:** n/a (resolved)

@@ -2,6 +2,7 @@
 
 **Category:** migration-general
 **Raised during:** Session 2026-07-17 (first live `migrate:import` on dev-0, against the newly-loaded `mandala_d7_images`/`mandala_d7_shared` staging-RDS source — see `d11-dev-database-bootstrap-and-migration-source.md`)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — not a correctness bug. **Update 2026-10-13:** the specific trigger
 described below (`d7_images_collection_memberships` failing because the user migration hadn't

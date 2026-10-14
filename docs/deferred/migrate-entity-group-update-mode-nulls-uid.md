@@ -5,6 +5,7 @@
 onto the already-migrated `d7_images_collections`/`d7_images_subcollections` Group
 entities — see the Sprint 2 B5 planning subsection,
 [docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md](../sprints/sprint-02-theme-images-ui-and-endpoint-access.md))
+**Issue:** none
 **Priority:** Medium — doesn't block the real staging/production cutover migration (that
 runs as a fresh import against production source, never `--update` against
 already-migrated rows), but blocks the normal "extend a migration, `--update` the

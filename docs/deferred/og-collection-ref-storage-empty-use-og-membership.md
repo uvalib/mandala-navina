@@ -2,6 +2,7 @@
 
 **Category:** migration-general
 **Raised during:** Sprint 2 Workstream C (content-model audits), Session 2026-09-01
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — will silently break any migration built the obvious way
 **Owner:** n/a (resolved)

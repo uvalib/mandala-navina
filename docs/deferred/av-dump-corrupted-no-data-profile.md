@@ -2,6 +2,7 @@
 
 **Category:** migration-av
 **Raised during:** Sprint 2 Workstream C1 (AV content-model audit), Session 2026-09-01
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** RESOLVED — was Medium/High before a fresh dump landed
 **Owner:** n/a (resolved)

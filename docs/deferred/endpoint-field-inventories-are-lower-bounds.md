@@ -4,6 +4,7 @@
 **Priority:** Medium (rises to High as each site builds its node-JSON controller)
 **Raised:** 2026-08-21 by Than Grove, during [Spike 6](../spikes/spike-06-api-compatibility.md)'s
 live endpoint verification
+**Issue:** none
 **Category:** migration-general
 **Owner:** unassigned
 

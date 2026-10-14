@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy, solr-search
 **Raised during:** Session 2026-08-11 (CI/CD pipeline inventory)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** ~~High~~ — **RESOLVED 2026-08-12**
 **Status:** ✅ **COMPLETE for the public/anonymous path, which is the 90% case.**

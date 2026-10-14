@@ -2,6 +2,7 @@
 
 **Category:** solr-search, auth
 **Raised during:** Session 2026-08-12 (testing the authenticated case after the solr-proxy pipeline went live)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **RESOLVED 2026-08-13.** Was High — blocked the entire authenticated half of
 ADR 014. The public path was unaffected throughout.

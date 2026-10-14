@@ -1,6 +1,7 @@
 # kmassets Sync Hook Fires Per-Node During Migration
 **Category:** solr-search, migration-general
 **Raised during:** Session 2026-07-07 (Sprint 1 1a.9, DDEV migrate → validate → rollback run)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — not a correctness bug, but a real efficiency + cutover-load concern
 **Owner:** n/a (resolved)

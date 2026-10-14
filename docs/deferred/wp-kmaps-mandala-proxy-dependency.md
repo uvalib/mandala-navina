@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy
 **Raised during:** Spike 6 (2026-08-12) — URL-strategy decision (Option A)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — needed before Option A's generalized rollout, not before the SSRF fix
 **Owner:** n/a (resolved)

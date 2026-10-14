@@ -2,6 +2,7 @@
 
 **Category:** migration-general
 **Raised during:** Sprint 1 (Step 1a.6 — first migration setup, 2026-06-22)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — cosmetic; a one-flag workaround exists
 **Owner:** Than Grove

@@ -2,6 +2,7 @@
 
 **Category:** migration-av
 **Raised during:** Session 2026-09-08/09 (building AV2/AV4), never revisited
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — migrates as-is, nothing broken; a naming/intent question
 for AV staff, not an implementation gap

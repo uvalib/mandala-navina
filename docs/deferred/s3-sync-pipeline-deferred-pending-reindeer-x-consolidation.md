@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy
 **Raised during:** Session 2026-08-11 (CI/CD pipeline inventory)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — no pipeline needed until/unless s3-sync ships standalone code
 **Status:** **DECIDED (2026-08-11, Yuji) — deferred.** Not scoping a pipeline now.

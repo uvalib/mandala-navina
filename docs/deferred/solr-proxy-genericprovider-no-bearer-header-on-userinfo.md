@@ -2,6 +2,7 @@
 
 **Category:** auth, solr-search
 **Raised during:** Session 2026-08-18 (first real browser walkthrough of the SAML → OAuth2 → proxy chain)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — blocks the authenticated (private-collection) path through the proxy entirely; the public/anonymous path is unaffected
 **Owner:** n/a (resolved)

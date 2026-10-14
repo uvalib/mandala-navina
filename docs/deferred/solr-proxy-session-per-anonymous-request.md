@@ -2,6 +2,7 @@
 
 **Category:** solr-search
 **Raised during:** Session 2026-08-11 (checking the proxy against the "public access is the 90% case" principle)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** ~~Medium~~ — **RESOLVED 2026-08-11** (called out as a major anti-pattern; fixed same session)
 **Owner:** n/a (resolved)

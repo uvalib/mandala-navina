@@ -2,6 +2,7 @@
 
 **Category:** auth, infrastructure-deploy
 **Raised during:** Session 2026-07-13 (1b.1 part 4 — scoping NetBadge/SAML outside DDEV)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — part of 1b.1 part 4
 **Status (2026-08-12): RESOLVED as an FYI to Dave, not a deletion request.**

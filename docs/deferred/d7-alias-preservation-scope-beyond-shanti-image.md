@@ -2,6 +2,7 @@
 
 **Category:** migration-images, migration-general
 **Raised during:** Session 2026-08-25, DDEV verification of the `d7_images_url_alias` migration
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — collection aliases are done; the live item is a one-query check on dev-0
 **Owner:** unassigned

@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy
 **Raised during:** Session 2026-08-25 (1a.9 acceptance run); documented as its own item 2026-08-28
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — not currently blocking, but has already caused a real incident (a silently empty backup) and cost "three detours" in one session
 **Owner:** unassigned

@@ -2,6 +2,7 @@
 
 **Category:** migration-av, solr-search
 **Raised during:** Session 2026-09-09 (building AV4), recommendation never acted on
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — a real, currently-live gap is plausible, not just a
 someday task; needs confirmation, not more analysis

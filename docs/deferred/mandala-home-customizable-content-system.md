@@ -2,6 +2,7 @@
 
 **Category:** migration-general
 **Raised during:** Sprint 3 (AV landing-page scoping session), 2026-09-15
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — not blocking; the home page ships as a deliberate placeholder first
 **Owner:** unassigned

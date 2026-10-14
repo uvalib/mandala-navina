@@ -1,6 +1,7 @@
 # Group Subgroup Nesting Approach Decision
 **Category:** access-control
 **Raised during:** Spike 3
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High
 **Status:** ✅ SUPERSEDED by [ADR 011](../adr/011-group-collections-inheritance.md) (Accepted 2026-06-18) — Option D ratified. This note remains for historical context (investigation of the five options); the open recommendation now lives in the ADR.

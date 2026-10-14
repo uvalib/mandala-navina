@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy
 **Raised during:** Session 2026-08-17 (following up on the config-sync deploy fix)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium now, **High before production rollout** — deliberately not
 solving this during active development; must be resolved before this deploy path

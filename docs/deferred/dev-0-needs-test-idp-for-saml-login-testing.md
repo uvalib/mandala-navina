@@ -2,6 +2,7 @@
 
 **Category:** auth
 **Raised during:** Session 2026-08-18 (predis/predis fix + first live NetBadge attempt)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **RESOLVED 2026-08-18** (same day, a second session). Was High — blocked
 the live end-to-end proof for

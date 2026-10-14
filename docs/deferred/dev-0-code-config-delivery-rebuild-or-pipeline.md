@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy
 **Raised during:** Session 2026-07-21 (attempting to deliver the merged user-migration config to dev-0)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — blocks the user-migration deploy and every future code/config change to dev-0
 **Status:** **DECISION OPEN — deferred to Yuji/Dave; do not treat either option as chosen**

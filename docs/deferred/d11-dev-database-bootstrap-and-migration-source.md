@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy
 **Raised during:** Session 2026-07-15 (1b.1 part 4 — first green pipeline run)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — dev serves `/core/install.php` until this is decided; blocks 1a.9 staging execution and part-4 item 7 validation
 **Owner:** unassigned

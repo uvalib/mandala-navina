@@ -2,6 +2,7 @@
 
 **Category:** migration-images, solr-search
 **Raised during:** Sprint 1 (1a.8 — kmasset Solr doc contract, Phase 1)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium
 **Owner:** unassigned

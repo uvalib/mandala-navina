@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy
 **Raised during:** Session 2026-07-14 (1b.1 part 4 — building the app image for the first time)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — blocks 1b.1 part 4 validation (§4 item 7); `deploy_backend.yml` has no image to pull
 **Owner:** n/a (resolved)

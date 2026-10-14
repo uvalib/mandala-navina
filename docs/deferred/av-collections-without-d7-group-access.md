@@ -1,6 +1,7 @@
 # AV collections missing from the D7-vs-D11 access comparison (nid 3, 9, 20, 23)
 **Category:** migration-av, access-control
 **Raised during:** Sprint 3 AV7 (session 2026-09-24)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low -- investigated, no exposure found; two small follow-ups remain
 **Owner:** unassigned

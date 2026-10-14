@@ -2,6 +2,7 @@
 
 **Category:** migration-av, access-control
 **Raised during:** Sprint 3 AV7 (session 2026-09-25, reassessing the AV7 row)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **High -- FIXED 2026-09-25 for node pages.** Residual: listings are still
 unfiltered, tracked separately in

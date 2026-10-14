@@ -2,6 +2,7 @@
 
 **Category:** migration-av
 **Raised during:** Sprint 3 AV14 (2026-09-08); deferred at Sprint 3 close-out, 2026-10-01
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium now; must be done before production cutover, not before
 **Owner:** unassigned

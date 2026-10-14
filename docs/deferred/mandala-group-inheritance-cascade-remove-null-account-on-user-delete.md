@@ -2,6 +2,7 @@
 
 **Category:** access-control
 **Raised during:** Implementing `authenticated-contributor-crud-not-wired-in-d11.md`, 2026-10-06 — functional smoke test of the new contributor-tier group permissions
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium — real, reproducible, but narrow trigger (deleting a user account that is still a collection member); not yet known to have hit dev-0 or production
 **Owner:** unassigned

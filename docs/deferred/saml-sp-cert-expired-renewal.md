@@ -2,6 +2,7 @@
 
 **Category:** auth, infrastructure-deploy
 **Raised during:** 2026-07-13 (1b.1 part 4 — recovering the live SP keypair for the D11 deploy)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium (works today), High before a production cutover
 **Owner:** unassigned

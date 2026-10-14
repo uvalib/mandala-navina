@@ -2,6 +2,7 @@
 
 **Category:** solr-search, migration-general
 **Raised during:** Sprint 1 (1a.8 uid identity discussion, 2026-07-01)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — must be completed before final cutover; determines redirect and
 compatibility scope

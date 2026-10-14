@@ -2,6 +2,7 @@
 
 **Category:** solr-search
 **Raised during:** Spike 11, write-path discussion 2026-10-02
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low to Medium. Some lag is expected and accepted; review once the core exists.
 **Owner:** unassigned

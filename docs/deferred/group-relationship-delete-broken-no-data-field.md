@@ -2,6 +2,7 @@
 
 **Category:** access-control
 **Raised during:** Session 2026-07-10 (1b.1 — testing the Redis visibility-token membership-change hook)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — affects already-merged 1b.2 functionality (PR #27), not just 1b.1
 **Owner:** n/a (resolved)

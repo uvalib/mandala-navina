@@ -2,6 +2,7 @@
 
 **Category:** security, infrastructure-deploy
 **Raised during:** Sprint 1 (Step 1a.5 — IIIF wiring reachability probe, 2026-06-22); re-examined 2026-09-18 while investigating two broken demo images
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low for the broken-images half -- confirmed with Yuji (2026-09-18) that
 all 10 affected nodes are known test/dev data, not real archival content, so

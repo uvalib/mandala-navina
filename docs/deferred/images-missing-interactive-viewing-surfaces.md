@@ -4,6 +4,7 @@
 **Raised during:** Session 2026-08-19 — reviewing the live D7 site
 (`images.mandala.library.virginia.edu`) against the Sprint 1 acceptance criterion "Images
 render through the existing IIIF server with `i3fid` linkage intact"
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **To be discussed by the team as the next item after Sprint 1 closes.** Not
 a Sprint 1 blocker — Sprint 1's AC as written is satisfied by 1a.5's URL-contract proof

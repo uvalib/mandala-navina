@@ -2,6 +2,7 @@
 
 **Category:** solr-search, infrastructure-deploy
 **Raised during:** Spike 11, write-path discussion 2026-10-02
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium. Needed before production, not before the core is built.
 **Owner:** unassigned

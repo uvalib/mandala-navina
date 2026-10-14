@@ -2,6 +2,7 @@
 
 **Category:** auth, infrastructure-deploy
 **Raised during:** Session 2026-10-05 (group session; side finding while checking what lives in `/mnt/data` on dev-0)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low-Medium. Read-only review of the playbook source; nothing was run and no
 live failure was observed. Finding 1 is the one worth fixing first.

@@ -5,6 +5,7 @@
 after merging [PR #183](https://github.com/uvalib/mandala-navina/pull/183) — see
 [docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md](../sprints/sprint-02-theme-images-ui-and-endpoint-access.md),
 Workstream B5)
+**Issue:** none
 **Priority:** Low — fixed live, not currently blocking anything. Worth a root-cause pass
 so it doesn't silently recur (e.g. on the next dev-0 rebuild or in staging/production).
 **Owner:** n/a (resolved)

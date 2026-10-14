@@ -2,6 +2,7 @@
 
 **Category:** access-control
 **Raised during:** Sprint 3 AV7 (session 2026-09-25, verifying the AV access fix in PR #255)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **High — RESOLVED 2026-09-28. Both halves decided and implemented; see
 "Decision and implementation" at the end. The gap and the options are kept below as the

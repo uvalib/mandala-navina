@@ -2,6 +2,7 @@
 
 **Category:** migration-general
 **Raised during:** Session 2026-10-05 (side finding from the file comparison)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low. **DEFERRED by the group, 2026-10-05, until closer to production deployment time.**
 No action is needed before then; revisit it as part of pre-production cleanup.

@@ -1,6 +1,7 @@
 # User migration executed on dev-0 (1,543 users) — 2026-08-12
 
 **Category:** migration-general
+**Issue:** none
 **Jira:** (add when available)
 **Status:** ✅ **DONE 2026-08-12.** Recorded because the code had been merged and
 verified since July while the *run* had never happened on dev-0 — a distinction the

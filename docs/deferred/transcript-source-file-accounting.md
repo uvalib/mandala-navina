@@ -2,6 +2,7 @@
 
 **Category:** migration-av
 **Raised during:** Spike 11, reconciliation 2026-10-02; deferred the same day (Yuji)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium. Must be done before Sprint 4 T7 (revert-to-upload) can be built or
 trusted; does not block the model, the viewer or the editor.

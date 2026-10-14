@@ -2,6 +2,7 @@
 
 **Category:** auth
 **Raised during:** Session 2026-08-20 (live session-config inspection while fixing the OAuth2 Bearer defect)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium-High — user-visible on every working day longer than eight hours, and it
 silently discards whatever the user was in the middle of. Not a blocker for any sprint item.

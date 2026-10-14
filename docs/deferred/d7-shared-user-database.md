@@ -2,6 +2,7 @@
 
 **Category:** migration-general, auth
 **Raised during:** Session 2026-07-10 (1b.1 — planning the user migration)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** **Low — user migration DONE (2026-08-12) and historical group ownership FIXED
 (2026-09-02).** 1,543 users migrated from `mandala_shared` on dev-0; all 22 private groups

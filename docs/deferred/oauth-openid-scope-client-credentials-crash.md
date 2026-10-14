@@ -2,6 +2,7 @@
 
 **Category:** auth
 **Raised during:** Spike 10 (SAML + OAuth2 coexistence)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium (implementation guardrail for 1b.1)
 **Owner:** unassigned

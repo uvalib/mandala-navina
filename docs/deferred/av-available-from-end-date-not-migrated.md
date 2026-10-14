@@ -2,6 +2,7 @@
 
 **Category:** migration-av
 **Raised during:** Sprint 3 AV4 (2026-09-09); moved here from a `config/sync` comment 2026-10-06
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — 9 rows; needs a content call from Than, not engineering
 **Owner:** unassigned

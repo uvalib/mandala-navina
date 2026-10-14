@@ -2,6 +2,7 @@
 
 **Category:** migration-images
 **Raised during:** Sprint 1 (1a.7 — pattern-setting image migration)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low
 **Owner:** n/a (resolved)

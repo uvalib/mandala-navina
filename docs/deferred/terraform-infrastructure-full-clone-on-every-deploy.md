@@ -2,6 +2,7 @@
 
 **Category:** infrastructure-deploy
 **Raised during:** Session 2026-08-26 (watching the dev-0 deploy during the from-scratch rebuild)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low-Medium — a real cost on every deploy, not a correctness bug
 **Status:** DONE — 2026-09-02: group agreed to implement the proposed fix; landed as

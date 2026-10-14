@@ -2,6 +2,7 @@
 
 **Category:** migration-av
 **Raised during:** Session 2026-09-21 (regression sweep after Mandala Home carousel work)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — pre-existing drift, not caused by this session's changes, no known user-facing symptom
 **Owner:** unassigned

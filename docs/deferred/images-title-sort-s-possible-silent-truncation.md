@@ -2,6 +2,7 @@
 
 **Category:** migration-images, solr-search
 **Raised during:** Session 2026-09-14, fixing AV8's `title_sort_s` bug (PR #199)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — no known symptom yet; this is a risk assessment, not a confirmed defect
 **Owner:** unassigned

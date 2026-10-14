@@ -2,6 +2,7 @@
 
 **Category:** security
 **Raised during:** Spike 6 (2026-08-12) — URL-strategy decision (Option A)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — blocks generalizing the proxy to all sites/apps
 **Owner:** n/a (resolved)

@@ -2,6 +2,7 @@
 
 **Category:** auth
 **Raised during:** Session 2026-08-20
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** High — root cause of the tracked 4th OAuth2 defect; **raised to Critical
 2026-08-27, see "Browser case confirmed" below — affects every real migrated user, not just OAuth2**

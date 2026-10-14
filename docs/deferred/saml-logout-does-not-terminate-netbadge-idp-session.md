@@ -2,6 +2,7 @@
 
 **Category:** auth, security
 **Raised during:** Session 2026-08-20 (re-rooting the "logout doesn't work" report)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium-High — user-visible, and it is the leading explanation for a real report
 from Xiaoming. Config-only to fix, but needs one fact from UVA ITS we don't have yet.

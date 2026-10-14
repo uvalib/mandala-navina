@@ -2,6 +2,7 @@
 
 **Category:** migration-av
 **Raised during:** Session 2026-09-17/18, auditing D7's `avinfo` block for AV15 parity
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — nothing user-facing is blocked; these two UI slots are
 either empty or unimplementable as-is on every real example checked, so

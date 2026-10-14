@@ -2,6 +2,7 @@
 
 **Category:** security, infrastructure-deploy
 **Raised during:** Session 2026-07-14 (1b.1 part 4 — dev-0 drift capture)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — explicitly not a D11 blocker. **Updated 2026-08-05:** load did return
 (2026-08-04 outage) — but in a shape this measure doesn't address; see the update below

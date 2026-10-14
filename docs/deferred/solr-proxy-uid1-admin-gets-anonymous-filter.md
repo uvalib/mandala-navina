@@ -2,6 +2,7 @@
 
 **Category:** solr-search, access-control
 **Raised during:** Session 2026-08-11 (running the proxy locally to validate the pipeline specs)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** ~~Medium~~ — **RESOLVED 2026-08-12**
 **Owner:** n/a (resolved)

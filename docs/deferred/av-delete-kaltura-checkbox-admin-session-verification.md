@@ -2,6 +2,7 @@
 
 **Category:** migration-av
 **Raised during:** Group session 2026-10-06 (Than, Yuji, Xiaoming) — feature requested live
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low — built, working, and **end-to-end verified live 2026-10-06** (Than,
 own machine). One narrower open question remains (ADMIN vs USER session type), not

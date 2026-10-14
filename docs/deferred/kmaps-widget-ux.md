@@ -1,6 +1,7 @@
 # KMaps Autocomplete Widget UX
 **Category:** solr-search
 **Raised during:** Spike 1  
+**Issue:** none
 **Jira:** (add when available)  
 **Priority:** Medium
 **Owner:** unassigned

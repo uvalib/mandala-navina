@@ -3,6 +3,7 @@
 **Category:** access-control, auth
 **Raised:** 2026-08-21 by Than Grove, following [Spike 6](../spikes/spike-06-api-compatibility.md)'s
 endpoint audit
+**Issue:** none
 **Priority:** **High** — a required property of every asset endpoint D11 builds; the per-site
 migration checklist depends on it
 **Status:** **DECIDED 2026-08-26.** Than confirmed with Yuji directly (Xiaoming not required for

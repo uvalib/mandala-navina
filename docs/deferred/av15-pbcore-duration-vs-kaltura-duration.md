@@ -2,6 +2,7 @@
 
 **Category:** migration-av
 **Raised during:** Session 2026-09-17/18, wiring up the "Video/Audio Overview" duration row (AV15) after the earlier `av15-avinfo-abandoned-fields-review-with-than.md` audit wrongly wrote `avduration` off as unmigratable/live-API-only
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Low-Medium — not blocking, D11's own display already uses the
 correct (Kaltura) source; the open question is whether/how to reconcile

@@ -1,6 +1,7 @@
 # Migration overwrote subcollection access with the parent's value
 **Category:** access-control, migration-general
 **Raised during:** Sprint 3 AV7 (session 2026-09-24)
+**Issue:** none
 **Jira:** (add when available)
 **Priority:** Medium -- dev-0 repaired 2026-09-24; residual items below (search-reader check, UVA enumeration mismatch, other environments)
 **Owner:** unassigned
