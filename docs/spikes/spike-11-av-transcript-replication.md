@@ -60,7 +60,12 @@ revert-to-upload, T8 search UI. Sprint 4 holds the detail.
 
 ### Still unproven (carried into the sprint, not blocking the spike)
 
-- Join cost at real scale (122,923 kmassets documents against about 245k units).
+- **Join cost at real scale** (122,923 kmassets documents against about 245k units). This is a
+  **go/no-go checkpoint, recorded 2026-10-14**: measure query time through the proxy as soon as
+  the T9 writer has populated `trid_i` on dev, and decide whether the cross-core join (access
+  option C) holds. If it does not, the access design is reopened (the fail-criteria table
+  already routes an index-shape change to the Solr owner). **The pass/fail threshold is not set
+  yet; the team will set it later**, before the measurement is taken.
 - Replication of the new core, and master-to-replica lag
   ([deferred note](../deferred/transcript-core-replica-lag-review.md)).
 - A compatibility diff of real `mandala-av` responses against the new core.
@@ -77,7 +82,7 @@ revert-to-upload, T8 search UI. Sprint 4 holds the detail.
    analyzers (Chinese, Indic, ICU) and the kmassets `trid_i` type (Trie on 7.x, Point on 9).
    Note the configsets directory is named `solr7.3.x` although it holds config for the 7.7.3
    servers; the core is added there only, not to `solr9.10.11`.
-3. Whether the items under "Still unproven" may stay open after close, as proposed.
+3. ~~Whether the items under "Still unproven" may stay open after close.~~ **Decided 2026-10-14:** yes; the spike closes with them carried into Sprint 4, and join cost is a go/no-go checkpoint with its threshold to be set by the team later.
 4. Who the editors are, and whether `keep_transcript_edits` migrates as a visible marker
    (question 1).
 
