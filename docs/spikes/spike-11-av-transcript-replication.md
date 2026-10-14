@@ -409,6 +409,33 @@ real use of Drupal Solr.** The node documents are not wholly idle, though: they 
 and the per-transcript language set has to come from somewhere other than a copy of the
 Drupal node documents. The new core should not copy the Drupal ApacheSolr schema.
 
+**Where the D7 core lives (read from the `d7_av` database, 2026-10-14).** The AV site's
+`apachesolr_environment` table has two rows, and `apachesolr_default_environment` is
+`mandala_library_rw`:
+
+| Environment | Target | State |
+|---|---|---|
+| `mandala_library_rw` | the **production Solr master**, internal host on port 8080, core `mandala-av` | Default. Indexes the `node` and `tcu` entity types. `apachesolr_read_only` is 0. `apachesolr_index_updated` is in 2026, so units were still being indexed this year |
+| `solr` ("mediabase") | an old hosted Solr (a third-party host), core `av` | Dead: last `tcu` index 2018, last `node` index 2019. The D7 search page names this environment, which is why it was missing from the earlier environment table |
+
+- **D7 wrote straight to the Solr master**, with no S3 or ingest hop. That is the same master
+  that hosts `kmassets` and `kmterms`, and the `mandala-av` directory is in
+  `solr-shanti-configsets` (`solr7.3.x/{staging,production}/mandala-av`, added 2022-04).
+  `apachesolr_direct_commit` and `apachesolr_soft_commit` are both 0, so visibility relied on
+  the core's autoCommit; that is why `openSearcher=true` was added to the `mandala-*` cores
+  (configsets commit `15e4522`, 2022-04-26). The new core sets `openSearcher=false` on purpose
+  and relies on the writer's commit (question 6).
+- **D11 keeps the same host and write style** (Drupal writes to the master) but uses a new
+  core, `mandala-av-transcripts`, leaving D7's `mandala-av` serving until cutover.
+- **How existing `mandala-*` cores were created:** by committing a core directory
+  (`conf/` plus a one-line `core.properties`) to `solr-shanti-configsets` and deploying it
+  to the master's data volume (commits `e2efa74`, `dec3304`, `0094bec`). No CoreAdmin call is
+  recorded. Whether a deploy alone makes a running Solr load a new core directory, or needs a
+  reload or restart, is **not documented**; try it on staging (#327).
+- The `solr` environment's stored URL embeds a credential in the D7 database. It is not
+  recorded here. The hosted service is probably dead; confirming that and retiring or rotating
+  the credential is left to whoever owns the legacy hosting.
+
 **Access (open, 2026-10-02).** The new core must enforce the same visibility rules as the
 rest of D11. Today the D11 proxy (`solr-proxy`, ADR 014) injects a per-user `fq` that Drupal
 precomputes into Redis (`mandala_solr_fq:{uid}`), built from kmassets fields (`visibility_i`,
@@ -452,8 +479,8 @@ to carry the facet):
 - **Compatibility test:** capture real responses from the D7 `mandala-av` core for a few
   transcripts and diff them against the new core's output, because the full set of fields the
   client reads has not been enumerated (only the ones in `audiovideo.js`).
-- **Not yet checked:** the D7 search page names Solr environment `solr`, which is not in the
-  environment table (only `mandala_library_rw` is); it presumably falls back to the default.
+- **D7 search page environment `solr`: checked 2026-10-14** (see "Where the D7 core lives").
+  It is a dead legacy environment, not a missing one, and does not affect D11.
 - **Work:** a Drupal-side search UI (page, header block, snippets, deep links) is new work
   beyond indexing, so it is added to Sprint 4 as T8.
 
