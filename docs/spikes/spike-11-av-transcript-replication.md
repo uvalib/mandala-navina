@@ -70,7 +70,13 @@ revert-to-upload, T8 search UI. Sprint 4 holds the detail.
 
 1. ~~Titles in results.~~ **Decided 2026-10-14:** look up from Drupal at render time (see
    "Open decisions").
-2. Solr 7.x or 9.x as the target; the core is built and checked for 7.7.3 only.
+2. ~~Solr 7.x or 9.x as the target.~~ **Decided 2026-10-14 (Yuji): target the latest 7.x,
+   which is 7.7.3**, the version the deployed master and replicas run and the one the core was
+   built and checked on. The core stays portable to 9 (Point field types; no 7-only features)
+   but is not tested there. Recheck on 9 when a 9 environment exists: the cross-core join, the
+   analyzers (Chinese, Indic, ICU) and the kmassets `trid_i` type (Trie on 7.x, Point on 9).
+   Note the configsets directory is named `solr7.3.x` although it holds config for the 7.7.3
+   servers; the core is added there only, not to `solr9.10.11`.
 3. Whether the items under "Still unproven" may stay open after close, as proposed.
 4. Who the editors are, and whether `keep_transcript_edits` migrates as a visible marker
    (question 1).
@@ -583,7 +589,7 @@ to carry the facet):
   stemming (`chant` no longer matches `chanting`) but Chinese, Nepali and Wylie tokenize sensibly.
 - **Creating the core:** the team can create cores whose names start with `mandala` on the
   dev/staging Solr instance (Yuji, 2026-10-02), so Dave is not needed for dev. Production
-  creation and the Solr 7.x versus 9.x target are still to be confirmed. Creating the core on
+  creation is still to be confirmed. The Solr version is decided (7.7.3, 2026-10-14). Creating the core on
   dev has not been done.
 - **`solrconfig.xml` written and the join prototype run, 2026-10-07** (lean config, loads on
   Solr 7.7.3; see `solr/mandala-av-transcripts/README.md`). The cross-core join works on 7.7.3
