@@ -6,8 +6,11 @@
   written by a Drupal-side sink, so none of kmassets' extras (DataImportHandler, clustering,
   velocity, spellcheck, elevation, update scripts) are carried over. What IS kept from
   kmassets is the master/replica replication handler, switched by the same system properties
-  (solr.replication.master / .slave / .masterUrl / .pollInterval), so the core runs on this
-  instance's existing master/replica topology without a different mechanism.
+  the deployed Solr already sets (-Denable.master on the master; -Denable.slave and
+  -Dmaster.url on the replicas; the master URL gets /${solr.core.name}/replication appended),
+  so the core runs on the existing master/replica topology without a different mechanism.
+  (Corrected 2026-10-14: an earlier draft used solr.replication.* names that no deployed
+  node sets, which would have left replication off on both sides.)
 
   Not yet exercised on the real dev/staging Solr instance. Prototyped on a throwaway
   Solr 7.7.3 together with a kmassets-shaped core: see README.md.
@@ -89,18 +92,19 @@
   </initParams>
   <requestHandler name="/update" class="solr.UpdateRequestHandler"/>
 
-  <!-- Same switches as kmassets, so one deploy mechanism covers both cores. -->
+  <!-- Same switches as the deployed kmassets and mandala-* cores (enable.master, enable.slave,
+       master.url), so one deploy mechanism covers all of them. -->
   <requestHandler name="/replication" class="solr.ReplicationHandler">
     <lst name="master">
-      <str name="enable">${solr.replication.master:false}</str>
+      <str name="enable">${enable.master:false}</str>
       <str name="replicateAfter">commit</str>
       <str name="replicateAfter">startup</str>
-      <str name="confFiles">${solr.replication.confFiles:schema.xml,lang/stopwords_en.txt}</str>
+      <str name="confFiles">schema.xml,solrconfig.xml,lang/stopwords_en.txt</str>
     </lst>
     <lst name="slave">
-      <str name="enable">${solr.replication.slave:false}</str>
-      <str name="masterUrl">${solr.replication.masterUrl:http://localhost:8983/solr}/replication</str>
-      <str name="pollInterval">${solr.replication.pollInterval:00:00:60}</str>
+      <str name="enable">${enable.slave:false}</str>
+      <str name="masterUrl">${master.url:none}/${solr.core.name}/replication</str>
+      <str name="pollInterval">00:00:30</str>
     </lst>
   </requestHandler>
 
