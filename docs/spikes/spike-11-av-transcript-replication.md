@@ -83,8 +83,13 @@ revert-to-upload, T8 search UI. Sprint 4 holds the detail.
    Note the configsets directory is named `solr7.3.x` although it holds config for the 7.7.3
    servers; the core is added there only, not to `solr9.10.11`.
 3. ~~Whether the items under "Still unproven" may stay open after close.~~ **Decided 2026-10-14:** yes; the spike closes with them carried into Sprint 4, and join cost is a go/no-go checkpoint with its threshold to be set by the team later.
-4. Who the editors are, and whether `keep_transcript_edits` migrates as a visible marker
-   (question 1).
+4. ~~Who the editors are, and whether `keep_transcript_edits` migrates as a visible marker.~~
+   **Decided 2026-10-14 (Yuji; Than present and approving):** (a) transcript editors and
+   content editors are the same people for a given node, so transcript editing needs no
+   separate role: access follows the node's edit permission (as already planned; ADR 015's
+   content-editor model applies); (b) the `keep_transcript_edits` flag is kept **visible**,
+   migrated as data (F1.1) and shown as a marker in the UI. Not stated: whether the marker is
+   shown to public viewers or only to editors; unless said otherwise, build it for editors.
 
 ### Leftovers stay as deferred notes
 
@@ -414,8 +419,9 @@ the audit, not a decision.
    corrected audit finding). Sprint 4 T6 is therefore in scope: an editor equivalent to
    D7's (in-place tier edit with optimistic locking, speaker edit, time edit, insert
    before/after, copy, delete, per-node and per-tier disable hooks, access following
-   node-edit permission, immediate reindex). Open follow-ups for Than: who the editors are,
-   and whether the `keep_transcript_edits` flag should migrate as a visible marker.
+   node-edit permission, immediate reindex). Follow-ups answered 2026-10-14: the editors are the
+   same people who can edit the node, and the `keep_transcript_edits` flag is kept visible (see the
+   close-out, decision 4).
 2. **Data model. ANSWERED 2026-10-02 (Than): one row per TCU, following D7's design.**
    Option B stands; B2 (JSON blob) is out because editing is kept. Paragraphs, sidecar VTT
    and Kaltura captions stay rejected.
