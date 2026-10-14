@@ -1,7 +1,7 @@
 # How-To: Verify Solr proxy visibility filtering (ADR 014)
 
 **Audience:** developers working in the monorepo
-**Last reviewed:** 2026-08-20
+**Last reviewed:** 2026-10-14
 
 ## Goal
 
@@ -124,6 +124,56 @@ uid 600 belongs to 4 collections, and 25 private documents sit inside them — s
 specific enough that a fail-closed regression makes them vanish. If the dev index is
 rebuilt these ids may change; `--discover` prints the queries to find new ones.
 
+## Transcript core (`--transcripts`, Spike 11 / #327)
+
+The `mandala-av-transcripts` core has no visibility fields of its own. The proxy wraps the
+user's kmassets filter in `{!join from=trid_i to=is_trid fromIndex=kmassets}` (solr-proxy PR
+#315), so a transcript unit is visible only if its kmassets parent document is. A unit with
+no parent matches nothing (fails closed).
+
+No real kmassets document carries `trid_i` yet, so this check uses **synthetic** data in the
+reserved `trid` range 990000-990999, written by `scripts/load-transcript-test-units.py`:
+
+| trid | kmassets parent | Anonymous | uid 600 |
+|---|---|---|---|
+| 990001 | public | visible | visible |
+| 990002 | private, in uid 600's collection | hidden | **visible** ← positive discriminator |
+| 990003 | private, someone else's collection | hidden | **hidden** ← negative discriminator |
+| 990004 | none | hidden | hidden (fail closed) |
+
+Prerequisites beyond the above: the core exists on dev Solr (#327), `trid_i` has
+docValues on the dev kmassets core (otherwise the join errors), and the proxy running on
+dev-0 includes PR #315.
+
+```bash
+# 1. Load (dry run by default; add --apply to write). Writes go to the MASTER.
+#    --link-kmassets also writes 3 parent docs into the SHARED dev kmassets core.
+scripts/load-transcript-test-units.py --master http://<dev-master>:8080 \
+    --replica http://<dev-replica>:8080 \
+    --mine-collection <collection_uid_s uid 600 belongs to> \
+    --other-collection <collection_uid_s uid 600 does not> \
+    --link-kmassets --apply
+
+# 2. Verify (on an app node, as above)
+ssh <node> python3 /tmp/verify-solr-proxy-visibility.py --transcripts
+
+# 3. Remove the test data when finished
+scripts/load-transcript-test-units.py --master http://<dev-master>:8080 --cleanup --apply
+```
+
+Get the two collection uids from `--discover` (queries 2-4). `--replica` times
+master-to-replica lag for the new core; record the number in
+`docs/deferred/transcript-core-replica-lag-review.md`.
+
+Expected output adds sections 7 (anonymous) and 8 (authenticated). Exit `3` with "no test
+units visible" means the core is missing, the join is misconfigured, or the loader was
+not run.
+
+**Clean up afterwards.** The parent documents are real entries in the dev kmassets core until
+`--cleanup` runs, and a `KmassetAuditor --fix` pass could delete or flag them. The loader
+refuses to write parents if any other kmassets document already uses a `trid_i` in the
+reserved range.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
@@ -132,7 +182,9 @@ rebuilt these ids may change; `--discover` prints the queries to find new ones.
 | Authenticated total == anonymous total | Same as above; the token is missing or Redis is unreachable | Proxy logs `Redis unavailable, falling back to anonymous visibility` |
 | `private doc of ANOTHER user` returns >0 | Either a real leak **or** an ambiguous fixture id | Check trap 1 first — confirm the id resolves to one document index-side |
 | `SETUP: proxy /auth returned no sid` | The OAuth2 chain is broken | Run `scripts/verify-oauth2-userinfo.sh` first; it isolates that layer |
-| Everything returns 0 | Wrong core path | The map is `/solr/kmassets` and `/solr/kmterms` |
+| Everything returns 0 | Wrong core path | The map is `/solr/kmassets` and `/solr/kmterms`; the transcript core is `/solr/mandala-av-transcripts` (via `JOIN_ACCESS`) |
+| Section 8 "THEIR collection" returns 0 but section 7 passes | Parent's `collection_uid_s` is not in uid 600's token, or the token is missing | Re-check `--mine-collection` against the token's collection list; then the Redis token as above |
+| Join error mentioning `docValues` or `bytesPerDim` | kmassets `trid_i` lacks docValues, or `is_trid` type mismatch | See `solr/mandala-av-transcripts/README.md` (join prototype findings) |
 
 ## Related
 

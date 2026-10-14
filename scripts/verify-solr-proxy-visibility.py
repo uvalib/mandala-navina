@@ -47,6 +47,12 @@ HOW THE FIXTURES WERE CHOSEN
 
 See docs/dev-notes/howto-verify-solr-proxy-visibility.md.
 
+TRANSCRIPT CORE (--transcripts, #327)
+    Sections 7-8 check the cross-core join filter on mandala-av-transcripts (solr-proxy PR
+    #315). They use synthetic data from scripts/load-transcript-test-units.py rather than
+    discovered fixtures, because no real kmassets document carries trid_i yet. Run the loader
+    first; run it with --cleanup afterwards.
+
 EXIT CODES
     0  PASS   1  FAIL (a real visibility defect)   3  SETUP (could not test)
 """
@@ -82,6 +88,10 @@ p.add_argument("--password", default=os.environ.get("MANDALA_TEST_PASSWORD", "st
 p.add_argument("--public-id", default=DEFAULTS["public_id"])
 p.add_argument("--mine-id", default=DEFAULTS["mine_id"])
 p.add_argument("--not-mine-id", default=DEFAULTS["not_mine_id"])
+p.add_argument("--transcripts", action="store_true",
+               help="also check the mandala-av-transcripts join filter (needs the core and "
+                    "scripts/load-transcript-test-units.py data loaded; see #327)")
+p.add_argument("--transcripts-core", default="/solr/mandala-av-transcripts")
 p.add_argument("--discover", action="store_true",
                help="print the queries that regenerate the fixture set, then exit")
 ARGS = p.parse_args()
@@ -112,8 +122,8 @@ def req(url, data=None, opener=follow):
         return e.code, e.read().decode("utf-8", "replace"), dict(e.headers), url
 
 
-def solr(query, sid=None, extra=""):
-    url = f"{ARGS.proxy}{ARGS.core}/select?q={query}&rows=0&wt=json{extra}"
+def solr(query, sid=None, extra="", core=None):
+    url = f"{ARGS.proxy}{core or ARGS.core}/select?q={query}&rows=0&wt=json{extra}"
     if sid:
         url += f"&sid={sid}"
     code, body, _, _ = req(url)
@@ -242,6 +252,41 @@ try:
     print("\n== 6. forged sid must not grant access ==")
     check("bogus sid falls back to anonymous", 0,
           solr(f"id:%22{ARGS.mine_id}%22", sid="deadbeefdeadbeefdeadbeef00000000"))
+
+    if ARGS.transcripts:
+        # The transcript core has no visibility of its own: the proxy wraps the user's
+        # kmassets fq in {!join from=trid_i to=is_trid fromIndex=kmassets}, so a unit is
+        # visible only if its kmassets parent is. Fixtures are the synthetic trids written by
+        # scripts/load-transcript-test-units.py (reserved range 990000-990999).
+        # PUBLIC=990001  MINE=990002 (private, test user's collection)
+        # OTHER=990003 (private, someone else's)  ORPHAN=990004 (no kmassets parent)
+        tc = ARGS.transcripts_core
+        def units(trid, sid=None, extra=""):
+            return solr(f"is_trid:{trid}", sid=sid, extra=extra, core=tc)
+
+        print("\n== 7. transcript core: anonymous ==")
+        total = units("[990000%20TO%20990999]")
+        if total == 0:
+            raise RuntimeError(f"no test units visible at {tc}: core missing, join "
+                               "misconfigured, or loader not run (anonymous should at least "
+                               "see trid 990001)")
+        check("unit of a public transcript visible", 2, units(990001))
+        check("unit of a private transcript in test user's collection HIDDEN", 0, units(990002))
+        check("unit of another user's private transcript HIDDEN", 0, units(990003))
+        check("unit with no kmassets parent HIDDEN (fails closed)", 0, units(990004))
+        check("fq=visibility_i:2 stripped, no effect", total,
+              units("[990000%20TO%20990999]", extra="&fq=visibility_i:2"))
+
+        print("\n== 8. transcript core: authenticated ==")
+        # Reuses the session from section 3 (sid), so this only runs when that succeeded.
+        check("public transcript still visible", 2, units(990001, sid=sid))
+        check("private transcript in THEIR collection NOW VISIBLE", 2, units(990002, sid=sid),
+              "  <- positive discriminator; 0 here means fail-closed")
+        check("another user's private transcript STILL HIDDEN", 0, units(990003, sid=sid),
+              "  <- negative discriminator")
+        check("orphan unit STILL HIDDEN", 0, units(990004, sid=sid))
+        check("forged sid falls back to anonymous", 0,
+              units(990002, sid="deadbeefdeadbeefdeadbeef00000000"))
 
 except RuntimeError as e:
     print(f"\nSETUP: {e}")
