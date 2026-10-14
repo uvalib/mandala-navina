@@ -97,7 +97,7 @@ index-side that the id resolves to exactly one document:
 /solr/kmassets/select?q=id:"<id>"&rows=10&fl=id,visibility_i,asset_type
 ```
 
-Prefer prefixed ids (`images-11-95599`) over bare numerics, which collide with the
+Prefer prefixed ids (`images-11-74591`) over bare numerics, which collide with the
 taxonomy shadow entries.
 
 ### 2. Client `fq` filters are deleted, not intersected
@@ -109,6 +109,12 @@ client filter would be applied and then intersected. It is not. Assert
 `injected == baseline`.
 
 ## Fixtures are data, not code
+
+**Refreshed 2026-10-14:** `images-11-95599` had become public (`visibility_i=1`), which made
+sections 1 and 6 fail even though the proxy was correct. The "mine" fixture is now
+`images-11-74591` (private, in collection `images-11-111`, which is one of uid 600's seven
+collections: `images-11-33/-111/-44/-160`, `audio-video-11-301/-292/-389`). Check a fixture's
+`visibility_i` and collection before trusting a failure in sections 1 and 6.
 
 The default ids were discovered on 2026-08-20 against dev-0 by faceting `kmassets` on
 `visibility_i` and intersecting with uid 600's real Group memberships:

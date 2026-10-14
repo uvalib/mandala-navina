@@ -73,9 +73,10 @@ DEFAULTS = {
     "drupal": "https://mandala-dev.internal.lib.virginia.edu",
     "proxy": "https://mandala-index-dev.internal.lib.virginia.edu",
     "core": "/solr/kmassets",
-    # Discovered 2026-08-20 against dev-0; see --discover to refresh.
+    # Refreshed 2026-10-14 against the staging index dev-0 reads (mine_id was public by
+    # then: images-11-95599 changed visibility). See --discover to refresh again.
     "public_id": "1631777",          # visibility_i=1, everyone sees
-    "mine_id": "images-11-95599",    # visibility_i=2, inside a uid-600 collection
+    "mine_id": "images-11-74591",    # visibility_i=2, collection images-11-111 (uid 600's)
     "not_mine_id": "images-11-3",    # visibility_i=2, collection images-11-5 (NOT uid 600's)
 }
 
