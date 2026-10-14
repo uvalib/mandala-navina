@@ -1,7 +1,104 @@
 # Spike 11: AV Transcript Replication on Drupal 11
-**Status:** Partial — corpus audit done (2026-10-01); data-model, prototype, search and migration work not started
+**Status:** ✅ **Closed 2026-10-14** — Than (spike lead) approved the close-out and its decisions. Verification items carried into Sprint 4; see "Close-out" below.
 **Date:** 2026-10
 **Branch/commit:** —
+
+## Close-out (approved 2026-10-14)
+
+Spike 11 is led by Than. This section was assembled from what the rest of this document
+records and **approved by Than on 2026-10-14**, in a meeting with Yuji and Xiaoming, together
+with every decision listed below. The spike is closed; what remains is engineering in Sprint 4
+and the checks under "Still unproven".
+
+### Recommendation: GO
+
+Build the D11 transcript layer as the sections below record. The unknowns that justified a
+spike are answered; what remains is engineering with known shape (Sprint 4 T2-T9), plus the
+checks listed under "Still unproven".
+
+- **Data model:** a dedicated transcript entity with one row per time-coded unit (TCU),
+  following D7's design (Than, 2026-10-02); per-unit revisions and non-fieldable custom entities
+  (2026-10-07). Paragraphs, sidecar WebVTT and Kaltura captions rejected on the audit.
+- **Authoring:** the editor is kept (Than, 2026-10-02: 540 nodes edited, latest 2026-04-30), so
+  Sprint 4 T6 and T7 stay in scope.
+- **Search:** a new core, `mandala-av-transcripts`, one document per TCU, keeping the field
+  names the React viewer reads. Access follows the kmassets parent document through a
+  cross-core join in `solr-proxy` (PR #315), which needs `trid_i` on kmassets documents
+  (docValues live on staging and production since 2026-10-13, #321).
+- **Migration:** read D7's stored TCU rows directly; no XSLT re-run.
+
+### Pass criteria against the evidence
+
+| Criterion | Status | Evidence | Gap |
+|---|---|---|---|
+| D7 model, sync and search documented from real data and code | Met | "Live evidence", "Corpus audit", "Where the D7 core lives" | none |
+| D11 mechanism chosen with rationale | Met | "Data-model evaluation" and the decided subsections; questions 1-3, 6, 7 | none |
+| Minimal prototype of timecode-to-playback sync | Partly met | Click-to-seek and highlight-on-play verified on one real node | Read the D7 tables, not D11 entities; one node, one preset. Redo against the T2 entity in T3 |
+| Multilingual and Tibetan fidelity confirmed | Partly met | NFC normalisation at migration decided (933 Dzongkha values not NFC); per-language analyzers verified on real `d7_av` rows | No explicit parallel-language round trip through the D11 model yet. Make it a T5 acceptance check |
+| Search strategy defined | Met as design | Question 6; join proven on a throwaway Solr 7.7.3 (#285) | Not yet on a real Solr core (#327, #330, configsets #33) |
+| Migration strategy and volume defined | Met, but scattered | Below | No single migration section existed before this one |
+
+### Migration strategy (gathered from the sections above)
+
+1. Source: D7 `tcu` rows and the transcript tracking rows, read from the database
+   (about 245,158 units in 5,343 transcripts). Source files are not parsed at migration.
+2. Preserve D7 ids: `tcuid` as the unit id and `trid` as the transcript id.
+3. Carry the 4,269 bad timecodes as found, with `timecode_status` and `end_original`; the fix
+   is a separate deferred task.
+4. Normalise to NFC (Spike 4a).
+5. Write one initial revision per unit; edit history starts at migration.
+6. Verify by counts (245,158 in, 245,158 out, flagged units included) and spot-check
+   against source files from each format.
+7. Source-file questions (the 68 replaced files use the current attachment as the original of
+   record; the 41, 19 and 3 outliers) are tracked in the deferred accounting note and do not
+   gate the migration.
+
+### Implementation sketch
+
+T2 transcript entity, then the core on dev Solr (#327) and the PR #315 end-to-end check, then
+T9 (`trid_i` writer, then the join filter), T3 viewer, T5 migration, T6 editor, T7
+revert-to-upload, T8 search UI. Sprint 4 holds the detail.
+
+### Still unproven (carried into the sprint, not blocking the spike)
+
+- **Join cost at real scale** (122,923 kmassets documents against about 245k units). This is a
+  **go/no-go checkpoint, recorded 2026-10-14**: measure query time through the proxy as soon as
+  the T9 writer has populated `trid_i` on dev, and decide whether the cross-core join (access
+  option C) holds. If it does not, the access design is reopened (the fail-criteria table
+  already routes an index-shape change to the Solr owner). **The pass/fail threshold is not set
+  yet; the team will set it later**, before the measurement is taken.
+- Replication of the new core, and master-to-replica lag
+  ([deferred note](../deferred/transcript-core-replica-lag-review.md)).
+- A compatibility diff of real `mandala-av` responses against the new core.
+- Whether a deploy alone makes the running Solr load a new core directory (#327).
+
+### Decisions taken at close (2026-10-14)
+
+1. ~~Titles in results.~~ **Decided 2026-10-14:** look up from Drupal at render time (see
+   "Open decisions").
+2. ~~Solr 7.x or 9.x as the target.~~ **Decided 2026-10-14 (Yuji): target the latest 7.x,
+   which is 7.7.3**, the version the deployed master and replicas run and the one the core was
+   built and checked on. The core stays portable to 9 (Point field types; no 7-only features)
+   but is not tested there. Recheck on 9 when a 9 environment exists: the cross-core join, the
+   analyzers (Chinese, Indic, ICU) and the kmassets `trid_i` type (Trie on 7.x, Point on 9).
+   Note the configsets directory is named `solr7.3.x` although it holds config for the 7.7.3
+   servers; the core is added there only, not to `solr9.10.11`.
+3. ~~Whether the items under "Still unproven" may stay open after close.~~ **Decided 2026-10-14:** yes; the spike closes with them carried into Sprint 4, and join cost is a go/no-go checkpoint with its threshold to be set by the team later.
+4. ~~Who the editors are, and whether `keep_transcript_edits` migrates as a visible marker.~~
+   **Decided 2026-10-14 (Yuji; Than present and approving):** (a) transcript editors and
+   content editors are the same people for a given node, so transcript editing needs no
+   separate role: access follows the node's edit permission (as already planned; ADR 015's
+   content-editor model applies); (b) the `keep_transcript_edits` flag is kept **visible**,
+   migrated as data (F1.1) and shown as a marker in the UI. Not stated: whether the marker is
+   shown to public viewers or only to editors; unless said otherwise, build it for editors.
+
+### Leftovers stay as deferred notes
+
+Bad timecodes, source-file accounting, replica lag, index queue triage, and tier analyzers and
+language fields (see "Deferred notes" below). Production kmassets going stale since 2025-08 is
+a separate legacy issue
+([mandala_drupal_docker#26](https://github.com/shanti-uva/mandala_drupal_docker/issues/26)),
+not part of this spike.
 
 ## Scope note (2026-09-04)
 
@@ -323,8 +420,9 @@ the audit, not a decision.
    corrected audit finding). Sprint 4 T6 is therefore in scope: an editor equivalent to
    D7's (in-place tier edit with optimistic locking, speaker edit, time edit, insert
    before/after, copy, delete, per-node and per-tier disable hooks, access following
-   node-edit permission, immediate reindex). Open follow-ups for Than: who the editors are,
-   and whether the `keep_transcript_edits` flag should migrate as a visible marker.
+   node-edit permission, immediate reindex). Follow-ups answered 2026-10-14: the editors are the
+   same people who can edit the node, and the `keep_transcript_edits` flag is kept visible (see the
+   close-out, decision 4).
 2. **Data model. ANSWERED 2026-10-02 (Than): one row per TCU, following D7's design.**
    Option B stands; B2 (JSON blob) is out because editing is kept. Paragraphs, sidecar VTT
    and Kaltura captions stay rejected.
@@ -477,8 +575,12 @@ to carry the facet):
   group/stats query), or from the node's kmassets document. Avoid a new document type in
   this core, or if one is added it must **not carry `is_trid`**, because the React client
   selects everything matching `is_trid:<trid>` and would receive the extra document.
-- **Titles in results:** look up from Drupal by node id at render time, or denormalise onto
-  the unit documents (cheap but needs reindexing when a title changes).
+- ~~**Titles in results**~~ **DECIDED 2026-10-14 (Yuji, in a meeting with Than and Xiaoming): look
+  titles up from Drupal by node id at render time**, in one batched read per results page. The
+  unit documents carry no title. Reason: a title edit would otherwise mean reindexing up to
+  about 1,400 units, and title sort probably never worked in D7 (the title field was a FIXME).
+  Copying the title onto the documents stays possible later as an additive field if title sort
+  turns out to be wanted; the React client ignores extra fields.
 - **Compatibility test:** capture real responses from the D7 `mandala-av` core for a few
   transcripts and diff them against the new core's output, because the full set of fields the
   client reads has not been enumerated (only the ones in `audiovideo.js`).
@@ -529,7 +631,7 @@ to carry the facet):
   stemming (`chant` no longer matches `chanting`) but Chinese, Nepali and Wylie tokenize sensibly.
 - **Creating the core:** the team can create cores whose names start with `mandala` on the
   dev/staging Solr instance (Yuji, 2026-10-02), so Dave is not needed for dev. Production
-  creation and the Solr 7.x versus 9.x target are still to be confirmed. Creating the core on
+  creation is still to be confirmed. The Solr version is decided (7.7.3, 2026-10-14). Creating the core on
   dev has not been done.
 - **`solrconfig.xml` written and the join prototype run, 2026-10-07** (lean config, loads on
   Solr 7.7.3; see `solr/mandala-av-transcripts/README.md`). The cross-core join works on 7.7.3
