@@ -68,8 +68,8 @@ revert-to-upload, T8 search UI. Sprint 4 holds the detail.
 
 ### Decisions Than should make (or say are later)
 
-1. Titles in results: look up from Drupal by node id at render time, or copy onto the unit
-   documents (cheap, but a reindex whenever a title changes).
+1. ~~Titles in results.~~ **Decided 2026-10-14:** look up from Drupal at render time (see
+   "Open decisions").
 2. Solr 7.x or 9.x as the target; the core is built and checked for 7.7.3 only.
 3. Whether the items under "Still unproven" may stay open after close, as proposed.
 4. Who the editors are, and whether `keep_transcript_edits` migrates as a visible marker
@@ -527,8 +527,12 @@ to carry the facet):
   group/stats query), or from the node's kmassets document. Avoid a new document type in
   this core, or if one is added it must **not carry `is_trid`**, because the React client
   selects everything matching `is_trid:<trid>` and would receive the extra document.
-- **Titles in results:** look up from Drupal by node id at render time, or denormalise onto
-  the unit documents (cheap but needs reindexing when a title changes).
+- ~~**Titles in results**~~ **DECIDED 2026-10-14 (Yuji, in a meeting with Than and Xiaoming): look
+  titles up from Drupal by node id at render time**, in one batched read per results page. The
+  unit documents carry no title. Reason: a title edit would otherwise mean reindexing up to
+  about 1,400 units, and title sort probably never worked in D7 (the title field was a FIXME).
+  Copying the title onto the documents stays possible later as an additive field if title sort
+  turns out to be wanted; the React client ignores extra fields.
 - **Compatibility test:** capture real responses from the D7 `mandala-av` core for a few
   transcripts and diff them against the new core's output, because the full set of fields the
   client reads has not been enumerated (only the ones in `audiovideo.js`).
