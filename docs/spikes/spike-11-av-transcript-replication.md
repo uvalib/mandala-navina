@@ -1,13 +1,14 @@
 # Spike 11: AV Transcript Replication on Drupal 11
-**Status:** Partial — **close-out drafted 2026-10-14, awaiting Than's review** (see "Close-out" below). Not Done until Than approves.
+**Status:** ✅ **Closed 2026-10-14** — Than (spike lead) approved the close-out and its decisions. Verification items carried into Sprint 4; see "Close-out" below.
 **Date:** 2026-10
 **Branch/commit:** —
 
-## Close-out (DRAFT 2026-10-14, for Than's review; not approved)
+## Close-out (approved 2026-10-14)
 
-Spike 11 is led by Than. This section is a proposal assembled from what the rest of this
-document already records. **Nothing here is decided until Than approves it**; if he does, the
-status line above, `docs/spikes/README.md` and Sprint 4 T1 change to Done in the same step.
+Spike 11 is led by Than. This section was assembled from what the rest of this document
+records and **approved by Than on 2026-10-14**, in a meeting with Yuji and Xiaoming, together
+with every decision listed below. The spike is closed; what remains is engineering in Sprint 4
+and the checks under "Still unproven".
 
 ### Recommendation: GO
 
@@ -71,7 +72,7 @@ revert-to-upload, T8 search UI. Sprint 4 holds the detail.
 - A compatibility diff of real `mandala-av` responses against the new core.
 - Whether a deploy alone makes the running Solr load a new core directory (#327).
 
-### Decisions Than should make (or say are later)
+### Decisions taken at close (2026-10-14)
 
 1. ~~Titles in results.~~ **Decided 2026-10-14:** look up from Drupal at render time (see
    "Open decisions").

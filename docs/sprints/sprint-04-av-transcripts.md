@@ -1,8 +1,8 @@
 # Sprint 4: AV transcripts (D7 authoring/rendering pipeline replication)
 
 **Status:** ○ Planned — not started. **Blocked on [Sprint 3](sprint-03-av-core-implementation.md)**
-(needs real migrated `audio`/`video` nodes to attach transcripts to) **and on
-[Spike 11](../spikes/spike-11-av-transcript-replication.md)** (still Pending).
+(needs real migrated `audio`/`video` nodes to attach transcripts to). Its other gate,
+[Spike 11](../spikes/spike-11-av-transcript-replication.md), **closed 2026-10-14**.
 **Phase:** [Roadmap](../roadmap.md) Phase 3 (AV), the second of AV's two independently-
 scheduled sprints per [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md).
 **Lead:** Yuji Shinozaki (tentative — same as Sprint 3; not yet confirmed as a separate
@@ -47,7 +47,7 @@ already exist, not the node migration itself.
 
 | | Task | Depends on | Status |
 |---|---|---|---|
-| T1 | Run Spike 11 in full: confirm TCU shape/volume per input format against real data; resolve the authoring-pipeline-vs-migration-time-conversion question; evaluate D11 data-model and display/sync options; confirm multilingual fidelity; define a search strategy and migration path | Sprint 3 (for a real node to prototype against); Spike 11's "live evidence" section (already recorded) | ◐ close-out drafted, awaiting Than |
+| T1 | Run Spike 11 in full: confirm TCU shape/volume per input format against real data; resolve the authoring-pipeline-vs-migration-time-conversion question; evaluate D11 data-model and display/sync options; confirm multilingual fidelity; define a search strategy and migration path | Sprint 3 (for a real node to prototype against); Spike 11's "live evidence" section (already recorded) | ✅ closed 2026-10-14 (Than approved) |
 | T2 | Build the chosen D11 transcript data model on the AV content type | T1, Sprint 3 AV2/AV3 | ○ |
 | T3 | Build the display/sync mechanism (field formatter + JS, or WebVTT `<track>`) | T2 | ○ |
 | T4 | Wire search indexing: a **new, separate transcript core, `mandala-av-transcripts`,** holding unit documents only, compatible with the React client (decided 2026-10-02; not kmassets, not D7's `mandala-av`) | T2 | ○ |
