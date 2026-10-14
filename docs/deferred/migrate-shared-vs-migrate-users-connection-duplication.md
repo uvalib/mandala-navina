@@ -1,9 +1,10 @@
 # PR #45's `migrate_shared` connection duplicates the already-merged `migrate_users` connection
 
-**Area:** migration / users / infrastructure / DX
+**Category:** migration-general
 **Raised during:** Session 2026-07-17 (PR sweep after the first live `migrate:import` on dev-0)
 **Jira:** (add when available)
 **Priority:** High — blocks PR #45 (`feat/user-migration`) from being safely un-drafted/merged as-is; doesn't block anything else today
+**Owner:** n/a (resolved)
 
 **Status: RESOLVED — 2026-07-21** (`feat/user-migration` commit `216579e`, PR #45).
 Rebased onto `main`, dropped the `migrate_shared` connection block from

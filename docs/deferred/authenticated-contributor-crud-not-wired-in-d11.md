@@ -1,9 +1,10 @@
 # Authenticated users are D7's contributor tier (create/edit-own/delete-own on all asset + collection types) — D11 wires none of it
 
-**Area:** access / users / migration / content model
+**Category:** access-control, migration-general
 **Raised during:** ADR 015 Q1 follow-up, 2026-08-07 (Than clarified the D7 contributor model; verified against the Images per-site dump)
 **Jira:** (add when available)
 **Priority:** **High** — this is the baseline authoring capability for **all ~1,538 migrated users**, D11 grants none of it, and it is what makes the ADR 015 Q1(b) decision (142 rid-4 editors → plain authenticated) non-destructive rather than a total loss of authoring on cutover day.
+**Owner:** unassigned
 
 > **Update 2026-08-07 (ADR 015 Q2 decided):** the contributor tier's **`create` is group-scoped, not core site-wide.** D11 forbids creating asset content outside a group **for every role** (authenticated, `content_editor`, admin) — see
 > [`adr-015-unanswered-questions-at-merge.md`](adr-015-unanswered-questions-at-merge.md) Q2. So the "wire core `create X content`" guidance in the body below is **superseded**: create/edit-own/delete-own are realized through **Group member-role permissions** (the D11 analogue of D7's OG `member` role), granted within groups, not as core node permissions on the site-wide `authenticated` role. The site-wide floor is view-only **plus one exception — `create <group_type> group`**, since groups are the only content type creatable without a containing group; all other authoring comes with group membership. The 36 orphan `shanti_image`s are anomalies (mistakes or pre-collection legacy), not evidence for collection-less content — they migrate to a temporary review group ([`orphaned-content-temp-group-on-migration.md`](orphaned-content-temp-group-on-migration.md)).

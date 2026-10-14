@@ -1,9 +1,10 @@
 # The Drupal container image has no `mysql` client — `drush sql:*` silently no-ops; fix belongs in `package/Dockerfile`
 
-**Area:** deployment / packaging / drush / DX
+**Category:** infrastructure-deploy
 **Raised during:** Session 2026-08-25 (1a.9 acceptance run); documented as its own item 2026-08-28
 **Jira:** (add when available)
 **Priority:** Medium — not currently blocking, but has already caused a real incident (a silently empty backup) and cost "three detours" in one session
+**Owner:** unassigned
 
 **Status (2026-08-28): both fixes below implemented, verified locally, and open for review** —
 [PR #167](https://github.com/uvalib/mandala-navina/pull/167) on branch

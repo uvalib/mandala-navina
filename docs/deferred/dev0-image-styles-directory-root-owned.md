@@ -1,12 +1,13 @@
 # dev-0's `files/styles/` directory was root-owned — fixed live, worth understanding why
 
-**Area:** infra / dev-0 filesystem
+**Category:** infrastructure-deploy, migration-images
 **Raised during:** Session 2026-09-03 (getting B5's collection-viewing work live on dev-0
 after merging [PR #183](https://github.com/uvalib/mandala-navina/pull/183) — see
 [docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md](../sprints/sprint-02-theme-images-ui-and-endpoint-access.md),
 Workstream B5)
 **Priority:** Low — fixed live, not currently blocking anything. Worth a root-cause pass
 so it doesn't silently recur (e.g. on the next dev-0 rebuild or in staging/production).
+**Owner:** n/a (resolved)
 
 ## What happened
 

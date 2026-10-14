@@ -1,10 +1,11 @@
 # AV4: `field_pbcore_instantiation` picked the wrong D7 item on 307 hosts — RESOLVED same session
 
-**Area:** migration / AV / data fidelity
+**Category:** migration-av
 **Raised during:** Session 2026-09-17, evening — investigating a user report that a live node's "Technical Metadata" panel was missing items present on the real D7 page
 **Jira:** (add when available)
 **Priority:** N/A — found and fixed in the same session
 **Status:** RESOLVED 2026-09-17
+**Owner:** n/a (resolved)
 
 ## What happened
 

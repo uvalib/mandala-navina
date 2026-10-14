@@ -1,11 +1,12 @@
 # Audit AV node fields D7 vs D11, starting from the missing technical-metadata fields
 
-**Area:** migration / AV / content model / data fidelity
+**Category:** migration-av
 **Raised during:** Group session 2026-10-02 (Than)
 **Issue:** #292
 **Priority:** High — raised as a direct observation against the live site, not a hypothetical.
 **Step 1 (edit form) DONE 2026-10-06 (Than).** Steps 2-5 (the full data/view-display audit)
 remain open and unstarted — see "Still open" below.
+**Owner:** Than
 
 ## What is deferred
 

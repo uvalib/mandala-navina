@@ -1,6 +1,6 @@
 # `drush ms` is noisy because migrate_drupal expects a full D7 Drupal install
 
-**Area:** migrate / DX
+**Category:** migration-general
 **Raised during:** Sprint 1 (Step 1a.6 — first migration setup, 2026-06-22)
 **Jira:** (add when available)
 **Priority:** Low — cosmetic; a one-flag workaround exists

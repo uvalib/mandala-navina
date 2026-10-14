@@ -1,10 +1,10 @@
 # Migration mapping: D7 image_agent node title → field_agent_name
 
-**Area:** migration / Images / paragraphs
+**Category:** migration-images
 **Raised during:** Sprint 1 (Step 1a — content-model build session, 2026-06-17)
 **Jira:** (add when available)
 **Priority:** Medium — must be resolved before the 1a.7 migration is written
-**Owner:** mob (1a.7 is the pattern-setting migration)
+**Owner:** group
 
 ## Context
 

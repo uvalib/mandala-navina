@@ -1,9 +1,10 @@
 # Review replica lag for the transcript Solr core
 
-**Area:** Solr / transcripts / search freshness
+**Category:** solr-search
 **Raised during:** Spike 11, write-path discussion 2026-10-02
 **Jira:** (add when available)
 **Priority:** Low to Medium. Some lag is expected and accepted; review once the core exists.
+**Owner:** unassigned
 
 ## What is deferred
 

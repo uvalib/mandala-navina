@@ -1,9 +1,10 @@
 # Image description HTML differs: D11 `basic_html` vs D7 auto-paragraph `safe_value`
 
-**Area:** migration / Images / text formats / kmassets write path
+**Category:** migration-images
 **Raised during:** Sprint 1 (1a.8 — doc-builder fixture validation)
 **Jira:** (add when available)
 **Priority:** Medium
+**Owner:** unassigned
 
 ## What we found
 

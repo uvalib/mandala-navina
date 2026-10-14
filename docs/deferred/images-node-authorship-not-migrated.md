@@ -1,9 +1,10 @@
 # Migrated Images nodes are all owned by Anonymous; D7 authorship was not carried
 
-**Area:** migration / Images / authorship
+**Category:** migration-images
 **Raised during:** Sprint 3 AV4 (2026-09-09) — found while writing the AV node migration
 **Jira:** (add when available)
 **Priority:** Medium
+**Owner:** unassigned
 
 ## What was found
 

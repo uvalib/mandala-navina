@@ -1,6 +1,6 @@
 # Cantaloupe: legacy S3 key layout breaks 10 known-test images + 404 page leaks stack trace
 
-**Area:** infrastructure / security / IIIF
+**Category:** security, infrastructure-deploy
 **Raised during:** Sprint 1 (Step 1a.5 — IIIF wiring reachability probe, 2026-06-22); re-examined 2026-09-18 while investigating two broken demo images
 **Jira:** (add when available)
 **Priority:** Low for the broken-images half -- confirmed with Yuji (2026-09-18) that
@@ -9,7 +9,7 @@ nothing user-facing is actually at stake. Kept documented (not deleted) because
 the underlying Cantaloupe key-derivation bug is real and could recur if any
 future real content ever lands in that same low-id/legacy-key situation.
 Medium for the info-disclosure half, unchanged.
-**Owner:** UVa Library DevOps (Cantaloupe owners) — not us
+**Owner:** UVa Library DevOps
 
 ## UPDATE 2026-09-18: 10 images 404 on a legacy S3 key layout -- confirmed test data, not lost archival content
 

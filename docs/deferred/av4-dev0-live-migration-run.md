@@ -1,6 +1,6 @@
 # AV4 migration on dev-0 — ✅ RESOLVED 2026-09-10, kept as the operational record
 
-**Area:** migration / AV4 / dev-0 operations
+**Category:** migration-av, infrastructure-deploy
 **Raised during:** Session 2026-09-09 (AV4 completion and dev-0 launch)
 **Resolved:** 2026-09-10 — the migration finished clean (5h04m49s, 27/27
 stages, 0 failed) and was re-verified directly against dev-0 (24/24 checks
@@ -11,6 +11,7 @@ both merged.
 **Kept, not deleted** — the hazard this note describes (a routine merge
 killing a long-running dev-0 process) is general and will recur for any
 future long job on dev-0, not just this one.
+**Owner:** n/a (resolved)
 
 ## ⚠ THE GENERAL HAZARD (for the NEXT long job on dev-0 — this instance is resolved)
 

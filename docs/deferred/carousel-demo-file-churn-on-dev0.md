@@ -1,10 +1,11 @@
 # Mandala Home carousel demo left orphaned thumbnail files on dev-0
 
-**Area:** Mandala Home carousel / files / housekeeping
+**Category:** migration-general
 **Raised during:** Session 2026-10-05 (side finding from the file comparison)
 **Jira:** (add when available)
 **Priority:** Low. **DEFERRED by the group, 2026-10-05, until closer to production deployment time.**
 No action is needed before then; revisit it as part of pre-production cleanup.
+**Owner:** unassigned
 
 ## What was found
 

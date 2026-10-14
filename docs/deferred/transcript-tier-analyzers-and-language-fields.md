@@ -1,6 +1,6 @@
 # Transcript tier analyzers, and separate language fields
 
-**Area:** Solr / transcripts / multilingual search
+**Category:** migration-av, solr-search
 **Raised during:** Spike 11, schema draft 2026-10-02; deferred the same day (Yuji)
 **Jira:** (add when available)
 **Priority:** Low. **Question 1 (analyzer choice) DECIDED and BUILT 2026-10-06** (Than),
@@ -9,6 +9,7 @@
 2026-10-06 (Than): not doing it.** None of those tiers have dedicated Lucene/Solr
 language support to gain from a split, so there's nothing to build even if split out.
 This item is now fully resolved.
+**Owner:** n/a (resolved)
 
 ## What is deferred
 

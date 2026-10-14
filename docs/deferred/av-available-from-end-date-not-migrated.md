@@ -1,9 +1,10 @@
 # `field_available_from` loses its end date on 9 migrated AV nodes
 
-**Area:** migration / AV / data fidelity
+**Category:** migration-av
 **Raised during:** Sprint 3 AV4 (2026-09-09); moved here from a `config/sync` comment 2026-10-06
 **Jira:** (add when available)
 **Priority:** Low — 9 rows; needs a content call from Than, not engineering
+**Owner:** unassigned
 
 ## What was found
 

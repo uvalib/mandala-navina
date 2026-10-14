@@ -1,10 +1,11 @@
 # SAML SP deploy playbooks (`deploy_netbadge.yml` / `deploy_backend.yml`): review findings, not yet addressed
 
-**Area:** deployment / Ansible / SimpleSAMLphp / terraform-infrastructure
+**Category:** auth, infrastructure-deploy
 **Raised during:** Session 2026-10-05 (group session; side finding while checking what lives in `/mnt/data` on dev-0)
 **Jira:** (add when available)
 **Priority:** Low-Medium. Read-only review of the playbook source; nothing was run and no
 live failure was observed. Finding 1 is the one worth fixing first.
+**Owner:** unassigned
 
 ## Scope and status
 

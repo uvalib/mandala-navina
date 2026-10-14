@@ -1,9 +1,10 @@
 # Mandala home page: real customizable-content system
 
-**Area:** theme / site home page / editorial content
+**Category:** migration-general
 **Raised during:** Sprint 3 (AV landing-page scoping session), 2026-09-15
 **Jira:** (add when available)
 **Priority:** Medium — not blocking; the home page ships as a deliberate placeholder first
+**Owner:** unassigned
 
 ## Context
 

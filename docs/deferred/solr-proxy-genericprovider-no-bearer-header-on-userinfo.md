@@ -1,9 +1,10 @@
 # solr-proxy's OAuth2 client never sends a Bearer header to `/oauth/userinfo`
 
-**Area:** solr-proxy / OAuth2 client / ADR 014 authenticated path
+**Category:** auth, solr-search
 **Raised during:** Session 2026-08-18 (first real browser walkthrough of the SAML → OAuth2 → proxy chain)
 **Jira:** (add when available)
 **Priority:** High — blocks the authenticated (private-collection) path through the proxy entirely; the public/anonymous path is unaffected
+**Owner:** n/a (resolved)
 
 ## Issue
 

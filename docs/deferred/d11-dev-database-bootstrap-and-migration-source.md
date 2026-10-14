@@ -1,9 +1,10 @@
 # How does dev's database get populated? Bootstrap + migration source
 
-**Area:** deployment / database / migration / dev environment
+**Category:** infrastructure-deploy
 **Raised during:** Session 2026-07-15 (1b.1 part 4 — first green pipeline run)
 **Jira:** (add when available)
 **Priority:** High — dev serves `/core/install.php` until this is decided; blocks 1a.9 staging execution and part-4 item 7 validation
+**Owner:** unassigned
 
 **Status: DECIDED 2026-07-16, Decision C's source location CORRECTED and EXECUTED
 2026-07-17 (Yuji).** The migration source dump+load is done; dev bootstrap (A) is

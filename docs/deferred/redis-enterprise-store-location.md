@@ -1,9 +1,10 @@
 # Redis: TWO stores required; enterprise/production location unresolved
 
-**Area:** infrastructure / Redis / ADR 014 / SAML session store / Drupal object cache
+**Category:** infrastructure-deploy, auth
 **Raised during:** Session 2026-07-14 (1b.1 part 4 — D11 backend deploy)
 **Jira:** (add when available)
 **Priority:** Medium — not blocking dev/validation; blocks production cutover
+**Owner:** unassigned
 
 ## Requirement: TWO Redis stores, not one (Yuji, 2026-07-14)
 

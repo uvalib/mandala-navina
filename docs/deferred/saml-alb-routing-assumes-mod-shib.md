@@ -1,6 +1,6 @@
 # Mandala terraform ALB routing assumes `mod_shib`, but the SP is SimpleSAMLphp
 
-**Area:** deployment / infrastructure / SAML / NetBadge / terraform-infrastructure
+**Category:** auth, infrastructure-deploy
 **Raised during:** Session 2026-07-13 (1b.1 part 4 — scoping NetBadge/SAML outside DDEV)
 **Jira:** (add when available)
 **Priority:** High — part of 1b.1 part 4
@@ -10,6 +10,7 @@ installations that use mod_shib**. Mandala uses SimpleSAMLphp and is not one of 
 so **we never needed this mapping** — it is not abandoned config we left behind.
 Action: tell Dave we don't need it; whether to remove it is his call, on his schedule.
 Nothing in the D11 rebuild depends on it either way.
+**Owner:** n/a (resolved)
 
 ⚠ **An earlier revision of this note framed it as "the team switched SP technology and
 never went back to update terraform."** That was wrong and is corrected below — it

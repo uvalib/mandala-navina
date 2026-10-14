@@ -1,9 +1,10 @@
 # Hand AV staff the 18 media-less AV nodes for cleanup
 
-**Area:** migration / AV / content cleanup / cutover
+**Category:** migration-av
 **Raised during:** Sprint 3 AV14 (2026-09-08); deferred at Sprint 3 close-out, 2026-10-01
 **Jira:** (add when available)
 **Priority:** Medium now; must be done before production cutover, not before
+**Owner:** unassigned
 
 ## What is deferred
 

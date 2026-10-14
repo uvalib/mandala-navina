@@ -1,6 +1,6 @@
 # D7 users live in a separate shared database, not any per-site dump
 
-**Area:** migration / users / infrastructure
+**Category:** migration-general, auth
 **Raised during:** Session 2026-07-10 (1b.1 — planning the user migration)
 **Jira:** (add when available)
 **Priority:** **Low — user migration DONE (2026-08-12) and historical group ownership FIXED
@@ -9,6 +9,7 @@ now have real members; `d7_images_collection_memberships` went from 36/246 (stuc
 2026-07-19) to **246/246**. The 171 collection/subcollection groups forced to `uid: 1` are
 now correctly re-owned to their real D7 creators — see below. What's left is just the
 still-open SAML/NetBadge mapping and `realname` design questions.
+**Owner:** Yuji
 
 ## What we found
 

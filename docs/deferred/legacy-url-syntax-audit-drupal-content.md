@@ -1,9 +1,10 @@
 # Audit migrated Drupal content for embedded legacy URL syntax, fix in place
 
-**Area:** migration / content model / URL structure / ADR 016
+**Category:** migration-general
 **Raised during:** Session 2026-10-12 (Than, Yuji) — resolves [ADR 016](../adr/016-public-url-structure-single-host.md) open item 3's reverse-lookup question
 **Issue:** none
 **Priority:** Medium — not urgent while migration is still in progress (the existing client-side shim keeps old links working in the meantime), but should land once migration is complete, before anyone considers retiring that shim
+**Owner:** unassigned
 
 ## Context
 

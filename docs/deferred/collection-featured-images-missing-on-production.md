@@ -1,6 +1,6 @@
 # Collection/subcollection featured images — 126 of 210 missing on DDEV only, FIXED, dev-0 was never affected
 
-**Area:** migration / Images content / local dev environment
+**Category:** migration-images
 **Raised during:** Session 2026-09-03 (backfilling `field_featured_image` onto D11
 Group entities — see
 [docs/sprints/sprint-02-theme-images-ui-and-endpoint-access.md](../sprints/sprint-02-theme-images-ui-and-endpoint-access.md),
@@ -15,6 +15,7 @@ out to be **DDEV-local only, now fixed** (see below). `shanti_collections_view` 
 falls back to a generic default thumbnail for any collection with no resolvable
 featured image, so nothing was ever broken or missing visually on a real environment —
 affected collections just showed the default instead of their real photo, on DDEV only.
+**Owner:** n/a (resolved)
 
 ## 2026-09-23 update: 99.8% missing (8,417 of 8,433) on a DIFFERENT team member's DDEV — the 2026-09-21 fix was correct and still holds, it just never reached this machine
 

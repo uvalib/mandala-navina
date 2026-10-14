@@ -1,9 +1,10 @@
 # Triage support for the transcript index retry queue
 
-**Area:** Solr / transcripts / operations
+**Category:** solr-search, infrastructure-deploy
 **Raised during:** Spike 11, write-path discussion 2026-10-02
 **Jira:** (add when available)
 **Priority:** Medium. Needed before production, not before the core is built.
+**Owner:** unassigned
 
 ## What is deferred
 

@@ -1,9 +1,10 @@
 # ADR 015 shipped with three questions unanswered — including whether `content_editor` applies to anybody
 
-**Area:** access / users / migration / ADR 015
+**Category:** access-control, migration-general
 **Raised during:** PR #75 merge, 2026-08-06 (verification by Than 2026-07-30 and Xiaoming 2026-08-06)
 **Jira:** (add when available)
 **Priority:** **All three questions RESOLVED** — Q1 (1(a) data 2026-08-06, 1(b) policy 2026-08-07), Q2 (2026-08-07, all asset content group-scoped), Q3 (2026-08-07, keep admin pages + narrow URL-alias perm). The remaining High-priority follow-through is downstream implementation, not open questions: the contributor-tier wiring ([`authenticated-contributor-crud-not-wired-in-d11.md`](authenticated-contributor-crud-not-wired-in-d11.md), gates the next migration cutover) and the orphan review-group sweep ([`orphaned-content-temp-group-on-migration.md`](orphaned-content-temp-group-on-migration.md))
+**Owner:** n/a (resolved)
 
 ## Context
 

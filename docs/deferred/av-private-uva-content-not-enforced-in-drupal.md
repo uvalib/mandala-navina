@@ -1,11 +1,12 @@
 # Private and UVA collection content was not enforced in Drupal for AV
 
-**Area:** access / Group / AV / mandala_group_inheritance / ADR 011 / ADR 015
+**Category:** migration-av, access-control
 **Raised during:** Sprint 3 AV7 (session 2026-09-25, reassessing the AV7 row)
 **Jira:** (add when available)
 **Priority:** **High -- FIXED 2026-09-25 for node pages.** Residual: listings are still
 unfiltered, tracked separately in
 [[collection-visibility-not-enforced-in-listings]]
+**Owner:** n/a (resolved)
 
 ## What happened
 

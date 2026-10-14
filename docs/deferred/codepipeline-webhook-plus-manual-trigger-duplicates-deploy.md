@@ -1,9 +1,10 @@
 # Merging to `main` auto-triggers a deploy via webhook — a manual `start-pipeline-execution` right after creates a real duplicate
 
-**Area:** deployment / CI/CD
+**Category:** infrastructure-deploy
 **Raised during:** Session 2026-09-14, deploying the AV7 group-permission fix (PR #201)
 **Jira:** (add when available)
 **Priority:** Low — self-correcting once known, but wastes a dev-0 container restart each time it's hit
+**Owner:** unassigned
 
 ## What happened
 

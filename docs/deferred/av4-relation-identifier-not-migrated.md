@@ -1,10 +1,11 @@
 # AV4: `field_relation_identifier` never migrated — empty across all 836 `av_pbcore_relation` paragraphs
 
-**Area:** migration / AV / data fidelity
+**Category:** migration-av
 **Raised during:** Session 2026-09-17, building AV15's technical-metadata accordion
 **Jira:** (add when available)
 **Priority:** Medium — no user-facing feature currently reads this field (AV15's Details panel is the first display surface to touch it at all), but it's real data loss versus D7, and AV3's own plan already flagged the risk
 **Status:** RESOLVED, same day (2026-09-17 afternoon) — see Resolution below
+**Owner:** n/a (resolved)
 
 ## What happened
 

@@ -1,12 +1,12 @@
 # reindeer_x AWS Credential Strategy (task role + operator assume-role)
 
-**Area:** reindeer_x / infrastructure / IAM
+**Category:** infrastructure-deploy
 **Raised during:** Spike 8 (Part A — file watcher)
 **Issue:** #295
 **Priority:** High — blocks deployed use of the Node file watcher
-**Owner:** Yuji Shinozaki (has Terraform infra access)
 **Approval gate:** requires sign-off from Dave Goldstein (Director, Cloud
 Infrastructure) before the task roles / IAM policies are created and deployed.
+**Owner:** Yuji
 
 ## Context
 

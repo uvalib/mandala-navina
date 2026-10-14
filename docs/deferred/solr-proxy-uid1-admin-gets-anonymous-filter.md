@@ -1,9 +1,10 @@
 # solr-proxy: uid=1 (admin) gets the ANONYMOUS filter, not "no filter" — docs say otherwise
 
-**Area:** solr-proxy / ADR 014 / visibility / documentation-vs-behaviour
+**Category:** solr-search, access-control
 **Raised during:** Session 2026-08-11 (running the proxy locally to validate the pipeline specs)
 **Jira:** (add when available)
 **Priority:** ~~Medium~~ — **RESOLVED 2026-08-12**
+**Owner:** n/a (resolved)
 
 ## What we found
 

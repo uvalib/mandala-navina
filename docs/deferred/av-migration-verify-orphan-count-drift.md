@@ -1,9 +1,10 @@
 # AV migration verification: orphaned-paragraph count drifted from documented "3 expected" to 2
 
-**Area:** migration / AV / data fidelity / verification tooling
+**Category:** migration-av
 **Raised during:** Session 2026-09-21 (regression sweep after Mandala Home carousel work)
 **Jira:** (add when available)
 **Priority:** Low — pre-existing drift, not caused by this session's changes, no known user-facing symptom
+**Owner:** unassigned
 
 ## What happened
 

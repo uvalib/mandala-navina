@@ -1,6 +1,6 @@
 # `SimplesamlSubscriber::checkAuthStatus()` forces logout on every simple_oauth Bearer request
 
-**Area:** simplesamlphp_auth (contrib) / session handling / ADR 014 authenticated path
+**Category:** auth
 **Raised during:** Session 2026-08-20
 **Jira:** (add when available)
 **Priority:** High — root cause of the tracked 4th OAuth2 defect; **raised to Critical
@@ -12,6 +12,7 @@ was replayed against the deployed image (`build-20260820151220`): `/oauth/userin
 same replay against the previous image (`build-20260819195654`) returns `302 → /`, so the
 before/after is measured, not asserted. **🔴 The browser case this note's title flagged as
 "maybe" is now confirmed OPEN — see below — and is not fixed by the OAuth2-only exemption.**
+**Owner:** unassigned
 
 ## Browser case confirmed, 2026-08-27 (Sprint 1 step 10 smoke test)
 

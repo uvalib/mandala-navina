@@ -1,16 +1,17 @@
 # Group entity editing is fully unwired — no one can edit a group, and a subcollection's parent can't be set
 
-**Area:** migration / Group module / content model / 1b.2 collections implementation
+**Category:** access-control, migration-general
 **Raised during:** Session 2026-10-08 (Than, creating review-holding groups on dev-0 for the
 orphaned-content sweep, issue #289)
 **Issue:** [#301](https://github.com/uvalib/mandala-navina/issues/301)
 **Priority:** High — blocks managing any collection/subcollection, including the review-holding
 groups issue #289 needs.
-**Status (2026-10-09):** Built, verified live, **open for review in
-[PR #308](https://github.com/uvalib/mandala-navina/pull/308) — Than's explicit instruction is to
-hold it, not merge without asking.** All three findings below are fixed, plus two follow-on asks
+**Status:** **RESOLVED — [PR #308](https://github.com/uvalib/mandala-navina/pull/308) merged
+2026-10-09.** Built 2026-10-08, verified live, held for Than's review per his explicit
+instruction, then merged 2026-10-09. All three findings below are fixed, plus two follow-on asks
 from the same conversation (an administrator superset, and a node-level "Collection" field) — see
 "What was built" below.
+**Owner:** n/a (resolved)
 
 ## What was built (PR #308, five commits)
 

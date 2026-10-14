@@ -1,10 +1,10 @@
 # wp-kmaps needs a declared dependency on mandala-wp-proxy
 
-**Area:** wp-kmaps (external repo `shanti-uva/wp-kmaps`) / mandala-wp-proxy (external repo
-`shanti-uva/mandala-wp-proxy`) / Spike 6
+**Category:** infrastructure-deploy
 **Raised during:** Spike 6 (2026-08-12) — URL-strategy decision (Option A)
 **Jira:** (add when available)
 **Priority:** Medium — needed before Option A's generalized rollout, not before the SSRF fix
+**Owner:** n/a (resolved)
 
 ## What we found
 

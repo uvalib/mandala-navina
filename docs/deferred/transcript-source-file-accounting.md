@@ -1,10 +1,11 @@
 # Transcript source files: account for every original
 
-**Area:** migration / AV / transcripts / data fidelity
+**Category:** migration-av
 **Raised during:** Spike 11, reconciliation 2026-10-02; deferred the same day (Yuji)
 **Jira:** (add when available)
 **Priority:** Medium. Must be done before Sprint 4 T7 (revert-to-upload) can be built or
 trusted; does not block the model, the viewer or the editor.
+**Owner:** unassigned
 
 ## What is deferred
 

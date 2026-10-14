@@ -1,9 +1,10 @@
 # `rotation_s` should be populated by the D11 Images writer
 
-**Area:** solr / kmassets / Images / write path (1a.8)
+**Category:** migration-images, solr-search
 **Raised during:** Sprint 1 (1a.8 — kmasset Solr doc contract, Phase 1)
 **Jira:** (add when available)
 **Priority:** Medium
+**Owner:** unassigned
 
 ## What we found
 

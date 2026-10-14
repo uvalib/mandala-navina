@@ -1,6 +1,6 @@
 # SimpleSAMLphp SP has never been configured in DDEV — deferred, but design it deliberately
 
-**Area:** infrastructure / DDEV / local dev environment / SAML
+**Category:** auth
 **Raised during:** Session 2026-08-06 (PR #75 DDEV-readiness check)
 **Jira:** (add when available)
 **Priority:** Medium for the core gap (not breaking anything today, deliberately deferred;
@@ -10,6 +10,7 @@ being broken in DDEV:** the personal workaround that caused one confirmed instan
 this has been removed, but logout remains broken in DDEV for a second, un-root-caused
 reason — **tabled, not release-blocking, since logout is confirmed working correctly on
 dev-0** (`mandala-dev.internal.lib.virginia.edu`). See "Correction" below.
+**Owner:** unassigned
 
 ## What's true today
 

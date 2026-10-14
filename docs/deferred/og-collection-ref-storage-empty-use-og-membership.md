@@ -1,9 +1,10 @@
 # D7 collection membership must be read from `og_membership`, not `field_data_field_og_collection_ref` — confirmed on 3 of 3 sites checked; Images assumed the same
 
-**Area:** migration / OG / collections — cross-site
+**Category:** migration-general
 **Raised during:** Sprint 2 Workstream C (content-model audits), Session 2026-09-01
 **Jira:** (add when available)
 **Priority:** High — will silently break any migration built the obvious way
+**Owner:** n/a (resolved)
 
 **Status (2026-09-01, Than):** `field_og_collection_ref` is a **vestigial field left
 over from an OG module version upgrade** — not a data-corruption bug, an artifact of

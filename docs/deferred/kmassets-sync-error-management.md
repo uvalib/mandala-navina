@@ -1,8 +1,9 @@
 # kmassets Sync Error-Management & Resubmit Automation
-**Area:** solr / kmassets / sync / observability / DevOps tooling
+**Category:** solr-search, infrastructure-deploy
 **Raised during:** Planning session 2026-06-26 (write-mechanism deep-dive)
 **Jira:** (add when available)
 **Priority:** Medium — **out of Sprint 1 scope; candidate for its own downstream sprint**
+**Owner:** unassigned
 
 ## Scope boundary
 

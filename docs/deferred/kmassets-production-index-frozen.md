@@ -1,12 +1,13 @@
 # Production kmassets has taken no writes in ~12 months
 
-**Area:** solr / kmassets / production / ingest pipeline
+**Category:** solr-search
 **Raised during:** Session 2026-08-13 (Solr index inventory across dev / staging / production)
 **Jira:** (add when available)
 **Priority:** **Medium–High — the "is kmterms actually changing" question is now
 answered (see 2026-08-17 update below); what remains is deciding with Andres what
 to do about it.** This started as an observation with two corroborating
 measurements; it is no longer just that for the `terms` domain.
+**Owner:** unassigned
 
 ## Measured (2026-08-13)
 

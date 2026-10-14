@@ -1,9 +1,10 @@
 # Dev migration is markedly slower than DDEV — cross-AZ latency, not CPU; two "fixes" investigated and ruled out
 
-**Area:** infrastructure / migration / performance
+**Category:** infrastructure-deploy, migration-general
 **Raised during:** Session 2026-07-17/18 (dev-0's first live `migrate:import`)
 **Jira:** (add when available)
 **Priority:** Low — a known, understood limitation the team is consciously living with, not a blocker; revisit only if migration time becomes a recurring real problem
+**Owner:** n/a (resolved)
 
 **Decision (2026-07-18, Yuji): live with it for the current Images migration.**
 Not worth acting on before vacation, and the two candidate fixes investigated

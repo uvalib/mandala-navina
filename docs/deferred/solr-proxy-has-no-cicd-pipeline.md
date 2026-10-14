@@ -1,6 +1,6 @@
 # solr-proxy has no CI/CD pipeline
 
-**Area:** deployment / CI-CD / ECR / solr-proxy / ADR 014
+**Category:** infrastructure-deploy, solr-search
 **Raised during:** Session 2026-08-11 (CI/CD pipeline inventory)
 **Jira:** (add when available)
 **Priority:** ~~High~~ — **RESOLVED 2026-08-12**
@@ -9,6 +9,7 @@
 here, but because the kmassets index carries no D11-format uids. See
 [kmassets-index-has-no-d11-uids.md](kmassets-index-has-no-d11-uids.md). Production
 remains explicitly out of scope; everything below is dev/staging.
+**Owner:** n/a (resolved)
 
 ## ✅ RESOLVED — 2026-08-12
 

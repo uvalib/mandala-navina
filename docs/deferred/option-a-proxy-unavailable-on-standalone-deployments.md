@@ -1,6 +1,6 @@
 # Option A's proxy doesn't exist on the standalone (non-WordPress) deployments
 
-**Area:** Spike 6 / URL strategy / mandala-om deployment topology / WAF
+**Category:** security, access-control
 **Raised during:** Spike 6 (2026-08-20) — generalizing the `/proxy/json` gate in `mandala-om`
 **Jira:** (add when available)
 **Priority:** Medium — no known break today, but it means the decided URL strategy covers only
@@ -9,6 +9,7 @@ part of the deployment matrix, which matters at D11 cutover
 browser cross-origin requests generally, not just from the thlib.org origin — so the standalone
 deployments (including production `mandala.kmaps.virginia.edu`) are very likely genuinely
 exposed, not theoretically so. Matters at D11 cutover and arguably before.
+**Owner:** unassigned
 
 ## What we found
 

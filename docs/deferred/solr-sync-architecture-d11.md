@@ -1,8 +1,9 @@
 # Solr Sync Architecture for D11
-**Area:** solr / kmassets / kmterms
+**Category:** solr-search
 **Raised during:** Session 2026-06-12 (kmterms/kmassets architecture investigation)
 **Jira:** (add when available)
 **Priority:** High
+**Owner:** unassigned
 
 ## Background
 

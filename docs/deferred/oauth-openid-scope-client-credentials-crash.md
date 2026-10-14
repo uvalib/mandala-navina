@@ -1,9 +1,10 @@
 # `openid` scope on `client_credentials` grant crashes (no end-user to resolve)
 
-**Area:** auth / simple_oauth / OAuth2 (1b.1 proxy + OIDC)
+**Category:** auth
 **Raised during:** Spike 10 (SAML + OAuth2 coexistence)
 **Jira:** (add when available)
 **Priority:** Medium (implementation guardrail for 1b.1)
+**Owner:** unassigned
 
 ## Issue
 

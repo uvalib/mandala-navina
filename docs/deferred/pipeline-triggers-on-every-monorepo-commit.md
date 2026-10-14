@@ -1,9 +1,10 @@
 # The pipeline will rebuild and redeploy on every commit to `main`, including docs
 
-**Area:** deployment / CI-CD / CodePipeline / monorepo
+**Category:** infrastructure-deploy
 **Raised during:** Session 2026-07-15 (1b.1 part 4 — reviewing the pipeline before the first apply)
 **Jira:** (add when available)
 **Priority:** Medium — noise and wasted deploys, not a correctness bug. Deliberately deferred until a green run.
+**Owner:** n/a (resolved)
 
 ## ✅ RESOLVED 2026-07-16 (Yuji)
 

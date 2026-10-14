@@ -1,9 +1,10 @@
 # SAML SP signing cert is expired — plan renewal + ITS re-registration
 
-**Area:** deployment / SAML / NetBadge / terraform-infrastructure
+**Category:** auth, infrastructure-deploy
 **Raised during:** 2026-07-13 (1b.1 part 4 — recovering the live SP keypair for the D11 deploy)
 **Jira:** (add when available)
 **Priority:** Medium (works today), High before a production cutover
+**Owner:** unassigned
 
 ## ▶ Next action (added 2026-08-18)
 

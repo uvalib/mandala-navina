@@ -1,10 +1,11 @@
 # Transcript bad timecodes: investigate and fix
 
-**Area:** migration / AV / transcripts / data fidelity
+**Category:** migration-av
 **Raised during:** Spike 11, 2026-10-01 audit; deferral decided with Than 2026-10-02
 **Jira:** (add when available)
 **Priority:** Medium. Must be understood before the transcript migration (Sprint 4 T5) is
 called verified; does not block building the model or the viewer.
+**Owner:** unassigned
 
 ## What is deferred
 

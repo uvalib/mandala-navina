@@ -1,11 +1,12 @@
 # The dev deploy never imports config/sync — merging to main does not change the site (RESOLVED)
 
-**Area:** deployment / Ansible / CMI / dev environment
+**Category:** infrastructure-deploy
 **Raised during:** Session 2026-08-12 (running the user migration on dev-0)
 **Jira:** (add when available)
 **Priority:** **Low — the headline finding no longer holds; config DOES reach dev-0.**
 One residual item remains (RDS snapshot gating, item 2), tracked in its own note at
 [[pre-deploy-rds-snapshot-gate]].
+**Owner:** n/a (resolved)
 
 **Re-verified live 2026-09-25.** `drush config:status` on dev-0 reports only
 `simplesamlphp_auth.settings` as Different, which is the known dev-0-only drift — every

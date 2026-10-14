@@ -1,9 +1,10 @@
 # solr-proxy forwards the session id to Solr as a query parameter
 
-**Area:** solr-proxy / hygiene / logging
+**Category:** solr-search, security
 **Raised during:** Session 2026-08-11 (running the proxy locally to validate the pipeline specs)
 **Jira:** (add when available)
 **Priority:** Low — no access-control impact; a logging-hygiene and tidiness issue
+**Owner:** unassigned
 
 ## What we found
 

@@ -1,6 +1,6 @@
 # `drush migrate:import --update` fails on already-migrated `entity:group` rows — `uid` comes back NULL
 
-**Area:** migration / Group entity
+**Category:** migration-general
 **Raised during:** Session 2026-09-03 (backfilling `field_featured_image`/`field_overview`
 onto the already-migrated `d7_images_collections`/`d7_images_subcollections` Group
 entities — see the Sprint 2 B5 planning subsection,
@@ -10,6 +10,7 @@ runs as a fresh import against production source, never `--update` against
 already-migrated rows), but blocks the normal "extend a migration, `--update` the
 already-run rows" workflow for `d7_images_collections`/`d7_images_subcollections`
 specifically, on any environment that already has these 174 Group entities.
+**Owner:** unassigned
 
 ## Observation
 
