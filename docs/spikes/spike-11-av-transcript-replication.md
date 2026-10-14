@@ -433,8 +433,11 @@ Drupal node documents. The new core should not copy the Drupal ApacheSolr schema
   recorded. Whether a deploy alone makes a running Solr load a new core directory, or needs a
   reload or restart, is **not documented**; try it on staging (#327).
 - The `solr` environment's stored URL embeds a credential in the D7 database. It is not
-  recorded here. The hosted service is probably dead; confirming that and retiring or rotating
-  the credential is left to whoever owns the legacy hosting.
+  recorded here. **Checked 2026-10-14:** the hosted Solr's hostname no longer resolves and an
+  unauthenticated request to it cannot connect, and no D7, legacy-docker or D11 code references
+  the host. There is nothing left to retire or rotate; the stored string disappears with the D7
+  database and its dumps. Not checked: whether the domain was reassigned, or the account state
+  with the vendor.
 
 **Access (open, 2026-10-02).** The new core must enforce the same visibility rules as the
 rest of D11. Today the D11 proxy (`solr-proxy`, ADR 014) injects a per-user `fq` that Drupal
