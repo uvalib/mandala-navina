@@ -215,6 +215,7 @@ None.
 
 | File | Categories | Owner | Raised | Priority |
 |---|---|---|---|---|
+| [solr-proxy-end-of-life-base-image.md](solr-proxy-end-of-life-base-image.md) | infrastructure-deploy, solr-search | unassigned | Spike 11 / #327 (2026-10-14) | Medium. The proxy image is on PHP 7.4 / Debian 11, both unsupported; PR #335 is a stopgap. Move to a supported base soon, before cutover; run the visibility and OAuth2 verify scripts on it |
 | [reindeer-x-aws-credential-strategy.md](reindeer-x-aws-credential-strategy.md) | infrastructure-deploy | Yuji | Spike 8 | High |
 | [images-prod-packaging-monorepo-pass.md](images-prod-packaging-monorepo-pass.md) | infrastructure-deploy, migration-images | Yuji, Xiaoming | Sprint 1 (1a) | High |
 | [staging-migration-execution-prerequisites.md](staging-migration-execution-prerequisites.md) | infrastructure-deploy, migration-general | Xiaoming, Yuji, Dave | Session 2026-07-07 (1a.9) | **Deferred 2026-10-01 until a staging server exists.** Sprint 1 closed without it (criteria evidenced on dev-0); what is unproven is a two-D11-environment promotion rehearsal and the per-env config override |
