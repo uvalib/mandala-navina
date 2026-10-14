@@ -14,7 +14,7 @@ trigger a deploy.
 
 - `conf/solrconfig.xml` — lean config (2026-10-07): ICU/analysis-extras libs, `/select`,
   `/query`, `/get`, `/update`, `/analysis/field`, `/admin/ping`, and the same
-  `/replication` master/slave system-property switches as kmassets. Not derived from the
+  `/replication` master/slave system-property switches as the deployed kmassets (`enable.master`, `enable.slave`, `master.url`; corrected 2026-10-14, an earlier draft named switches no deployed node sets). Not derived from the
   1,572-line kmassets file on purpose; none of its extras apply. Loads cleanly on Solr 7.7.3.
 - `conf/lang/stopwords_en.txt` — Solr's bundled English list (the English tier references it).
 - `prototype/join-check.sh` — the cross-core join prototype (below).
