@@ -3,7 +3,7 @@
 **Category:** migration-general, access-control
 **Raised during:** ADR 015 Q2 decision, 2026-08-07 (Than, team present)
 **Issue:** #289
-**Priority:** **Medium–High — direction CONFIRMED 2026-09-28 (Than, Yuji); open specifics RESOLVED 2026-10-02 (Than); BUILT and the AV exposure FIXED on local DDEV 2026-10-02; MERGED to `main` 2026-10-05 ([PR #275](https://github.com/uvalib/mandala-navina/pull/275)).** Applies to **every** per-site asset migration. Confirmed 2026-10-02: the current Images membership migration genuinely drops orphans today, not just a theoretical risk. AV orphans are quantified and carry a live access consequence — see "Confirmed 2026-09-28" below. **Still needed: run the sweep on dev-0** (its own review group(s) must be created there first); **Texts/Sources sweeps wait on those sites' migrations**, not yet run.
+**Priority:** **Medium–High — direction CONFIRMED 2026-09-28 (Than, Yuji); open specifics RESOLVED 2026-10-02 (Than); BUILT and the AV exposure FIXED on local DDEV 2026-10-02; MERGED to `main` 2026-10-05 ([PR #275](https://github.com/uvalib/mandala-navina/pull/275)).** Applies to **every** per-site asset migration. Confirmed 2026-10-02: the current Images membership migration genuinely drops orphans today, not just a theoretical risk. AV orphans are quantified and carry a live access consequence — see "Confirmed 2026-09-28" below. **Images and AV sweeps RUN on dev-0 by Than, 2026-10-14** (see "Run on dev-0" below); **Texts/Sources sweeps wait on those sites' migrations**, not yet run.
 **Owner:** Than
 
 ## Context
@@ -190,3 +190,48 @@ with a comment pointing here, in both `mandala_group_inheritance_entity_access()
   `field_group_content_access` value that the review group's own visibility must not
   override — the same "default loosens" failure mode as
   [[av-collections-without-d7-group-access]].
+
+## Run on dev-0, 2026-10-14 (Than)
+
+Than ran `group:sweep-orphans` on dev-0 for Images and for AV; both completed. The groups were
+created by hand: a parent collection "Orphaned Nodes" with a child subcollection **per content
+type**. That is the same thing the 2026-10-02 design called a child "per site": D7 had one site
+per content type, and D11 has one site, so the grouping is named by content type. Claude did not
+run, read or verify anything on dev-0; the counts and group ids belong in Than's own record of the
+run.
+
+## Decision 2026-10-14 (Than): a child always follows its parent's flag
+
+**Supersedes** the 2026-10-02 "set explicitly on every group, not inherited" call above. Found on
+dev-0: with the parent flagged, the child subcollections could not be edited, and the flag could
+not be set on them.
+
+- **Cause (reproduced on DDEV):** the parent picker (`field_parent_collection`) lists groups
+  through the `group_access` query, which now excluded the flagged parent, even for uid 1. So the
+  parent was not a valid choice in its own field and the child could not be saved. Separately,
+  nothing carried the flag from parent to child, so an unflagged child of a flagged parent was
+  still listed.
+- **Rule:** a subcollection is review-holding exactly when its parent collection is. No override.
+  No parent, or an unflagged parent, means unflagged.
+- **Built** (`mandala_group_inheritance`): `group_presave` derives the flag from the parent on
+  every subcollection save (creation, re-parenting, hand edits); `group_update` on a collection
+  re-saves its children when the collection's flag changes; the flag is disabled on the
+  subcollection add/edit forms (form alter, no config change); `GroupQueryAlter` also excludes a
+  subcollection whose parent is flagged, so a stale child value cannot expose review content; and
+  it leaves a flagged parent visible to an account with group bypass in the subcollection's own
+  parent picker only, never anywhere else. Kernel tests in `ReviewHoldingGroupVisibilityTest`,
+  each shown failing without its fix.
+- **Not done here:** re-parenting a subcollection still does not re-sync its visibility or
+  inherited memberships; see [[subcollection-reparenting-does-not-resync-visibility-or-members]].
+
+### For Than to check on dev-0 after this deploys
+
+Claude does not touch dev-0. These are yours to run, read-only unless noted:
+
+1. Each child under "Orphaned Nodes" shows the flag ticked (the form shows it greyed out).
+   Existing children saved before this change are only corrected the next time each is saved, or
+   when the parent's flag is next changed; the query also hides them now regardless, via the parent
+   check, so listings are safe before that.
+2. `drush group:sweep-orphans --dry-run` per site reports no remaining group-less nodes.
+3. None of the review groups appear on `/collections`, for an administrator or anonymous.
+

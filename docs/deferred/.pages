@@ -58,6 +58,7 @@ nav:
   - "ADR 015 merged with three questions unanswered": adr-015-unanswered-questions-at-merge.md
   - "Authenticated contributor CRUD not wired in D11": authenticated-contributor-crud-not-wired-in-d11.md
   - "Orphaned content → temp review group on migration": orphaned-content-temp-group-on-migration.md
+  - "Re-parenting a subcollection does not re-sync visibility or members": subcollection-reparenting-does-not-resync-visibility-or-members.md
   - "Texts footnotes production transform (Spike 4b downstream)": texts-footnotes-production-transform.md
   - "solr-proxy CI/CD pipeline (COMPLETE 2026-08-12)": solr-proxy-has-no-cicd-pipeline.md
   - "s3-sync pipeline deferred (pending reindeer_x consolidation)": s3-sync-pipeline-deferred-pending-reindeer-x-consolidation.md

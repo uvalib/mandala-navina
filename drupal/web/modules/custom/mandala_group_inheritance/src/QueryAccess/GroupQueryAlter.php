@@ -6,6 +6,7 @@ namespace Drupal\mandala_group_inheritance\QueryAccess;
 
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Database\Query\SelectInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -56,22 +57,48 @@ final class GroupQueryAlter {
       return;
     }
 
-    // An orphaned-content review holding group (created and flagged by hand
-    // through the Group UI, not by this module) is never a browsable
-    // collection, for anyone — including an account with bypass, which is
-    // why this is a separate, unconditional join rather than folded into the
-    // visibility expression below (that one IS skipped for bypass). See
-    // docs/deferred/orphaned-content-temp-group-on-migration.md.
-    $review_holding = $query->leftJoin(
-      'group__field_is_review_holding',
-      'mgi_review_holding',
-      "%alias.entity_id = $base_table.id AND %alias.deleted = 0",
-    );
-    $query->condition(
-      $query->orConditionGroup()
-        ->isNull("$review_holding.field_is_review_holding_value")
-        ->condition("$review_holding.field_is_review_holding_value", 0)
-    );
+    // The one place a review-holding group must stay visible: an administrator
+    // picking (or re-validating) the parent of a subcollection. Without this a
+    // child of a flagged parent cannot be edited, because the parent is not a
+    // valid choice in its own entity-reference field. Everywhere else, and for
+    // everyone else, the exclusion below holds.
+    if (!$this->isParentCollectionPicker($query, $account)) {
+      // An orphaned-content review holding group (created and flagged by hand
+      // through the Group UI, not by this module) is never a browsable
+      // collection, for anyone — including an account with bypass, which is
+      // why this is a separate, unconditional join rather than folded into the
+      // visibility expression below (that one IS skipped for bypass). See
+      // docs/deferred/orphaned-content-temp-group-on-migration.md.
+      $review_holding = $query->leftJoin(
+        'group__field_is_review_holding',
+        'mgi_review_holding',
+        "%alias.entity_id = $base_table.id AND %alias.deleted = 0",
+      );
+      $query->condition(
+        $query->orConditionGroup()
+          ->isNull("$review_holding.field_is_review_holding_value")
+          ->condition("$review_holding.field_is_review_holding_value", 0)
+      );
+
+      // A subcollection follows its parent's flag (kept in sync by presave), but
+      // also check the parent here so a stale stored child value can never expose
+      // review content. Collections have no parent row, so both joins are NULL.
+      $parent_ref = $query->leftJoin(
+        'group__field_parent_collection',
+        'mgi_review_parent',
+        "%alias.entity_id = $base_table.id AND %alias.deleted = 0",
+      );
+      $parent_review = $query->leftJoin(
+        'group__field_is_review_holding',
+        'mgi_review_parent_flag',
+        "%alias.entity_id = $parent_ref.field_parent_collection_target_id AND %alias.deleted = 0",
+      );
+      $query->condition(
+        $query->orConditionGroup()
+          ->isNull("$parent_review.field_is_review_holding_value")
+          ->condition("$parent_review.field_is_review_holding_value", 0)
+      );
+    }
 
     // Note this uses the GROUP bypass set, which omits 'bypass node access'.
     // That asymmetry is deliberate — see CollectionVisibility::hasNodeBypass().
@@ -186,4 +213,25 @@ final class GroupQueryAlter {
     $this->renderer->render($build);
   }
 
+  /**
+   * Whether this is the parent-collection picker of a subcollection form.
+   *
+   * An entity-reference selection query (core's autocomplete and its
+   * validation constraint) whose host entity is a subcollection group, run by
+   * an account that bypasses group access. Subcollections have one reference
+   * field to collections, field_parent_collection, so the host bundle
+   * identifies it without reaching into widget internals.
+   */
+  private function isParentCollectionPicker(SelectInterface $query, AccountInterface $account): bool {
+    if (!$query->hasTag('entity_reference') || !CollectionVisibility::hasGroupBypass($account)) {
+      return FALSE;
+    }
+    $handler = $query->getMetaData('entity_reference_selection_handler');
+    $host = is_object($handler) && method_exists($handler, 'getConfiguration')
+      ? ($handler->getConfiguration()['entity'] ?? NULL)
+      : NULL;
+    return $host instanceof EntityInterface
+      && $host->getEntityTypeId() === 'group'
+      && $host->bundle() === 'subcollection';
+  }
 }

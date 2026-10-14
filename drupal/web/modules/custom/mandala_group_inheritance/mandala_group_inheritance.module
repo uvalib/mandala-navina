@@ -18,6 +18,7 @@ use Drupal\Core\Database\Query\SelectInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\group\Entity\GroupInterface;
 use Drupal\group\Entity\GroupRelationshipInterface;
@@ -288,7 +289,16 @@ function _mandala_group_inheritance_owning_group(EntityInterface $node): ?GroupI
  * visibility does not propagate over it.
  */
 function mandala_group_inheritance_group_presave(GroupInterface $group) {
-  if ($group->bundle() !== 'subcollection' || !$group->isNew()) {
+  if ($group->bundle() !== 'subcollection') {
+    return;
+  }
+
+  // Runs on every save, not just creation: a child's review-holding flag is
+  // derived from its parent, so re-parenting or a hand edit must not leave it
+  // stale. See _mandala_group_inheritance_derive_review_holding().
+  _mandala_group_inheritance_derive_review_holding($group);
+
+  if (!$group->isNew()) {
     return;
   }
 
@@ -325,6 +335,8 @@ function mandala_group_inheritance_group_update(GroupInterface $group) {
     return;
   }
 
+  _mandala_group_inheritance_propagate_review_holding($group);
+
   $old = (int) $group->original->get('field_group_access')->value;
   $new = (int) $group->get('field_group_access')->value;
   if ($old === $new) {
@@ -332,6 +344,74 @@ function mandala_group_inheritance_group_update(GroupInterface $group) {
   }
 
   _mandala_group_inheritance_propagate_visibility($group, $new);
+}
+
+/**
+ * Sets a subcollection's field_is_review_holding from its parent.
+ *
+ * A child always follows its parent: flagged parent means flagged child, and
+ * no parent (or an unflagged one) means unflagged. There is deliberately no
+ * override, so review content can never be exposed by a child someone forgot
+ * to flag, nor released by un-flagging one. The flag is display-only on the
+ * subcollection form. See docs/deferred/orphaned-content-temp-group-on-migration.md.
+ */
+function _mandala_group_inheritance_derive_review_holding(GroupInterface $group): void {
+  $parent = $group->get('field_parent_collection')->entity;
+  $flag = ($parent && $parent->hasField('field_is_review_holding'))
+    ? (int) $parent->get('field_is_review_holding')->value
+    : 0;
+  $group->set('field_is_review_holding', $flag);
+}
+
+/**
+ * Makes the review-holding flag display-only on the subcollection forms.
+ *
+ * It is derived from the parent collection on every save, so an editable
+ * checkbox would only mislead. A form alter rather than a form-display change
+ * so the config does not need a live-Drupal export for it.
+ */
+function _mandala_group_inheritance_lock_review_holding_field(array &$form): void {
+  if (isset($form['field_is_review_holding'])) {
+    $form['field_is_review_holding']['#disabled'] = TRUE;
+    $form['field_is_review_holding']['widget']['#description'] = t("Set automatically from the parent collection: a subcollection is review-holding exactly when its parent is. To change it, change the parent collection's setting.");
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for the subcollection edit form.
+ */
+function mandala_group_inheritance_form_group_subcollection_edit_form_alter(array &$form, FormStateInterface $form_state) {
+  _mandala_group_inheritance_lock_review_holding_field($form);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for the subcollection add form.
+ */
+function mandala_group_inheritance_form_group_subcollection_add_form_alter(array &$form, FormStateInterface $form_state) {
+  _mandala_group_inheritance_lock_review_holding_field($form);
+}
+
+/**
+ * Re-derives the flag on every subcollection of a collection whose flag changed.
+ */
+function _mandala_group_inheritance_propagate_review_holding(GroupInterface $collection): void {
+  $old = (int) $collection->original->get('field_is_review_holding')->value;
+  $new = (int) $collection->get('field_is_review_holding')->value;
+  if ($old === $new) {
+    return;
+  }
+
+  $subcollections = \Drupal::entityTypeManager()
+    ->getStorage('group')
+    ->loadByProperties([
+      'type' => 'subcollection',
+      'field_parent_collection' => $collection->id(),
+    ]);
+
+  // Saving re-runs presave, which derives the flag from the parent.
+  foreach ($subcollections as $sub) {
+    $sub->save();
+  }
 }
 
 /**
