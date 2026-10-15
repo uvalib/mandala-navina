@@ -41,7 +41,33 @@ rewrite is what adds it, and since #321 the field has docValues.
 `mandala_kmassets_sync.settings`): the default is the staging master, and a local
 `index-all` writes there.
 
-## Next: the go/no-go measurement
+## The go/no-go measurement
 
-Once `trid_i` is populated on dev, measure cross-core join time through the proxy (the T9
-checkpoint). The pass/fail threshold is set by the team before measuring.
+`scripts/measure-transcript-join-cost.py` loads synthetic units at D7's real shape (243,005
+units, one set per real `trid`), times the proxy's cross-core join against the same queries
+without it, and deletes the units again (`load`, `measure`, `cleanup`; writes need `--apply`).
+It reports numbers only. The pass/fail threshold is the team's call.
+
+**Result, 2026-10-15** (dev replica, Solr QTime in ms; anonymous visibility join):
+
+| Scenario | No join | Join |
+|---|---|---|
+| One transcript by `is_trid`, up to 1,000 rows, cache bypassed | median 0, p95 7, max 10 | median 16, p95 42, max 55 |
+| Whole-core match-all count, cache bypassed | not measured | median 19, p95 49, max 86 |
+| Repeated (cached) queries | about 0 | about 0 |
+
+The proxy's anonymous counts match the replica's join counts (229,846 of 243,005 visible).
+
+**Authenticated path, through the proxy** (run from dev-0 as test uid 600 with
+`measure-auth`; the filter also carries the user's collection list):
+
+| | Anonymous | Authenticated (uid 600) |
+|---|---|---|
+| First query after the replica opened a new searcher (cold) | QTime 31 ms | QTime 140 ms |
+| Warm: text query / match-all count / one transcript by `is_trid` | median 0 / 0 / 2 ms | median 0 / 0 / 1 ms |
+| Units visible | 229,846 | 230,634 |
+
+The authenticated join costs more on the first query after a new searcher (140 ms against
+31 ms) and nothing measurable once warm. The data is synthetic, so unit text and size are not
+realistic; the join structure and the kmassets parent count are. Not measured: a user in many
+collections, and the load when many different users arrive after a searcher reopens.
