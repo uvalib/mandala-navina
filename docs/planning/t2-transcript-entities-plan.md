@@ -16,8 +16,9 @@ a stable save/delete hook surface. Nothing is migrated and no viewer exists yet.
 - **Entity kind:** both are non-fieldable custom content entities (base fields only), both
   revisionable. `av_tcu` has per-unit revisions; `av_transcript` revisions are metadata only.
 - **Ids:** `av_transcript` id is D7's `trid`; `av_tcu` id is D7's `tcuid` (so `#tcu/NNN` links
-  keep working). The migration sets them explicitly. New ids are allocated above the D7 maxima:
-  27,016 for transcripts, 1,394,104 for units.
+  keep working). The migration sets them explicitly. New ids are allocated well above the D7 maxima
+  (27,016 for transcripts, 1,394,104 for units) because legacy D7 keeps minting ids until cutover:
+  transcripts start at 100,000 (done in phase 1, PR #343); units will start at 2,000,000.
 - **Timecodes:** `DECIMAL(10,3)`. Bad values are carried as found, with a `timecode_status`
   and `end_original` whenever a fix is applied.
 - **Tier and speaker maps:** JSON columns on the unit (17 tier names; 245,158 units).
@@ -32,7 +33,7 @@ a stable save/delete hook surface. Nothing is migrated and no viewer exists yet.
 
 | # | PR | Estimate | Notes |
 |---|---|---|---|
-| 1 | `av_transcript` entity (new module `mandala_av_transcripts`) | 2-4 h | First custom content entity in the repo; sets the pattern. Node reference (unique), source file, source format, tier list, `has_edits`, `edits_flagged_at`, workflow fields (open question 1), revision log. Id allocation above 27,016. |
+| 1 | `av_transcript` entity (new module `mandala_av_transcripts`) | 2-4 h | First custom content entity in the repo; sets the pattern. Node reference (unique), source file, source format, tier list, `has_edits`, `edits_flagged_at`, workflow fields (open question 1), revision log. Id allocation starts at 100,000. **Done: PR #343, merged 2026-10-15** (workflow fields left out pending open question 1). |
 | 2 | `av_tcu` entity | 2-3 h | Transcript reference, sequence, `start`, `end`, `end_original`, `timecode_status`, tier map, speaker map. Per-unit revisions. Indexes on (transcript, sequence) and (transcript, start). Id allocation above 1,394,104. A 245k-row insert check. |
 | 3 | Access handler and tests | 3-5 h | Delegates to the parent node. Kernel tests: private node, node in a collection the user is not in, anonymous, orphaned transcript. Security-critical. |
 | 4 | Read service | 1-2 h | One range read per transcript; tested on the largest (1,380 units). |
