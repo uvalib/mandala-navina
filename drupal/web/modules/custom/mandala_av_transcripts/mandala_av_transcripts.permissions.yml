@@ -1,0 +1,4 @@
+administer av transcripts:
+  title: 'Administer AV transcripts'
+  description: 'Full access to AV transcripts. Per-node viewing and editing follow the parent node, not this permission.'
+  restrict access: true

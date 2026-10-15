@@ -1,0 +1,16 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for mandala_av_transcripts.
+ */
+
+use Drupal\mandala_av_transcripts\AvTranscriptIdSequence;
+use Drupal\mandala_av_transcripts\Entity\AvTranscript;
+
+/**
+ * Implements hook_install().
+ */
+function mandala_av_transcripts_install(): void {
+  (new AvTranscriptIdSequence(\Drupal::database()))->reserve('av_transcript', AvTranscript::ID_FLOOR);
+}
