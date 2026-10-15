@@ -57,6 +57,17 @@ It reports numbers only. The pass/fail threshold is the team's call.
 | Repeated (cached) queries | about 0 | about 0 |
 
 The proxy's anonymous counts match the replica's join counts (229,846 of 243,005 visible).
-Not yet measured: the authenticated case, whose filter also carries the user's collection
-list. The data is synthetic, so unit text and size are not realistic; the join structure and
-the kmassets parent count are.
+
+**Authenticated path, through the proxy** (run from dev-0 as test uid 600 with
+`measure-auth`; the filter also carries the user's collection list):
+
+| | Anonymous | Authenticated (uid 600) |
+|---|---|---|
+| First query after the replica opened a new searcher (cold) | QTime 31 ms | QTime 140 ms |
+| Warm: text query / match-all count / one transcript by `is_trid` | median 0 / 0 / 2 ms | median 0 / 0 / 1 ms |
+| Units visible | 229,846 | 230,634 |
+
+The authenticated join costs more on the first query after a new searcher (140 ms against
+31 ms) and nothing measurable once warm. The data is synthetic, so unit text and size are not
+realistic; the join structure and the kmassets parent count are. Not measured: a user in many
+collections, and the load when many different users arrive after a searcher reopens.

@@ -12,6 +12,8 @@ units with D7's real shape (one unit set per real trid, D7's units-per-transcrip
     #      transcripts_apachesolr_transcript t ON t.trid=c.trid GROUP BY t.trid" > counts.tsv
     ./scripts/measure-transcript-join-cost.py load    --master http://<master>:8080 --counts counts.tsv --apply
     ./scripts/measure-transcript-join-cost.py measure --replica https://<replica> [--proxy https://<proxy>]
+    # authenticated path: run ON a dev app node (SAML test login), as verify-solr-proxy-visibility.py is
+    python3 /tmp/measure-transcript-join-cost.py measure-auth --proxy https://<proxy> --drupal https://<drupal>
     ./scripts/measure-transcript-join-cost.py cleanup --master http://<master>:8080 --apply
 
 WRITES TO A SHARED INDEX (the transcript core, replicated to the replica). Default is a dry
@@ -24,7 +26,12 @@ states no pass/fail: the threshold is the team's call.
 """
 
 import argparse
+import html
+import http.cookiejar
 import json
+import os
+import re
+import ssl
 import random
 import statistics
 import sys
@@ -34,11 +41,14 @@ import urllib.parse
 import urllib.request
 
 p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-p.add_argument("mode", choices=["load", "measure", "cleanup"])
+p.add_argument("mode", choices=["load", "measure", "measure-auth", "cleanup"])
 p.add_argument("--master")
 p.add_argument("--replica", help="replica base URL (https://host or http://host:8080)")
 p.add_argument("--proxy", help="proxy base URL; anonymous queries only")
 p.add_argument("--counts", help="trid<TAB>units file")
+p.add_argument("--drupal", default="https://mandala-dev.internal.lib.virginia.edu", help="measure-auth: Drupal base URL")
+p.add_argument("--user", default=os.environ.get("MANDALA_TEST_USER", "staff"))
+p.add_argument("--password", default=os.environ.get("MANDALA_TEST_PASSWORD", "staffpass"))
 p.add_argument("--core", default="mandala-av-transcripts")
 p.add_argument("--kmassets", default="kmassets")
 p.add_argument("--batch", type=int, default=5000)
@@ -182,4 +192,83 @@ def do_measure():
     print("\nNo verdict: the pass/fail threshold is the team's call.")
 
 
-{"load": do_load, "measure": do_measure, "cleanup": do_cleanup}[A.mode]()
+def _login():
+    """SAML test login to Drupal, then the proxy's /auth; returns (uid, sid). Same flow as
+    scripts/verify-solr-proxy-visibility.py."""
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    op = urllib.request.build_opener(urllib.request.HTTPSHandler(context=ctx),
+                                     urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+
+    def req(url, data=None):
+        r = urllib.request.Request(url, urllib.parse.urlencode(data).encode() if data else None)
+        try:
+            resp = op.open(r, timeout=40)
+            return resp.read().decode("utf-8", "replace"), resp.geturl()
+        except urllib.error.HTTPError as e:
+            return e.read().decode("utf-8", "replace"), url
+
+    fields = lambda b: {html.unescape(n): html.unescape(v) for n, v in
+                        re.findall(r'<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"', b, re.I)}
+    action = lambda b, d: html.unescape(m.group(1)) if (m := re.search(r'<form[^>]*action="([^"]+)"', b, re.I)) else d
+    body, url = req(f"{A.drupal}/saml_login")
+    f = fields(body)
+    f.update({"username": A.user, "password": A.password})
+    body, url = req(urllib.parse.urljoin(url, action(body, url)), f)
+    for _ in range(4):
+        if "SAMLResponse" not in body:
+            break
+        body, url = req(urllib.parse.urljoin(url, action(body, url)), fields(body))
+    m = re.search(r"/user/(\d+)", url)
+    if not m:
+        raise SystemExit("SAML login did not reach an authenticated Drupal session")
+    _, url = req(f"{A.proxy}/auth?returl=" + urllib.parse.quote(f"{A.proxy}/ping", safe=""))
+    q = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
+    if "sid" not in q:
+        raise SystemExit(f"proxy /auth returned no sid; landed on {url}")
+    return m.group(1), q["sid"][0]
+
+
+def do_measure_auth():
+    """Through the proxy: anonymous vs authenticated, cold first query then warm runs."""
+    if not A.proxy:
+        p.error("measure-auth needs --proxy")
+    uid, sid = _login()
+    print(f"logged in as drupal uid {uid}; proxy sid {sid[:8]}...")
+    ctxs = ssl.create_default_context()
+    ctxs.check_hostname = False
+    ctxs.verify_mode = ssl.CERT_NONE
+
+    def q(params, use_sid):
+        pr = dict(params, wt="json")
+        if use_sid:
+            pr["sid"] = sid
+        t0 = time.time()
+        with urllib.request.urlopen(f"{A.proxy}/solr/{A.core}/select?" + urllib.parse.urlencode(pr),
+                                    timeout=120, context=ctxs) as r:
+            b = json.load(r)
+        return b["responseHeader"]["QTime"], (time.time() - t0) * 1000, b["response"]["numFound"]
+
+    # Authenticated visibility is a larger filter (public + UVA + the user's collections).
+    for name, use in (("anonymous", False), ("authenticated", True)):
+        first = q({"q": "*:*", "rows": 0}, use)
+        print(f"\n== {name}: first query after the searcher opened (cold): QTime={first[0]} ms "
+              f"wall={first[1]:.0f} ms  visible={first[2]}")
+    trids = sorted(kmassets_trids(A.replica)) if A.replica else None
+    if trids is None:
+        q0, _, _ = q({"q": "*:*", "rows": 0}, False)
+    for name, use in (("anonymous", False), ("authenticated", True)):
+        print(f"\n== {name}: warm, {A.runs} runs each")
+        for label, pr in (("A. text query rows=10", {"q": "ts_content_eng:chanting", "rows": 10}),
+                          ("B. match-all count", {"q": "*:*", "rows": 0})):
+            r = [q(pr, use) for _ in range(A.runs)]
+            row(label, [x[0] for x in r], [x[1] for x in r], r[0][2])
+        if trids:
+            r = [q({"q": f"is_trid:{t}", "rows": 1000, "fl": "id,fts_start"}, use)
+                 for t in random.sample(trids, min(len(trids), A.runs))]
+            row("C. one transcript by is_trid, rows=1000", [x[0] for x in r], [x[1] for x in r], r[0][2])
+    print("\nNo verdict: the pass/fail threshold is the team's call.")
+
+
+{"load": do_load, "measure": do_measure, "measure-auth": do_measure_auth, "cleanup": do_cleanup}[A.mode]()
