@@ -1,0 +1,53 @@
+<?php
+
+/**
+ * @file
+ * Install and update hooks for mandala_kmassets_sync.
+ */
+
+use Drupal\mandala_kmassets_sync\Transcript\LegacyTridMapResolver;
+
+/**
+ * Defines the node-to-trid table (see schema below).
+ */
+function _mandala_kmassets_sync_trid_map_schema(): array {
+  return [
+    'description' => 'D7 transcript id (trid) per legacy AV node, interim source for kmassets trid_i until the T2 transcript entity exists.',
+    'fields' => [
+      'legacy_site' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ],
+      'legacy_nid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'trid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['legacy_site', 'legacy_nid'],
+    'unique keys' => ['trid' => ['trid']],
+  ];
+}
+
+/**
+ * Implements hook_schema().
+ */
+function mandala_kmassets_sync_schema(): array {
+  return [LegacyTridMapResolver::TABLE => _mandala_kmassets_sync_trid_map_schema()];
+}
+
+/**
+ * Create the node-to-trid table on existing installs.
+ */
+function mandala_kmassets_sync_update_10001(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists(LegacyTridMapResolver::TABLE)) {
+    $schema->createTable(LegacyTridMapResolver::TABLE, _mandala_kmassets_sync_trid_map_schema());
+  }
+}
