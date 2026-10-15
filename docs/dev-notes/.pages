@@ -11,5 +11,6 @@ nav:
   - "How-to: Flush image style derivatives after replacing a file's content": howto-flush-image-style-derivatives.md
   - "How-to: Check or watch a Mandala CodePipeline deploy": howto-check-deploy-status.md
   - "How-to: Deploy a kmassets Solr schema change and verify nothing broke": howto-deploy-kmassets-schema-change.md
+  - "How-to: Write trid_i onto AV kmassets documents": howto-write-trid-i-to-kmassets.md
   - "Migration and settings config: rationale": migration-config-rationale.md
   - "How-to template": howto-template.md

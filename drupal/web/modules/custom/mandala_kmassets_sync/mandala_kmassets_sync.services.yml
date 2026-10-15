@@ -73,3 +73,18 @@ services:
     public: true
 
 
+
+  # trid_i on AV documents (Spike 11 T9 half a). The resolver is the swap
+  # point: an av_transcript-entity resolver replaces the D7-derived table
+  # (T2) by changing this one alias.
+  mandala_kmassets_sync.trid_resolver:
+    class: Drupal\mandala_kmassets_sync\Transcript\LegacyTridMapResolver
+    arguments:
+      - '@database'
+
+  mandala_kmassets_sync.contributor.transcript_id:
+    class: Drupal\mandala_kmassets_sync\Contributor\TranscriptIdContributor
+    arguments:
+      - '@mandala_kmassets_sync.trid_resolver'
+    tags:
+      - { name: mandala_kmassets_sync.doc_contributor, priority: 5 }
