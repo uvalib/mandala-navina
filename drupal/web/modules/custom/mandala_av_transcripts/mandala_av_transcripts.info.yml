@@ -1,0 +1,9 @@
+name: 'Mandala AV Transcripts'
+type: module
+description: 'The av_transcript and av_tcu content entities: D11 home for AV transcripts and their time-coded units (Sprint 4 T2, Spike 11).'
+package: Mandala
+core_version_requirement: ^11
+dependencies:
+  - drupal:node
+  - drupal:file
+  - drupal:options
