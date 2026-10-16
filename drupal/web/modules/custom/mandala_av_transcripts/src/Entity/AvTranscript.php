@@ -173,6 +173,26 @@ class AvTranscript extends RevisionableContentEntityBase implements AvTranscript
   /**
    * {@inheritdoc}
    */
+  public function postSave(EntityStorageInterface $storage, $update = TRUE): void {
+    parent::postSave($storage, $update);
+    \Drupal::service('mandala_av_transcripts.change_notifier')->transcriptSaved($this, !$update);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function postDelete(EntityStorageInterface $storage, array $entities): void {
+    parent::postDelete($storage, $entities);
+    $notifier = \Drupal::service('mandala_av_transcripts.change_notifier');
+    foreach ($entities as $transcript) {
+      assert($transcript instanceof self);
+      $notifier->transcriptDeleted($transcript);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function preSave(EntityStorageInterface $storage): void {
     parent::preSave($storage);
     if ($this->hasEdits() && $this->get('edits_flagged_at')->isEmpty()) {

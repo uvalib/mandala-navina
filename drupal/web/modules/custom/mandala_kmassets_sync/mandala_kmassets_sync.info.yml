@@ -13,3 +13,6 @@ dependencies:
   # labels a document must be what Drupal decides about it.
   - mandala_group_inheritance:mandala_group_inheritance
   - shanti_kmaps_admin:shanti_kmaps_admin
+  # For the transcript events that trigger a node's re-index (T2 phase 5), and
+  # for the entity-backed trid resolver that replaces the D7 table (phase 7).
+  - mandala_av_transcripts:mandala_av_transcripts
