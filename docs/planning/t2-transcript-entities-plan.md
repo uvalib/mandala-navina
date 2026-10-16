@@ -34,7 +34,7 @@ a stable save/delete hook surface. Nothing is migrated and no viewer exists yet.
 | # | PR | Estimate | Notes |
 |---|---|---|---|
 | 1 | `av_transcript` entity (new module `mandala_av_transcripts`) | 2-4 h | First custom content entity in the repo; sets the pattern. Node reference (unique), source file, source format, tier list, `has_edits`, `edits_flagged_at`, workflow fields (open question 1), revision log. Id allocation starts at 100,000. **Done: PR #343, merged 2026-10-15** (workflow fields left out pending open question 1). |
-| 2 | `av_tcu` entity | 2-3 h | Transcript reference, sequence, `start`, `end`, `end_original`, `timecode_status`, tier map, speaker map. Per-unit revisions. Indexes on (transcript, sequence) and (transcript, start). Id allocation above 1,394,104. A 245k-row insert check. |
+| 2 | `av_tcu` entity | 2-3 h | Transcript reference, sequence, `start`, `end`, `end_original`, `timecode_status`, tier map, speaker map. Per-unit revisions. Indexes on (transcript, sequence) and (transcript, start). Id allocation above 1,394,104. A 245k-row insert check. **Done: PR pending (branch `feat/t2-2-av-tcu-entity`)**; ids start at 2,000,000, installed on existing sites by `update_10001`. Open: Drupal's delete removes a unit's revision rows, so "a deleted unit keeps its history" (Tests section) needs a decision (soft-delete flag or archive) before T7. |
 | 3 | Access handler and tests | 3-5 h | Delegates to the parent node. Kernel tests: private node, node in a collection the user is not in, anonymous, orphaned transcript. Security-critical. |
 | 4 | Read service | 1-2 h | One range read per transcript; tested on the largest (1,380 units). |
 | 5 | Hook surface and kmassets reindex subscriber | 2-4 h | Events on unit save/delete and whole-transcript operations. T4 subscribes for Solr. One subscriber reindexes the parent node's kmassets document so `trid_i` stays current; it must not loop. |
@@ -64,6 +64,18 @@ feed 3.
 4. **Sequencing.** Ship phases 1-6 as T2 and do the resolver swap together with T5's cutover
    (recommended).
 5. **Retry queue** for failed index writes belongs to T4, not T2.
+
+## For review Monday 2026-10-19
+
+Decided not to block phases 2-3; none of these changes the access handler.
+
+- Open questions 1-4 above (workflow fields, existence rule, module home, sequencing). The
+  module home is already `mandala_av_transcripts` as recommended; confirm or move.
+- **Deleted units and history** (raised in phase 2, PR #345): Drupal's delete removes a unit's
+  revision rows, so "a deleted unit keeps its history" needs a soft-delete flag or an archive
+  before T7 (revert).
+- Phase 2 load numbers are DDEV-only (245,158 inserts 260 s; range read 1.5 ms); re-measure on
+  dev-0 after the T5 migration.
 
 ## Risks
 
