@@ -74,7 +74,7 @@ Nothing below blocked phases 2-6. Items marked **T5** must be settled before the
 1. **Repair policy for bad timecodes (T5; needs Than or AV staff).** The classifier only labels;
    it never changes a value. Whether the migration repairs anything, and what `end_original`
    then holds, is open. Counts by class (D7, all 245,158 units): `inverted` 904, of which 137 have
-   `end = 0` (D7's "unknown") and 71 of those are mid-transcript units in 75 transcripts;
+   `end = 0` (D7's "unknown"; 71 mid-transcript, 66 last units, across 75 transcripts);
    `last_unit_no_end` 66; `zero_length_other` 188; `end_implausible` 56 (54 overrun the next
    unit by over 10 minutes, 2 are last units over 4 hours). Candidate repairs: a missing end
    becomes the next unit's start; an implausible end is clamped to it; zero-length units stay
