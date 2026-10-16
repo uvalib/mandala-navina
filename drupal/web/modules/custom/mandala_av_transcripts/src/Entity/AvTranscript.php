@@ -69,6 +69,13 @@ class AvTranscript extends RevisionableContentEntityBase implements AvTranscript
   public const ID_FLOOR = 100000;
 
   /**
+   * Cache tag for "this transcript's units changed" (invalidated by AvTcu).
+   */
+  public static function unitsCacheTag(int $trid): string {
+    return 'av_transcript_units:' . $trid;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type): array {
