@@ -12,6 +12,7 @@ use Drupal\Core\Entity\RevisionLogEntityTrait;
 use Drupal\Core\Entity\Sql\SqlContentEntityStorage;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\mandala_av_transcripts\Access\AvTcuAccessControlHandler;
 use Drupal\mandala_av_transcripts\AvTcuStorageSchema;
 
 /**
@@ -29,9 +30,7 @@ use Drupal\mandala_av_transcripts\AvTcuStorageSchema;
  * whenever a fix has been applied. `end` is nullable (the last unit of a
  * transcript may have none).
  *
- * Access is not defined here yet: with no access handler Drupal denies
- * everyone except administrators, which fails closed until the access phase.
- * Units are never exposed on their own; access will delegate to the transcript.
+ * Access is the parent node's: see AvTcuAccessControlHandler.
  */
 #[ContentEntityType(
   id: 'av_tcu',
@@ -46,6 +45,7 @@ use Drupal\mandala_av_transcripts\AvTcuStorageSchema;
   ],
   handlers: [
     'storage' => SqlContentEntityStorage::class,
+    'access' => AvTcuAccessControlHandler::class,
     'storage_schema' => AvTcuStorageSchema::class,
   ],
   base_table: 'av_tcu',

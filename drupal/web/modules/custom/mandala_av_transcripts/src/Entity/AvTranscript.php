@@ -13,6 +13,7 @@ use Drupal\Core\Entity\RevisionLogEntityTrait;
 use Drupal\Core\Entity\Sql\SqlContentEntityStorage;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\mandala_av_transcripts\Access\AvTranscriptAccessControlHandler;
 use Drupal\mandala_av_transcripts\AvTranscriptStorageSchema;
 use Drupal\node\NodeInterface;
 
@@ -29,8 +30,7 @@ use Drupal\node\NodeInterface;
  * D7's range, because legacy D7 is still in production and keeps minting
  * trids until cutover. The id doubles as the kmassets `trid_i`.
  *
- * Access is not defined here yet: with no access handler Drupal denies
- * everyone except administrators, which fails closed until the access phase.
+ * Access is the parent node's: see AvTranscriptAccessControlHandler.
  */
 #[ContentEntityType(
   id: 'av_transcript',
@@ -45,6 +45,7 @@ use Drupal\node\NodeInterface;
   ],
   handlers: [
     'storage' => SqlContentEntityStorage::class,
+    'access' => AvTranscriptAccessControlHandler::class,
     'storage_schema' => AvTranscriptStorageSchema::class,
   ],
   base_table: 'av_transcript',
