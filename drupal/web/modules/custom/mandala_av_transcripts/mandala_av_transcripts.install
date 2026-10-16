@@ -6,6 +6,7 @@
  */
 
 use Drupal\mandala_av_transcripts\AvTranscriptIdSequence;
+use Drupal\mandala_av_transcripts\Entity\AvTcu;
 use Drupal\mandala_av_transcripts\Entity\AvTranscript;
 
 /**
@@ -13,4 +14,16 @@ use Drupal\mandala_av_transcripts\Entity\AvTranscript;
  */
 function mandala_av_transcripts_install(): void {
   (new AvTranscriptIdSequence(\Drupal::database()))->reserve('av_transcript', AvTranscript::ID_FLOOR);
+  (new AvTranscriptIdSequence(\Drupal::database()))->reserve('av_tcu', AvTcu::ID_FLOOR);
+}
+
+/**
+ * Installs the av_tcu entity type and reserves its id range (T2 phase 2).
+ */
+function mandala_av_transcripts_update_10001(): void {
+  $manager = \Drupal::entityDefinitionUpdateManager();
+  if (!$manager->getEntityType('av_tcu')) {
+    $manager->installEntityType(\Drupal::entityTypeManager()->getDefinition('av_tcu'));
+  }
+  (new AvTranscriptIdSequence(\Drupal::database()))->reserve('av_tcu', AvTcu::ID_FLOOR);
 }
