@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\mandala_av_transcripts\Entity;
 
-use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\Attribute\ContentEntityType;
 use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -196,7 +195,7 @@ class AvTcu extends RevisionableContentEntityBase implements AvTcuInterface {
    */
   public function postSave(EntityStorageInterface $storage, $update = TRUE): void {
     parent::postSave($storage, $update);
-    $this->invalidateTranscriptUnits();
+    \Drupal::service('mandala_av_transcripts.change_notifier')->unitSaved($this, !$update);
   }
 
   /**
@@ -204,19 +203,10 @@ class AvTcu extends RevisionableContentEntityBase implements AvTcuInterface {
    */
   public static function postDelete(EntityStorageInterface $storage, array $entities): void {
     parent::postDelete($storage, $entities);
+    $notifier = \Drupal::service('mandala_av_transcripts.change_notifier');
     foreach ($entities as $unit) {
       assert($unit instanceof self);
-      $unit->invalidateTranscriptUnits();
-    }
-  }
-
-  /**
-   * Invalidates what a reader cached about this unit's transcript.
-   */
-  private function invalidateTranscriptUnits(): void {
-    $trid = $this->get('transcript')->target_id;
-    if ($trid !== NULL) {
-      Cache::invalidateTags([AvTranscript::unitsCacheTag((int) $trid)]);
+      $notifier->unitDeleted($unit);
     }
   }
 

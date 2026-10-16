@@ -9,3 +9,17 @@ services:
       - '@database'
       - '@entity_type.manager'
       - '@current_user'
+
+  # Turns entity changes into events and cache-tag invalidations; bulk
+  # operations wrap themselves in suppressed() to get one of each per transcript.
+  mandala_av_transcripts.change_notifier:
+    class: Drupal\mandala_av_transcripts\TranscriptChangeNotifier
+    arguments:
+      - '@event_dispatcher'
+      - '@database'
+      - '@logger.channel.mandala_av_transcripts'
+
+  logger.channel.mandala_av_transcripts:
+    parent: logger.channel_base
+    arguments:
+      - 'mandala_av_transcripts'
