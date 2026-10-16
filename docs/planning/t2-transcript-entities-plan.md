@@ -65,6 +65,18 @@ feed 3.
    (recommended).
 5. **Retry queue** for failed index writes belongs to T4, not T2.
 
+## For review Monday 2026-10-19
+
+Decided not to block phases 2-3; none of these changes the access handler.
+
+- Open questions 1-4 above (workflow fields, existence rule, module home, sequencing). The
+  module home is already `mandala_av_transcripts` as recommended; confirm or move.
+- **Deleted units and history** (raised in phase 2, PR #345): Drupal's delete removes a unit's
+  revision rows, so "a deleted unit keeps its history" needs a soft-delete flag or an archive
+  before T7 (revert).
+- Phase 2 load numbers are DDEV-only (245,158 inserts 260 s; range read 1.5 ms); re-measure on
+  dev-0 after the T5 migration.
+
 ## Risks
 
 - If the entity pattern needs a rethink after phase 1 (for example, the migrate destination does
