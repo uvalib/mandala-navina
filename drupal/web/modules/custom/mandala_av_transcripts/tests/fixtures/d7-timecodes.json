@@ -1,0 +1,424 @@
+{
+ "source": "D7 mandala-av tcu table, 2026-10-15 copy (d7_av); expected computed by an independent SQL implementation of the rules; values rounded to 3 dp",
+ "units": [
+  {
+   "end": "46824.000",
+   "trid": 1941,
+   "start": "43230.000",
+   "tcuid": 113330,
+   "expected": "end_implausible",
+   "next_start": "43242.000"
+  },
+  {
+   "end": "50400.000",
+   "trid": 1941,
+   "start": "46800.000",
+   "tcuid": 113334,
+   "expected": "end_implausible",
+   "next_start": "46812.000"
+  },
+  {
+   "end": "64812.000",
+   "trid": 1941,
+   "start": "61218.000",
+   "tcuid": 113351,
+   "expected": "end_implausible",
+   "next_start": "61242.000"
+  },
+  {
+   "end": "68412.000",
+   "trid": 1941,
+   "start": "64806.000",
+   "tcuid": 113355,
+   "expected": "end_implausible",
+   "next_start": "64830.000"
+  },
+  {
+   "end": "30168.100",
+   "trid": 5381,
+   "start": "4.733",
+   "tcuid": 305476,
+   "expected": "end_implausible",
+   "next_start": null
+  },
+  {
+   "end": "33470.500",
+   "trid": 5606,
+   "start": "8.967",
+   "tcuid": 306206,
+   "expected": "end_implausible",
+   "next_start": null
+  },
+  {
+   "end": "838.166",
+   "trid": 8946,
+   "start": "0.000",
+   "tcuid": 681551,
+   "expected": "end_implausible",
+   "next_start": "4.300"
+  },
+  {
+   "end": "1180.300",
+   "trid": 12341,
+   "start": "95.567",
+   "tcuid": 809091,
+   "expected": "end_implausible",
+   "next_start": "101.667"
+  },
+  {
+   "end": "16.478",
+   "trid": 2625,
+   "start": "24.915",
+   "tcuid": 159586,
+   "expected": "inverted",
+   "next_start": "24.948"
+  },
+  {
+   "end": "89.666",
+   "note": "sub-second inversion",
+   "trid": 3275,
+   "start": "89.667",
+   "tcuid": 173632,
+   "expected": "inverted",
+   "next_start": "89.667"
+  },
+  {
+   "end": "228.531",
+   "note": "sub-second inversion",
+   "trid": 7101,
+   "start": "228.532",
+   "tcuid": 416606,
+   "expected": "inverted",
+   "next_start": "228.532"
+  },
+  {
+   "end": "91.132",
+   "note": "sub-second inversion",
+   "trid": 8961,
+   "start": "91.133",
+   "tcuid": 683126,
+   "expected": "inverted",
+   "next_start": "91.133"
+  },
+  {
+   "end": "12.437",
+   "note": "sub-second inversion",
+   "trid": 26933,
+   "start": "12.438",
+   "tcuid": 1385636,
+   "expected": "inverted",
+   "next_start": "12.438"
+  },
+  {
+   "end": "243.511",
+   "note": "sub-second inversion",
+   "trid": 26933,
+   "start": "243.512",
+   "tcuid": 1385774,
+   "expected": "inverted",
+   "next_start": "243.512"
+  },
+  {
+   "end": "480.678",
+   "note": "sub-second inversion",
+   "trid": 26933,
+   "start": "480.679",
+   "tcuid": 1385912,
+   "expected": "inverted",
+   "next_start": "480.679"
+  },
+  {
+   "end": "783.189",
+   "note": "sub-second inversion",
+   "trid": 26933,
+   "start": "783.190",
+   "tcuid": 1386050,
+   "expected": "inverted",
+   "next_start": "783.190"
+  },
+  {
+   "end": "0.000",
+   "trid": 10616,
+   "start": "391.322",
+   "tcuid": 758671,
+   "expected": "last_unit_no_end",
+   "next_start": null
+  },
+  {
+   "end": "0.000",
+   "trid": 13476,
+   "start": "140.110",
+   "tcuid": 848146,
+   "expected": "last_unit_no_end",
+   "next_start": null
+  },
+  {
+   "end": "0.000",
+   "trid": 14056,
+   "start": "199.228",
+   "tcuid": 858001,
+   "expected": "last_unit_no_end",
+   "next_start": null
+  },
+  {
+   "end": "0.000",
+   "trid": 14071,
+   "start": "1257.280",
+   "tcuid": 858241,
+   "expected": "last_unit_no_end",
+   "next_start": null
+  },
+  {
+   "end": "0.000",
+   "trid": 14076,
+   "start": "343.060",
+   "tcuid": 858336,
+   "expected": "last_unit_no_end",
+   "next_start": null
+  },
+  {
+   "end": "0.000",
+   "trid": 14081,
+   "start": "117.150",
+   "tcuid": 858351,
+   "expected": "last_unit_no_end",
+   "next_start": null
+  },
+  {
+   "end": "384.400",
+   "trid": 2206,
+   "start": "383.167",
+   "tcuid": 129649,
+   "expected": "ok",
+   "next_start": "385.200"
+  },
+  {
+   "end": "3.378",
+   "note": "negative start",
+   "trid": 2371,
+   "start": "-0.125",
+   "tcuid": 142269,
+   "expected": "ok",
+   "next_start": "3.378"
+  },
+  {
+   "end": "149.156",
+   "trid": 6251,
+   "start": "145.652",
+   "tcuid": 369001,
+   "expected": "ok",
+   "next_start": "149.157"
+  },
+  {
+   "end": "277.432",
+   "trid": 12371,
+   "start": "266.733",
+   "tcuid": 817786,
+   "expected": "ok",
+   "next_start": "277.433"
+  },
+  {
+   "end": "209.376",
+   "trid": 14516,
+   "start": "154.169",
+   "tcuid": 867656,
+   "expected": "ok",
+   "next_start": null
+  },
+  {
+   "end": "82.482",
+   "trid": 15191,
+   "start": "44.403",
+   "tcuid": 877631,
+   "expected": "ok",
+   "next_start": null
+  },
+  {
+   "end": "688.987",
+   "trid": 18156,
+   "start": "645.327",
+   "tcuid": 947441,
+   "expected": "ok",
+   "next_start": null
+  },
+  {
+   "end": "52.166",
+   "trid": 19151,
+   "start": "50.533",
+   "tcuid": 967381,
+   "expected": "ok",
+   "next_start": "52.167"
+  },
+  {
+   "end": "2017.500",
+   "trid": 25641,
+   "start": "2015.800",
+   "tcuid": 1266571,
+   "expected": "ok",
+   "next_start": "2017.500"
+  },
+  {
+   "end": "63.879",
+   "trid": 26201,
+   "start": "61.270",
+   "tcuid": 1316436,
+   "expected": "ok",
+   "next_start": "63.880"
+  },
+  {
+   "end": "0.000",
+   "note": "untimed (0 and 0)",
+   "trid": 2308,
+   "start": "0.000",
+   "tcuid": 140232,
+   "expected": "zero_length_other",
+   "next_start": "31.162"
+  },
+  {
+   "end": "0.000",
+   "note": "untimed (0 and 0)",
+   "trid": 2309,
+   "start": "0.000",
+   "tcuid": 140249,
+   "expected": "zero_length_other",
+   "next_start": "13.845"
+  },
+  {
+   "end": "0.000",
+   "note": "untimed (0 and 0)",
+   "trid": 2310,
+   "start": "0.000",
+   "tcuid": 140294,
+   "expected": "zero_length_other",
+   "next_start": "31.162"
+  },
+  {
+   "end": "0.000",
+   "note": "untimed (0 and 0)",
+   "trid": 2312,
+   "start": "0.000",
+   "tcuid": 140369,
+   "expected": "zero_length_other",
+   "next_start": "43.154"
+  },
+  {
+   "end": "0.000",
+   "note": "untimed (0 and 0)",
+   "trid": 2324,
+   "start": "0.000",
+   "tcuid": 140536,
+   "expected": "zero_length_other",
+   "next_start": "2.935"
+  },
+  {
+   "end": "0.000",
+   "note": "untimed (0 and 0)",
+   "trid": 2506,
+   "start": "0.000",
+   "tcuid": 149623,
+   "expected": "zero_length_other",
+   "next_start": "6.148"
+  },
+  {
+   "end": "0.000",
+   "note": "untimed (0 and 0)",
+   "trid": 2626,
+   "start": "0.000",
+   "tcuid": 159637,
+   "expected": "zero_length_other",
+   "next_start": null
+  },
+  {
+   "end": "0.000",
+   "note": "untimed (0 and 0)",
+   "trid": 2627,
+   "start": "0.000",
+   "tcuid": 159684,
+   "expected": "zero_length_other",
+   "next_start": null
+  },
+  {
+   "end": "0.000",
+   "note": "untimed (0 and 0)",
+   "trid": 2628,
+   "start": "0.000",
+   "tcuid": 159711,
+   "expected": "zero_length_other",
+   "next_start": null
+  },
+  {
+   "end": "0.000",
+   "note": "untimed (0 and 0)",
+   "trid": 2629,
+   "start": "0.000",
+   "tcuid": 159726,
+   "expected": "zero_length_other",
+   "next_start": null
+  },
+  {
+   "end": "0.000",
+   "note": "untimed (0 and 0)",
+   "trid": 2630,
+   "start": "0.000",
+   "tcuid": 159752,
+   "expected": "zero_length_other",
+   "next_start": null
+  },
+  {
+   "end": "185.292",
+   "trid": 17061,
+   "start": "185.292",
+   "tcuid": 917636,
+   "expected": "zero_length_other",
+   "next_start": null
+  },
+  {
+   "end": "1143.640",
+   "trid": 26933,
+   "start": "1143.640",
+   "tcuid": 1386248,
+   "expected": "zero_length_shared_start",
+   "next_start": "1143.640"
+  },
+  {
+   "end": "1148.550",
+   "trid": 26933,
+   "start": "1148.550",
+   "tcuid": 1386250,
+   "expected": "zero_length_shared_start",
+   "next_start": "1148.550"
+  },
+  {
+   "end": "1149.360",
+   "trid": 26933,
+   "start": "1149.360",
+   "tcuid": 1386252,
+   "expected": "zero_length_shared_start",
+   "next_start": "1149.360"
+  },
+  {
+   "end": "1150.810",
+   "trid": 26933,
+   "start": "1150.810",
+   "tcuid": 1386254,
+   "expected": "zero_length_shared_start",
+   "next_start": "1150.810"
+  },
+  {
+   "end": "1154.650",
+   "trid": 26933,
+   "start": "1154.650",
+   "tcuid": 1386256,
+   "expected": "zero_length_shared_start",
+   "next_start": "1154.650"
+  },
+  {
+   "end": "1157.950",
+   "trid": 26933,
+   "start": "1157.950",
+   "tcuid": 1386260,
+   "expected": "zero_length_shared_start",
+   "next_start": "1157.950"
+  }
+ ]
+}

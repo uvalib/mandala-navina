@@ -88,3 +88,16 @@ services:
       - '@mandala_kmassets_sync.trid_resolver'
     tags:
       - { name: mandala_kmassets_sync.doc_contributor, priority: 5 }
+
+  # Refreshes a node's document (trid_i) when its transcript is created, moved
+  # or deleted. Events come from mandala_av_transcripts (T2 phase 5).
+  mandala_kmassets_sync.transcript_reindex:
+    class: Drupal\mandala_kmassets_sync\EventSubscriber\TranscriptReindexSubscriber
+    arguments:
+      - '@entity_type.manager'
+      - '@mandala_kmassets_sync.direct_sink'
+      - '@config.factory'
+      - '@mandala_kmassets_sync.migrate_suppressor'
+      - '@logger.channel.mandala_kmassets_sync'
+    tags:
+      - { name: event_subscriber }

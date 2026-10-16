@@ -6,12 +6,14 @@ namespace Drupal\mandala_av_transcripts\Entity;
 
 use Drupal\Core\Entity\Attribute\ContentEntityType;
 use Drupal\Core\Entity\EntityChangedTrait;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\RevisionableContentEntityBase;
 use Drupal\Core\Entity\RevisionLogEntityTrait;
 use Drupal\Core\Entity\Sql\SqlContentEntityStorage;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\mandala_av_transcripts\Access\AvTcuAccessControlHandler;
 use Drupal\mandala_av_transcripts\AvTcuStorageSchema;
 
 /**
@@ -29,9 +31,7 @@ use Drupal\mandala_av_transcripts\AvTcuStorageSchema;
  * whenever a fix has been applied. `end` is nullable (the last unit of a
  * transcript may have none).
  *
- * Access is not defined here yet: with no access handler Drupal denies
- * everyone except administrators, which fails closed until the access phase.
- * Units are never exposed on their own; access will delegate to the transcript.
+ * Access is the parent node's: see AvTcuAccessControlHandler.
  */
 #[ContentEntityType(
   id: 'av_tcu',
@@ -46,6 +46,7 @@ use Drupal\mandala_av_transcripts\AvTcuStorageSchema;
   ],
   handlers: [
     'storage' => SqlContentEntityStorage::class,
+    'access' => AvTcuAccessControlHandler::class,
     'storage_schema' => AvTcuStorageSchema::class,
   ],
   base_table: 'av_tcu',
@@ -187,6 +188,26 @@ class AvTcu extends RevisionableContentEntityBase implements AvTcuInterface {
    */
   public function setSpeakers(array $speakers): static {
     return $this->encodeMap('speakers', $speakers);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postSave(EntityStorageInterface $storage, $update = TRUE): void {
+    parent::postSave($storage, $update);
+    \Drupal::service('mandala_av_transcripts.change_notifier')->unitSaved($this, !$update);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function postDelete(EntityStorageInterface $storage, array $entities): void {
+    parent::postDelete($storage, $entities);
+    $notifier = \Drupal::service('mandala_av_transcripts.change_notifier');
+    foreach ($entities as $unit) {
+      assert($unit instanceof self);
+      $notifier->unitDeleted($unit);
+    }
   }
 
   /**
