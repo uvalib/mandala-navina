@@ -40,12 +40,6 @@ class AvTranscriptAccessTest extends CollectionVisibilityKernelTestBase {
     $this->installEntitySchema('file');
     $this->installEntitySchema('av_transcript');
     $this->installEntitySchema('av_tcu');
-    // The shared fixture's first createUser() is uid 1, which Drupal treats as
-    // a superuser that passes every access check. Swap in ordinary accounts so
-    // "outsider" really is one.
-    $this->assertSame('1', (string) $this->accounts['outsider']->id(), 'fixture assumption: outsider is uid 1');
-    $this->accounts['outsider'] = $this->createUser();
-    $this->assertNotSame('1', (string) $this->accounts['outsider']->id());
   }
 
   /**
