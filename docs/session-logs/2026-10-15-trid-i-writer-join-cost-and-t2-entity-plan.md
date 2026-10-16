@@ -7,8 +7,8 @@
 ### Pick-up list
 
 - **T2 phase 2 (`av_tcu`)** is next; see the plan for phases 2-7 and estimates. Ids for units should start at 2,000,000 (same reasoning as transcripts at 100,000).
-- **Plan open questions, unanswered:** where the D7 workflow fields live (phase 1 left them out), whether the 41 + 3 nodes with no tracking row get an empty transcript, module home, and whether the resolver swap (phase 7) waits for T5. Raise at the next group meeting.
-- **Join-cost checkpoint:** numbers are in the [howto](../dev-notes/howto-write-trid-i-to-kmassets.md); the team still has to decide whether they are acceptable. Unmeasured: a user in many collections, many users arriving after a searcher reopens.
+- **Plan open questions, unanswered:** where the D7 workflow fields live (phase 1 left them out), whether the 41 + 3 nodes with no tracking row get an empty transcript, module home, and whether the resolver swap (phase 7) waits for T5. Raise at the group meeting on Monday 2026-10-19; none of them blocks phase 2 (`av_tcu`), so proceed in the meantime.
+- **Join-cost checkpoint:** numbers are in the [howto](../dev-notes/howto-write-trid-i-to-kmassets.md); the team still has to decide whether they are acceptable (also for the 2026-10-19 meeting). Unmeasured: a user in many collections, many users arriving after a searcher reopens.
 - **#290 stays open** until the interim `mandala_kmassets_trid_map` table is replaced by an entity-backed resolver. Do not remove the table before T5 populates the entities, or `trid_i` disappears.
 - **dev-0 `config:status`** showed `simplesamlphp_auth.settings` as Different when checked read-only; not caused by this session's changes, not investigated.
 - **Still unassigned deferred issues:** #336 (solr-proxy EOL base image) and #300.
