@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\mandala_av_transcripts\Entity;
 
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\Attribute\ContentEntityType;
 use Drupal\Core\Entity\EntityChangedTrait;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\RevisionableContentEntityBase;
 use Drupal\Core\Entity\RevisionLogEntityTrait;
@@ -187,6 +189,35 @@ class AvTcu extends RevisionableContentEntityBase implements AvTcuInterface {
    */
   public function setSpeakers(array $speakers): static {
     return $this->encodeMap('speakers', $speakers);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postSave(EntityStorageInterface $storage, $update = TRUE): void {
+    parent::postSave($storage, $update);
+    $this->invalidateTranscriptUnits();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function postDelete(EntityStorageInterface $storage, array $entities): void {
+    parent::postDelete($storage, $entities);
+    foreach ($entities as $unit) {
+      assert($unit instanceof self);
+      $unit->invalidateTranscriptUnits();
+    }
+  }
+
+  /**
+   * Invalidates what a reader cached about this unit's transcript.
+   */
+  private function invalidateTranscriptUnits(): void {
+    $trid = $this->get('transcript')->target_id;
+    if ($trid !== NULL) {
+      Cache::invalidateTags([AvTranscript::unitsCacheTag((int) $trid)]);
+    }
   }
 
   /**
