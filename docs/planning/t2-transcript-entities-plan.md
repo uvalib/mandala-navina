@@ -95,6 +95,33 @@ Nothing below blocked phases 2-6. Items marked **T5** must be settled before the
 6. Open questions 1-4 above (workflow fields, existence rule, module home, sequencing). The
    module home is already `mandala_av_transcripts` as recommended; confirm or move.
 
+### Outcome of the review, 2026-10-19
+
+Meeting of Yuji Shinozaki, Than Grove and Xiaoming Wang. The meeting ended early (Than had to
+leave), so items 2 and 3 and the PR decision are open.
+
+| # | Decision | Decided by |
+|---|---|---|
+| 1 | **Bad timecodes do not block the migration.** T5 carries units as found, with the classifier status only; no repair in the migration. Keep the original start and end values so a later repair is possible. Than owns the transcript fixes (see [the deferred note](../deferred/transcript-bad-timecodes-investigate-and-fix.md)). | Yuji |
+| 2 | **Untimed units: open, a note for Than.** 3,039 units (163 transcripts: 62 fully untimed, 101 partly) have start = end = 0. Does the viewer treat them as having no time (no playhead sync) or as a cue at 0:00? Recommendation: untimed, as a derived flag, values stored as found. | open |
+| 3 | **The one negative start (tcu 142269): open, a note for Than.** Own status, clamp to 0 with `end_original`-style bookkeeping, or leave (classifies `ok`). Leaving it is lowest-risk under decision 1. | open |
+| 4 | **Workflow fields** (`field_transcript_input`, `_proofed`, `_timecoded`, `_workflow_notes`) become base fields on `av_transcript`. Field types in D7 are still to be checked. | Than |
+| 5 | **Existence rule:** an `av_transcript` exists exactly when D7 has a tracking row. The 41 never-processed nodes get none; the 4 tracked nodes with no current file get one with no source file. The 19 orphan trids (units, no tracking row, no node) are kept somewhere for later review, not dropped. | Than |
+| 6 | **Deleting a transcript soft-deletes it and its units** (reversible). | Yuji |
+| 7 | **Deleted units keep their history by soft-delete flag**, not an archive table. See [ADR 019](../adr/019-av-transcript-lifecycle-soft-delete-and-existence-rule.md). | Yuji |
+| 8 | Module home (`mandala_av_transcripts`) and sequencing (resolver swap waits for T5): not discussed, the recommendations stand. | n/a |
+
+Work this adds, none of it blocking T5:
+
+- A soft-delete base field on `av_transcript` and `av_tcu` (update hook), respected by the reader,
+  the access handlers and the kmassets reindex. Needed before T7 (revert).
+- The four workflow base fields on `av_transcript` (update hook).
+- A place to keep the 19 orphan trids' units for review ([deferred note](../deferred/transcript-orphan-trids-keep-for-review.md)).
+- **Unchecked:** what happens to a transcript and its units when the parent node is deleted.
+- Add an `untimed` and a `start_missing` reading to the classifier or a derived flag: the review
+  found that `end_implausible` includes units whose start is 0 and whose end is real (see the
+  deferred note's 2026-10-19 section).
+
 ### Notes for T5 (migration)
 
 - **Round before classifying.** D7 stores single-precision floats; the stored value is
