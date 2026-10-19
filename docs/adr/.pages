@@ -19,3 +19,4 @@ nav:
   - "016: Public URL structure — one host, namespaced paths": 016-public-url-structure-single-host.md
   - "017: Legacy identity composite key": 017-legacy-identity-composite-key.md
   - "018: AV track starts in parallel, not strictly last": 018-av-track-starts-in-parallel-not-strictly-last.md
+  - "019: AV transcript lifecycle — soft-delete, existence rule": 019-av-transcript-lifecycle-soft-delete-and-existence-rule.md

@@ -71,6 +71,11 @@ abstract class CollectionVisibilityKernelTestBase extends KernelTestBase {
   protected array $accounts = [];
 
   /**
+   * The placeholder holding uid 1; never used as a test subject.
+   */
+  protected \Drupal\user\UserInterface $superuser;
+
+  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
@@ -143,6 +148,13 @@ abstract class CollectionVisibilityKernelTestBase extends KernelTestBase {
     // Kernel tests do not ship the uid 0 row that a real site always has.
     User::create(['uid' => 0, 'name' => '', 'status' => 0])->save();
 
+    // Drupal treats uid 1 as a superuser that passes every access check, and
+    // the first createUser() in a kernel test is uid 1. Claim it for a
+    // placeholder so no labelled account below is accidentally all-powerful;
+    // otherwise "outsider" silently was one.
+    $this->superuser = $this->createUser();
+    $this->assertSame('1', (string) $this->superuser->id());
+
     $this->accounts = [
       'anonymous' => User::load(0),
       'outsider' => $this->createUser(),
@@ -151,6 +163,11 @@ abstract class CollectionVisibilityKernelTestBase extends KernelTestBase {
       // per-group membership.
       'bypass' => $this->createUser(['bypass mandala group access']),
     ];
+    foreach ($this->accounts as $label => $account) {
+      if ($label !== 'anonymous') {
+        $this->assertNotSame('1', (string) $account->id(), "$label must not be the uid 1 superuser");
+      }
+    }
   }
 
   /**
