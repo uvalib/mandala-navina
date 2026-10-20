@@ -27,3 +27,19 @@ function mandala_av_transcripts_update_10001(): void {
   }
   (new AvTranscriptIdSequence(\Drupal::database()))->reserve('av_tcu', AvTcu::ID_FLOOR);
 }
+
+/**
+ * Adds the soft-delete flags to av_transcript and av_tcu (ADR 019).
+ */
+function mandala_av_transcripts_update_10002(): void {
+  $manager = \Drupal::entityDefinitionUpdateManager();
+  $fields = \Drupal::service('entity_field.manager');
+  foreach (['av_transcript' => ['deleted'], 'av_tcu' => ['deleted', 'deleted_with_transcript']] as $type => $names) {
+    $definitions = $fields->getBaseFieldDefinitions($type);
+    foreach ($names as $name) {
+      if (!$manager->getFieldStorageDefinition($name, $type)) {
+        $manager->installFieldStorageDefinition($name, $type, 'mandala_av_transcripts', $definitions[$name]);
+      }
+    }
+  }
+}

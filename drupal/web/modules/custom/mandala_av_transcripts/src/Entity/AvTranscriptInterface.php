@@ -20,6 +20,18 @@ interface AvTranscriptInterface extends ContentEntityInterface, EntityChangedInt
   public function getNode(): ?NodeInterface;
 
   /**
+   * Whether the transcript is soft-deleted (ADR 019).
+   *
+   * Change it through the lifecycle service, which also flags the units.
+   */
+  public function isDeleted(): bool;
+
+  /**
+   * Sets the soft-delete flag on this transcript only.
+   */
+  public function setDeleted(bool $deleted): static;
+
+  /**
    * Whether staff have edited the transcript since upload (D7 keep_transcript_edits).
    */
   public function hasEdits(): bool;

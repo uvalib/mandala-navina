@@ -90,6 +90,13 @@ class AvTranscript extends RevisionableContentEntityBase implements AvTranscript
       ->setRevisionable(FALSE)
       ->addConstraint('UniqueField');
 
+    $fields['deleted'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(new TranslatableMarkup('Deleted'))
+      ->setDescription(new TranslatableMarkup('Soft-delete flag (ADR 019). A deleted transcript is hidden from everyone but administrators; its units and revisions are kept.'))
+      ->setDefaultValue(FALSE)
+      ->setInitialValue(FALSE)
+      ->setRevisionable(FALSE);
+
     $fields['source_file'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Source file'))
       ->setDescription(new TranslatableMarkup('The originally uploaded transcript file, the base for revert-to-upload.'))
@@ -144,6 +151,21 @@ class AvTranscript extends RevisionableContentEntityBase implements AvTranscript
   public function getNode(): ?NodeInterface {
     $node = $this->get('node')->entity;
     return $node instanceof NodeInterface ? $node : NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isDeleted(): bool {
+    return (bool) $this->get('deleted')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setDeleted(bool $deleted): static {
+    $this->set('deleted', $deleted);
+    return $this;
   }
 
   /**

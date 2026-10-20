@@ -19,6 +19,16 @@ services:
       - '@database'
       - '@logger.channel.mandala_av_transcripts'
 
+  # Soft-delete and restore (ADR 019): flags a transcript and its units together,
+  # and restores exactly the units the transcript took with it.
+  mandala_av_transcripts.lifecycle:
+    class: Drupal\mandala_av_transcripts\TranscriptLifecycle
+    arguments:
+      - '@database'
+      - '@mandala_av_transcripts.change_notifier'
+      - '@current_user'
+      - '@datetime.time'
+
   logger.channel.mandala_av_transcripts:
     parent: logger.channel_base
     arguments:

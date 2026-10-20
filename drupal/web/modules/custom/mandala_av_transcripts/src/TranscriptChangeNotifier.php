@@ -48,6 +48,16 @@ class TranscriptChangeNotifier {
    * A unit was saved.
    */
   public function unitSaved(AvTcu $unit, bool $isNew): void {
+    $was = $isNew ? FALSE : ($unit->getOriginal()?->get('deleted')->value ?? FALSE);
+    if ($unit->isDeleted()) {
+      // Soft-deleting reads as a delete to subscribers; saving a unit that is
+      // already deleted changes nothing anyone can see.
+      if (!$was) {
+        $this->unitChanged($unit, TranscriptEvents::UNIT_DELETED, FALSE);
+      }
+      return;
+    }
+    // A restore reads as a save of an existing unit.
     $this->unitChanged($unit, TranscriptEvents::UNIT_SAVED, $isNew);
   }
 
@@ -62,6 +72,16 @@ class TranscriptChangeNotifier {
    * A transcript was saved.
    */
   public function transcriptSaved(AvTranscript $transcript, bool $isNew): void {
+    if ($transcript->isDeleted()) {
+      // Soft-deleting reads as a delete to subscribers (one event; the units go
+      // with it). Saving a transcript that is already deleted changes nothing
+      // anyone can see.
+      $was = $isNew ? FALSE : ($transcript->getOriginal()?->get('deleted')->value ?? FALSE);
+      if (!$was) {
+        $this->transcriptDeleted($transcript);
+      }
+      return;
+    }
     $previous = NULL;
     $original = $isNew ? NULL : $transcript->getOriginal();
     if ($original !== NULL) {
