@@ -16,7 +16,8 @@ use Drupal\mandala_av_transcripts\Entity\AvTcuInterface;
  *
  * Units are never exposed on their own (Spike 11), so the same operation is
  * asked of the transcript, which in turn asks the node. A unit whose
- * transcript is gone is denied to everyone except the administer permission.
+ * transcript is gone, and a soft-deleted unit, are denied to everyone except the
+ * administer permission.
  */
 class AvTcuAccessControlHandler extends EntityAccessControlHandler {
 
@@ -29,6 +30,11 @@ class AvTcuAccessControlHandler extends EntityAccessControlHandler {
       return $admin;
     }
     assert($entity instanceof AvTcuInterface);
+    if ($entity->isDeleted()) {
+      return AccessResult::forbidden('Unit is deleted.')
+        ->addCacheableDependency($entity)
+        ->addCacheContexts(['user.permissions']);
+    }
     $transcript = $entity->getTranscript();
     if ($transcript === NULL) {
       return AccessResult::forbidden('Unit has no transcript.')

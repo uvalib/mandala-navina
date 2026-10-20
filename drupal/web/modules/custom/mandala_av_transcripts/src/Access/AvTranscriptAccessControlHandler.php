@@ -24,8 +24,8 @@ use Drupal\mandala_av_transcripts\Entity\AvTranscriptInterface;
  * - every other operation (update, delete, view/revert/delete revision, and any
  *   operation Drupal adds later): the node is editable. Mapping unknown
  *   operations to "update" fails closed rather than open.
- * - A transcript whose node is gone is denied to everyone except the
- *   administer permission.
+ * - A transcript whose node is gone, and a soft-deleted transcript, are denied
+ *   to everyone except the administer permission.
  */
 class AvTranscriptAccessControlHandler extends EntityAccessControlHandler {
 
@@ -38,6 +38,12 @@ class AvTranscriptAccessControlHandler extends EntityAccessControlHandler {
       return $admin;
     }
     assert($entity instanceof AvTranscriptInterface);
+    if ($entity->isDeleted()) {
+      // Soft-deleted (ADR 019): administrators only, whatever the node allows.
+      return AccessResult::forbidden('Transcript is deleted.')
+        ->addCacheableDependency($entity)
+        ->addCacheContexts(['user.permissions']);
+    }
     $node = $entity->getNode();
     if ($node === NULL) {
       // Fail closed. The transcript is a dependency so that restoring the node

@@ -172,6 +172,33 @@ administrators, deal with the orphans, with drush commands first and a screen on
 - **Not checked:** what deleting a whole collection (the editor roles hold `delete group`) does to its member
   nodes, and so to their transcripts.
 
+### Soft-delete as built (2026-10-20)
+
+Implements [ADR 019](../adr/019-av-transcript-lifecycle-soft-delete-and-existence-rule.md) decisions 1 and 2's
+mechanics; the node-delete cascade, snapshot fields and drush commands above are the next PR.
+
+- **Fields.** `deleted` on `av_transcript`; `deleted` and `deleted_with_transcript` on `av_tcu`. Not revisionable
+  (lifecycle state, not content), `NOT NULL DEFAULT 0`, so a plain `deleted = 0` filter is right for every row.
+  Update hook `10002`.
+- **`deleted_with_transcript`** marks the units a transcript's soft-delete took. Restoring the transcript revives
+  exactly those, so a unit an editor deleted on its own earlier stays deleted. ADR 019 says the cascade flags the
+  units; this keeps that and makes restore safe.
+- **`mandala_av_transcripts.lifecycle`** (`TranscriptLifecycle`): `softDelete()` and `restore()`. Units are flagged
+  with one UPDATE, not loaded and saved (over a thousand per transcript). The transcript is saved as a new
+  revision with a log message, user and time, which is the audit trail for who deleted or restored it. Purge is
+  still the entity's own `delete()`.
+- **Events.** A soft-delete dispatches `TRANSCRIPT_DELETED` once and no per-unit events, so T4 should treat that
+  event as "remove every unit of this transcript". A restore dispatches `TRANSCRIPT_SAVED` and `UNITS_REPLACED`
+  (rewrite the whole transcript). A single unit soft-deleted on its own dispatches `UNIT_DELETED`; restored,
+  `UNIT_SAVED`. Saving an already-deleted entity dispatches nothing. This refines the earlier note that a soft-delete
+  would fire `UNIT_DELETED` per unit, which does not scale.
+- **Respected by:** the reader (hidden from everyone, administrators included, and its raw unit query filters the
+  flag), and both access handlers (denied to everyone but `administer av transcripts`).
+- **Consequence to know.** `av_transcript.node` is a database unique key and a soft-deleted row still holds it, so
+  a node with a soft-deleted transcript cannot get a new one until the old one is restored or purged.
+- **Restore access.** Only administrators can restore for now. The earlier idea that whoever can edit the node can
+  restore a transcript soft-deleted on its own arrives with the restore command and screen, if wanted.
+
 ### Notes for T5 (migration)
 
 - **Round before classifying.** D7 stores single-precision floats; the stored value is
@@ -202,6 +229,9 @@ administrators, deal with the orphans, with drush commands first and a screen on
   same for everyone with the same node access).
 - **Phase 7 (resolver swap) is gated on T5**; until then the kmassets reindex rebuilds `trid_i`
   from the legacy table, so the plumbing is live but document content does not change.
+- **The entity-backed `trid` resolver (phase 7) must skip soft-deleted transcripts**, or `trid_i` stays on the
+  node's kmassets document after the transcript is deleted. The legacy-table resolver in use until then does
+  not know about the flag.
 - **Load numbers are DDEV-only** (245,158 inserts 260 s; range read 1.5 ms); re-measure on dev-0
   after T5.
 
