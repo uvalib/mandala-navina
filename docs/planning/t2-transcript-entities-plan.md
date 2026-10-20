@@ -135,9 +135,12 @@ already deletes the node's kmassets document inline and is suppressed during mig
 ([ADR 019](../adr/019-av-transcript-lifecycle-soft-delete-and-existence-rule.md)). Administrators, and only
 administrators, deal with the orphans, with drush commands first and a screen only if wanted.
 
-- **Hook.** `hook_node_delete` for the AV bundles sets the soft-delete flag on the transcript and its units.
-  It dispatches the existing `TRANSCRIPT_DELETED` and `UNIT_DELETED` events, so T4's Solr subscriber needs no new
-  case, and it is suppressed during migrate import and rollback like the kmassets hook.
+- **Hook.** `hook_node_delete` soft-deletes the node's transcript and units through the lifecycle service, so
+  T4's Solr subscriber sees the one `TRANSCRIPT_DELETED` event and needs no new case. It is **not** suppressed
+  during migrate import or rollback (this corrects an earlier draft): a rollback of the node migration soft-deletes
+  the transcripts it orphans, with a snapshot that carries the legacy key. That is deliberate. The transcript's id
+  is D7's `trid`, so T5's import finds the existing row by id, re-points `node` at the new node and restores it,
+  instead of creating a duplicate.
 - **Snapshot at delete time**, because the node's title, legacy key and collection membership vanish with it:
   `deleted_by`, `deleted_at`, node title, legacy composite key (ADR 017), and the collection ids.
 - **Two kinds of orphan.** A transcript soft-deleted while its node still exists can be restored (flip the flag).
@@ -198,6 +201,25 @@ mechanics; the node-delete cascade, snapshot fields and drush commands above are
   a node with a soft-deleted transcript cannot get a new one until the old one is restored or purged.
 - **Restore access.** Only administrators can restore for now. The earlier idea that whoever can edit the node can
   restore a transcript soft-deleted on its own arrives with the restore command and screen, if wanted.
+
+### Node-delete cascade as built (2026-10-20)
+
+- **`NodeDeleteCascade`** (hooks in `mandala_av_transcripts.module`): `hook_node_predelete` takes the snapshot,
+  `hook_node_delete` soft-deletes the transcript (`softDelete()` with the reason "its AV node was deleted"). The
+  snapshot is on `av_transcript`: `node_title`, `node_legacy_site`, `node_legacy_nid`, `node_collections` (JSON group
+  ids), plus `deleted_at` and `deleted_by`, which the lifecycle sets on every soft-delete and clears on restore. Update
+  hook `10003`.
+- **Already soft-deleted** when the node goes: `deleted_at`/`deleted_by` stay, the node snapshot is added.
+- **A failure is logged and swallowed.** It runs inside the node delete's transaction and must not stop an editor
+  deleting a node. The fallback is safe: a transcript whose node is gone is denied to non-administrators and the reader
+  returns nothing for it.
+- **Warning on the node delete form** (`hook_form_alter`, matched on the form object like `mandala_kaltura`'s
+  checkbox): "This node has a transcript with N units. They are not deleted with the node: they are kept for
+  administrators." Shown only for a live transcript.
+- **Verified** with 5 Kernel tests and a run on the real DDEV site (node deleted, transcript and units soft-deleted,
+  snapshot and unit revisions kept). Group removes a node's relationship rows from the generic `hook_entity_delete`,
+  after `hook_node_delete`, so the collections are readable in either; predelete is used so it never depends on that order.
+- **Still to build:** the orphan manager service and drush commands (list, export, restore, purge).
 
 ### Notes for T5 (migration)
 
