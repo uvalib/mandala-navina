@@ -29,6 +29,15 @@ services:
       - '@current_user'
       - '@datetime.time'
 
+  # Deleting an AV node soft-deletes its transcript (see NodeDeleteCascade).
+  mandala_av_transcripts.node_delete_cascade:
+    class: Drupal\mandala_av_transcripts\NodeDeleteCascade
+    arguments:
+      - '@entity_type.manager'
+      - '@mandala_av_transcripts.lifecycle'
+      - '@database'
+      - '@logger.channel.mandala_av_transcripts'
+
   logger.channel.mandala_av_transcripts:
     parent: logger.channel_base
     arguments:

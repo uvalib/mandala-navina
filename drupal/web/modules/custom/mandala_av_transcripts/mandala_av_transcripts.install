@@ -43,3 +43,16 @@ function mandala_av_transcripts_update_10002(): void {
     }
   }
 }
+
+/**
+ * Adds the deletion snapshot fields to av_transcript (node-delete cascade).
+ */
+function mandala_av_transcripts_update_10003(): void {
+  $manager = \Drupal::entityDefinitionUpdateManager();
+  $definitions = \Drupal::service('entity_field.manager')->getBaseFieldDefinitions('av_transcript');
+  foreach (['deleted_at', 'deleted_by', 'node_title', 'node_legacy_site', 'node_legacy_nid', 'node_collections'] as $name) {
+    if (!$manager->getFieldStorageDefinition($name, 'av_transcript')) {
+      $manager->installFieldStorageDefinition($name, 'av_transcript', 'mandala_av_transcripts', $definitions[$name]);
+    }
+  }
+}

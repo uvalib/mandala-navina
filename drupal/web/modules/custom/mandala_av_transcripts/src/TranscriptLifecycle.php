@@ -39,10 +39,15 @@ class TranscriptLifecycle {
   /**
    * Soft-deletes the transcript and its live units.
    *
+   * @param string $reason
+   *   The revision log message.
+   * @param array<string, mixed> $values
+   *   Further base-field values to set in the same save (the node snapshot).
+   *
    * @return bool
    *   FALSE if it was already deleted.
    */
-  public function softDelete(AvTranscriptInterface $transcript): bool {
+  public function softDelete(AvTranscriptInterface $transcript, string $reason = 'Soft-deleted.', array $values = []): bool {
     if ($transcript->isDeleted()) {
       return FALSE;
     }
@@ -54,7 +59,12 @@ class TranscriptLifecycle {
         ->condition('transcript', $transcript->id())
         ->condition('deleted', 0)
         ->execute();
-      $this->saveWithRevision($transcript->setDeleted(TRUE), 'Soft-deleted.');
+      foreach ($values as $field => $value) {
+        $transcript->set($field, $value);
+      }
+      $transcript->set('deleted_at', $this->time->getRequestTime());
+      $transcript->set('deleted_by', (int) $this->currentUser->id() ?: NULL);
+      $this->saveWithRevision($transcript->setDeleted(TRUE), $reason);
     }
     catch (\Throwable $e) {
       $transaction->rollBack();
@@ -81,6 +91,8 @@ class TranscriptLifecycle {
         ->condition('transcript', $transcript->id())
         ->condition('deleted_with_transcript', 1)
         ->execute();
+      $transcript->set('deleted_at', NULL);
+      $transcript->set('deleted_by', NULL);
       $this->saveWithRevision($transcript->setDeleted(FALSE), 'Restored.');
     }
     catch (\Throwable $e) {
