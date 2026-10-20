@@ -46,6 +46,6 @@ Hand-written, abridged. Driver: Yuji Shinozaki. Follows the 2026-10-19 T2 review
 ## Open
 
 - Than (#353): 3,039 untimed units, the negative start on tcu 142269, where his repairs land.
-- Not yet checked: what deleting a whole collection does to its members' transcripts.
+- Checked: deleting a collection does not delete its member nodes, so transcripts are untouched (test added).
 - The 19 orphan trids, the four workflow base fields, T5 migration, the phase 7 resolver swap (must skip soft-deleted
   transcripts).

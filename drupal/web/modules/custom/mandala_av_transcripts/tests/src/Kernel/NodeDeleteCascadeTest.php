@@ -153,6 +153,26 @@ class NodeDeleteCascadeTest extends CollectionVisibilityKernelTestBase {
     $this->assertNull($note($plain));
   }
 
+  public function testDeletingTheCollectionsLeavesNodeAndTranscriptAlone(): void {
+    [$node, $groups] = $this->fixture();
+    $before = $this->transcript()->access('view', $this->accounts['anonymous']);
+    $storage = $this->container->get('entity_type.manager')->getStorage('group');
+
+    $storage->delete($storage->loadMultiple($groups));
+
+    $this->assertNotNull(Node::load($node->id()), 'Group removes the membership rows, not the nodes.');
+    $transcript = $this->transcript();
+    $this->assertNotNull($transcript);
+    $this->assertFalse($transcript->isDeleted(), 'No node delete, so no cascade.');
+    $this->assertSame(3, (int) $this->container->get('database')->query('SELECT COUNT(*) FROM {av_tcu} WHERE transcript = 7 AND deleted = 0')->fetchField());
+    // Visibility is the node's: the transcript follows whatever the collection-less node now is.
+    $this->container->get('entity_type.manager')->getAccessControlHandler('av_transcript')->resetCache();
+    $this->assertSame(
+      Node::load($node->id())->access('view', $this->accounts['anonymous']),
+      $transcript->access('view', $this->accounts['anonymous']),
+    );
+  }
+
   /**
    * Runs the module's form alter on the node delete form; returns the warning text.
    */
