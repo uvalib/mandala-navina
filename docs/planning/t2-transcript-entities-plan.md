@@ -117,10 +117,49 @@ Work this adds, none of it blocking T5:
   the access handlers and the kmassets reindex. Needed before T7 (revert).
 - The four workflow base fields on `av_transcript` (update hook).
 - A place to keep the 19 orphan trids' units for review ([deferred note](../deferred/transcript-orphan-trids-keep-for-review.md)).
-- **Unchecked:** what happens to a transcript and its units when the parent node is deleted.
+- Deleting the parent node cascades a soft-delete to its transcript and units, and administrators manage the
+  orphans on a screen (decided 2026-10-20, see "Parent-node delete and the orphan screen" below).
 - Add an `untimed` and a `start_missing` reading to the classifier or a derived flag: the review
   found that `end_implausible` includes units whose start is 0 and whose end is real (see the
   deferred note's 2026-10-19 section).
+
+### Parent-node delete and the orphan screen (decided 2026-10-20)
+
+Checked first: nothing in `mandala_av_transcripts` reacts to a node delete, so today a deleted node
+leaves its transcript and units behind, denied to everyone but administrators. Collection content
+editors (`collection-content_editor_*` and the subcollection roles) hold `delete any group_node:audio`
+and `:video`, so this happens in day-to-day editing, not only in rollbacks. `mandala_kmassets_sync_node_delete`
+already deletes the node's kmassets document inline and is suppressed during migrate import and rollback.
+
+**Decision (Yuji): option B.** Deleting an AV node soft-deletes its transcript and all its units
+([ADR 019](../adr/019-av-transcript-lifecycle-soft-delete-and-existence-rule.md)). Administrators, and only
+administrators, deal with the orphans.
+
+- **Hook.** `hook_node_delete` for the AV bundles sets the soft-delete flag on the transcript and its units.
+  It dispatches the existing `TRANSCRIPT_DELETED` and `UNIT_DELETED` events, so T4's Solr subscriber needs no new
+  case, and it is suppressed during migrate import and rollback like the kmassets hook.
+- **Snapshot at delete time**, because the node's title, legacy key and collection membership vanish with it:
+  `deleted_by`, `deleted_at`, node title, legacy composite key (ADR 017), and the collection ids.
+- **Two kinds of orphan.** A transcript soft-deleted while its node still exists can be restored (flip the flag).
+  A transcript whose node was deleted cannot be restored on its own: core has no node undelete.
+- **Admin screen** (`/admin/content/av-transcripts`, custom list builder, gated by `administer av transcripts`):
+  list and filter by state; inspect the units with their timecode status; restore (where the node exists);
+  export to JSON, SRT or VTT before purging; purge, a confirmed hard delete that is the only operation removing
+  revisions, with a bulk form that previews the count. Operations are registered as entity operations, so adding
+  one later does not change the list.
+- **Warning on the node-delete confirmation form** naming the transcript and its unit count, and saying the
+  units are kept for administrators.
+- **T5 consequence.** Migration rollback deletes nodes, so under this rule it soft-deletes their transcripts. The
+  transcript import must be idempotent and keyed on the legacy composite key, so a re-run revives the existing
+  transcript and units instead of creating duplicates. Design this before T5.
+- **Not in the first version:** re-attaching an orphan to another node, any editor access to orphans, and
+  retention-based auto-purge. See the [deferred note](../deferred/transcript-orphan-management-reattach-and-editor-access.md).
+  The first version leaves room: the node reference stays a changeable field, the snapshot is stored from day one,
+  and one node per transcript is enforced on the entity, not in a form.
+- **Open:** whether the 19 orphan trids ([deferred note](../deferred/transcript-orphan-trids-keep-for-review.md))
+  use this screen. It would conflict with ADR 019, which says they are not migrated into `av_transcript`.
+- **Not checked:** what deleting a whole collection (the editor roles hold `delete group`) does to its member
+  nodes, and so to their transcripts.
 
 ### Notes for T5 (migration)
 
