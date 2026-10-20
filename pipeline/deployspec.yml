@@ -29,7 +29,7 @@ phases:
     runtime-versions:
       # Pinned: `3.x` resolved to the 3.15 alpha on 2026-10-19 and ansible-core
       # would not import (dataclasses._is_type), failing deploy_redis.yml.
-      python: 3.12
+      python: 3.14
       golang: 1.x
     commands:
       # ccrypt, needed to decrypt the committed *.cpt keys and container secrets
