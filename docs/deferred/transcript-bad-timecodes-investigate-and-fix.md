@@ -108,6 +108,38 @@ migration):
 unit times, flags, likely cause) for Than to work from. It was shared with Than directly and is
 not linked here because it includes transcript text.
 
+## 2026-10-20 update: repair rule for `last_unit_no_end`
+
+**Decision (Than, group session with Yuji and Xiaoming): the repair for `last_unit_no_end` is to
+use the media duration as the unit's end.** This settles the "Kaltura duration for last units"
+option in step 2 of "What closes it" for this class only. The other classes are unchanged.
+David Germano's sign-off (step 3) is still needed before any correction is applied.
+
+How the rule would work:
+
+- The end becomes the node's `field_kaltura_duration` (whole seconds, so about ±1 s) and the
+  unit's `timecode_status` becomes `corrected`, with the unit's old end kept in `end_original`.
+- Apply it only when the duration is at or after the unit's start. If it is not, leave the unit
+  as found and flag it for a person.
+
+What the original files show (local DDEV database and the exported `.vtt` and `.srt` files; not
+checked on dev-0):
+
+- 65 `.vtt` and `.srt` files have a last cue whose end is `00:00:00.000` while its start is
+  positive, which is the `last_unit_no_end` shape. Every one of the 65 has a duration on its node,
+  and none has a duration earlier than the last cue's start.
+- Worked example: `BU_URA_2014_08_27_HISTORY_OF_CHORTEN.vtt`. Its last cue starts at
+  00:17:23.575 with end 0, and the node's duration is 1070 s (00:17:50), so the cue would run about
+  26 s.
+- **Match files to nodes by `file_managed.uri`, not `filename`.** Drupal renamed colliding uploads
+  on disk (`6-04_0.vtt`, `..._Revised_3.vtt`) but left the original name in `filename`, so a
+  `filename` match misses them. Three of the 65 failed to match until this was found.
+- The duration is the media length, not necessarily where the speech stops, so the corrected end
+  is an upper bound on the true one.
+
+The 65 files are the exports on disk; the classifier's 66 units in 66 transcripts come from the D7
+database, so the two counts differ by one.
+
 ## Related
 
 - [Spike 11](../spikes/spike-11-av-transcript-replication.md): corpus audit and data-model evaluation
