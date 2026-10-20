@@ -38,6 +38,19 @@ services:
       - '@database'
       - '@logger.channel.mandala_av_transcripts'
 
+  # Finds, restores, exports and purges soft-deleted transcripts; the drush
+  # commands are a thin layer over it (a later admin screen would be too).
+  mandala_av_transcripts.orphan_manager:
+    class: Drupal\mandala_av_transcripts\OrphanManager
+    arguments:
+      - '@database'
+      - '@entity_type.manager'
+      - '@mandala_av_transcripts.lifecycle'
+  # Class-name alias so AutowireTrait (Drush 13) can resolve it by type hint.
+  Drupal\mandala_av_transcripts\OrphanManager:
+    alias: mandala_av_transcripts.orphan_manager
+    public: true
+
   logger.channel.mandala_av_transcripts:
     parent: logger.channel_base
     arguments:

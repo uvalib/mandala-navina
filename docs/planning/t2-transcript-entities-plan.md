@@ -219,7 +219,30 @@ mechanics; the node-delete cascade, snapshot fields and drush commands above are
 - **Verified** with 5 Kernel tests and a run on the real DDEV site (node deleted, transcript and units soft-deleted,
   snapshot and unit revisions kept). Group removes a node's relationship rows from the generic `hook_entity_delete`,
   after `hook_node_delete`, so the collections are readable in either; predelete is used so it never depends on that order.
-- **Still to build:** the orphan manager service and drush commands (list, export, restore, purge).
+- **Merged and deployed** as PR #360 (2026-10-20).
+
+### Orphan manager as built (2026-10-20)
+
+- **`OrphanManager`** (service `mandala_av_transcripts.orphan_manager`) holds the logic; `OrphanCommands` is a thin
+  drush layer over it, so a later admin screen shares the same code. No access check of its own: drush needs shell
+  access, and a future screen must gate on `administer av transcripts`.
+- **`list()`** returns every soft-deleted transcript with its state (`node_gone` or `node_exists`), the delete-time
+  snapshot, unit count and the count of units whose `timecode_status` is not `ok`.
+- **`restore($id)`** only when the node still exists (a node-gone orphan cannot be restored; re-attach is deferred).
+  It refuses a transcript that is not soft-deleted.
+- **`export($id, json|srt|vtt)`.** json is the faithful copy (every unit, bad timecodes as found, snapshot, tiers) to
+  take before a purge. srt and vtt are for reading: a missing or inverted end is written as end = start.
+- **`purge($ids)`** is the only operation that removes data. Every id is checked first, so one live or unknown id
+  fails the whole batch before anything is deleted. Units and their revisions go by direct delete in chunks of 500
+  (an entity delete per unit would fire an event and cache invalidation each); the transcript goes through
+  `delete()`, which removes its revisions and sends one `TRANSCRIPT_DELETED`.
+- **Commands:** `av-transcripts:orphans` (table or `--format=json`), `:export <id> --as=json|srt|vtt`,
+  `:restore <id>`, `:purge <id...> [--dry-run]` (prints counts, asks for confirmation, default no).
+- **Verified:** 7 Kernel tests (list, restore, restore refusals, export formats, purge scope, purge refuses a live id
+  and deletes nothing from the batch); the module's Kernel suite is 74 tests and passes; the commands register and
+  run on DDEV (empty list; unknown ids refused).
+- **Still open:** the 19 orphan trids and whether they use this service (conflicts with ADR 019); what deleting a
+  whole collection does to member nodes' transcripts; the four workflow base fields.
 
 ### Notes for T5 (migration)
 
