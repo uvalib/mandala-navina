@@ -118,12 +118,12 @@ Work this adds, none of it blocking T5:
 - The four workflow base fields on `av_transcript` (update hook).
 - A place to keep the 19 orphan trids' units for review ([deferred note](../deferred/transcript-orphan-trids-keep-for-review.md)).
 - Deleting the parent node cascades a soft-delete to its transcript and units, and administrators manage the
-  orphans on a screen (decided 2026-10-20, see "Parent-node delete and the orphan screen" below).
+  orphans with drush commands, with a screen deferred (decided 2026-10-20, see "Parent-node delete and orphan management" below).
 - Add an `untimed` and a `start_missing` reading to the classifier or a derived flag: the review
   found that `end_implausible` includes units whose start is 0 and whose end is real (see the
   deferred note's 2026-10-19 section).
 
-### Parent-node delete and the orphan screen (decided 2026-10-20)
+### Parent-node delete and orphan management (decided 2026-10-20)
 
 Checked first: nothing in `mandala_av_transcripts` reacts to a node delete, so today a deleted node
 leaves its transcript and units behind, denied to everyone but administrators. Collection content
@@ -133,7 +133,7 @@ already deletes the node's kmassets document inline and is suppressed during mig
 
 **Decision (Yuji): option B.** Deleting an AV node soft-deletes its transcript and all its units
 ([ADR 019](../adr/019-av-transcript-lifecycle-soft-delete-and-existence-rule.md)). Administrators, and only
-administrators, deal with the orphans.
+administrators, deal with the orphans, with drush commands first and a screen only if wanted.
 
 - **Hook.** `hook_node_delete` for the AV bundles sets the soft-delete flag on the transcript and its units.
   It dispatches the existing `TRANSCRIPT_DELETED` and `UNIT_DELETED` events, so T4's Solr subscriber needs no new
@@ -142,22 +142,33 @@ administrators, deal with the orphans.
   `deleted_by`, `deleted_at`, node title, legacy composite key (ADR 017), and the collection ids.
 - **Two kinds of orphan.** A transcript soft-deleted while its node still exists can be restored (flip the flag).
   A transcript whose node was deleted cannot be restored on its own: core has no node undelete.
-- **Admin screen** (`/admin/content/av-transcripts`, custom list builder, gated by `administer av transcripts`):
-  list and filter by state; inspect the units with their timecode status; restore (where the node exists);
-  export to JSON, SRT or VTT before purging; purge, a confirmed hard delete that is the only operation removing
-  revisions, with a bulk form that previews the count. Operations are registered as entity operations, so adding
-  one later does not change the list.
+- **Orphan manager service plus drush commands (first version).** One service holds the logic: find orphans,
+  restore, export, purge. The commands sit on top of it, following the repo's existing admin housekeeping
+  (`group:sweep-orphans`, `mandala:missing-file-audit`, the `av:backfill-*` commands). All are
+  administrator-only in the sense that they need shell access to the server (drush runs with no Drupal user, so
+  there is no permission check to make); the purge command's confirmation is the safeguard.
+  - `av-transcripts:orphans` lists them with state, the delete-time snapshot, unit count and timecode-problem
+    count; `--format=json` for scripting.
+  - `av-transcripts:export <id> --format=srt|vtt|json` before purging.
+  - `av-transcripts:restore <id>` where the node still exists (flips the flag).
+  - `av-transcripts:purge <id...>`, a hard delete and the only operation that removes revisions. Takes
+    `--dry-run`, prints the count, and asks for confirmation.
+- **Admin screen: deferred, not in the first version.** A list at `/admin/content/av-transcripts` as a thin
+  layer over the same service (custom list builder, entity operations, bulk form). The entities have no UI
+  handlers today (no list builder, routes or forms), so this is a day or more of work. Build it if
+  administrators want something other than the command line.
 - **Warning on the node-delete confirmation form** naming the transcript and its unit count, and saying the
   units are kept for administrators.
 - **T5 consequence.** Migration rollback deletes nodes, so under this rule it soft-deletes their transcripts. The
   transcript import must be idempotent and keyed on the legacy composite key, so a re-run revives the existing
   transcript and units instead of creating duplicates. Design this before T5.
-- **Not in the first version:** re-attaching an orphan to another node, any editor access to orphans, and
-  retention-based auto-purge. See the [deferred note](../deferred/transcript-orphan-management-reattach-and-editor-access.md).
+- **Not in the first version:** the admin screen, re-attaching an orphan to another node, any editor access to
+  orphans, and retention-based auto-purge. See the [deferred note](../deferred/transcript-orphan-management-reattach-and-editor-access.md).
   The first version leaves room: the node reference stays a changeable field, the snapshot is stored from day one,
-  and one node per transcript is enforced on the entity, not in a form.
+  and one node per transcript is enforced on the entity, not in a form. It all sits behind one service, so
+  the commands and a later screen share the logic.
 - **Open:** whether the 19 orphan trids ([deferred note](../deferred/transcript-orphan-trids-keep-for-review.md))
-  use this screen. It would conflict with ADR 019, which says they are not migrated into `av_transcript`.
+  use the same service and commands. It would conflict with ADR 019, which says they are not migrated into `av_transcript`.
 - **Not checked:** what deleting a whole collection (the editor roles hold `delete group`) does to its member
   nodes, and so to their transcripts.
 

@@ -1,18 +1,21 @@
-# Transcript orphans: re-attach to another node, and editor access
+# Transcript orphans: admin screen, re-attach to another node, and editor access
 
 **Category:** migration-av, access-control
 **Raised during:** T2 review, 2026-10-20 (parent-node-delete discussion)
 **Issue:** #357
-**Priority:** Low. Nothing blocks on it; administrators can already list, export and purge orphans.
+**Priority:** Low. Nothing blocks on it; administrators can list, export, restore and purge orphans with drush commands.
 **Owner:** unassigned
 
 ## What is deferred
 
 When an AV node is deleted, its transcript and units are soft-deleted
 ([T2 plan](../planning/t2-transcript-entities-plan.md), "Parent-node delete and the orphan screen"). The first
-version of the admin screen lets administrators list, inspect, restore, export and purge them. Two things were
-left out on purpose:
+version is an orphan manager service with administrator-only drush commands (list, export, restore, purge).
+Three things were left out on purpose:
 
+0. **The admin screen** at `/admin/content/av-transcripts`, a thin layer over the same service. The entities have
+   no UI handlers today, so it is a day or more of work; build it if administrators want something other than
+   the command line.
 1. **Re-attaching an orphan to a different node.** Useful when a node was recreated, or deleted by mistake.
 2. **Any access for content editors.** Decided 2026-10-20 (Yuji): administrators deal with the orphans. Editors
    delete the nodes that create orphans, but a node-delete orphan cannot be restored without re-attach, and
@@ -26,9 +29,9 @@ collection and creates orphans, should editor B be able to act on them?
 
 ## What is already in place for it
 
-The first version stores the changeable node reference, a snapshot at delete time (`deleted_by`, `deleted_at`,
-node title, legacy key, collection ids), and registers operations as entity operations. Re-attach is then a new
-operation and route, with no schema change.
+The first version stores the changeable node reference and a snapshot at delete time (`deleted_by`,
+`deleted_at`, node title, legacy key, collection ids), and keeps all logic in one service. Re-attach is then a
+new service method and command, and the screen a layer on top, with no schema change.
 
 ## Options for editor access (not decided)
 
