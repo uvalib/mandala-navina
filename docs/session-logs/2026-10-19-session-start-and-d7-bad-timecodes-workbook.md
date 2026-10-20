@@ -154,7 +154,7 @@ I can't tell from the repo whether you've already done these. The issue comment 
 
 ## User — 2026-10-19 18:15
 
-Can you open this url and download the .xslx file https://claude.ai/artifact/2S7jGBy1PVGEiB6jEGSntq
+Can you open this url and download the .xslx file [artifact link redacted: the page is shared by link and holds transcript snippets]
 
 ---
 
