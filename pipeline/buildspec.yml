@@ -22,7 +22,9 @@ phases:
   build:
     commands:
       - echo Building Docker image...
-      - docker build -f package/Dockerfile -t $CONTAINER_IMAGE:latest --build-arg BUILD_TAG=$BUILD_VERSION .
+      # --pull: always take the current base image, so a patched php/drupal release is
+      # picked up by the next build and not served from a cached layer.
+      - docker build --pull -f package/Dockerfile -t $CONTAINER_IMAGE:latest --build-arg BUILD_TAG=$BUILD_VERSION .
       # NB: the "build-" prefix is load-bearing — it must match the value written to
       # /containers/$CONTAINER_IMAGE/latest below, because that parameter is what
       # deploy_backend.yml resolves the image tag from. dsf tags the same way.
