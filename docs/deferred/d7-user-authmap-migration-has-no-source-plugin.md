@@ -1,10 +1,30 @@
-# `d7_user_authmap` names a source plugin that does not exist, so `migrate:*` aborts
+# `d7_user_authmap` names a source plugin that does not exist, so `migrate:*` aborts (RESOLVED 2026-10-21)
 
 **Category:** migration-general
 **Raised during:** adding the transcript workflow fields to `d7_av_workflow`, 2026-10-21
 **Issue:** #369
 **Priority:** Medium. It blocks every `drush migrate:*` command wherever the migration is active, including dev-0, until worked around. Nothing is broken today; a re-run (the cutover user sync) is what needs it fixed.
-**Owner:** unassigned
+**Owner:** n/a (resolved)
+
+## Resolved 2026-10-21
+
+Fixed with our own plugins in `mandala_migrations`: source `mandala_d7_authmap` (reads the D7 `authmap` table, optional
+`modules` filter) and destination `mandala_authmap` (links through `AuthmapInterface::save()`), with `d7_user_authmap`
+pointed at them (PR #371). The first deploy of that PR failed on an unrelated `pecl.php.net` outage; the redis extension is now
+built from a pinned, checksummed GitHub release (PR #372), and the deploy then succeeded (execution `cebe958f`, 14:25 EDT).
+
+Checked on dev-0 afterwards:
+- `drush migrate:status` runs with no workaround, and the migration is back in active config with the new plugins.
+- Before running it, the D7 source (1,384 `simplesamlphp_auth` rows, one per uid) was compared with dev-0's `authmap`: every
+  source row already present with the same authname, 0 missing users, 1 extra link on dev-0 (the deliberate SAML test link,
+  not in the migration's id map).
+- `drush migrate:import d7_user_authmap --update`: 1,384 processed, 0 created, 1,384 updated, 0 failed. The table afterwards
+  is identical to before (same hash, 1,385 rows, every `data` value `N;` as `save()` writes with no data).
+- A Kernel test (`AuthmapMigrationTest`) runs both plugins through real migrations (link, idempotent re-run, missing user,
+  module filter); mutating the filter or the user check fails it.
+
+What remains true: the destination approach no longer depends on `externalauth`'s deprecated plugin, so the planned move to
+`externalauth` 2.1 does not break this. The cutover user sync can re-run it.
 
 ## Root cause (found 2026-10-21)
 
