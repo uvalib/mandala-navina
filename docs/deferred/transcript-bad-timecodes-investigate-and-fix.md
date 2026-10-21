@@ -180,6 +180,64 @@ in `AvTcu::TIMECODE_STATUSES`. Nothing has been built.
 **Still open:** the 97 anomalous files; other repair types Than wants to add; the 4 placeholders
 followed by another bad cue; the garbage-last-end durations count; the backup question above.
 
+## 2026-10-21 update: sorting every transcript into lists, and the rules that fell out
+
+Group session (Yuji driving his own Claude; Than reviewing transcripts). All 5,343 tracked
+transcripts were sorted into lists for a review workbook (not built yet; three or four sheets once
+the problem set is covered). Counts are from the local DDEV copy of the D7 data and the exported
+files, not dev-0, and come from scratch scripts kept locally (not in the repo).
+
+| List | Transcripts (draft) |
+|---|---|
+| Needs hand review | 256 |
+| Repairable by `transcripts:repair` | 274 |
+| Needs timecodes | 62 |
+| OK as is | 4,751 |
+
+**Hand-review list (Than):** D7 nodes 2067, 3652, 3535, 3553, 4624, plus 796 (did not work properly
+in the player). Also in review: any transcript with a cue that starts earlier than the one before,
+`end_implausible`, an inverted unit that is not a placeholder, a negative start, a first cue at
+25 s or later (applied only inside the transcripts already flagged: 458 otherwise-fine transcripts
+also start at 15 s or later, so it is not a signal on its own), and the ten whose last cue starts
+after the node's duration.
+
+**Rules decided 2026-10-21:**
+
+1. **Rule 1 is extended to a last unit whose non-zero end is before its start.** The stray ends
+   repeat: 185.292, 56.628, 210.390 and 413.250 s account for 215 of 222 such cases, and
+   `00:03:05.292` is in 166 source files, so they were typed or exported into the files. 212-214
+   transcripts have a duration at or after the last start and are repairable.
+2. **Ten stay in review** (last cue starts after the node's duration). In four the stray end equals
+   the duration, so the start is the wrong value and setting the end would hide it (for example
+   node 20236, a 5:09 recording with cues around 1:02:55, about an hour late).
+3. **Fully untimed transcripts (62) are a separate list, "Needs timecodes".** The source files
+   carry no timing at all (no `-->` cues, no `<AUDIO start end>`); they do not highlight in the
+   reader. 15 are single-unit stubs (node 502's one unit is a lone tsheg).
+4. **Untimed units at the end of a transcript that are empty (no text in any tier) go to OK.** Only
+   5 of the 25 trailing-untimed transcripts qualify (3938, 369, 372, 31, 32); the other 20 have real
+   text with no time and stay in review.
+5. **A single untimed unit between two timed units: start = the previous unit's end, end = the next
+   unit's start** (new repair rule). The text is real and the neighbours bracket it (node 517: a
+   1.33 s gap; node 796: 6.5 s). Runs of two or more untimed units are not covered. Only one
+   transcript qualified outright under the draft lists, because most candidates also carry another
+   review reason (see the classifier artifact below).
+
+**Classifier artifact found.** The unit just before an untimed unit is compared with a "next start"
+of 0, so a unit ending after 600 s is flagged `end_implausible`; this probably explains the flag on
+node 796 and several other single-gap cases. Separately, an untimed unit's start of 0 looks like a
+start earlier than the previous one if not skipped (it inflated the out-of-order count from 141 to
+186 in the first draft). Both are in the audit, not in the stored data. `TimecodeClassifier`
+should skip untimed units when picking the neighbour's "next start" before the repair rule relies
+on `end_implausible`. Not changed here.
+
+**Orphan trids:** see [transcript-orphan-trids-keep-for-review](transcript-orphan-trids-keep-for-review.md)
+(19 matched to files; 16 superseded, 3 unplaced; plan recorded, not carried out).
+
+**Still open:** the 97 anomalous files; where backups of the original transcripts are kept; the
+paired-cue pattern (about 37 transcripts like node 2067; only 2067 was opened); the middle and
+leading untimed units not covered by rule 5; the 20 transcripts with trailing untimed units that
+have text; the 4 placeholders followed by another bad cue; and the workbook itself.
+
 ## Related
 
 - [Spike 11](../spikes/spike-11-av-transcript-replication.md): corpus audit and data-model evaluation
