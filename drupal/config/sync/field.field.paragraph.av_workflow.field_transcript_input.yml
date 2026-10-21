@@ -1,0 +1,21 @@
+uuid: 479ff8be-c22c-402b-83b3-a85988316487
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_transcript_input
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_transcript_input
+field_name: field_transcript_input
+entity_type: paragraph
+bundle: av_workflow
+label: 'Transcript input'
+description: 'Retired in D7 (no field definition left, data kept); carried over by decision of Yuji and Than, 2026-10-21.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string
