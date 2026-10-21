@@ -301,13 +301,17 @@ the node.
 
 - No update hook and no new base fields on `av_transcript`; the item is removed from T2's list.
 - A derived transcript status (a reader or service method) is built when a screen or API needs it.
-- **`field_transcript_input` is kept (Than, 2026-10-21).** Its 2,482 values (No 1,249, Not Reviewed 614, Yes 597,
-  Incomplete 22) need a home in D11. By the table above it is a process flag, so it goes on the node's `av_workflow`
-  paragraph beside the other workflow fields, not on `av_transcript`. Work: a `field_transcript_input` list field
-  on `av_workflow` (storage, instance, form and view display, exported from a live Drupal), its source field and
-  process mapping added to `d7_av_workflow`, and a re-import of that migration's items on each environment that has
-  already run it (dev-0 has). Not yet built. `_proofed` and `_timecoded` stay dropped (unused / superseded) unless
-  Than says otherwise.
+- **All three retired fields are kept (Than for `_input`, then Yuji for `_proofed` and `_timecoded`, 2026-10-21).**
+  `field_transcript_input` (2,482 values: No 1,249, Not Reviewed 614, Yes 597, Incomplete 22),
+  `field_transcript_proofed` (2,482, almost all Not Reviewed) and `field_transcript_timecoded` (2,482: Not Reviewed
+  1,853, Yes 572, No 57) have no home in D11. By the table above they are process or editorial flags, so each goes on the
+  node's `av_workflow` paragraph beside the other workflow fields, not on `av_transcript`. Compared with their live
+  counterparts on the same items, `_timecoded` agrees where both are set but 33 items (28 Yes, 5 No) have a value
+  only in the old field, 26 disagree and 391 are "Not Reviewed" where the live field says Yes; `_proofed` has two
+  informative values. They are kept as separate fields, not merged into the live ones, so nothing has to decide
+  which value wins. Work: three list fields on `av_workflow` (storage, instance, form and view display, exported
+  from a live Drupal), their source fields and process mappings added to `d7_av_workflow`, and a re-import of that
+  migration's items on each environment that has already run it (dev-0 has). Not yet built.
 
 **Also found (for #353, not blocking T5):** of the 5,343 tracked transcripts, 8 have units but no text at all, 53
 have exactly one unit (some hold a long block of text, so may be whole transcripts parsed as one unit; one of them,
