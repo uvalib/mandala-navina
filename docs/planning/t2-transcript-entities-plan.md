@@ -301,8 +301,13 @@ the node.
 
 - No update hook and no new base fields on `av_transcript`; the item is removed from T2's list.
 - A derived transcript status (a reader or service method) is built when a screen or API needs it.
-- For Than: whether the 2,482 `field_transcript_input` values should be carried over or dropped, since D11 has no
-  home for them today.
+- **`field_transcript_input` is kept (Than, 2026-10-21).** Its 2,482 values (No 1,249, Not Reviewed 614, Yes 597,
+  Incomplete 22) need a home in D11. By the table above it is a process flag, so it goes on the node's `av_workflow`
+  paragraph beside the other workflow fields, not on `av_transcript`. Work: a `field_transcript_input` list field
+  on `av_workflow` (storage, instance, form and view display, exported from a live Drupal), its source field and
+  process mapping added to `d7_av_workflow`, and a re-import of that migration's items on each environment that has
+  already run it (dev-0 has). Not yet built. `_proofed` and `_timecoded` stay dropped (unused / superseded) unless
+  Than says otherwise.
 
 **Also found (for #353, not blocking T5):** of the 5,343 tracked transcripts, 8 have units but no text at all, 53
 have exactly one unit (some hold a long block of text, so may be whole transcripts parsed as one unit; one of them,
