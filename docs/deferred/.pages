@@ -53,6 +53,7 @@ nav:
   - "Dev migration slower than DDEV (cross-AZ latency)": dev-migration-slower-than-ddev-cross-az-latency.md
   - "Deliver code/config to dev-0: rebuild vs pipeline (RESOLVED 2026-08-11)": dev-0-code-config-delivery-rebuild-or-pipeline.md
   - "d7_user_role wipes committed role permissions": d7-user-role-migration-wipes-committed-role-permissions.md
+  - "d7_user_authmap has no source plugin": d7-user-authmap-migration-has-no-source-plugin.md
   - "D7 editor permissions are OG group-scoped, not migrated": d7-editor-permissions-og-group-scoped-not-migrated.md
   - "SimpleSAMLphp never configured in DDEV": simplesamlphp-never-configured-in-ddev.md
   - "ADR 015 merged with three questions unanswered": adr-015-unanswered-questions-at-merge.md

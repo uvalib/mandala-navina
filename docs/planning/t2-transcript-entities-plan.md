@@ -311,7 +311,14 @@ the node.
   informative values. They are kept as separate fields, not merged into the live ones, so nothing has to decide
   which value wins. Work: three list fields on `av_workflow` (storage, instance, form and view display, exported
   from a live Drupal), their source fields and process mappings added to `d7_av_workflow`, and a re-import of that
-  migration's items on each environment that has already run it (dev-0 has). Not yet built.
+  migration's items on each environment that has already run it (dev-0 has).
+  **Built on DDEV 2026-10-21** (fields and mapping; the source plugin needed no change because it discovers value
+  columns from the table). A 20-item update matched D7 field by field. The full update (10,647 items, 0 failed) migrated
+  2,462 values per field; D7 holds 2,482, and the 20 difference are leftover rows with no collection item, no
+  host and no other values (input: 7 No and 13 Not Reviewed; proofed and timecoded: 20 Not Reviewed), correctly
+  not migrated. **dev-0 re-import not yet run.** Note `drush migrate:*` aborts wherever
+  `d7_user_authmap` is active (see [the deferred note](../deferred/d7-user-authmap-migration-has-no-source-plugin.md)),
+  so the same workaround is needed there.
 
 **Also found (for #353, not blocking T5):** of the 5,343 tracked transcripts, 8 have units but no text at all, 53
 have exactly one unit (some hold a long block of text, so may be whole transcripts parsed as one unit; one of them,

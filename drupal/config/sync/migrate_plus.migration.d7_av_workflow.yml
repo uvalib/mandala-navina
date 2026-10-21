@@ -38,6 +38,9 @@ source:
     - field_trans_proofed_lang_2
     - field_trans_proofed_lang_3
     - field_transcribed
+    - field_transcript_input
+    - field_transcript_proofed
+    - field_transcript_timecoded
     - field_transcript_workflow_notes
     - field_translation_input_lang_1
     - field_translation_input_lang_2
@@ -82,6 +85,9 @@ process:
   field_trans_proofed_lang_2: field_trans_proofed_lang_2
   field_trans_proofed_lang_3: field_trans_proofed_lang_3
   field_transcribed: field_transcribed
+  field_transcript_input: field_transcript_input
+  field_transcript_proofed: field_transcript_proofed
+  field_transcript_timecoded: field_transcript_timecoded
   field_transcript_workflow_notes:
     plugin: sub_process
     source: field_transcript_workflow_notes
