@@ -15,8 +15,8 @@ use Drupal\mandala_av_transcripts\Entity\AvTranscriptInterface;
  * Reads a transcript and its units for display.
  *
  * Access is checked here, against the transcript (which asks the node), so no
- * caller can forget it. A transcript that does not exist, whose node the
- * account cannot view, or whose node is gone all return NULL: the caller
+ * caller can forget it. A transcript that does not exist, is soft-deleted,
+ * whose node the account cannot view, or whose node is gone all return NULL: the caller
  * cannot tell them apart, so this is not an oracle for which nodes have a
  * hidden transcript.
  *
@@ -49,7 +49,7 @@ class TranscriptReader {
    */
   public function readForNode(int $nid, ?AccountInterface $account = NULL, float|int|null $from = NULL, float|int|null $to = NULL): ?TranscriptRead {
     $ids = $this->entityTypeManager->getStorage('av_transcript')
-      ->getQuery()->accessCheck(FALSE)->condition('node', $nid)->range(0, 1)->execute();
+      ->getQuery()->accessCheck(FALSE)->condition('node', $nid)->condition('deleted', 0)->range(0, 1)->execute();
     return $ids ? $this->read((int) reset($ids), $account, $from, $to) : NULL;
   }
 
@@ -58,13 +58,16 @@ class TranscriptReader {
    */
   public function readEntity(AvTranscriptInterface $transcript, ?AccountInterface $account = NULL, float|int|null $from = NULL, float|int|null $to = NULL): ?TranscriptRead {
     $node = $transcript->getNode();
-    if ($node === NULL || !$transcript->access('view', $account ?? $this->currentUser)) {
+    // A soft-deleted transcript is gone for display, administrators included:
+    // they manage it elsewhere, the viewer never shows it.
+    if ($transcript->isDeleted() || $node === NULL || !$transcript->access('view', $account ?? $this->currentUser)) {
       return NULL;
     }
 
     $query = $this->database->select('av_tcu', 't')
       ->fields('t', ['id', 'sequence', 'start', 'end', 'end_original', 'timecode_status', 'tiers', 'speakers'])
-      ->condition('t.transcript', $transcript->id());
+      ->condition('t.transcript', $transcript->id())
+      ->condition('t.deleted', 0);
     if ($from !== NULL) {
       $query->condition('t.start', (string) $from, '>=');
     }

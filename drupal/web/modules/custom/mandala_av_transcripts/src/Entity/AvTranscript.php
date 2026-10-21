@@ -90,6 +90,49 @@ class AvTranscript extends RevisionableContentEntityBase implements AvTranscript
       ->setRevisionable(FALSE)
       ->addConstraint('UniqueField');
 
+    $fields['deleted'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(new TranslatableMarkup('Deleted'))
+      ->setDescription(new TranslatableMarkup('Soft-delete flag (ADR 019). A deleted transcript is hidden from everyone but administrators; its units and revisions are kept.'))
+      ->setDefaultValue(FALSE)
+      ->setInitialValue(FALSE)
+      ->setRevisionable(FALSE);
+
+    $fields['deleted_at'] = BaseFieldDefinition::create('timestamp')
+      ->setLabel(new TranslatableMarkup('Deleted at'))
+      ->setDescription(new TranslatableMarkup('When it was soft-deleted. Empty while live.'))
+      ->setRevisionable(FALSE);
+
+    $fields['deleted_by'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Deleted by'))
+      ->setDescription(new TranslatableMarkup('Who soft-deleted it. Empty while live.'))
+      ->setSetting('target_type', 'user')
+      ->setRevisionable(FALSE);
+
+    // A snapshot of the node, taken when the node is deleted: its title, legacy
+    // key and collections vanish with it, and an administrator reviewing the
+    // orphan needs them to know what it was.
+    $fields['node_title'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Node title when deleted'))
+      ->setSetting('max_length', 255)
+      ->setRevisionable(FALSE);
+
+    $fields['node_legacy_site'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Node legacy site when deleted'))
+      ->setDescription(new TranslatableMarkup('field_legacy_site of the node (ADR 017).'))
+      ->setSetting('max_length', 64)
+      ->setRevisionable(FALSE);
+
+    $fields['node_legacy_nid'] = BaseFieldDefinition::create('integer')
+      ->setLabel(new TranslatableMarkup('Node legacy nid when deleted'))
+      ->setDescription(new TranslatableMarkup('field_legacy_nid of the node (ADR 017).'))
+      ->setSetting('unsigned', TRUE)
+      ->setRevisionable(FALSE);
+
+    $fields['node_collections'] = BaseFieldDefinition::create('string_long')
+      ->setLabel(new TranslatableMarkup('Node collections when deleted'))
+      ->setDescription(new TranslatableMarkup('JSON list of the ids of the groups the node belonged to.'))
+      ->setRevisionable(FALSE);
+
     $fields['source_file'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Source file'))
       ->setDescription(new TranslatableMarkup('The originally uploaded transcript file, the base for revert-to-upload.'))
@@ -144,6 +187,21 @@ class AvTranscript extends RevisionableContentEntityBase implements AvTranscript
   public function getNode(): ?NodeInterface {
     $node = $this->get('node')->entity;
     return $node instanceof NodeInterface ? $node : NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isDeleted(): bool {
+    return (bool) $this->get('deleted')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setDeleted(bool $deleted): static {
+    $this->set('deleted', $deleted);
+    return $this;
   }
 
   /**

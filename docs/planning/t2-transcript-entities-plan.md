@@ -135,9 +135,12 @@ already deletes the node's kmassets document inline and is suppressed during mig
 ([ADR 019](../adr/019-av-transcript-lifecycle-soft-delete-and-existence-rule.md)). Administrators, and only
 administrators, deal with the orphans, with drush commands first and a screen only if wanted.
 
-- **Hook.** `hook_node_delete` for the AV bundles sets the soft-delete flag on the transcript and its units.
-  It dispatches the existing `TRANSCRIPT_DELETED` and `UNIT_DELETED` events, so T4's Solr subscriber needs no new
-  case, and it is suppressed during migrate import and rollback like the kmassets hook.
+- **Hook.** `hook_node_delete` soft-deletes the node's transcript and units through the lifecycle service, so
+  T4's Solr subscriber sees the one `TRANSCRIPT_DELETED` event and needs no new case. It is **not** suppressed
+  during migrate import or rollback (this corrects an earlier draft): a rollback of the node migration soft-deletes
+  the transcripts it orphans, with a snapshot that carries the legacy key. That is deliberate. The transcript's id
+  is D7's `trid`, so T5's import finds the existing row by id, re-points `node` at the new node and restores it,
+  instead of creating a duplicate.
 - **Snapshot at delete time**, because the node's title, legacy key and collection membership vanish with it:
   `deleted_by`, `deleted_at`, node title, legacy composite key (ADR 017), and the collection ids.
 - **Two kinds of orphan.** A transcript soft-deleted while its node still exists can be restored (flip the flag).
@@ -169,8 +172,81 @@ administrators, deal with the orphans, with drush commands first and a screen on
   the commands and a later screen share the logic.
 - **Open:** whether the 19 orphan trids ([deferred note](../deferred/transcript-orphan-trids-keep-for-review.md))
   use the same service and commands. It would conflict with ADR 019, which says they are not migrated into `av_transcript`.
-- **Not checked:** what deleting a whole collection (the editor roles hold `delete group`) does to its member
-  nodes, and so to their transcripts.
+- **Collection delete checked (2026-10-20): no effect on transcripts.** Group's `preDelete` removes the group's
+  relationship rows only; it never deletes member nodes, and nothing in the custom modules does either (only
+  `hook_group_relationship_delete` for membership cascade and the Solr visibility sync). So no node delete, no
+  cascade, and the transcript stays live. What changes is visibility: the node loses its collections, and the
+  transcript follows the node's access. A Kernel test (`testDeletingTheCollectionsLeavesNodeAndTranscriptAlone`)
+  pins it: node and transcript survive, units stay live, and transcript access equals node access.
+
+### Soft-delete as built (2026-10-20)
+
+Implements [ADR 019](../adr/019-av-transcript-lifecycle-soft-delete-and-existence-rule.md) decisions 1 and 2's
+mechanics; the node-delete cascade, snapshot fields and drush commands above are the next PR.
+
+- **Fields.** `deleted` on `av_transcript`; `deleted` and `deleted_with_transcript` on `av_tcu`. Not revisionable
+  (lifecycle state, not content), `NOT NULL DEFAULT 0`, so a plain `deleted = 0` filter is right for every row.
+  Update hook `10002`.
+- **`deleted_with_transcript`** marks the units a transcript's soft-delete took. Restoring the transcript revives
+  exactly those, so a unit an editor deleted on its own earlier stays deleted. ADR 019 says the cascade flags the
+  units; this keeps that and makes restore safe.
+- **`mandala_av_transcripts.lifecycle`** (`TranscriptLifecycle`): `softDelete()` and `restore()`. Units are flagged
+  with one UPDATE, not loaded and saved (over a thousand per transcript). The transcript is saved as a new
+  revision with a log message, user and time, which is the audit trail for who deleted or restored it. Purge is
+  still the entity's own `delete()`.
+- **Events.** A soft-delete dispatches `TRANSCRIPT_DELETED` once and no per-unit events, so T4 should treat that
+  event as "remove every unit of this transcript". A restore dispatches `TRANSCRIPT_SAVED` and `UNITS_REPLACED`
+  (rewrite the whole transcript). A single unit soft-deleted on its own dispatches `UNIT_DELETED`; restored,
+  `UNIT_SAVED`. Saving an already-deleted entity dispatches nothing. This refines the earlier note that a soft-delete
+  would fire `UNIT_DELETED` per unit, which does not scale.
+- **Respected by:** the reader (hidden from everyone, administrators included, and its raw unit query filters the
+  flag), and both access handlers (denied to everyone but `administer av transcripts`).
+- **Consequence to know.** `av_transcript.node` is a database unique key and a soft-deleted row still holds it, so
+  a node with a soft-deleted transcript cannot get a new one until the old one is restored or purged.
+- **Restore access.** Only administrators can restore for now. The earlier idea that whoever can edit the node can
+  restore a transcript soft-deleted on its own arrives with the restore command and screen, if wanted.
+
+### Node-delete cascade as built (2026-10-20)
+
+- **`NodeDeleteCascade`** (hooks in `mandala_av_transcripts.module`): `hook_node_predelete` takes the snapshot,
+  `hook_node_delete` soft-deletes the transcript (`softDelete()` with the reason "its AV node was deleted"). The
+  snapshot is on `av_transcript`: `node_title`, `node_legacy_site`, `node_legacy_nid`, `node_collections` (JSON group
+  ids), plus `deleted_at` and `deleted_by`, which the lifecycle sets on every soft-delete and clears on restore. Update
+  hook `10003`.
+- **Already soft-deleted** when the node goes: `deleted_at`/`deleted_by` stay, the node snapshot is added.
+- **A failure is logged and swallowed.** It runs inside the node delete's transaction and must not stop an editor
+  deleting a node. The fallback is safe: a transcript whose node is gone is denied to non-administrators and the reader
+  returns nothing for it.
+- **Warning on the node delete form** (`hook_form_alter`, matched on the form object like `mandala_kaltura`'s
+  checkbox): "This node has a transcript with N units. They are not deleted with the node: they are kept for
+  administrators." Shown only for a live transcript.
+- **Verified** with 5 Kernel tests and a run on the real DDEV site (node deleted, transcript and units soft-deleted,
+  snapshot and unit revisions kept). Group removes a node's relationship rows from the generic `hook_entity_delete`,
+  after `hook_node_delete`, so the collections are readable in either; predelete is used so it never depends on that order.
+- **Merged and deployed** as PR #360 (2026-10-20).
+
+### Orphan manager as built (2026-10-20)
+
+- **`OrphanManager`** (service `mandala_av_transcripts.orphan_manager`) holds the logic; `OrphanCommands` is a thin
+  drush layer over it, so a later admin screen shares the same code. No access check of its own: drush needs shell
+  access, and a future screen must gate on `administer av transcripts`.
+- **`list()`** returns every soft-deleted transcript with its state (`node_gone` or `node_exists`), the delete-time
+  snapshot, unit count and the count of units whose `timecode_status` is not `ok`.
+- **`restore($id)`** only when the node still exists (a node-gone orphan cannot be restored; re-attach is deferred).
+  It refuses a transcript that is not soft-deleted.
+- **`export($id, json|srt|vtt)`.** json is the faithful copy (every unit, bad timecodes as found, snapshot, tiers) to
+  take before a purge. srt and vtt are for reading: a missing or inverted end is written as end = start.
+- **`purge($ids)`** is the only operation that removes data. Every id is checked first, so one live or unknown id
+  fails the whole batch before anything is deleted. Units and their revisions go by direct delete in chunks of 500
+  (an entity delete per unit would fire an event and cache invalidation each); the transcript goes through
+  `delete()`, which removes its revisions and sends one `TRANSCRIPT_DELETED`.
+- **Commands:** `av-transcripts:orphans` (table or `--format=json`), `:export <id> --as=json|srt|vtt`,
+  `:restore <id>`, `:purge <id...> [--dry-run]` (prints counts, asks for confirmation, default no).
+- **Verified:** 7 Kernel tests (list, restore, restore refusals, export formats, purge scope, purge refuses a live id
+  and deletes nothing from the batch); the module's Kernel suite is 74 tests and passes; the commands register and
+  run on DDEV (empty list; unknown ids refused).
+- **Still open:** the 19 orphan trids and whether they use this service (conflicts with ADR 019); the four workflow
+  base fields.
 
 ### Notes for T5 (migration)
 
@@ -202,6 +278,9 @@ administrators, deal with the orphans, with drush commands first and a screen on
   same for everyone with the same node access).
 - **Phase 7 (resolver swap) is gated on T5**; until then the kmassets reindex rebuilds `trid_i`
   from the legacy table, so the plumbing is live but document content does not change.
+- **The entity-backed `trid` resolver (phase 7) must skip soft-deleted transcripts**, or `trid_i` stays on the
+  node's kmassets document after the transcript is deleted. The legacy-table resolver in use until then does
+  not know about the flag.
 - **Load numbers are DDEV-only** (245,158 inserts 260 s; range read 1.5 ms); re-measure on dev-0
   after T5.
 

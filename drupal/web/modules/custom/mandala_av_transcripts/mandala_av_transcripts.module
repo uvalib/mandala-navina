@@ -1,0 +1,68 @@
+<?php
+
+/**
+ * @file
+ * Hooks for mandala_av_transcripts.
+ */
+
+use Drupal\Core\Entity\ContentEntityDeleteForm;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_node_predelete().
+ *
+ * Snapshots the node while its collections can still be read; see
+ * NodeDeleteCascade.
+ */
+function mandala_av_transcripts_node_predelete(NodeInterface $node): void {
+  \Drupal::service('mandala_av_transcripts.node_delete_cascade')->snapshot($node);
+}
+
+/**
+ * Implements hook_node_delete().
+ *
+ * Soft-deletes the node's transcript and units (ADR 019).
+ */
+function mandala_av_transcripts_node_delete(NodeInterface $node): void {
+  \Drupal::service('mandala_av_transcripts.node_delete_cascade')->cascade($node);
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Tells an editor deleting a node that its transcript is kept. Deliberately the
+ * generic hook, matched on the form object, for the reason given in
+ * mandala_kaltura_form_alter(): the node delete form's id is per bundle.
+ */
+function mandala_av_transcripts_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $form_object = $form_state->getFormObject();
+  if (!($form_object instanceof ContentEntityDeleteForm)) {
+    return;
+  }
+  $node = $form_object->getEntity();
+  if (!($node instanceof NodeInterface) || $node->isNew()) {
+    return;
+  }
+  $trid = \Drupal::service('mandala_av_transcripts.node_delete_cascade')->transcriptIdFor((int) $node->id());
+  if ($trid === NULL) {
+    return;
+  }
+  $live = (int) \Drupal::database()->select('av_tcu', 'u')
+    ->condition('u.transcript', $trid)
+    ->condition('u.deleted', 0)
+    ->countQuery()->execute()->fetchField();
+  $deleted = (bool) \Drupal::database()->select('av_transcript', 't')
+    ->fields('t', ['deleted'])->condition('t.id', $trid)->execute()->fetchField();
+  if ($deleted) {
+    return;
+  }
+  $form['av_transcript_kept'] = [
+    '#type' => 'container',
+    '#attributes' => ['class' => ['messages', 'messages--warning']],
+    '#weight' => 5,
+    'text' => [
+      '#markup' => t('This node has a transcript with @count units. They are not deleted with the node: they are kept for administrators.', ['@count' => $live]),
+    ],
+  ];
+}

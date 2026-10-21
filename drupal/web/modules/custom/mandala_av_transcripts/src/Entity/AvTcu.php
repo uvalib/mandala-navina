@@ -94,6 +94,20 @@ class AvTcu extends RevisionableContentEntityBase implements AvTcuInterface {
       ->setRequired(TRUE)
       ->setRevisionable(FALSE);
 
+    $fields['deleted'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(new TranslatableMarkup('Deleted'))
+      ->setDescription(new TranslatableMarkup('Soft-delete flag (ADR 019). A deleted unit is hidden from everyone but administrators; its revisions are kept.'))
+      ->setDefaultValue(FALSE)
+      ->setInitialValue(FALSE)
+      ->setRevisionable(FALSE);
+
+    $fields['deleted_with_transcript'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(new TranslatableMarkup('Deleted with its transcript'))
+      ->setDescription(new TranslatableMarkup('Set when the unit was hidden by its transcript being soft-deleted, so restoring the transcript revives exactly these units.'))
+      ->setDefaultValue(FALSE)
+      ->setInitialValue(FALSE)
+      ->setRevisionable(FALSE);
+
     $fields['sequence'] = BaseFieldDefinition::create('integer')
       ->setLabel(new TranslatableMarkup('Sequence'))
       ->setDescription(new TranslatableMarkup('Position of the unit within its transcript, from 0.'))
@@ -160,6 +174,39 @@ class AvTcu extends RevisionableContentEntityBase implements AvTcuInterface {
   public function getTranscript(): ?AvTranscriptInterface {
     $transcript = $this->get('transcript')->entity;
     return $transcript instanceof AvTranscriptInterface ? $transcript : NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isDeleted(): bool {
+    return (bool) $this->get('deleted')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setDeleted(bool $deleted): static {
+    $this->set('deleted', $deleted);
+    if (!$deleted) {
+      $this->set('deleted_with_transcript', FALSE);
+    }
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isDeletedWithTranscript(): bool {
+    return (bool) $this->get('deleted_with_transcript')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setDeletedWithTranscript(bool $withTranscript): static {
+    $this->set('deleted_with_transcript', $withTranscript);
+    return $this;
   }
 
   /**

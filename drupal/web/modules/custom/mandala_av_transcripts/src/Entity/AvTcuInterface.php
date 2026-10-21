@@ -19,6 +19,29 @@ interface AvTcuInterface extends ContentEntityInterface, EntityChangedInterface,
   public function getTranscript(): ?AvTranscriptInterface;
 
   /**
+   * Whether the unit is soft-deleted (ADR 019), on its own or with its transcript.
+   */
+  public function isDeleted(): bool;
+
+  /**
+   * Sets the soft-delete flag. A unit deleted on its own is not "with transcript".
+   */
+  public function setDeleted(bool $deleted): static;
+
+  /**
+   * Whether the unit was hidden by its transcript's soft-delete.
+   *
+   * Restoring the transcript revives exactly these units, so a unit an editor
+   * deleted earlier stays deleted.
+   */
+  public function isDeletedWithTranscript(): bool;
+
+  /**
+   * Marks the unit as hidden by its transcript's soft-delete.
+   */
+  public function setDeletedWithTranscript(bool $withTranscript): static;
+
+  /**
    * Tier name => text, in the order stored.
    *
    * @return array<string, string>

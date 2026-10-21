@@ -19,6 +19,38 @@ services:
       - '@database'
       - '@logger.channel.mandala_av_transcripts'
 
+  # Soft-delete and restore (ADR 019): flags a transcript and its units together,
+  # and restores exactly the units the transcript took with it.
+  mandala_av_transcripts.lifecycle:
+    class: Drupal\mandala_av_transcripts\TranscriptLifecycle
+    arguments:
+      - '@database'
+      - '@mandala_av_transcripts.change_notifier'
+      - '@current_user'
+      - '@datetime.time'
+
+  # Deleting an AV node soft-deletes its transcript (see NodeDeleteCascade).
+  mandala_av_transcripts.node_delete_cascade:
+    class: Drupal\mandala_av_transcripts\NodeDeleteCascade
+    arguments:
+      - '@entity_type.manager'
+      - '@mandala_av_transcripts.lifecycle'
+      - '@database'
+      - '@logger.channel.mandala_av_transcripts'
+
+  # Finds, restores, exports and purges soft-deleted transcripts; the drush
+  # commands are a thin layer over it (a later admin screen would be too).
+  mandala_av_transcripts.orphan_manager:
+    class: Drupal\mandala_av_transcripts\OrphanManager
+    arguments:
+      - '@database'
+      - '@entity_type.manager'
+      - '@mandala_av_transcripts.lifecycle'
+  # Class-name alias so AutowireTrait (Drush 13) can resolve it by type hint.
+  Drupal\mandala_av_transcripts\OrphanManager:
+    alias: mandala_av_transcripts.orphan_manager
+    public: true
+
   logger.channel.mandala_av_transcripts:
     parent: logger.channel_base
     arguments:
