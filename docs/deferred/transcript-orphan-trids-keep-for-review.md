@@ -4,7 +4,7 @@
 **Raised during:** T2 review meeting, 2026-10-19 (Spike 11 audit found them 2026-10-01)
 **Issue:** none
 **Priority:** Low. Not blocking T2 or T5; needs a decision before the units are migrated.
-**Owner:** unassigned
+**Owner:** unassigned (Than is looking into where they came from, 2026-10-21)
 
 ## What is deferred
 
@@ -25,6 +25,62 @@ units are kept somewhere for later review.
   drop later), or a CSV kept with the migration notes.
 - **Who reviews them and when.** Than for content; nothing is scheduled.
 - Whether any belongs to a replaced upload that does have a current node under another trid.
+
+## For Than: what the D7 data shows so far (2026-10-21)
+
+A quick, read-only look at the local D7 AV copy, to save you starting from nothing. These are hints from counts
+and text matches, not conclusions; nothing was written anywhere. No transcript text is quoted here.
+
+**The 19** (`tcu` trids with no `transcripts_apachesolr_transcript` row). Every one was created in a single day, so
+each looks like one upload processed once.
+
+| trid | units | created | | trid | units | created |
+|---|---|---|---|---|---|---|
+| 2994 | 1 | 2016-03-18 | | 12361 | 118 | 2018-09-06 |
+| 2995 | 11 | 2016-03-18 | | 17151 | 9 | 2018-09-20 |
+| 2996 | 6 | 2016-03-18 | | 21251 | 175 | 2018-10-15 |
+| 3082 | 7 | 2016-03-24 | | 22756 | 11 | 2018-12-27 |
+| 3215 | 6 | 2016-03-30 | | 23416 | 25 | 2019-01-08 |
+| 3551 | 305 | 2016-12-01 | | 23546 | 22 | 2019-02-01 |
+| 3586 | 526 | 2016-12-01 | | 24236 | 19 | 2019-05-13 |
+| 3616 | 439 | 2016-12-01 | | 26026 | 63 | 2020-06-16 |
+| 10266 | 3 | 2018-08-07 | | 26932 | 272 | 2021-07-26 |
+| 10271 | 135 | 2018-08-07 | | | | |
+
+**No shape twins.** No tracked transcript has the same unit count, first start and last end as any of the 19.
+
+**Text twins.** Comparing each orphan's tier text (values of 30 characters or more) with every other transcript
+finds identical text in a nearby tracked transcript for most of them. That fits a replaced upload: re-uploading
+made a new trid and the old one lost its tracking row.
+
+| Orphan | Tracked trid with the same text | Matching values / orphan units |
+|---|---|---|
+| 2995 | 3003 | 12 / 11 |
+| 2996 | 3002 | 24 / 6 |
+| 3215 | 3216 | 6 / 6 |
+| 3551 | 3581 | 5714 / 305 |
+| 21251 | 21256 | 152 / 175 |
+| 22756 | 22761 | 5 / 11 |
+| 23416 | 23421 | 24 / 25 |
+| 23546 | 23551 | 22 / 22 |
+| 24236 | 24301 | 14 / 19 |
+| 26026 | 26031 and 26316 | 63 / 63 each |
+| 3586 | 3591 (408), and a few values shared with 3355, 3361, 3363 to 3365, 3601, 3606, 3621 | 408 / 526 |
+| 3616 | 3621 (299) | 299 / 439 |
+
+Counts are matching values, not units, so a figure can exceed the unit count when a value repeats. Notes:
+
+- **3586 and 3616** share text with several tracked transcripts and with each other, so they may be overlapping
+  or merged material, not a simple replacement. Worth a look by someone who knows the recordings.
+- **10266 and 10271** match only each other, and both are orphans.
+- **Not matched at 30 characters or more:** 3082, 12361 and 17151 had no match at all, and 2994 was not
+  confirmed either way. These are the likeliest to be genuinely unreferenced.
+- **Not checked:** whether any matching tracked transcript's file is the current one for its node, and who
+  uploaded what. Both would need the node and file tables.
+
+To reproduce: the orphans are `select distinct trid from tcu where trid not in (select trid from
+transcripts_apachesolr_transcript)`; text matches join `tcu_tier` on equal `tier` and `value` across different
+trids. In DDEV the D7 copy is the `d7_av` database.
 
 ## Related
 
