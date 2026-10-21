@@ -15,7 +15,9 @@ migration_tags:
 # D11 simplesamlphp_auth stores its links through externalauth under the same
 # provider name.
 source:
-  plugin: authmap
+  plugin: mandala_d7_authmap
+  modules:
+    - simplesamlphp_auth
   # ✓ VERIFIED 2026-07-21 against mandala_d7_shared (the crux unknown from the
   # deferred doc), both assumptions hold — no transform needed:
   #   1. Filter — all 1,384 authmap rows carry module = 'simplesamlphp_auth'
@@ -44,8 +46,9 @@ process:
 
 destination:
   # externalauth stores authmap through its AuthmapStorage service, NOT as a
-  # content entity — the destination plugin id is `authmap`, not `entity:authmap`.
-  # (Caught by the local synthetic smoke-test, 2026-07-21.)
+  # content entity. Both the source and this destination are our own plugins
+  # (mandala_d7_authmap, mandala_authmap): externalauth removed its authmap
+  # source in 2.0.14 and deprecated its destination (upstream #3618043).
   plugin: authmap
 
 migration_dependencies:
