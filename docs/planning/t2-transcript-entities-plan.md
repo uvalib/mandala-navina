@@ -250,6 +250,12 @@ mechanics; the node-delete cascade, snapshot fields and drush commands above are
   refused with a live id in the batch, real purge: units, unit revisions and transcript revisions gone, a live
   transcript untouched). Found and fixed: json output dropped `node` and `collections` (the field labels act as the
   field list), and a restorable orphan had a blank title (now falls back to the live node's).
+- **Deployed and verified on dev-0 (2026-10-21).** #360 to #364 are on dev-0 (schema 10003, no pending updates). A probe
+  run there with unpublished probe nodes (so the kmassets hooks and subscriber, which index published nodes only, wrote
+  nothing to Solr): orphans table and json, export json/srt/vtt, restore (success and refusal), purge dry run, refusal
+  with a live id in the batch, real purge. Cleaned up; the tables are empty again. Known nit: `export --as=json` shows
+  `deleted_at` as an epoch, `orphans` as a date.
+- **Collection delete:** see above; no effect on transcripts.
 - **Still open:** the 19 orphan trids and whether they use this service (conflicts with ADR 019); the four workflow
   base fields.
 
