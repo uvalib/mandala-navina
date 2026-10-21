@@ -58,6 +58,7 @@ feed 3.
 1. **Workflow fields.** D7 has `field_transcript_input`, `_proofed`, `_timecoded` (2,482 rows
    each) and `_workflow_notes` (565). Base fields on `av_transcript`, or do they stay on the
    node? The spike says only "workflow flags". Recommended: on `av_transcript`.
+   **Corrected 2026-10-21: they stay on the node. See "Workflow fields: correction" below.**
 2. **Existence rule.** 41 nodes have a transcript file but no tracking row, and 3 have none at
    all. Do they get an empty `av_transcript`?
 3. **Module home.** New `mandala_av_transcripts` (recommended), or inside `mandala_av_metadata`.
@@ -105,7 +106,7 @@ leave), so items 2 and 3 and the PR decision are open.
 | 1 | **Bad timecodes do not block the migration.** T5 carries units as found, with the classifier status only; no repair in the migration. Keep the original start and end values so a later repair is possible. Than owns the transcript fixes (see [the deferred note](../deferred/transcript-bad-timecodes-investigate-and-fix.md)). | Yuji |
 | 2 | **Untimed units: open, a note for Than.** 3,039 units (163 transcripts: 62 fully untimed, 101 partly) have start = end = 0. Does the viewer treat them as having no time (no playhead sync) or as a cue at 0:00? Recommendation: untimed, as a derived flag, values stored as found. | open |
 | 3 | **The one negative start (tcu 142269): open, a note for Than.** Own status, clamp to 0 with `end_original`-style bookkeeping, or leave (classifies `ok`). Leaving it is lowest-risk under decision 1. | open |
-| 4 | **Workflow fields** (`field_transcript_input`, `_proofed`, `_timecoded`, `_workflow_notes`) become base fields on `av_transcript`. Field types in D7 are still to be checked. | Than |
+| 4 | ~~**Workflow fields** (`field_transcript_input`, `_proofed`, `_timecoded`, `_workflow_notes`) become base fields on `av_transcript`.~~ **Corrected 2026-10-21: they do not. The workflow state stays on the node's `av_workflow` paragraph; measurable states are derived. See "Workflow fields: correction".** | Than |
 | 5 | **Existence rule:** an `av_transcript` exists exactly when D7 has a tracking row. The 41 never-processed nodes get none; the 4 tracked nodes with no current file get one with no source file. The 19 orphan trids (units, no tracking row, no node) are kept somewhere for later review, not dropped. | Than |
 | 6 | **Deleting a transcript soft-deletes it and its units** (reversible). | Yuji |
 | 7 | **Deleted units keep their history by soft-delete flag**, not an archive table. See [ADR 019](../adr/019-av-transcript-lifecycle-soft-delete-and-existence-rule.md). | Yuji |
@@ -115,7 +116,7 @@ Work this adds, none of it blocking T5:
 
 - A soft-delete base field on `av_transcript` and `av_tcu` (update hook), respected by the reader,
   the access handlers and the kmassets reindex. Needed before T7 (revert).
-- The four workflow base fields on `av_transcript` (update hook).
+- ~~The four workflow base fields on `av_transcript` (update hook).~~ Dropped 2026-10-21, see "Workflow fields: correction".
 - A place to keep the 19 orphan trids' units for review ([deferred note](../deferred/transcript-orphan-trids-keep-for-review.md)).
 - Deleting the parent node cascades a soft-delete to its transcript and units, and administrators manage the
   orphans with drush commands, with a screen deferred (decided 2026-10-20, see "Parent-node delete and orphan management" below).
@@ -259,6 +260,62 @@ mechanics; the node-delete cascade, snapshot fields and drush commands above are
 - **Collection delete:** see above; no effect on transcripts.
 - **Still open:** the 19 orphan trids (storage decision deferred to Than after his analysis; reusing this service
   conflicts with ADR 019); the four workflow base fields.
+
+### Workflow fields: correction (2026-10-21)
+
+Decision 4 above assumed the four D7 workflow fields were the live transcript flags and should become base fields
+on `av_transcript`. Checked against the D7 data on 2026-10-21; **Yuji and Than agreed to drop it.**
+
+**What the data showed**
+
+- The fields live in D7's `field_workflow` field collection, one item on each of 11,465 AV nodes. It is already
+  migrated to the `av_workflow` paragraph (AV3) and displayed (AV15), including the live sub-fields
+  `field_transcribed`, `field_timecoded`, `field_trans_proofed_lang_1..3`, `field_translation_input_lang_*` and
+  `field_transcript_workflow_notes` (with its own migration).
+- `field_transcript_input`, `_proofed` and `_timecoded` have no `field_config` row in D7: only orphaned data
+  tables remain, on 2,482 workflow items. `_proofed` is effectively unused (2,480 of 2,482 "Not Reviewed");
+  `_timecoded` is superseded by `field_timecoded`; `_input` has real values (No 1,249, Not Reviewed 614, Yes 597,
+  Incomplete 22) and none of the three exists in D11.
+- The flags track producing a transcript, so they exist before one does. `field_transcribed` is "No" on 5,671
+  nodes, 3,957 of which have no transcript row, and no `av_transcript` can exist for them (ADR 019). Conversely 1,714
+  nodes say "No" yet have a transcript, so the stored flag has drifted from reality (1,671 of the 1,677 "Yes" nodes
+  have a row). 1,776 of the 5,343 tracked nodes have no `transcribed` value at all.
+- Every one of the 5,343 tracking rows has units, so "a transcript exists" already means "it has been processed
+  and has content".
+
+**Decision**
+
+| Kind of fact | Where | Examples |
+|---|---|---|
+| Measurable from the transcript | Derived, not stored | transcribed, timecoded (from the units' `timecode_status`), unit count, text present |
+| Process or editorial judgment | The node's `av_workflow` paragraph, as already built | proofed per language, translation, problem, notes |
+| A judgment that must follow the content through replace and revert | The transcript, only if T6 or T7 needs it | none yet |
+
+The third row is the test for revisiting this: a flag such as "proofed" is true of particular text, so if a
+replace or a revert (T7) is meant to clear it, it belongs on the transcript, where that operation can reset it
+and record it in the revision history. `has_edits` already is such a flag. Nobody has asked for another. Flags
+about the work (translation requested, cataloging done, notes) stay true whatever happens to the text and stay on
+the node.
+
+**Consequences**
+
+- No update hook and no new base fields on `av_transcript`; the item is removed from T2's list.
+- A derived transcript status (a reader or service method) is built when a screen or API needs it.
+- **All three retired fields are kept (Than for `_input`, then Yuji for `_proofed` and `_timecoded`, 2026-10-21).**
+  `field_transcript_input` (2,482 values: No 1,249, Not Reviewed 614, Yes 597, Incomplete 22),
+  `field_transcript_proofed` (2,482, almost all Not Reviewed) and `field_transcript_timecoded` (2,482: Not Reviewed
+  1,853, Yes 572, No 57) have no home in D11. By the table above they are process or editorial flags, so each goes on the
+  node's `av_workflow` paragraph beside the other workflow fields, not on `av_transcript`. Compared with their live
+  counterparts on the same items, `_timecoded` agrees where both are set but 33 items (28 Yes, 5 No) have a value
+  only in the old field, 26 disagree and 391 are "Not Reviewed" where the live field says Yes; `_proofed` has two
+  informative values. They are kept as separate fields, not merged into the live ones, so nothing has to decide
+  which value wins. Work: three list fields on `av_workflow` (storage, instance, form and view display, exported
+  from a live Drupal), their source fields and process mappings added to `d7_av_workflow`, and a re-import of that
+  migration's items on each environment that has already run it (dev-0 has). Not yet built.
+
+**Also found (for #353, not blocking T5):** of the 5,343 tracked transcripts, 8 have units but no text at all, 53
+have exactly one unit (some hold a long block of text, so may be whole transcripts parsed as one unit; one of them,
+trid 26931, is also untimed) and 338 have three or fewer.
 
 ### Notes for T5 (migration)
 
