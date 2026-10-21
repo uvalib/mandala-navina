@@ -85,6 +85,7 @@ class OrphanManagerTest extends CollectionVisibilityKernelTestBase {
     $this->assertSame('Gone', $rows[2]['node_title']);
     $this->assertNull($rows[2]['node']);
     $this->assertSame('node_exists', $rows[3]['state']);
+    $this->assertSame('n', $rows[3]['node_title'], 'A restorable orphan shows its live node title.');
     $this->assertSame(3, $rows[2]['units']);
     $this->assertSame(1, $rows[2]['untimed_or_bad']);
   }

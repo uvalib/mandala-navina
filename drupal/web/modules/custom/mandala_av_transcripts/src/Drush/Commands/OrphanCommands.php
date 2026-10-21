@@ -35,9 +35,11 @@ class OrphanCommands extends DrushCommands {
   #[CLI\FieldLabels(labels: [
     'id' => 'Transcript',
     'state' => 'State',
+    'node' => 'Node id',
     'node_title' => 'Node title',
     'legacy_site' => 'Legacy site',
     'legacy_nid' => 'Legacy nid',
+    'collections' => 'Collections',
     'deleted_at' => 'Deleted at',
     'deleted_by' => 'By uid',
     'units' => 'Units',
