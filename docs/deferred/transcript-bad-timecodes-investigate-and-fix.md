@@ -140,6 +140,46 @@ checked on dev-0):
 The 65 files are the exports on disk; the classifier's 66 units in 66 transcripts come from the D7
 database, so the two counts differ by one.
 
+## 2026-10-20 findings: the exported transcript files, and the repair plan
+
+Group session (Yuji, Xiaoming, Than). Than scanned all 5,232 timed files in `files/transcripts`
+(`.vtt`, `.srt` and `.xml`); 448 contain an inverted cue. Filenames and counts only; nothing is
+committed from the files themselves.
+
+| Bucket | Files | Cues | Notes |
+|---|---|---|---|
+| Fixable by "following start's minutes + the end's own seconds" | 1 | 7 | The Gebchak Wangdrak interview file, which Than confirmed. The rule fixes almost nothing else. |
+| Placeholder cue or bad last cue only | 350 | 372 | See below. |
+| Anomalous | 97 | 627 | 158 cues start after the next cue's start (the `..._0073.vtt` pattern: the ends are consistent with the next start, so the *start* is wrong), plus 12 others. Cause unknown. |
+
+**Placeholder cues** (end one unit before start, next cue shares the start): 539 runs, all of
+length 1, so no chains. 535 are followed by a cue with a real span; 509 of those have the same
+speaker, so they are not bilingual pairs. **Decision: leave them as found, flagged by the
+classifier.** The D7 player (`transcripts_ui/js/transcripts-scroller.js` in `mandala-drupal`)
+only highlights a cue while begin < now < end and only seeks when end - begin > 0, so these cues
+were silently skipped on the old site and nothing looked wrong (checked on `Lhalung Hermitage 1`).
+An equal split of the time between the two cues, which Than proposed, would change what D7
+visitors saw and gives meaningless values for very short spans (0.033 s each in that file; 52
+splits come out under 0.5 s). The D11 spike viewer highlights by start only. T6 decides how the
+viewer treats these units.
+
+**Last cue with a bad end** (301 cues): 65 files end at `00:00:00.000`; the rest carry a stray
+non-zero value. Than: use the duration for both when one exists. How many of the non-zero ones
+have a duration is not yet counted.
+
+**Repair process (agreed with Yuji: post-import, not inside T5).** A re-runnable
+`transcripts:repair` drush command that runs small, idempotent rules, each selecting by
+`timecode_status`, with `--dry-run`. Rule 1 is `last_unit_no_end` -> duration (status `corrected`,
+old end kept in `end_original`, only when duration >= start). It runs after the T5 import and
+after `av:backfill-kaltura-duration`, which is not in `scripts/run-av-migration.sh` yet. T5 must
+not overwrite `corrected` units on a re-run, and the T7 revert parser must re-apply the rule.
+**No David Germano sign-off is needed provided the original transcripts are backed up**; where the
+backups are, and whether they cover every format, still has to be confirmed. `corrected` is not yet
+in `AvTcu::TIMECODE_STATUSES`. Nothing has been built.
+
+**Still open:** the 97 anomalous files; other repair types Than wants to add; the 4 placeholders
+followed by another bad cue; the garbage-last-end durations count; the backup question above.
+
 ## Related
 
 - [Spike 11](../spikes/spike-11-av-transcript-replication.md): corpus audit and data-model evaluation
