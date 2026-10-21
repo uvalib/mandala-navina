@@ -4,19 +4,22 @@
 **Raised during:** T2 review, 2026-10-20 (parent-node-delete discussion)
 **Issue:** #357
 **Priority:** Low. Nothing blocks on it; administrators can list, export, restore and purge orphans with drush commands.
+**Status:** The drush tooling is built and verified (PRs #361, #363; probe run on dev-0 2026-10-21). What remains deferred is the screen, re-attach and editor access below.
 **Owner:** unassigned
 
 ## What is deferred
 
 When an AV node is deleted, its transcript and units are soft-deleted
-([T2 plan](../planning/t2-transcript-entities-plan.md), "Parent-node delete and the orphan screen"). The first
-version is an orphan manager service with administrator-only drush commands (list, export, restore, purge).
+([T2 plan](../planning/t2-transcript-entities-plan.md), "Parent-node delete and orphan management"). The first
+version, **now built**, is an orphan manager service (`OrphanManager`) with administrator-only drush commands:
+`av-transcripts:orphans`, `:export`, `:restore` and `:purge` (see the plan's "Orphan manager as built").
 Three things were left out on purpose:
 
 0. **The admin screen** at `/admin/content/av-transcripts`, a thin layer over the same service. The entities have
    no UI handlers today, so it is a day or more of work; build it if administrators want something other than
    the command line.
-1. **Re-attaching an orphan to a different node.** Useful when a node was recreated, or deleted by mistake.
+1. **Re-attaching an orphan to a different node.** Useful when a node was recreated, or deleted by mistake. A new
+   service method and drush command first; the screen would come after.
 2. **Any access for content editors.** Decided 2026-10-20 (Yuji): administrators deal with the orphans. Editors
    delete the nodes that create orphans, but a node-delete orphan cannot be restored without re-attach, and
    purge is destructive, so there was nothing safe to give them yet.
@@ -43,3 +46,10 @@ new service method and command, and the screen a layer on top, with no schema ch
 ## Start trigger
 
 An administrator finds orphan handling a bottleneck, or someone needs to re-attach a transcript.
+
+## Sequence
+
+Still deferred, with no date. Ordering: re-attach (service method and command) is likely first, since it is the
+only item with a concrete need; the screen follows whichever is built; editor access waits on a decision about
+scoping (see the options) and is not started without it. The T5 migration may add a reason, because a rollback
+leaves soft-deleted transcripts that T5 revives by id rather than through re-attach.
