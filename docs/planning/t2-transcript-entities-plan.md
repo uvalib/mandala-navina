@@ -172,6 +172,7 @@ administrators, deal with the orphans, with drush commands first and a screen on
   the commands and a later screen share the logic.
 - **Open:** whether the 19 orphan trids ([deferred note](../deferred/transcript-orphan-trids-keep-for-review.md))
   use the same service and commands. It would conflict with ADR 019, which says they are not migrated into `av_transcript`.
+  **Deferred to Than (Yuji, 2026-10-21):** he decides where they are kept after he finishes analysing the 19.
 - **Collection delete checked (2026-10-20): no effect on transcripts.** Group's `preDelete` removes the group's
   relationship rows only; it never deletes member nodes, and nothing in the custom modules does either (only
   `hook_group_relationship_delete` for membership cascade and the Solr visibility sync). So no node delete, no
@@ -256,8 +257,8 @@ mechanics; the node-delete cascade, snapshot fields and drush commands above are
   with a live id in the batch, real purge. Cleaned up; the tables are empty again. Known nit: `export --as=json` shows
   `deleted_at` as an epoch, `orphans` as a date.
 - **Collection delete:** see above; no effect on transcripts.
-- **Still open:** the 19 orphan trids and whether they use this service (conflicts with ADR 019); the four workflow
-  base fields.
+- **Still open:** the 19 orphan trids (storage decision deferred to Than after his analysis; reusing this service
+  conflicts with ADR 019); the four workflow base fields.
 
 ### Notes for T5 (migration)
 

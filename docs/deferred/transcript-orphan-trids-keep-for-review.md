@@ -4,7 +4,7 @@
 **Raised during:** T2 review meeting, 2026-10-19 (Spike 11 audit found them 2026-10-01)
 **Issue:** none
 **Priority:** Low. Not blocking T2 or T5; needs a decision before the units are migrated.
-**Owner:** unassigned (Than is looking into where they came from, 2026-10-21)
+**Owner:** unassigned (Than is analysing the 19; the storage decision waits for that, 2026-10-21)
 
 ## What is deferred
 
@@ -19,6 +19,11 @@ rule is "a transcript exists exactly when D7 has a tracking row", see
 units are kept somewhere for later review.
 
 ## What is still open
+
+**Storage decision deferred to Than (Yuji, 2026-10-21):** he decides where the units are kept once he has finished
+analysing the 19. Until then nothing is built for them, and the options below stand. It is still needed before T5
+loads the units. Note the orphan manager cannot hold them without an `av_transcript` row, which ADR 019 rules out
+(these have no tracking row and no node).
 
 - **Where they are kept.** `av_tcu` units belong to a transcript, which belongs to a node, so these
   cannot be `av_tcu` rows. Candidates: a plain staging table loaded from D7 (queryable, easy to
