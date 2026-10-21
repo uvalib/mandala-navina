@@ -35,6 +35,18 @@ RUN pecl install redis && docker-php-ext-enable redis
 # Enable Apache modules
 RUN a2enmod proxy proxy_http headers rewrite
 
+# Interim hardening for PHP2Shell (CVE-2026-109618 and CVE-2026-109619, 2026-10-21):
+# upload-progress off and request-size limits. Not a fix; the fix is a base image on
+# PHP 8.3.36 or later, which the official drupal image did not have on the day of the
+# release. Remove once the base is patched and the exposure is understood.
+COPY package/data/files/usr/local/etc/php/conf.d/zz-mandala-security.ini /usr/local/etc/php/conf.d/zz-mandala-security.ini
+COPY package/data/files/etc/apache2/conf-available/mandala-request-limits.conf /etc/apache2/conf-available/mandala-request-limits.conf
+RUN a2enconf mandala-request-limits
+
+# Show the PHP version in every build log, so it is obvious whether the base image
+# has picked up a security release.
+RUN php -v | head -1
+
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
