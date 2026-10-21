@@ -243,8 +243,13 @@ mechanics; the node-delete cascade, snapshot fields and drush commands above are
 - **Commands:** `av-transcripts:orphans` (table or `--format=json`), `:export <id> --as=json|srt|vtt`,
   `:restore <id>`, `:purge <id...> [--dry-run]` (prints counts, asks for confirmation, default no).
 - **Verified:** 7 Kernel tests (list, restore, restore refusals, export formats, purge scope, purge refuses a live id
-  and deletes nothing from the batch); the module's Kernel suite is 74 tests and passes; the commands register and
+  and deletes nothing from the batch); the module's Kernel suite is 75 tests and passes; the commands were also run through drush on DDEV with probe data (see below); they register and
   run on DDEV (empty list; unknown ids refused).
+- **Run through drush on DDEV with probe data (2026-10-21):** orphans (table and json, all fields), export json/srt/vtt
+  and a bad format, restore (success; refused for a node-gone orphan and for a live one), purge (dry run, declined,
+  refused with a live id in the batch, real purge: units, unit revisions and transcript revisions gone, a live
+  transcript untouched). Found and fixed: json output dropped `node` and `collections` (the field labels act as the
+  field list), and a restorable orphan had a blank title (now falls back to the live node's).
 - **Still open:** the 19 orphan trids and whether they use this service (conflicts with ADR 019); the four workflow
   base fields.
 
