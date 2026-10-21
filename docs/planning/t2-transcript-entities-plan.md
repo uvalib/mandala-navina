@@ -172,8 +172,12 @@ administrators, deal with the orphans, with drush commands first and a screen on
   the commands and a later screen share the logic.
 - **Open:** whether the 19 orphan trids ([deferred note](../deferred/transcript-orphan-trids-keep-for-review.md))
   use the same service and commands. It would conflict with ADR 019, which says they are not migrated into `av_transcript`.
-- **Not checked:** what deleting a whole collection (the editor roles hold `delete group`) does to its member
-  nodes, and so to their transcripts.
+- **Collection delete checked (2026-10-20): no effect on transcripts.** Group's `preDelete` removes the group's
+  relationship rows only; it never deletes member nodes, and nothing in the custom modules does either (only
+  `hook_group_relationship_delete` for membership cascade and the Solr visibility sync). So no node delete, no
+  cascade, and the transcript stays live. What changes is visibility: the node loses its collections, and the
+  transcript follows the node's access. A Kernel test (`testDeletingTheCollectionsLeavesNodeAndTranscriptAlone`)
+  pins it: node and transcript survive, units stay live, and transcript access equals node access.
 
 ### Soft-delete as built (2026-10-20)
 
@@ -241,8 +245,8 @@ mechanics; the node-delete cascade, snapshot fields and drush commands above are
 - **Verified:** 7 Kernel tests (list, restore, restore refusals, export formats, purge scope, purge refuses a live id
   and deletes nothing from the batch); the module's Kernel suite is 74 tests and passes; the commands register and
   run on DDEV (empty list; unknown ids refused).
-- **Still open:** the 19 orphan trids and whether they use this service (conflicts with ADR 019); what deleting a
-  whole collection does to member nodes' transcripts; the four workflow base fields.
+- **Still open:** the 19 orphan trids and whether they use this service (conflicts with ADR 019); the four workflow
+  base fields.
 
 ### Notes for T5 (migration)
 
