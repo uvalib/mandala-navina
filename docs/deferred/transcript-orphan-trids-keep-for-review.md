@@ -73,8 +73,9 @@ Counts are matching values, not units, so a figure can exceed the unit count whe
 - **3586 and 3616** share text with several tracked transcripts and with each other, so they may be overlapping
   or merged material, not a simple replacement. Worth a look by someone who knows the recordings.
 - **10266 and 10271** match only each other, and both are orphans.
-- **Not matched at 30 characters or more:** 3082, 12361 and 17151 had no match at all, and 2994 was not
-  confirmed either way. These are the likeliest to be genuinely unreferenced.
+- **No match at all (values of 30 characters or more):** 2994, 3082, 12361, 17151 and 26932. These are the
+  likeliest to be genuinely unreferenced. Short units (under 30 characters) were not compared, so 2994 (one
+  unit) and 3082 (seven) in particular may simply have too little text to match.
 - **Not checked:** whether any matching tracked transcript's file is the current one for its node, and who
   uploaded what. Both would need the node and file tables.
 
