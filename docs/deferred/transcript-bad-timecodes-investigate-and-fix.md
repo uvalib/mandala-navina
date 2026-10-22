@@ -238,6 +238,43 @@ paired-cue pattern (about 37 transcripts like node 2067; only 2067 was opened); 
 leading untimed units not covered by rule 5; the 20 transcripts with trailing untimed units that
 have text; the 4 placeholders followed by another bad cue; and the workbook itself.
 
+## 2026-10-22 update: when the repair can run
+
+Nothing here can run yet. Checked against the code on 2026-10-22: the repair needs four things, in
+this order, and none is built.
+
+1. **T5, the transcript migration** (sprint task, depends on T2 to T4: entities, viewer, Solr
+   index). `av_transcript` and `av_tcu` exist but hold 0 rows locally, and there is no migration
+   code in `mandala_av_transcripts`. T5 carries units as found with the classifier status only and
+   does no repair (T2 review decision 1, 2026-10-19). Until it has run on an environment there is
+   nothing there to repair. The old `field_transcript` file field (5,379 rows) is only the
+   placeholder T5 replaces.
+2. **`corrected` as a valid `timecode_status`**, with `end_original` kept and T5 prevented from
+   overwriting `corrected` units on a re-run. `corrected` appears nowhere in
+   `mandala_av_transcripts/src`.
+3. **The `transcripts:repair` command**: small idempotent rules, each selecting by
+   `timecode_status`, with `--dry-run`. Does not exist.
+4. **`av:backfill-kaltura-duration`** (`AvKalturaDurationBackfillCommands.php`) must run first,
+   because Rule 1 reads the node's duration. The command exists but is not in
+   `scripts/run-av-migration.sh`.
+
+So the earliest run is after T5 has populated the entities on the target environment, then the
+backfill, then `transcripts:repair`. The rules and the command can be written and tested earlier,
+against a throwaway load of units from the triage CSVs, but that is a fixture, not real data.
+
+**Correction to the paired-cue item in the 2026-10-21 section.** The "about 37 transcripts like
+node 2067" was inferred and does not hold. Counting units whose end is within 10 ms before their
+start across all 5,343 tracked transcripts: 55 have any, 2067 is the only heavy one (284 of 816
+units), and every other has 5 or fewer (42 of the 55 have exactly 1). Node 1191, opened as the
+next heaviest, has five placeholder cues and one cue (31) whose start looks wrong by 68 ms. So 2067
+stays on the hand-review list and the rest fall under the placeholder rule. How many other files
+have the cue-31 shape (end matches the next start, start off by tens of milliseconds) is not yet
+counted.
+
+**Placeholder and zero-length cues are not tracked for a later player check.** Considered and
+dropped 2026-10-22: the OK files already work in the D7 player, the repair files get repaired, and
+the review files are reviewed anyway.
+
 ## Related
 
 - [Spike 11](../spikes/spike-11-av-transcript-replication.md): corpus audit and data-model evaluation
