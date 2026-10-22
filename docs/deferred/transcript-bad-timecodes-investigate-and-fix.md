@@ -276,6 +276,27 @@ counted.
 dropped 2026-10-22: the OK files already work in the D7 player, the repair files get repaired, and
 the review files are reviewed anyway.
 
+## 2026-10-22 update: remaining review items, all dealt with or deferred
+
+Everything the earlier "Still open" lists carried is settled here, so nothing is left hanging for a
+person. This is post-migration cleanup and blocks nothing. **Trigger for every deferred item: when
+the repair (the dependency chain above) is being built**, which cannot start before T5. Until then
+transcripts are carried as found.
+
+| Item | Status | Detail |
+|---|---|---|
+| Paired-cue pattern (node 2067) | **Done** | A one-off (284 of 816 units); the other 54 files with 1 ms-inverted units have 5 or fewer. 2067 stays on the hand-review list. |
+| Cue-31 shape (end equals the next start, start off by tens of milliseconds to a few seconds) | **Done** | 62 files, 92 units. All 62 are already in the review bucket (none in repair or OK), so no bucket changes. Reviewed with the rest of that bucket. |
+| Placeholder and zero-length cues | **Done** | Left as found. They work in the D7 player; no later player check is tracked. |
+| Hand-review set (2067, 3652, 3535, 3553, 4624, 796) and the 256-file review bucket | **Deferred** | Reviewed when the repair is built, by the lists in the triage folder (kept locally, ids only). |
+| The 97 anomalous files, including the 158 cues whose next start is earlier than their own start | **Deferred** | Part of the review bucket; decide each rule when the repair is built. |
+| Untimed units at the start of a transcript or in runs of two or more; the 20 transcripts with trailing untimed units that have text; the 4 placeholders followed by another bad cue | **Deferred** | Not covered by rule 5; stay in review as found. |
+| Other repair types (short-ms-fraction zero-padding, lost starts mislabelled `end_implausible`, untimed 0/0 units, the negative start) | **Deferred** | Added to the repair command only if the review shows they are worth it. |
+| `TimecodeClassifier` neighbour fix (skip untimed units when picking the next start) | **Deferred** | Do it before the repair relies on `end_implausible`. |
+| Backups of the original transcripts | **Deferred** | The exported files in `files/transcripts` are the originals; confirm they and the D7 source cover vtt/srt/xml/txt before the repair rewrites anything. No sign-off from the project director is needed if the originals are backed up (decided 2026-10-20). |
+| The D7 review workbook | **Deferred** | Superseded by the triage lists; build one only if reviewers need it when review starts. |
+| The 19 orphan trids (trash 16, zip 3) | **Deferred** | Recorded in [transcript-orphan-trids-keep-for-review](transcript-orphan-trids-keep-for-review.md); carried out after confirming with Yuji that his T2 tooling is the way to do it. |
+
 ## Related
 
 - [Spike 11](../spikes/spike-11-av-transcript-replication.md): corpus audit and data-model evaluation
