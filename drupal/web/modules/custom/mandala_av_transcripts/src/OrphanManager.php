@@ -41,9 +41,10 @@ class OrphanManager {
    */
   public function list(): array {
     $query = $this->database->select('av_transcript', 't');
-    $query->leftJoin('node', 'n', 'n.nid = t.node');
+    $query->leftJoin('node_field_data', 'n', 'n.nid = t.node AND n.default_langcode = 1');
     $query->fields('t', ['id', 'node', 'node_title', 'node_legacy_site', 'node_legacy_nid', 'node_collections', 'deleted_at', 'deleted_by']);
     $query->addField('n', 'nid', 'live_nid');
+    $query->addField('n', 'title', 'live_title');
     $query->condition('t.deleted', 1)->orderBy('t.deleted_at')->orderBy('t.id');
     $rows = [];
     foreach ($query->execute() as $row) {
@@ -52,7 +53,8 @@ class OrphanManager {
         'id' => (int) $row->id,
         'state' => $row->live_nid === NULL ? 'node_gone' : 'node_exists',
         'node' => $row->live_nid === NULL ? NULL : (int) $row->live_nid,
-        'node_title' => $row->node_title,
+        // The snapshot is taken when the node is deleted; until then the live title.
+        'node_title' => $row->node_title ?? $row->live_title,
         'legacy_site' => $row->node_legacy_site,
         'legacy_nid' => $row->node_legacy_nid === NULL ? NULL : (int) $row->node_legacy_nid,
         'collections' => is_array($collections) ? $collections : [],

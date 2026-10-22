@@ -14,7 +14,9 @@ use Drush\Commands\DrushCommands;
  * Administrator housekeeping for soft-deleted transcripts (ADR 019).
  *
  * Drush runs with no Drupal user, so there is no permission to check: these
- * need shell access to the server, and purge asks for confirmation.
+ * need shell access to the server, and purge asks for confirmation. The
+ * field labels on orphans() double as the field list, so every field the
+ * service returns needs one.
  */
 class OrphanCommands extends DrushCommands {
 
@@ -35,9 +37,11 @@ class OrphanCommands extends DrushCommands {
   #[CLI\FieldLabels(labels: [
     'id' => 'Transcript',
     'state' => 'State',
+    'node' => 'Node id',
     'node_title' => 'Node title',
     'legacy_site' => 'Legacy site',
     'legacy_nid' => 'Legacy nid',
+    'collections' => 'Collections',
     'deleted_at' => 'Deleted at',
     'deleted_by' => 'By uid',
     'units' => 'Units',

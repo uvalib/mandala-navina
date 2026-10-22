@@ -252,7 +252,9 @@ Results — **1,538 imported, 0 failed:**
 **Two operational gotchas for whoever runs this on dev-0** (neither is a fault in
 the fix; both cost time here):
 
-1. **`externalauth` must be enabled first.** migrate's discovery instantiates *all*
+1. **CORRECTION 2026-10-21: no longer true, see [d7-user-authmap-migration-has-no-source-plugin.md](d7-user-authmap-migration-has-no-source-plugin.md).**
+   The source plugin below was removed from `externalauth` in 2.0.14/2.0.15, so enabling the module no longer helps.
+   The original text follows. **`externalauth` must be enabled first.** migrate's discovery instantiates *all*
    migrations, and the sibling `d7_user_authmap` migration's `authmap` source +
    destination plugins come from `externalauth`. If it's off, discovery throws
    *"The 'authmap' plugin does not exist"* and **aborts the entire `migrate:import`

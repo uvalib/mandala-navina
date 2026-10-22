@@ -30,10 +30,39 @@ RUN docker-php-ext-install bcmath
 # does NOT intercept, so hook_user_login fatals on every login. This works in DDEV
 # only because the ddev-redis add-on supplies the extension, which is why it was
 # never caught. Also a prerequisite for the planned Drupal object cache.
-RUN pecl install redis && docker-php-ext-enable redis
+#
+# Built from the pinned GitHub release, not `pecl install redis`: pecl.php.net is a
+# single small service, and on 2026-10-21 (the day of a critical PHP security
+# release) it answered 500 or took seconds per request, which failed a deploy build
+# (execution 9d9cf342). GitHub's release tarball is fast, can be checksummed, and
+# the version is explicit. Same extension, same default build options as the pecl
+# install (no igbinary, msgpack or compression), so `php --ri redis` is unchanged.
+# To bump: change the version, download the tarball and put its `shasum -a 256` in.
+ARG PHPREDIS_VERSION=6.3.0
+ARG PHPREDIS_SHA256=cb8f81df1a275599e4f8ddcfec7e1f65ed1953e6f5673649149fd680ebff4cad
+RUN set -eux; \
+    curl -fsSL -o /tmp/phpredis.tar.gz "https://github.com/phpredis/phpredis/archive/refs/tags/${PHPREDIS_VERSION}.tar.gz"; \
+    echo "${PHPREDIS_SHA256}  /tmp/phpredis.tar.gz" | sha256sum -c -; \
+    mkdir -p /usr/src/php/ext/redis; \
+    tar -xzf /tmp/phpredis.tar.gz -C /usr/src/php/ext/redis --strip-components=1; \
+    docker-php-ext-install redis; \
+    rm -rf /tmp/phpredis.tar.gz /usr/src/php/ext/redis; \
+    php --ri redis | grep -E "Redis Version"
 
 # Enable Apache modules
 RUN a2enmod proxy proxy_http headers rewrite
+
+# Interim hardening for PHP2Shell (CVE-2026-109618 and CVE-2026-109619, 2026-10-21):
+# upload-progress off and request-size limits. Not a fix; the fix is a base image on
+# PHP 8.3.36 or later, which the official drupal image did not have on the day of the
+# release. Remove once the base is patched and the exposure is understood.
+COPY package/data/files/usr/local/etc/php/conf.d/zz-mandala-security.ini /usr/local/etc/php/conf.d/zz-mandala-security.ini
+COPY package/data/files/etc/apache2/conf-available/mandala-request-limits.conf /etc/apache2/conf-available/mandala-request-limits.conf
+RUN a2enconf mandala-request-limits
+
+# Show the PHP version in every build log, so it is obvious whether the base image
+# has picked up a security release.
+RUN php -v | head -1
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer

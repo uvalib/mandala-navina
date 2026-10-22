@@ -1,0 +1,21 @@
+uuid: 129ea299-4420-4233-9e99-b39d2b12d2ad
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_transcript_timecoded
+    - paragraphs.paragraphs_type.av_workflow
+  module:
+    - options
+id: paragraph.av_workflow.field_transcript_timecoded
+field_name: field_transcript_timecoded
+entity_type: paragraph
+bundle: av_workflow
+label: 'Transcript timecoded'
+description: 'Retired in D7 (no field definition left, data kept); carried over by decision of Yuji and Than, 2026-10-21.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string
