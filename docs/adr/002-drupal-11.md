@@ -24,6 +24,6 @@ should use PHP 8.3 or later.
 
 - Spike work (e.g., KMaps field type) is validated against Drupal 11.
 - The production Dockerfile base image will be `drupal:11.x`.
-- DDEV config uses `type: drupal11`, `php_version: "8.3"`.
+- DDEV config uses `type: drupal11`, `php_version: "8.4"` (moved from 8.3 on 2026-10-22; see the PHP2Shell notes).
 - Contrib modules must be confirmed compatible with Drupal 11 before adoption.
 - Documentation and CLAUDE.md files refer to "Drupal 11" throughout.
