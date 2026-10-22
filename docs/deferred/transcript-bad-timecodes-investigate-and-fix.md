@@ -3,8 +3,9 @@
 **Category:** migration-av
 **Raised during:** Spike 11, 2026-10-01 audit; deferral decided with Than 2026-10-02
 **Issue:** #353
-**Priority:** Medium. Must be understood before the transcript migration (Sprint 4 T5) is
-called verified; does not block building the model or the viewer.
+**Priority:** Medium. **Post-migration cleanup; it blocks nothing**: not the model, the viewer or the
+transcript migration (Sprint 4 T5), which carries units as found. The repair runs after T5 (see
+the 2026-10-22 update).
 **Owner:** Than (transcript fixes); Yuji (migration side)
 
 ## What is deferred
