@@ -1,7 +1,7 @@
 # Production container — follows drupal-dsf pattern, adapted for the
 # mandala-navina monorepo (the Drupal app lives under drupal/, not the repo root).
 # See pipeline/buildspec.yml for build instructions
-FROM public.ecr.aws/docker/library/drupal:11-php8.3-apache
+FROM public.ecr.aws/docker/library/drupal:11-php8.4-apache
 
 # Install additional PHP extensions and utilities
 #
@@ -54,7 +54,7 @@ RUN a2enmod proxy proxy_http headers rewrite
 
 # Interim hardening for PHP2Shell (CVE-2026-109618 and CVE-2026-109619, 2026-10-21):
 # upload-progress off and request-size limits. Not a fix; the fix is a base image on
-# PHP 8.3.36 or later, which the official drupal image did not have on the day of the
+# PHP 8.4.27 or later (8.3.36 on the 8.3 line), which the official drupal image did not have on the day of the
 # release. Remove once the base is patched and the exposure is understood.
 COPY package/data/files/usr/local/etc/php/conf.d/zz-mandala-security.ini /usr/local/etc/php/conf.d/zz-mandala-security.ini
 COPY package/data/files/etc/apache2/conf-available/mandala-request-limits.conf /etc/apache2/conf-available/mandala-request-limits.conf
