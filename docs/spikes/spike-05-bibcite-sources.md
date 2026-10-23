@@ -5,7 +5,7 @@
 **Date:** 2026-08-24 (first working session)
 **Commit:** branch `spike/5-bibcite-sources`
 
-**Two of six pass criteria met on evidence; one materially reframed; three not started.**
+**Two of six pass criteria met on evidence; criterion 4 reduced and criterion 5 dropped pending one confirmation (finding 3, 2026-10-23); criterion 6 not started.**
 All findings below are from the D11 package metadata and the production Sources dump
 `mandala-prod-sources-db_2026-06-11.sql.gz` (**2026-06-11, ~2.5 months stale**). Nothing has
 been installed on D11 and no citation output has been compared.
@@ -104,21 +104,46 @@ Ten bibcite types have no D7 usage at all (`bill`, `chart`, `government_report`,
 `legal_ruling`, `miscellaneous_section`, `patent`, `statute`, `unpublished`, `web_service`) —
 harmless, but worth not exposing in the editorial UI.
 
-### 3. The Zotero workflow is live but far smaller than the pass criterion implies — **reframed**
+### 3. The Zotero workflow is dormant in the dump — **criterion 4 reduced, criterion 5 dropped (pending one confirmation)**
 
-Both `biblio_zotero` and `sources_zotero_importer` are **enabled** in production. But the
+Both `biblio_zotero` and `sources_zotero_importer` are **enabled** in production, but the
 `zotero_feed` content type the criterion is built around has exactly **one node**, and
 `biblio_zotero_collections` has **one row**.
 
 The *imported data* is substantial — ~12,817 `field_zotero_tags` rows, ~6,212
-`field_zotero_collections`, ~1,015 `field_zotero_attachment` — so Zotero clearly seeded a large
-share of the corpus historically. What is small is the **ongoing feed configuration**.
+`field_zotero_collections`, ~1,015 `field_zotero_attachment` — so Zotero seeded a share of the
+corpus historically. What is small is the **ongoing feed configuration**.
 
-That materially changes the criterion "a viable Zotero feed management approach exists in
-bibcite": migrating *one* feed definition is a very different problem from migrating a feed
-subsystem. **Whether that single feed is still actively syncing has not been checked** and is
-the next thing to establish — if it is dormant, this criterion may reduce to preserving the
-imported field data, with no live-feed requirement at all.
+**Dormancy check (2026-10-23, against the 2026-06-11 dump; timestamps and structure only, no
+credential fields read):**
+
+- **The feed node** (nid 20812, "Zotero Feed Importer", published) was created 2014-04-28 and
+  last changed 2015-12-01. It has **no rows in any `field_data_*` table**, so its connection
+  settings are not stored on the node and are not visible in the dump. The only `variable` rows
+  mentioning Zotero are per-content-type settings (pathauto, node options, kmaps field
+  settings) — no feed schedule or credential variable. The `queue` table has no Zotero entries.
+- **The imported records:** 1,920 nodes carry Zotero tag/URL fields, **all created 2014-05-12 to
+  2014-09-05** — one import burst, nothing created through Zotero since. Their `changed` dates
+  cluster in 2015 (890), 2016 (54), 2020 (975) and 2023 (1); the 2020 batch looks like a bulk
+  edit rather than a sync, but that was not verified.
+- **The wider corpus** is not Zotero-sourced: most of the 25.6k `biblio` nodes were created
+  2019-2022 (2019: 6,608; 2020: 10,440; 2022: 5,222), the latest on 2025-12-19. Sources is still
+  growing, but not through this feed.
+- **`watchdog`** holds only 20,193 `php`, 6 `cron` and 1 `actions` rows — no Zotero-typed entries,
+  so no log evidence of a recent sync.
+
+**Consequence.** Criterion 4 ("a viable Zotero feed management approach exists in bibcite")
+reduces to **preserving the imported Zotero fields** (tags, collections, attachments, URLs) on
+the migrated nodes; no live feed management is needed. Criterion 5 (Zotero API credentials)
+almost certainly falls away, since nothing has pulled from Zotero since 2014 as far as the dump
+shows.
+
+**Still open before criterion 5 is formally dropped:**
+- The dump is ~4.5 months old. One question to Sources staff ("does anyone still sync from
+  Zotero?") settles it.
+- The feed's actual settings live somewhere not visible in the dump (module config or the feed
+  node's revisions). That is the one place left to look, and it likely holds credentials, so it
+  was deliberately not read.
 
 ### 4. Sources' configured style is `cse`, which bibcite does **not** ship — **gap, solvable**
 
