@@ -236,9 +236,11 @@ confirmed by reading source, not by fetching private content.
 
 > **One access-control question is deliberately not documented here.** Reading
 > `shanti_texts_node_json()` raised a question about the live D7 stack that this public repo is
-> the wrong place for, per [non-public documentation policy](../non-public-documentation.md). It
-> is not known to be exploitable and was not tested against production. **Ask Than Grove**; it
-> belongs in `uvalib/mandala-legacy-docs` if it holds up.
+> the wrong place for, per [non-public documentation policy](../non-public-documentation.md).
+> **Update 2026-10-27:** it was confirmed on 2026-08-21 and filed privately in
+> `uvalib/mandala-legacy-docs` on 2026-08-24 (status open; the D11 fix is tracked in
+> [the uniform endpoint access note](../deferred/d11-asset-endpoints-uniform-access-and-authenticated-fetch.md)).
+> **Ask Than Grove.**
 
 **Evidence scope, stated honestly:** one Sources collection tree (3 nodes across all three
 types) and one Texts book (5 page nids). Random nid sampling on both sites mostly returned
@@ -309,11 +311,10 @@ response contracts; it does not change the scope steer above.
 
 > **Access-control review deliberately not written up here.** Reading these four handlers side by
 > side raised a question about the live D7 stack that this public repo is the wrong place for, per
-> [non-public documentation policy](../non-public-documentation.md). It concerns how these
-> endpoints gate non-public nodes, it was **not** tested against production, and no private
-> content was fetched. **Ask Than Grove**; it belongs in `uvalib/mandala-legacy-docs` if it holds
-> up. This supersedes the narrower pointer in the Sources + Texts verification section, which was
-> one instance of the same question.
+> [non-public documentation policy](../non-public-documentation.md). **Update 2026-10-27:** it has
+> since been confirmed and filed privately (see the note in the Sources + Texts verification
+> section). **Ask Than Grove.** This supersedes the narrower pointer in the Sources + Texts
+> verification section, which was one instance of the same question.
 
 **AV live-verified 2026-08-21 — all six routes are now evidence-based.** Two AV-specific results:
 
