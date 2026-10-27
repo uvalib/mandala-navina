@@ -5,10 +5,11 @@
 **Date:** 2026-08-24 (first working session)
 **Commit:** branch `spike/5-bibcite-sources`
 
-**Two of six pass criteria met on evidence; criterion 4 reduced and criterion 5 dropped pending one confirmation (finding 3, 2026-10-23); criterion 6 not started.**
-All findings below are from the D11 package metadata and the production Sources dump
-`mandala-prod-sources-db_2026-06-11.sql.gz` (**2026-06-11, ~2.5 months stale**). Nothing has
-been installed on D11 and no citation output has been compared.
+**Updated 2026-10-27 (bibcite 3.1.2 installed locally in DDEV only; nothing committed to composer or config).**
+Criteria 1, 2 met; 3 met for CSE (both prepared styles import and render); 4 reduced and 5 dropped
+pending one staff confirmation (finding 3); 6 sampled on one node (finding 6), not yet broad.
+Counts come from the production Sources dump `mandala-prod-sources-db_2026-06-11.sql.gz`
+(**2026-06-11, ~4.5 months stale**).
 
 ## Theory
 The `bibcite` module on Drupal 11 supports all reference types currently in use on
@@ -207,6 +208,29 @@ bundle's **form display** (`content` vs `hidden`); the comparison below uses tha
 - **Not checked:** how field *values* map into CSL (`bibcite_entity.mapping.csl` `fields:`),
   which is part of criterion 6.
 
+### 6. CSE output renders and is comparable to D7, on a sample of one — **criterion 3 met for CSE; criterion 6 started** (2026-10-27)
+
+Imported both prepared CSE styles into the local install and rendered nid 25581 (a journal
+article) from its D7 row via `bibcite.citation_styler`:
+
+| Source | Output |
+|---|---|
+| D7 `cse` baseline | `[Anonymous]. 2017. A Theoretically and Ethically Grounded Approach to Mindfulness Practices in the Primary Grades.. Childhood Education. :100-108.` |
+| bibcite, CSE 9th ed. | `Moreno AJ. 2017. A Theoretically and Ethically Grounded Approach to Mindfulness Practices in the Primary Grades. Childhood Education. 100–108` |
+| bibcite, CSE 8th ed. | `Moreno AJ. 2017. A Theoretically and Ethically Grounded Approach to Mindfulness Practices in the Primary Grades. Childhood Education.:100–108.` |
+
+- **bibcite is the better output, not just a different one.** The D7 baseline prints
+  `[Anonymous]` although the node has an author (`Moreno, A. J.`, primary, in the dump), doubles
+  the period after the title and leads the pages with a stray colon. A migration that "matches D7"
+  byte for byte would reproduce those defects.
+- **The 8th-edition style is the closest match to D7's shape** (`Journal.:pages.`); the 9th
+  drops the trailing period. Which edition Sources wants is a stakeholder call.
+- **Differences to expect everywhere:** en dash in page ranges where D7 has a hyphen, and author
+  initials without periods (`AJ`, correct CSE).
+- **Limits:** one node, one type, one style family. Not yet checked: books, chapters, the four
+  custom types, multi-author lists, and the other seven styles reachable through
+  `sources-api/ajax/{nid}/cite/{style}` (apa, chicago, mla, ama, harvard, vancouver, ieee).
+
 ## Handoff for the Sources migration (Xiaoming)
 
 The spike installed bibcite locally in DDEV only; **no composer or config change is committed**,
@@ -225,18 +249,14 @@ because a spike should not change the production image. When the Sources migrati
 
 ## What this does NOT establish
 
-- **Citation styles** (criterion 3) — see finding 4 below; the shipped set does **not** include
-  the style Sources actually uses. Note [Spike 6](spike-06-api-compatibility.md)
-  found `sources-api/ajax/{nid}/{type}` renders citations with the biblio style taken from
-  `arg(4)`, so the set of styles actually reachable is broader than the site's default and needs
-  enumerating from that route as well as from config.
+- **The seven non-CSE styles** reachable through the citation route (finding 6) — not rendered.
 - **Zotero API credentials** (criterion 5) — not tested, and deliberately not extracted here.
-- **Citation output comparison** (criterion 6) — needs bibcite installed and a D7 baseline;
-  nothing has been rendered.
-- **Whether the type mapping survives contact with the data.** Name-level 1:1 correspondence
-  is not field-level compatibility. bibcite's per-type field sets have not been compared against
-  D7's `biblio_field_type_data`, and the [endpoint-field-inventories-are-lower-bounds](../deferred/endpoint-field-inventories-are-lower-bounds.md)
-  caution applies with equal force here.
+- **Broad citation output comparison** (criterion 6) — one node sampled (finding 6); books,
+  chapters, multi-author lists and the four custom types are not.
+- **How D7 values map into CSL fields** (`bibcite_entity.mapping.csl` `fields:`) beyond the
+  fields exercised in finding 6, and which CSL targets the custom types should use (finding 2a).
+- **Whether the migrated Zotero fields survive** — criterion 4 is reduced to preserving them but
+  that has not been exercised.
 - **Staleness.** All counts come from a 2026-06-11 dump. Directionally reliable, not current.
 
 ## Deferred notes
