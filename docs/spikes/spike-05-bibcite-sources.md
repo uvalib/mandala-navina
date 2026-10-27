@@ -183,6 +183,30 @@ Two things widen this question:
   engine's "CSE" for another's, and the output will not be byte-identical. That makes criterion
   6 (output comparability) the place where this actually gets settled.
 
+### 5. Field sets: nothing is lost in storage; the default edit forms hide populated D7 fields — **PASS with named config work** (2026-10-27)
+
+Method: loaded the 2026-06-11 dump into a scratch database, counted per D7 type which `biblio`
+columns are non-empty, and compared against the matching bibcite type on the local install.
+(A first pass compared against the type config's `fields:` list and found "no gaps" — vacuous,
+because every bibcite type lists the same 49 fields. Per-type visibility actually lives in each
+bundle's **form display** (`content` vs `hidden`); the comparison below uses that.)
+
+- **Storage:** every bibcite type carries the same 49-field pool, and every D7 data column has a
+  `bibcite_*` counterpart (only the derived `sort_title`, `full_text`, `coins`, `md5`, `formats`
+  do not). Nothing is unmappable.
+- **Editing:** bibcite's default form displays hide fields D7 populates. By volume: `citekey`
+  (every row; bibcite normally generates it from `citekey_pattern`, so migrate or regenerate is a
+  decision), `lang` (5,305 on journal articles), `remote_db_provider` (5,867), `notes` (2,729),
+  `date` (3,627 on books), `access_date`, and `type_of_work`, `publisher`, `place_published` on
+  several types. The data would store, but editors could not see or change it. Fixing this is
+  form-display config per type, no code.
+- **Custom types** must enable what their D7 rows populate. Review: `other_number`,
+  `secondary_title`, `type_of_work`, `date`, `isbn`, `issue`, `volume`, `pages`, `publisher`.
+  Dictionary: `custom3` (166 rows) plus the usual. Block Print: `custom1`–`custom4`,
+  `custom6`, `number_of_volumes` (105), `short_title`, `section`. Obituary: the Review set.
+- **Not checked:** how field *values* map into CSL (`bibcite_entity.mapping.csl` `fields:`),
+  which is part of criterion 6.
+
 ## Handoff for the Sources migration (Xiaoming)
 
 The spike installed bibcite locally in DDEV only; **no composer or config change is committed**,
