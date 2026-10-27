@@ -38,8 +38,7 @@ migration (Xiaoming)").
 - DDEV has bibcite 3.1.2 enabled and `drupal/composer.json` + `composer.lock` modified, uncommitted.
   `ddev drush config:status` will show bibcite config as "Only in DB"; expected here, and
   `session-start-check.sh` may flag it. Do not export it.
-- Scratch DB `spike5_d7` (the 2026-06-11 Sources dump) is on DDEV's DB server; drop it with
-  `ddev mysql -e "DROP DATABASE spike5_d7"` when done. DDEV snapshot `pre-spike5-test` also remains.
+- The scratch DB `spike5_d7` (the 2026-06-11 Sources dump) and the DDEV snapshot `pre-spike5-test` were **dropped at the end of the session**. For the broader render pass, reload the dump into a scratch database (`gzip -dc ~/Sandbox/Mandala/data/mandala-prod-sources-db_2026-06-11.sql.gz | ddev mysql <db>`; macOS `zcat` wants `.Z`).
 - Other open items untouched: PR #378 (PHP 8.4), PR #381 and issues #380/#382 (Yuji's cutover review).
 
 ---
