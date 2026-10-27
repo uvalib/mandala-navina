@@ -6,8 +6,10 @@
 **Commit:** branch `spike/5-bibcite-sources`
 
 **Updated 2026-10-27 (bibcite 3.1.2 installed locally in DDEV only; nothing committed to composer or config).**
-Criteria 1, 2 met; 3 met for CSE (both prepared styles import and render); 4 reduced and 5 dropped
-pending one staff confirmation (finding 3); 6 sampled on one node (finding 6), not yet broad.
+Criteria 1, 2 met; 3 met for CSE (both prepared styles import and render); 4 met as a design with a
+working throwaway prototype (finding 7: the API pull is custom, bibcite supplies none); 5 partly
+(public-library API access needs no credentials and works; a keyed private library is untested);
+6 sampled on one node plus a 40-item Zotero sample (findings 6, 7), not yet broad.
 Counts come from the production Sources dump `mandala-prod-sources-db_2026-06-11.sql.gz`
 (**2026-06-11, ~4.5 months stale**).
 
@@ -118,7 +120,7 @@ Ten bibcite types have no D7 usage at all (`bill`, `chart`, `government_report`,
 `legal_ruling`, `miscellaneous_section`, `patent`, `statute`, `unpublished`, `web_service`) —
 harmless, but worth not exposing in the editorial UI.
 
-### 3. The Zotero workflow is dormant in the dump — **criterion 4 reduced, criterion 5 dropped (pending one confirmation)**
+### 3. The Zotero feed has been dormant since 2014 in the dump — **but the capability is wanted; see finding 7**
 
 Both `biblio_zotero` and `sources_zotero_importer` are **enabled** in production, but the
 `zotero_feed` content type the criterion is built around has exactly **one node**, and
@@ -146,18 +148,16 @@ credential fields read):**
 - **`watchdog`** holds only 20,193 `php`, 6 `cron` and 1 `actions` rows — no Zotero-typed entries,
   so no log evidence of a recent sync.
 
-**Consequence.** Criterion 4 ("a viable Zotero feed management approach exists in bibcite")
-reduces to **preserving the imported Zotero fields** (tags, collections, attachments, URLs) on
-the migrated nodes; no live feed management is needed. Criterion 5 (Zotero API credentials)
-almost certainly falls away, since nothing has pulled from Zotero since 2014 as far as the dump
-shows.
+**Consequence (revised 2026-10-27).** This section first read the dormant feed as "criterion 4
+reduces to preserving imported fields, criterion 5 drops". Than clarified the requirement: **the
+capability itself is wanted**, as in D7: a privileged user imports a Zotero bibliography and each
+entry becomes a record. Dormancy only says nobody has *used* it since 2014. Criteria 4 and 5 are
+live again and are addressed in finding 7.
 
-**Still open before criterion 5 is formally dropped:**
-- The dump is ~4.5 months old. One question to Sources staff ("does anyone still sync from
-  Zotero?") settles it.
-- The feed's actual settings live somewhere not visible in the dump (module config or the feed
-  node's revisions). That is the one place left to look, and it likely holds credentials, so it
-  was deliberately not read.
+**Still open:**
+- Whether anyone on the Sources side uses Zotero today (ask Sources staff).
+- The feed's actual library and settings live in D7's per-feed Feeds config, not in the dump,
+  and likely include a key. Deliberately not read.
 
 ### 4. Sources' configured style is `cse`, which bibcite does **not** ship — **gap, solvable**
 
@@ -231,6 +231,70 @@ article) from its D7 row via `bibcite.citation_styler`:
   custom types, multi-author lists, and the other seven styles reachable through
   `sources-api/ajax/{nid}/cite/{style}` (apa, chicago, mla, ama, harvard, vancouver, ieee).
 
+### 7. Zotero import: admin-only API pull, each entry a `bibcite_reference` — **design proven by a throwaway prototype** (2026-10-27)
+
+**Requirement (Than):** a way for privileged users, **admins only to start**, to import a Zotero
+bibliography into Sources, converting each entry into a record. Chosen record model: **bibcite's
+own** (`bibcite_reference` entities, one bundle per reference type), not nodes.
+
+**What D7 did.** A Feeds importer attached to a `zotero_feed` node type: an editor created a feed
+node holding the library (user or group), numeric id, optional collection key and an API key
+(stored per feed in the database), and the feed re-imported on create and every 30 minutes. It
+read Zotero's old v2 Atom API, mapped item type to biblio type (`ZoteroBiblioMap.inc`;
+unsupported Zotero types went to Miscellaneous), creators to contributors (editor/translator keep
+their role, an institution becomes a corporate contributor), tags and collections to two taxonomy
+vocabularies, links to an attachment field, and skipped notes and attachments. It matched
+existing records on the Zotero item key and updated them; nothing was deleted. Who was allowed to
+run it was not recoverable from the code (only generic node-type and Feeds permissions).
+
+**What bibcite gives.** `bibcite_import` is **file upload only** (BibTeX, RIS, EndNote, MARC); no
+Zotero API pull, no re-sync, no tags, collections or attachments. So the pull is custom either
+way. bibcite contributes the type list, contributors, keywords and CSL rendering.
+
+**Prototype** (`docs/spikes/assets/spike-05-bibcite/zotero-prototype/`; throwaway, local DDEV only,
+not a module): a Zotero API v3 client, a pure-PHP item mapper and a Drush writer.
+- **Zotero API v3 works for a public library with no credentials**, returns JSON, pages through a
+  `Link: rel="next"` header, exposes `Total-Results` and a per-library `version`, and supports a
+  `since` parameter, so an import can be incremental where D7 re-fetched everything every run. The
+  `itemType` filter accepts only **one** negation (`-attachment`); standalone notes are skipped in
+  the mapper.
+- **Mapper:** on a public library of 164 top-level items, 163 mapped (1 standalone note skipped).
+  Item types seen: book, journalArticle, webpage, newspaperArticle, film, conferencePaper,
+  artwork, manuscript, plus two that D7's table also did not support (`blogPost`,
+  `encyclopediaArticle`), which fall back to `miscellaneous`. Extending the type table is cheap.
+- **Writer:** upsert keyed on the Zotero item key. Run on 40 items: 40 created; an immediate
+  re-run 40 unchanged; after editing one record locally, a re-run updated exactly that one and the
+  next run showed 40 unchanged. The check compares stored values, so it can fail (it did detect the
+  edit). Zotero **tags map naturally onto bibcite keywords**.
+- **Rendering:** the imported references render through the CSE style, e.g.
+  `Mann T. 2008. The Peloponnesian War and the future of reference, cataloging, and scholarship in research libraries. Journal of Library Metadata. 8(1):53–100.`
+  The prototype's test references, contributors, keywords and styles were deleted afterwards.
+
+**Gaps the prototype exposed**
+- **Dedup key needs a dedicated field.** The prototype reused `bibcite_remote_db_name`, which D7
+  populated on real rows, to avoid a config change. Production needs its own field for the Zotero
+  item key (and the library), and should also keep the item `version` for `since` pulls.
+- **Zotero collections have no stock home.** D7 kept them as a vocabulary; bibcite has nothing
+  equivalent (tags map to keywords). Whether Sources still wants them is a decision.
+- **Observed, not isolated:** rendering emitted `field "original-date" has invalid values
+  (month=1, day=1)` for some items. It did not reproduce on a journal article with or without the
+  prototype's raw `bibcite_date`; D7 mapped Zotero's free-text date to year only. Check in the
+  broader render pass before storing raw dates.
+
+**Production design (for Xiaoming, not built):** an admin-only form behind its own permission
+(widen to editors later with one permission); the API key held outside `config/sync` and outside
+any node (Key module or environment); run as a batch or queue; idempotent upsert on the item key;
+incremental via `since`. Open: on-demand only, or the D7 30-minute re-sync.
+
+**Consequences of using `bibcite_reference` instead of nodes** (stated from reading, **not
+verified**; they affect the whole Sources migration, not only Zotero): there is no nid, so old
+`sources-api/ajax/{nid}/...` routes resolve via a legacy-nid field (ADR 017); D7 collections and
+access were OG on nodes, and Group needs a relationship plugin for `bibcite_reference` (it ships
+node support), else access falls back to bibcite permissions; the KMaps field should attach to
+reference bundles but is untested; `mandala_node_api`, the kmassets sync hooks and
+`mandala_solr_visibility` assume nodes and need reference-aware versions; editing, display and
+views come from bibcite's admin pages. **Xiaoming and Yuji should be told of this model choice.**
+
 ## Handoff for the Sources migration (Xiaoming)
 
 The spike installed bibcite locally in DDEV only; **no composer or config change is committed**,
@@ -250,13 +314,14 @@ because a spike should not change the production image. When the Sources migrati
 ## What this does NOT establish
 
 - **The seven non-CSE styles** reachable through the citation route (finding 6) — not rendered.
-- **Zotero API credentials** (criterion 5) — not tested, and deliberately not extracted here.
+- **A keyed (private) Zotero library** (criterion 5) — only a public library was fetched; the
+  credential path is untested and no real key was read or used.
 - **Broad citation output comparison** (criterion 6) — one node sampled (finding 6); books,
   chapters, multi-author lists and the four custom types are not.
 - **How D7 values map into CSL fields** (`bibcite_entity.mapping.csl` `fields:`) beyond the
   fields exercised in finding 6, and which CSL targets the custom types should use (finding 2a).
-- **Whether the migrated Zotero fields survive** — criterion 4 is reduced to preserving them but
-  that has not been exercised.
+- **Migrating the existing 2014 Zotero data** (tags, collections, attachments on ~1.9k nodes) —
+  the prototype imports new Zotero entries, not the D7 history.
 - **Staleness.** All counts come from a 2026-06-11 dump. Directionally reliable, not current.
 
 ## Deferred notes
