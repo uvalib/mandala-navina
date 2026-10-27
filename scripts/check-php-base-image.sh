@@ -13,15 +13,15 @@
 # Usage:
 #   ./scripts/check-php-base-image.sh                 # tag dates only (fast, no pull)
 #   ./scripts/check-php-base-image.sh --verify        # pull the drupal tag and read its real PHP version
-#   MIN_PHP=8.3.36 ./scripts/check-php-base-image.sh --verify
+#   MIN_PHP=8.4.27 ./scripts/check-php-base-image.sh --verify
 #
 # Without --verify it can only say whether the `drupal` tag was rebuilt after the `php` tag
 # (a necessary, not sufficient, sign), so it exits 1 until it can prove the version.
 set -euo pipefail
 
-DRUPAL_TAG="${DRUPAL_TAG:-11-php8.3-apache}"
-PHP_TAG="${PHP_TAG:-8.3-apache}"
-MIN_PHP="${MIN_PHP:-8.3.36}"
+DRUPAL_TAG="${DRUPAL_TAG:-11-php8.4-apache}"
+PHP_TAG="${PHP_TAG:-8.4-apache}"
+MIN_PHP="${MIN_PHP:-8.4.27}"
 VERIFY=0
 [ "${1:-}" = "--verify" ] && VERIFY=1
 

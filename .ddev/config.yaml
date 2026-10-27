@@ -2,7 +2,7 @@ name: mandala
 type: drupal11
 docroot: drupal/web
 composer_root: drupal
-php_version: "8.3"
+php_version: "8.4"
 webserver_type: apache-fpm
 database:
   # Match the staging/prod RDS engine (MySQL 8.4) so local runs validate under

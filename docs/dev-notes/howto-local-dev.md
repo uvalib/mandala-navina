@@ -13,7 +13,7 @@ rebuild it from a clean state.
 - [DDEV](https://ddev.readthedocs.io/) and Docker installed.
 - Run all commands from the **repo root**. DDEV is configured here
   (`.ddev/config.yaml`): project `mandala`, `drupal11`, docroot `drupal/web`,
-  composer root `drupal`, PHP 8.3, MariaDB 10.11.
+  composer root `drupal`, PHP 8.4, MariaDB 10.11.
 
 ## First-time setup
 
