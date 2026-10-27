@@ -87,8 +87,8 @@ CSL vocabulary is the full CSL type list — which contains precise targets for 
 |---|---|---|
 | Review | `review-book` | exact — CSL has a dedicated book-review type |
 | Dictionary | `entry-dictionary` | exact |
-| Obituary | `article-newspaper` | good |
-| Block Print | `manuscript` | closest available; renders as a hand-produced artifact |
+| Obituary | `article-newspaper` — **taken, see below; needs an unused target** | not usable as written |
+| Block Print | `manuscript` — **taken, see below; needs an unused target** | not usable as written |
 
 So the fail-criteria row *"a critical reference type is missing → assess whether a custom
 bundle can fill the gap"* resolves affirmatively: **a custom bundle can fill all four gaps,
@@ -96,9 +96,22 @@ config-only, with correct CSL rendering.** `Block Print` is the only one where t
 is an approximation rather than a match — acceptable, since CSL has no xylograph concept and
 `manuscript` carries the right physical-artifact semantics.
 
-**Not yet verified:** that the CSL mapping UI accepts a *custom* reference type id (the form
-builds its type list from a fixed CSL vocabulary, but the mapping is per-reference-type — this
-needs confirming against a real install, not source reading).
+**Verified on a real install (2026-10-27, bibcite 3.1.2 in DDEV).** A custom reference type
+is accepted: `CslMappingForm` takes its CSL side from a fixed list (which does contain
+`review-book` and `entry-dictionary`) and builds the reference-type dropdown from entity
+storage, so config-only types appear in it. Creating a `review` type and mapping
+`review-book` to it rendered it as `review-book`.
+
+**But the mapping is one-to-one, and two of the targets above are already taken.** The
+mapping config (`bibcite_entity.mapping.csl`, `types:`) is keyed by CSL type with one
+reference type per key, and the normalizer inverts it with `array_flip`. The shipped mapping
+already sends `article-newspaper` to `newspaper_article` and `manuscript` to `manuscript`.
+Mapping Obituary onto `article-newspaper` was tested: `obituary` rendered correctly, but
+`newspaper_article` lost its mapping and silently fell back to the default type. So
+**Obituary and Block Print need unused CSL targets** (candidates not used by any shipped
+type: `article`, `entry`, `pamphlet`, `graphic`, `post`; choice is open and belongs with the
+criterion 6 output comparison). Review and Dictionary are unaffected, since `review-book` and
+`entry-dictionary` have no existing mapping.
 
 Ten bibcite types have no D7 usage at all (`bill`, `chart`, `government_report`, `hearing`,
 `legal_ruling`, `miscellaneous_section`, `patent`, `statute`, `unpublished`, `web_service`) —
@@ -169,6 +182,22 @@ Two things widen this question:
   plugins; bibcite is CSL-only. So this is not a rename — it is a substitution of one rendering
   engine's "CSE" for another's, and the output will not be byte-identical. That makes criterion
   6 (output comparability) the place where this actually gets settled.
+
+## Handoff for the Sources migration (Xiaoming)
+
+The spike installed bibcite locally in DDEV only; **no composer or config change is committed**,
+because a spike should not change the production image. When the Sources migration starts:
+
+1. `composer require drupal/bibcite:^3.1` (3.1.2 tested; pulls in `drupal/token`,
+   `seboettg/citeproc-php` and the CSL styles/locales packages), then enable `bibcite`,
+   `bibcite_entity`, `bibcite_import`, `bibcite_export`. Export the resulting config from a live
+   Drupal; never hand-edit it.
+2. Create the four custom reference types (Review, Dictionary, Obituary, Block Print) as config.
+   Model Block Print on the shipped `manuscript` type.
+3. Map each to its **own** CSL type: the CSL mapping is one-to-one (see finding 2a), so Review
+   gets `review-book` and Dictionary `entry-dictionary`; Obituary and Block Print need unused
+   targets, to be chosen in the criterion 6 output comparison.
+4. Import the prepared CSE styles from `docs/spikes/assets/spike-05-bibcite/`.
 
 ## What this does NOT establish
 
