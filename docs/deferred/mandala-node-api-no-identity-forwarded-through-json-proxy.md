@@ -6,6 +6,9 @@
 **Priority:** Medium — Sprint 1 (Images) is mostly public collections, so low blast radius today;
 becomes real once private-collection content needs to be viewable via the React app's detail view
 **Owner:** unassigned
+**Cutover review:** pending (flagged 2026-10-27). The question for the review: does anything at cutover
+need private-collection asset detail views in the React app? If yes, build the direction in
+[Spike 12](../spikes/spike-12-authenticated-asset-fetch.md); if no, record this as a known limitation.
 
 ## What we found
 

@@ -35,6 +35,22 @@ Rules:
 notes missing an `**Issue:**` header. Existing notes get the header as they are next touched —
 there is no bulk backfill.
 
+## Cutover review (decided 2026-10-27)
+
+Before the D7 → D11 cutover we review a list of deferrals and decide, for each, whether it must
+be done before cutover. This is a **flag on the existing notes**, not a second list.
+
+- **Flag:** add `**Cutover review:** pending` to the note's header. Flag only items someone
+  deliberately wants decided; this is not a sweep of every deferral.
+- **Track:** put the `cutover-review` label on the note's issue (promote the note first if it has
+  none). One umbrella issue, [#380](https://github.com/uvalib/mandala-navina/issues/380) *Pre-cutover review of deferred items*, holds the decision log as
+  comments, the same pattern as the periodic review in #300.
+- **Decide at the review**, per item: `before-cutover` (with an owner), `after-cutover`, or
+  `dropped`. Update the header to `**Cutover review:** decided <date> — <value>: <one-line reason>`.
+  For `after-cutover`, the reason states what users or operators will live with until it ships.
+- **A deferral is not a decision.** A note whose own text says "no option chosen yet" stays
+  `pending` until the review chooses.
+
 ## Naming convention
 
 `CATEGORY-or-topic-short-description.md` (the file name is free-form; the `Category` header is what classifies the note)
