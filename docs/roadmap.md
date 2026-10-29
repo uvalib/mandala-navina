@@ -143,6 +143,9 @@ Now the deliberate parallelism earns its keep — each owner takes an independen
     other.
 - **Spike 6 — API URL strategy** + React app reconciliation: the cutover gate
   (single domain vs. subdomain aliases vs. 301 redirects).
+- **Legacy decommission item:** interim measures put in place on the legacy hosts must be retired
+  when those hosts are shut down. The checklist is tracked privately (`mandala-legacy-docs`, with a stub
+  in `mandala-navina-docs`); ask Yuji Shinozaki. Raise it in the cutover review ([#380](https://github.com/uvalib/mandala-navina/issues/380)).
 
 ## Open question (resolve before Phase 3 scoping)
 
