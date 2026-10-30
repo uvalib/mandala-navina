@@ -1,0 +1,139 @@
+<?php
+
+/**
+ * @file
+ * THROWAWAY Spike 5 proof of concept (local DDEV only; never merge).
+ *
+ * Access: the same rule mandala_group_inheritance applies to nodes, applied to
+ * bibcite_reference by resolving through CollectionVisibility, which already
+ * accepts any EntityInterface. Note what had to be copied: the entity-type
+ * guard and the bundle discovery in mandala_group_inheritance_entity_access()
+ * are node-only.
+ */
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\mandala_group_inheritance\Access\CollectionVisibility;
+
+/**
+ * Implements hook_entity_access().
+ */
+function spike5_bibcite_poc_entity_access(EntityInterface $entity, $operation, AccountInterface $account) {
+  if ($operation !== 'view' || $entity->getEntityTypeId() !== 'bibcite_reference') {
+    return AccessResult::neutral();
+  }
+  if (CollectionVisibility::hasNodeBypass($account)) {
+    return AccessResult::neutral()->cachePerPermissions();
+  }
+  $group = CollectionVisibility::owningGroup($entity);
+  if (!$group) {
+    return AccessResult::neutral()->addCacheableDependency($entity);
+  }
+  $visibility = CollectionVisibility::forNode($entity, $group);
+  if (CollectionVisibility::allows($visibility, $account, $group)) {
+    return AccessResult::neutral()->addCacheableDependency($group)->addCacheableDependency($entity);
+  }
+  return AccessResult::forbidden("Reference is $visibility; account not allowed.")
+    ->addCacheableDependency($group)->addCacheableDependency($entity)->cachePerUser();
+}
+
+/**
+ * Implements hook_query_TAG_alter() for the bibcite_reference_access tag.
+ *
+ * THROWAWAY port of mandala_group_inheritance's NodeQueryAlter: the listings
+ * half of the same rule. EntityQuery (accessCheck TRUE) and Views tag queries
+ * with {entity_type}_access; nothing else filters them. Differences from the
+ * node version: base table, plugin id, and no per-record override field (a
+ * reference has no field_group_content_access), so visibility is the group's.
+ */
+function spike5_bibcite_poc_query_bibcite_reference_access_alter(Drupal\Core\Database\Query\AlterableInterface $query) {
+  if (!$query instanceof Drupal\Core\Database\Query\SelectInterface) {
+    return;
+  }
+  $account = $query->getMetaData('account') ?: \Drupal::currentUser();
+  if (CollectionVisibility::hasNodeBypass($account)) {
+    return;
+  }
+  $base = NULL;
+  foreach ($query->getTables() as $alias => $info) {
+    if (!($info['table'] instanceof Drupal\Core\Database\Query\SelectInterface) && in_array($info['table'], ['bibcite_reference', 'bibcite_reference_field_data'], TRUE)) {
+      $base = $alias;
+      break;
+    }
+  }
+  if ($base === NULL) {
+    return;
+  }
+  $grel = $query->leftJoin('group_relationship_field_data', 'spk_rel', "%alias.entity_id = $base.id AND %alias.plugin_id = 'group_bibcite_reference'");
+  $gfa = $query->leftJoin('group__field_group_access', 'spk_gfa', "%alias.entity_id = $grel.gid AND %alias.deleted = 0");
+  $vis = CollectionVisibility::groupVisibilityExpression($gfa);
+  $allowed = $query->orConditionGroup()
+    ->isNull("$grel.gid")
+    ->where("$vis = :spk_public", [':spk_public' => CollectionVisibility::CODE_PUBLIC]);
+  if ($account->isAuthenticated()) {
+    $allowed->where("$vis = :spk_uva", [':spk_uva' => CollectionVisibility::CODE_UVA]);
+    $gids = [];
+    $s = \Drupal::entityTypeManager()->getStorage('group_relationship');
+    foreach ($s->loadMultiple($s->getQuery()->accessCheck(FALSE)->condition('plugin_id', 'group_membership')->condition('entity_id', $account->id())->execute()) as $m) {
+      $gids[] = (int) $m->getGroupId();
+    }
+    if ($gids) {
+      $allowed->condition($query->andConditionGroup()
+        ->where("$vis = :spk_private", [':spk_private' => CollectionVisibility::CODE_PRIVATE])
+        ->condition("$grel.gid", $gids, 'IN'));
+    }
+  }
+  $query->condition($allowed);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view_alter() for bibcite_reference (full view).
+ *
+ * THROWAWAY: renders the field order of the D7 Sources record page (node
+ * 21045 as pasted 2026-10-30). Production would be a dedicated view mode or
+ * template with real labels and theming; this only shows every D7 element has
+ * a source on a reference.
+ */
+function spike5_bibcite_poc_bibcite_reference_view_alter(array &$build, Drupal\Core\Entity\EntityInterface $entity, Drupal\Core\Entity\Display\EntityViewDisplayInterface $display) {
+  if (!in_array($display->getMode(), ['default', 'table'], TRUE)) {
+    return;
+  }
+  $val = fn($f) => $entity->hasField($f) && !$entity->get($f)->isEmpty() ? $entity->get($f)->value : NULL;
+  $group = CollectionVisibility::owningGroup($entity);
+  $vis = $group ? CollectionVisibility::forNode($entity, $group) : 'public';
+  $authors = [];
+  foreach ($entity->get('author') as $item) {
+    if ($c = $item->entity) {
+      $authors[] = trim($c->get('first_name')->value . ' ' . $c->get('last_name')->value) . ' (' . ucfirst($item->role ?: 'author') . ')';
+    }
+  }
+  $type = \Drupal::entityTypeManager()->getStorage('bibcite_reference_type')->load($entity->bundle());
+  $terms = [];
+  foreach ($entity->get('field_zotero_collections')->referencedEntities() as $t) {
+    $terms[] = $t->label();
+  }
+  $subjects = [];
+  foreach ($entity->get('field_kmaps_subjects') as $i) {
+    $subjects[] = $i->get('header')->getValue();
+  }
+  $row = fn($l, $v) => $v === NULL || $v === '' ? '' : '<div class="poc-row"><strong>' . $l . ':</strong> ' . $v . '</div>';
+  $html = '<div class="poc-d7-record">'
+    . '<h2>' . htmlspecialchars($entity->label()) . '</h2>'
+    . ($val('bibcite_secondary_title') ? '<h3>' . htmlspecialchars($val('bibcite_secondary_title')) . '</h3>' : '')
+    . ($authors ? '<div>' . htmlspecialchars(implode('; ', $authors)) . '</div>' : '')
+    . $row('Format', htmlspecialchars($type ? $type->label() : $entity->bundle()))
+    . $row('Publication Year', htmlspecialchars((string) $val('bibcite_year')))
+    . $row('Pages', htmlspecialchars((string) $val('bibcite_pages')))
+    . $row('Sources ID', htmlspecialchars((string) $val('field_legacy_nid')))
+    . $row('Visibility', ucfirst($vis === 'public' ? 'Public' : ($vis === 'private' ? 'Private' : 'UVA')))
+    . $row('Zotero Collections', htmlspecialchars(implode(', ', $terms)))
+    . ($val('bibcite_abst_e') ? '<details><summary>Abstract: (Show)</summary>' . $val('bibcite_abst_e') . '</details>' : '')
+    . ($val('bibcite_url') ? $row('URL', '<a href="' . htmlspecialchars($val('bibcite_url')) . '">' . htmlspecialchars($val('bibcite_url')) . '</a>') : '')
+    . ($terms ? '<h4>Zotero Collections</h4><ul><li>' . htmlspecialchars(implode('</li><li>', $terms)) . '</li></ul>' : '')
+    . ($subjects ? '<h4>Subjects:</h4><ul><li>' . htmlspecialchars(implode('</li><li>', $subjects)) . '</li></ul>' : '')
+    . '</div>';
+  // Keep the '#...' keys core's title callback reads (#entity_type etc).
+  $build = array_filter($build, fn($k) => is_string($k) && str_starts_with($k, '#') && !in_array($k, ['#theme', '#pre_render'], TRUE), ARRAY_FILTER_USE_KEY)
+    + ['poc_d7' => ['#markup' => \Drupal\Core\Render\Markup::create($html)]];
+}

@@ -159,7 +159,9 @@ Grouped by each note's **first** `Category` value (a note appears once; its othe
 
 ### Migration: Sources (`migration-sources`)
 
-None.
+| File | Categories | Owner | Raised | Priority |
+|---|---|---|---|---|
+| [sources-record-display-parity-check-d7-subtypes.md](sources-record-display-parity-check-d7-subtypes.md) | migration-sources | unassigned | Spike 5, session 2026-10-30 | High (trigger: building the Sources record page) |
 
 ### Migration: cross-site (`migration-general`)
 
