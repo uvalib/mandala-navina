@@ -1,5 +1,5 @@
 # Spike 5: bibcite for the Sources Site
-**Status:** ◐ **Partial — desk research done 2026-08-24; nothing installed or run yet**
+**Status:** ✅ **Complete — 2026-10-30.** Sources will use `bibcite_reference` entities ([ADR 020](../adr/020-sources-records-are-bibcite-reference-entities.md)); the model question is closed by a local proof of concept (findings 8, 9). Remaining checks are Sources-build tasks, listed under "Carried to the Sources build".
 **Lead:** Than Grove (reassigned from Xiaoming, 2026-07-22, by mutual agreement)
 **Mode:** Individual
 **Date:** 2026-08-24 (first working session)
@@ -12,6 +12,25 @@ working throwaway prototype (finding 7: the API pull is custom, bibcite supplies
 6 sampled on one node plus a 40-item Zotero sample (findings 6, 7), not yet broad.
 Counts come from the production Sources dump `mandala-prod-sources-db_2026-06-11.sql.gz`
 (**2026-06-11, ~4.5 months stale**).
+
+## Resolution (2026-10-30)
+
+**Decision (Than, individual; open to review by Xiaoming and Yuji):** build Sources on bibcite's own
+`bibcite_reference` entities, not nodes. Recorded as
+[ADR 020](../adr/020-sources-records-are-bibcite-reference-entities.md). The deciding evidence is the
+proof of concept in findings 8 and 9: legacy-key redirect and `/sources/{id}` paths, Group access,
+listing enforcement, the Solr visibility filter and a D7-style record display all work on a
+reference, and the code that has to change is named and bounded.
+
+**Other decisions made on 2026-10-30:** CSE **9th** edition; **migrate the D7 citekeys**; **keep
+Zotero Collections**; a **dedicated Zotero item-key field**; Zotero import **on-demand only**
+(admin-only to start). Each is recorded where the finding appears below.
+
+**Criteria, final state:** 1 and 2 met (findings 1, 2). 3 met for CSE, 9th edition chosen (finding
+6). 4 met as a design with a working prototype (finding 7). 5 partly: the public-library path works,
+a keyed library is untested (carried). 6 sampled (finding 6) and the record display proven
+structurally (finding 9), but the broad citation render pass was **not run** here (carried). The
+spike closes on the model decision, not on every criterion being exhaustively checked.
 
 ## Theory
 The `bibcite` module on Drupal 11 supports all reference types currently in use on
@@ -307,7 +326,7 @@ access were OG on nodes, and Group needs a relationship plugin for `bibcite_refe
 node support), else access falls back to bibcite permissions; the KMaps field should attach to
 reference bundles but is untested; `mandala_node_api`, the kmassets sync hooks and
 `mandala_solr_visibility` assume nodes and need reference-aware versions; editing, display and
-views come from bibcite's admin pages. **Xiaoming and Yuji should be told of this model choice.**
+views come from bibcite's admin pages. **Xiaoming and Yuji should be told of this model choice** (done through ADR 020; still ask them to read it).
 
 ### 8. Legacy-key redirect and `/sources/{id}` paths work on `bibcite_reference`; the display requirement (2026-10-30)
 
@@ -414,9 +433,24 @@ because a spike should not change the production image. When the Sources migrati
 3. Map each to its **own** CSL type: the CSL mapping is one-to-one (see finding 2a), so Review
    gets `review-book` and Dictionary `entry-dictionary`; Obituary and Block Print need unused
    targets, to be chosen in the criterion 6 output comparison.
-4. Import the prepared CSE styles from `docs/spikes/assets/spike-05-bibcite/`.
+4. Import the prepared CSE style from `docs/spikes/assets/spike-05-bibcite/`: **the 9th edition**
+   (`cse_name_year`), the decided one. The 8th-edition file is not needed.
+5. Build the entity-model code and config listed in
+   [ADR 020](../adr/020-sources-records-are-bibcite-reference-entities.md) (consequences 1 to 7) and
+   finding 9. The throwaway prototypes in `docs/spikes/assets/spike-05-bibcite/` show each part
+   working (`legacy-redirect-prototype/`, `entity-model-poc/`, `zotero-prototype/`); read them, do
+   not merge them. Run a script with `ddev exec "MODE=... drush php:script <file>"`; a host-side
+   `MODE=x ddev drush ...` is silently ignored.
+6. Fields on every reference type: `field_legacy_site`, `field_legacy_nid`, Zotero Collections (term
+   reference to a vocabulary seeded from D7's 280 `collections` terms), a KMaps field, and a
+   dedicated Zotero item-key field. Migrate D7 citekeys as supplied.
+7. Zotero import: admin-only form behind its own permission, on demand, API key held outside
+   `config/sync` and outside any node, idempotent upsert on the item key (finding 7).
 
-## What this does NOT establish
+## Carried to the Sources build (not spike questions)
+
+The spike is closed; these were not checked in it and are tasks for whoever builds Sources. Each
+is a verification or a build step, not an open decision about the model.
 
 - **The seven non-CSE styles** reachable through the citation route (finding 6) — not rendered.
 - **A keyed (private) Zotero library** (criterion 5) — only a public library was fetched; the
@@ -427,10 +461,24 @@ because a spike should not change the production image. When the Sources migrati
   fields exercised in finding 6, and which CSL targets the custom types should use (finding 2a).
 - **Migrating the existing 2014 Zotero data** (tags, collections, attachments on ~1.9k nodes) —
   the prototype imports new Zotero entries, not the D7 history.
+- **Obituary and Block Print CSL targets.** Pick unused CSL types (candidates `article`, `entry`,
+  `pamphlet`, `graphic`, `post`) during the render pass; the mapping must stay one-to-one.
+- **The `original-date` render warning** (`month=1, day=1`) seen on some imported Zotero items:
+  check before storing raw dates.
+- **Verify bibcite keeps a supplied citekey** on save, since the D7 citekeys are being migrated.
+- **Ask Sources staff whether anyone uses Zotero today**, and read the D7 feed's library settings
+  (per-feed Feeds config; likely holds a key, not read here). On-demand import is built either way.
+- **Zotero attachment fields** (`field_zotero_attachment` on 809 nodes, `field_zotero_files` on 7,
+  `field_zotero_attachment_links` on 12): decide whether they migrate.
+- **Other subtypes of the record display**, and everything in ADR 020 consequence 7 that assumes a
+  node for Sources (`mandala_node_api`, Views, the Spike 6 Sources API routes).
 - **Staleness.** All counts come from a 2026-06-11 dump. Directionally reliable, not current.
 
 ## Deferred notes
-*To be completed when spike is run.*
+
+[Sources record display parity: check several D7 subtypes](../deferred/sources-record-display-parity-check-d7-subtypes.md).
+The items under "Carried to the Sources build" above are the rest of the carry-over; none is a
+standing deferral because the build is their trigger.
 
 ---
 
