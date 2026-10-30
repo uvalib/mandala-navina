@@ -196,8 +196,10 @@ bundle's **form display** (`content` vs `hidden`); the comparison below uses tha
   `bibcite_*` counterpart (only the derived `sort_title`, `full_text`, `coins`, `md5`, `formats`
   do not). Nothing is unmappable.
 - **Editing:** bibcite's default form displays hide fields D7 populates. By volume: `citekey`
-  (every row; bibcite normally generates it from `citekey_pattern`, so migrate or regenerate is a
-  decision), `lang` (5,305 on journal articles), `remote_db_provider` (5,867), `notes` (2,729),
+  (every row; bibcite normally generates it from `citekey_pattern`; **decided 2026-10-30 (Than):
+  migrate the D7 citekeys**. All 25,627 D7 rows have one and all are distinct in the 2026-06-11
+  dump, so none need repair. Still to verify in the build: that bibcite does not overwrite a
+  supplied citekey on save), `lang` (5,305 on journal articles), `remote_db_provider` (5,867), `notes` (2,729),
   `date` (3,627 on books), `access_date`, and `type_of_work`, `publisher`, `place_published` on
   several types. The data would store, but editors could not see or change it. Fixing this is
   form-display config per type, no code.
@@ -224,7 +226,9 @@ article) from its D7 row via `bibcite.citation_styler`:
   the period after the title and leads the pages with a stray colon. A migration that "matches D7"
   byte for byte would reproduce those defects.
 - **The 8th-edition style is the closest match to D7's shape** (`Journal.:pages.`); the 9th
-  drops the trailing period. Which edition Sources wants is a stakeholder call.
+  drops the trailing period. **Decided 2026-10-30 (Than): Sources uses the 9th edition** (the
+  prepared `cse_name_year` style; `cse_name_year_8th_edition` is then not needed). It differs from
+  D7's output by the trailing period, so the migrated citations will not match D7 byte for byte.
 - **Differences to expect everywhere:** en dash in page ranges where D7 has a hyphen, and author
   initials without periods (`AJ`, correct CSE).
 - **Limits:** one node, one type, one style family. Not yet checked: books, chapters, the four
@@ -274,8 +278,17 @@ not a module): a Zotero API v3 client, a pure-PHP item mapper and a Drush writer
 - **Dedup key needs a dedicated field.** The prototype reused `bibcite_remote_db_name`, which D7
   populated on real rows, to avoid a config change. Production needs its own field for the Zotero
   item key (and the library), and should also keep the item `version` for `since` pulls.
+  **Decided 2026-10-30 (Than): add a dedicated field for the Zotero item key** (library id and item
+  `version` still to be settled in the build; `bibcite_remote_db_name` stays free for D7's own use).
 - **Zotero collections have no stock home.** D7 kept them as a vocabulary; bibcite has nothing
-  equivalent (tags map to keywords). Whether Sources still wants them is a decision.
+  equivalent (tags map to keywords). **Decided 2026-10-30 (Than): keep Zotero Collections in the new
+  Sources.** So the build needs a taxonomy vocabulary (D7's `collections` has 280 terms) and a
+  term-reference field on every reference bundle, filled by the migration (2,196 D7 nodes carry
+  one or more) and by the Zotero import, and shown on the record page and as a facet or listing.
+  Other D7 Zotero fields in the 2026-06-11 dump: `field_zotero_tags` on 1,920 nodes (maps to
+  bibcite keywords), `field_zotero_attachment` on 809, `field_zotero_files` on 7,
+  `field_zotero_attachment_links` on 12; `field_zotero_canonical_url` and `field_zotero_fetch_url`
+  are on none. Whether the attachment fields are still wanted is not decided.
 - **Observed, not isolated:** rendering emitted `field "original-date" has invalid values
   (month=1, day=1)` for some items. It did not reproduce on a journal article with or without the
   prototype's raw `bibcite_date`; D7 mapped Zotero's free-text date to year only. Check in the
@@ -284,7 +297,8 @@ not a module): a Zotero API v3 client, a pure-PHP item mapper and a Drush writer
 **Production design (for Xiaoming, not built):** an admin-only form behind its own permission
 (widen to editors later with one permission); the API key held outside `config/sync` and outside
 any node (Key module or environment); run as a batch or queue; idempotent upsert on the item key;
-incremental via `since`. Open: on-demand only, or the D7 30-minute re-sync.
+incremental via `since`. **Decided 2026-10-30 (Than): on-demand only**, no D7-style 30-minute
+re-sync, so no scheduled job or cron dependency is needed.
 
 **Consequences of using `bibcite_reference` instead of nodes** (stated from reading, **not
 verified**; they affect the whole Sources migration, not only Zotero): there is no nid, so old
@@ -295,7 +309,98 @@ reference bundles but is untested; `mandala_node_api`, the kmassets sync hooks a
 `mandala_solr_visibility` assume nodes and need reference-aware versions; editing, display and
 views come from bibcite's admin pages. **Xiaoming and Yuji should be told of this model choice.**
 
+### 8. Legacy-key redirect and `/sources/{id}` paths work on `bibcite_reference`; the display requirement (2026-10-30)
+
+**Throwaway prototype, local DDEV only** (`docs/spikes/assets/spike-05-bibcite/legacy-redirect-prototype/`):
+- `bibcite_reference` is fieldable per bundle, so `field_legacy_site` + `field_legacy_nid` (ADR 017)
+  can be added to every reference type.
+- `mandala_legacy_redirect` needed one change to serve references: add `bibcite_reference` to the
+  entity types its lookup tries (`['node', 'group']` today). With that, a legacy-host
+  `/node/{d7nid}` resolved by `(sources, nid)` returned a 301 to `/sources/{id}`. Tested with three
+  real D7 nids from the 2026-06-11 dump (21043, 21045, 22011): each landed on the record carrying
+  that nid. A made-up nid, the raw D11 id and the wrong site all returned 404, and an anonymous
+  request without view permission also returned 404 (no leak that the record exists).
+- A path alias `/sources/{id}` on each reference works; production would generate it with pathauto
+  or in the migration. The id is the new entity id, never the D7 nid.
+- The canonical page is bibcite's bare default display, visible only with the "view
+  bibcite_reference" permission (anonymous gets 403 by default).
+
+**Requirement (Than, 2026-10-30): a migrated record must show all the fields the old Sources
+record showed, in roughly the same way.** Example, D7 node 21045 (`/node/21045` on the legacy
+host) shows, in order: title; the journal ("Complementary Health Practice Review"); author with
+role; Format; Publication Year; Pages; **Sources ID** (the legacy nid); **Visibility** (Private);
+**Zotero Collections**; a collapsible **Abstract**; **URL**; then **Zotero Collections** and
+**Subjects** (KMaps) as linked lists. bibcite's default display shows only its own bibliographic
+fields, so a production build needs a dedicated display (view mode or template) that adds:
+Format label, Sources ID, Visibility (from Group/collection access, see the open Group-plugin
+question), Zotero Collections (no stock home; see finding 7), a collapsible Abstract, URL,
+Subjects (KMaps field, untested on a reference bundle). This is the node-vs-entity cost the
+choice has to carry: everything node-based that Sources pages got for free is built for the
+reference type instead. The field-by-field comparison in the broader render pass (criterion 6)
+should use this page as the reference.
+
+### 9. Entity-model proof of concept: access, listings, Solr and display all work, with named code changes (2026-10-30)
+
+**Throwaway, local DDEV only** (`docs/spikes/assets/spike-05-bibcite/entity-model-poc/`). Each part
+below was run, and the access test was shown able to fail: with the new hook disabled, anonymous
+could view the private reference (it then returned `YES (leak)`); with it on, it was denied.
+
+**Access (single record): works.** Group 3.3.5 takes a custom relation plugin for
+`bibcite_reference` (an attribute class modelled on gnode's `GroupNode`, no bundle deriver) and a
+relationship type on the `collection` group type. Installing it adds a new group permission,
+`view group_bibcite_reference entity`; until a collection role holds it, **Group itself forbids
+every grouped reference to everyone** (the first symptom was a public reference denied to
+anonymous). With the permission granted to the collection anonymous/outsider/member roles and a
+`hook_entity_access()` that resolves through `CollectionVisibility` (it already accepts any
+`EntityInterface`), the matrix was correct for anonymous, an authenticated outsider, a member of the
+private collection and admin, across a private, a public, a UVA and an ungrouped reference.
+
+**Access (listings): needed its own port.** An `EntityQuery` with `accessCheck(TRUE)` returned
+all four references, private and UVA included, until a `bibcite_reference_access` query alter was
+added. It is `NodeQueryAlter` with three swaps (base table, plugin id, no per-record override
+field). After it, listings matched single-record access for all four viewers.
+
+**Solr: reader side needs no change, writer side needs generalizing.** `KmassetDocBuilder::build()`
+is typed `NodeInterface` and fails on a reference with a `TypeError`; the contributors, the
+direct sink and the insert/update/delete hooks are node-typed too. A PoC document for a reference
+(`sources-11-{id}`, `service: sources`, visibility and `collection_uid_s` from `CollectionVisibility`,
+`uid_legacy_s` from the legacy key) was evaluated against `VisibilityTokenBuilder`'s real filter for
+anonymous, outsider and member: Solr-side and Drupal-side agreed in all 12 cases. The builder only
+built; nothing was posted (the effective `solr_master_url` is empty in DDEV). Not covered: owner
+fields (a reference has no owner), kmapid expansion from the KMaps field, and the bulk
+`kmassets:index-all` path. In the scratch run `collection_uid_s` read `images-11-{gid}` because the
+scratch groups had no `field_legacy_site`; writer and reader share that fallback, so they agreed.
+
+**Display: every D7 element has a source on a reference.** The canonical route renders the
+**`table` view mode**, not `default`; a display alter must cover it. With the `shanti_kmaps_fields_default`
+field and a term-reference field for Zotero Collections attached to the reference bundles, and node
+21045's real values on a reference, the page rendered, in order: title, journal, author with role,
+Format, Publication Year, Pages, Sources ID (legacy nid), Visibility (derived from the collection),
+Zotero Collections, collapsible Abstract, URL, then the Zotero Collections and Subjects lists.
+**The KMaps field type attaches to a reference bundle and stores a value** (its `isEmpty()` needs
+the `raw` column, three `|`-separated parts). Not done: real theming, the abstract in full, the
+Zotero attachment fields, and the other subtypes (the build must check several, see the deferred
+note).
+
+**What production would have to change** (the cost of the entity model, measured):
+1. `mandala_group_inheritance`: the access hook's entity-type guard and the bundle discovery are
+   node-only; generalize both. Generalize `NodeQueryAlter` or add the reference twin.
+2. `mandala_kmassets_sync`: builder, contributors, sink and hooks from `NodeInterface` to
+   `EntityInterface`, plus a `sources` entry in the bundles config.
+3. Config: the relationship type for `collection` and `subcollection`, and the new group
+   permission on each role that holds `view group_node:* entity`. Exported from a live Drupal.
+4. A reference-aware display (view mode or template) and the reference-type fields above.
+5. Not needed: the Solr reader (`VisibilityTokenBuilder`, the proxy), which keys on
+   `visibility_i` and `collection_uid_s` only.
+6. Open: references have no per-record visibility override (`field_group_content_access` exists
+   only on AV nodes); D7 Sources showed `Visibility` from its group, which this matches.
+
 ## Handoff for the Sources migration (Xiaoming)
+
+**Before building the record display, read
+[sources-record-display-parity-check-d7-subtypes](../deferred/sources-record-display-parity-check-d7-subtypes.md):
+look at several D7 record pages of different subtypes (or have them pasted in) and at the old
+site's display settings; do not design the display from bibcite's defaults or one example.**
 
 The spike installed bibcite locally in DDEV only; **no composer or config change is committed**,
 because a spike should not change the production image. When the Sources migration starts:
