@@ -25,6 +25,7 @@ nav:
   - "AV10 Scope Note: Kaltura configuration layer": av10-kaltura-configuration-layer.md
   - "Sources: Content Model Audit": sources-content-model-audit.md
   - "Texts: Content Model Audit": texts-content-model-audit.md
+  - "Texts: Migration Plan (approved 2026-11-02)": texts-migration-plan.md
   - "AV/Sources/Texts: Migration Complexity Comparison": av-sources-texts-migration-complexity-comparison.md
   - "B3: Masonry Gallery Production Reference": b3-masonry-gallery-production-reference.md
   - "Uniform Asset-Endpoint Access: the _entity_access convention": entity-access-endpoint-convention.md

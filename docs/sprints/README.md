@@ -15,6 +15,7 @@ executes against rather than restating them.
 | [Sprint 2](sprint-02-theme-images-ui-and-endpoint-access.md) | D11 base theme, Images interactive UI, other-asset-type groundwork | Roadmap Phase 2 setup | ● Done (2026-09-04) |
 | [Sprint 3](sprint-03-av-core-implementation.md) | AV core implementation (`audio`/`video`, Kaltura, access, collections) | Roadmap Phase 3 (reordered, [ADR 018](../adr/018-av-track-starts-in-parallel-not-strictly-last.md)) | ● Done (2026-10-01) |
 | [Sprint 4](sprint-04-av-transcripts.md) | AV transcripts (D7 authoring pipeline replication) — depends on Sprint 3 | Roadmap Phase 3 | ○ Planned |
+| [Sprint 5](sprint-05-texts-core-implementation.md) | Texts core implementation (`book`, whole-book reader, collections, Views-tab formats) — gated on [Spike 13](../spikes/spike-13-texts-whole-book.md) | Roadmap Phase 2 (Texts track) | ○ Planned |
 
 **Status key:** ● Done · ◐ In progress · ○ Planned
 

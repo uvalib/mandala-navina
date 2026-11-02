@@ -156,6 +156,7 @@ Grouped by each note's **first** `Category` value (a note appears once; its othe
 | File | Categories | Owner | Raised | Priority |
 |---|---|---|---|---|
 | [texts-footnotes-production-transform.md](texts-footnotes-production-transform.md) | migration-texts | unassigned | Spike 4b closeout 2026-08-07 | **Medium** — downstream of the now-Complete Spike 4b (Option 1+3, feasibility proven + prototype). Production build for the **Texts migration**: book-outline-aware `nb{N}`/`n{N}` transform (both markup variants incl. `xmlns:i18n` ~3.3%), Option 3 Notes-list integration + tests, CKEditor 5 render check, the benign "orphan footnote 1" spot-check, and 2 content outliers (`bid=15582`/`15988`). No open technical risk — build-out, not investigation |
+| [texts-tibetan-solr-and-ckeditor-normalization-unproven.md](texts-tibetan-solr-and-ckeditor-normalization-unproven.md) | migration-texts, solr-search | Than | Texts migration planning 2026-11-02 (Spike 4a limits) | **Medium** — acceptance checks, not design risks: Tibetan through Solr, CKEditor 5 normalization, browser font rendering; start after Sprint 5 TX15/TX19 |
 
 ### Migration: Sources (`migration-sources`)
 
