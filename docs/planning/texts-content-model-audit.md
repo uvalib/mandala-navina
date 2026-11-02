@@ -58,10 +58,12 @@ rather than storing anything itself — the outline position lives entirely in c
 shanti_texts-owned schema.
 
 **Migration implication:** the page-outline hierarchy is a **known, core-supported
-migration path** (D11's Book module uses the same `bid`/`plid`/`weight` shape), not a
-bespoke data model to reverse-engineer the way Images' satellite graph or Sources'
-flat-column table were. This narrows what would otherwise be the single biggest
-open question for Texts.
+migration path** in D7 (`bid`/`plid`/`weight`), not a bespoke data model to
+reverse-engineer the way Images' satellite graph or Sources' flat-column table were.
+This narrows what would otherwise be the single biggest open question for Texts.
+**Corrected 2026-11-02:** the original text here said "D11's Book module uses the same
+shape". Drupal 11 core has no Book module any more, so that sentence was wrong as
+written. See [Corrections](#corrections-2026-11-02).
 
 **A second, unrelated source of the multi-page-per-book pattern:**
 `shanti_texts_splitter` is an **editorial convenience tool, not an import or migration
@@ -70,6 +72,43 @@ machine-generated from one pasted document rather than hand-authored, but produc
 ordinary core Book-outline nodes either way; D11 does not need to distinguish
 splitter-generated pages from hand-authored ones structurally (though no field
 currently flags which is which — see Open questions).
+
+## Corrections (2026-11-02)
+
+Found while planning the Texts migration ([plan](texts-migration-plan.md),
+[Spike 13](../spikes/spike-13-texts-whole-book.md)). The audit above is otherwise unchanged.
+
+1. **Book is not in Drupal 11 core.** Core 11.4 has no `book` module and this repo does not
+   install one. Contrib `drupal/book` 3.x exists (3.0.8; requires core `^11.2 || ^12`) and its git
+   tree ships `migrations/d7_book.yml` (source plugin `book`, destination `book`, depends on
+   `d7_node`). Whether it suits 1,051 books up to depth 7 is **unverified**; Spike 13 step S1
+   tests it. The "Recommended next step" below that assumes a core Book migration is superseded.
+2. **The D7 display is a whole-book render, not one page per request.** Any book page (root or
+   chapter) renders `node--book.tpl.php`, which prints
+   `views_embed_view('single_text_body', 'panel_pane_default', $bid)`: every page in outline
+   order as `div.shanti-texts-section.text-level-N` with an anchor `#shanti-texts-<nid>`, plus a
+   sidebar with Contents, Description and Views tabs (views `single_text_toc`, `single_text_meta`,
+   `single_text_views`). The audit's field inventory is accurate but did not describe this, and
+   it is the largest look-and-feel requirement. The largest book has 374 pages; one page body is
+   about 4 MB.
+3. **Fields the inventory missed**, on `book`: `field_doi` (125 rows), `field_journal_title` (40),
+   `field_journal_issue`, `field_journal_volume`, `field_pages` (86).
+4. **Alternative formats.** The Views tab offers "View in PubReader" (`book_pubreader/[nid]`),
+   "View as raw text" (`shanti_texts/node_ajax_text/[nid]`) and "View in Voyant"
+   (`shanti_texts/voyant/[nid]`); the route `shanti_texts/node_embed/[nid]` also exists (hidden
+   in the tab, used by `legacy/texts.js` through `url_ajax`).
+5. **Data profile re-derived 2026-11-02** from the `d7_texts` database (loaded from
+   `mandala-prod-texts-db_20260710.sql.gz`): 7,633 `book` (7,568 published, 65 unpublished),
+   65 `collection`, 57 `subcollection`, 8 `asset_link`; 1,051 book roots; outline depth
+   1/2/3/4/5/6/7 = 1,051 / 2,020 / 2,541 / 1,848 / 162 / 6 / 5 (via `menu_links.depth`);
+   `group_content_access` on books 0 = 4,668, 1 = 2,693, 2 = 272; `field_dc_lang_code`
+   en 3,650, bo 1,138, dz 2, id 1; 6,940 node aliases and 850 books with none; 537 files;
+   `og_membership` 7,419 on `field_og_collection_ref` plus 57 on `field_og_parent_collection_ref`.
+6. **Complexity.** The 2.0/5 score in the
+   [complexity comparison](av-sources-texts-migration-complexity-comparison.md) predates items 1
+   and 2 and should be read as a lower bound; a rescore is Sprint 5 task TX1's last open part.
+
+---
 
 ## The entity graph
 

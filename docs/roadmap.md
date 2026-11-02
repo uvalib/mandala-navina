@@ -114,7 +114,7 @@ Now the deliberate parallelism earns its keep — each owner takes an independen
 > so revisiting whether Sources (Xiaoming's own track, not Than-gated the way Texts is)
 > could resume before Wednesday is an open team question, not yet decided.
 
-- **Texts** (Than): footnote markup transformation + Tibetan Unicode body round-trip. ⏸ paused
+- **Texts** (Than): footnote markup transformation + Tibetan Unicode body round-trip. ⏸ paused 2026-09-04; **resumed 2026-11-02** — planned in [Sprint 5](sprints/sprint-05-texts-core-implementation.md), gated on [Spike 13](spikes/spike-13-texts-whole-book.md) (plan: [texts-migration-plan.md](planning/texts-migration-plan.md))
 - **Sources** (Xiaoming): bibcite + Tibetan-in-references if present. ⏸ paused
 - **Collections** (owner TBD): finalize Spike 3 on D11 + implement the Option D
   custom hooks for nesting and access inheritance. (deferred:
