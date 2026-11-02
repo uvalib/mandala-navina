@@ -1,6 +1,6 @@
 # Spike 13: Texts book outline and whole-book render
 
-**Status:** ○ Pending — planned 2026-11-02, not started
+**Status:** ◐ In progress — S1 done 2026-11-02 (passed, with four findings); S2–S6 not started
 **Lead:** Than Grove
 **Mode:** Individual
 **Time-box:** 3.5–4.5 days
@@ -93,5 +93,72 @@ All D11 routes must enforce access per the [entity-access endpoint convention](.
   assumptions with evidence.
 
 ## Results
+
+### S1 outline — PASS (2026-11-02, Than with Claude Code)
+
+Evidence and scripts: [`assets/spike-13-texts/`](assets/spike-13-texts/README.md) (throwaway; nothing
+merged). Environment: local DDEV, Drupal 11.4.11, `drupal/book` 3.0.8, the `d7_texts` database
+(loaded from `mandala-prod-texts-db_20260710.sql.gz`).
+
+**Books tested (444 outline rows):** `bid` 53536 (5 pages, depth 4), 15641 (52, depth 5), 53126
+(13, **depth 7**, the deepest in the corpus), 14679 (**374**, the largest). The plan named three
+books; the depth-7 book was added because outline depth is a risk.
+
+**Result.** Contrib Book installs and enables with no other dependency change. Its own source and
+destination plugins migrated all 444 rows (0 failed). A comparison of every D11 row against D7
+(`menu_links` and `book`, with D7 ids translated through the migration map) found **zero
+differences** in book id, parent, weight, depth and the materialized path p1–p9, for all four books.
+Book's own `bookTreeAllData()` then read each tree back with the right page counts (5, 52, 13 with
+depth 7, 374). The 374-page tree took 275 ms uncached on DDEV, as an administrator. This is not the
+S2 render test.
+
+**The comparison can fail.** I corrupted three D11 rows (a weight, a parent, a depth plus a path
+entry), and it flagged exactly those, in the right books, before I repaired them.
+
+**Findings that change Sprint 5:**
+
+1. **The shipped `d7_book` cannot run unmodified.** It copies `nid` and `book/bid` straight
+   through, assuming D7 node ids are preserved, as in an in-place upgrade. In Mandala **all 7,763
+   D7 Texts node ids collide with existing D11 nodes** (on this DB the sampled ones are Images
+   nodes), the situation ADR 017 describes. The test used a copy of `d7_book` whose `nid` and
+   `book/bid` use `migration_lookup` on the node migration. It still runs Book's own plugins, so the
+   module is viable; Sprint 5 TX11 should be a Mandala outline migration of this shape.
+2. **Book's migration destination cannot update an existing outline.** Its update branch builds the
+   new values but never calls `setBook()`. Observed: `migrate:import --update` reports "444
+   updated" and changes nothing, and rolling back the outline migration then importing again also
+   leaves wrong values in place (rollback only clears the migration map). A reset has to roll back
+   the **outline migration first** (clears the map), then the **node migration** (deleting the nodes
+   removes their outline rows), then re-import nodes and outline. Verified end to end, zero
+   differences afterward. This fits our rollback-cycle runbooks but must be written into
+   `run-texts-migration.sh`, and an upstream issue is worth filing.
+3. **`mandala_group_inheritance` breaks Book's tree queries for non-administrators.** Book tags its
+   queries `node_access` with `base_table` metadata `book`. `NodeQueryAlter::baseTable()` falls back
+   to any table whose name matches the declared base table, so it treats the `book` table (alias `b`)
+   as the node table and adds `b.type`, a column that does not exist, producing an SQL error.
+   Administrators bypass it. Sprint 5 TX7 must make the alter join `node_field_data` (or skip) when
+   the declared base table has no `type`. Not fixed in the spike.
+4. **Book 3.x's configuration differs from core's.** `book.settings.allowed_types` is a list of
+   `{content_type, child_type}` entries, not a flat list of type names, and the module registers its
+   node bundle class from that setting. A flat list silently leaves nodes without `getBook()`, which
+   showed as a fatal error in the destination plugin. Sprint 5 TX5 should export this config from a
+   live Drupal.
+
+**Smaller notes.** `migrate:import` insists that a dependency migration has processed every row, so
+partial runs need `--force` (an artefact of testing four books, not a production issue). The DDEV
+`db` user needs an explicit grant on `d7_texts` (what `scripts/load-d7-source.sh` does).
+
+**Verified, not assumed:** `drupal/book` 3.0.8 installs and works on Drupal 11.4.11; it ships
+`migrations/d7_book.yml` using its own `book` source and destination plugins; D7 `menu_links`
+`plid`/`weight`/`depth`/`p1..p9` map cleanly (with id translation) onto the D11 `book` table,
+including depth 7 and a 374-page tree.
+
+**Not tested in S1:** the full corpus (7,633 rows) and its migration time; Solr/kmassets
+interaction; anything about rendering, cache or access (S2–S4); contrib Book's behaviour under the
+Group access model beyond finding 3.
+
+**Effect on TX3:** on this evidence the outline model is contrib Book with a Mandala lookup-based
+outline migration; the custom-table fallback is not needed. S2 onward is unchanged.
+
+### S2–S6
 
 Not started.

@@ -1,0 +1,31 @@
+id: spike13_book
+label: 'Spike 13 S1: d7_book with node ids resolved by lookup (throwaway)'
+migration_tags:
+  - Spike13
+source:
+  plugin: book
+process:
+  nid:
+    plugin: migration_lookup
+    migration: spike13_node
+    source: nid
+    no_stub: true
+  book/bid:
+    plugin: migration_lookup
+    migration: spike13_node
+    source: bid
+    no_stub: true
+  book/weight: weight
+  book/pid:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: plid
+    -
+      plugin: migration_lookup
+      migration: spike13_book
+destination:
+  plugin: book
+migration_dependencies:
+  required:
+    - spike13_node

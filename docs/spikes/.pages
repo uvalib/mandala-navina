@@ -15,4 +15,4 @@ nav:
   - "● Spike 10: SAML + OAuth2 coexistence": spike-10-saml-oauth2-coexistence.md
   - "○ Spike 11: AV transcript replication": spike-11-av-transcript-replication.md
   - "✅ Spike 12: Authenticated asset-fetch (design)": spike-12-authenticated-asset-fetch.md
-  - "○ Spike 13: Texts whole-book render": spike-13-texts-whole-book.md
+  - "◐ Spike 13: Texts whole-book render": spike-13-texts-whole-book.md
