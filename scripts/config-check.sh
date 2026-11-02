@@ -80,7 +80,7 @@ pass "DDEV is running"
 # ── 1. DB vs sync directory (semantic) ──────────────────────────────────
 echo
 echo "=== 1. config:status (DB vs sync directory) ==="
-STATUS="$(ddev drush config:status 2>&1)"
+STATUS="$(ddev_drush_clean config:status 2>&1)"
 if echo "$STATUS" | grep -q "No differences between DB and sync directory"; then
   pass "no differences between DB and sync directory"
 else

@@ -124,7 +124,7 @@ echo
 # {stage_file_proxy}), not core.extension drift in general -- a real,
 # unrelated module left enabled locally should still fail this check.
 echo "=== 3a. Local DDEV config:status ==="
-LOCAL_CONFIG_STATUS="$(ddev drush config:status 2>&1)"
+LOCAL_CONFIG_STATUS="$(ddev_drush_clean config:status 2>&1)"
 echo "$LOCAL_CONFIG_STATUS"
 
 if echo "$LOCAL_CONFIG_STATUS" | grep -q "No differences between DB and sync directory"; then
@@ -173,7 +173,7 @@ PHP
 
 PHP_B64="$(printf '%s' "$COUNT_QUERY_PHP" | base64 | tr -d '\n')"
 
-LOCAL_COUNTS="$(ddev drush eval "eval(base64_decode('$PHP_B64'));" 2>/dev/null)"
+LOCAL_COUNTS="$(ddev_drush_clean eval "eval(base64_decode('$PHP_B64'));" 2>/dev/null)"
 
 if [ "$LOCAL_ONLY" -eq 1 ]; then
   warn "--local-only given -- skipping dev-0 comparison. Local counts:"
@@ -256,7 +256,7 @@ foreach ($rows as $r) {
 }
 PHP
   DRIFT_B64="$(printf '%s' "$DRIFT_SAMPLE_PHP" | base64 | tr -d '\n')"
-  LOCAL_SAMPLE="$(ddev drush eval "eval(base64_decode('$DRIFT_B64'));" 2>/dev/null)"
+  LOCAL_SAMPLE="$(ddev_drush_clean eval "eval(base64_decode('$DRIFT_B64'));" 2>/dev/null)"
 
   if [ -z "$LOCAL_SAMPLE" ]; then
     warn "no field_legacy_nid rows found locally -- skipping drift spot-check"
