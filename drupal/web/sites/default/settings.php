@@ -1102,7 +1102,7 @@ if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev
   // Harmless if the target DB does not exist; Drupal only opens it when a
   // migration actually runs.
   $databases['migrate']['default'] = [
-    'database' => 'd7_images',
+    'database' => 'd7_texts',
     'username' => 'db',
     'password' => 'db',
     'host'     => 'db',

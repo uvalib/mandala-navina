@@ -1,0 +1,19 @@
+id: spike13_node
+label: 'Spike 13 S1: stand-in book nodes (throwaway)'
+migration_tags:
+  - Spike13
+source:
+  plugin: d7_node
+  node_type: book
+process:
+  title: title
+  status: status
+  langcode:
+    plugin: default_value
+    default_value: en
+  uid:
+    plugin: default_value
+    default_value: 1
+destination:
+  plugin: 'entity:node'
+  default_bundle: book

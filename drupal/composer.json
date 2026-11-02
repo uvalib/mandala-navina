@@ -30,6 +30,7 @@
         "cweagans/composer-patches": "^2.0",
         "drupal/admin_toolbar": "^3.5",
         "drupal/better_exposed_filters": "^7.1",
+        "drupal/book": "^3.0",
         "drupal/bootstrap5": "^4.0",
         "drupal/core-composer-scaffold": "^11",
         "drupal/core-project-message": "^11",
