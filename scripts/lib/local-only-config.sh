@@ -20,17 +20,33 @@
 
 LOCAL_ONLY_MODULE="stage_file_proxy"
 
+# `ddev drush` on PHP 8.4 prints third-party "Deprecated: ... implicitly
+# nullable" notices (currently field_group) to stdout AND stderr. They land
+# inside --format=json and `drush eval` output and break anything that parses
+# it. Use this wrapper wherever a script parses or diffs drush output; it
+# strips only `Deprecated:` lines and blank lines, so real errors still show,
+# and keeps drush's own exit status. Deliberately NOT a DDEV-wide
+# error_reporting change -- that would also hide deprecations in our own
+# custom modules.
+ddev_drush_clean() {
+  local rc
+  { ddev drush "$@" 2> >(grep -Ev '^(PHP )?Deprecated: |^$' >&2); } \
+    | { grep -Ev '^(PHP )?Deprecated: |^$' || true; }
+  rc="${PIPESTATUS[0]}"
+  return "$rc"
+}
+
 # Print the config:status entries NOT explained by the local-only module, one
 # per line. Empty output means clean once the expected drift is discounted.
 # Returns 2 if the status could not be read or classified (no jq, bad JSON).
 config_status_unexplained() {
   local json db_modules sync_modules only_in_db discount
   command -v jq >/dev/null 2>&1 || return 2
-  json="$(ddev drush config:status --format=json 2>/dev/null)" || return 2
+  json="$(ddev_drush_clean config:status --format=json 2>/dev/null)" || return 2
   echo "$json" | jq -e . >/dev/null 2>&1 || return 2
 
-  db_modules="$(ddev drush pm:list --status=enabled --type=module --field=name 2>/dev/null | sort)"
-  sync_modules="$(ddev drush php:eval "echo implode(PHP_EOL, array_keys(\Drupal::service('config.storage.sync')->read('core.extension')['module'] ?? []));" 2>/dev/null | sort)"
+  db_modules="$(ddev_drush_clean pm:list --status=enabled --type=module --field=name 2>/dev/null | sort)"
+  sync_modules="$(ddev_drush_clean php:eval "echo implode(PHP_EOL, array_keys(\Drupal::service('config.storage.sync')->read('core.extension')['module'] ?? []));" 2>/dev/null | sort)"
   only_in_db="$(comm -23 <(echo "$db_modules") <(echo "$sync_modules"))"
 
   discount="${LOCAL_ONLY_MODULE}.settings"
