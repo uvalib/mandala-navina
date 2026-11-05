@@ -1,0 +1,7 @@
+name: 'Spike 13 whole-book render (throwaway)'
+type: module
+description: 'Spike 13 S2 throwaway. Never merge.'
+package: Spike
+core_version_requirement: ^11
+dependencies:
+  - drupal:book
