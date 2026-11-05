@@ -1,0 +1,23 @@
+id: spike13_content
+label: 'Spike 13 S2: copy D7 field_book_content onto the stand-in nodes (throwaway)'
+migration_tags:
+  - Spike13
+source:
+  plugin: d7_node
+  node_type: book
+process:
+  nid:
+    plugin: migration_lookup
+    migration: spike13_node
+    source: nid
+    no_stub: true
+  field_book_content/value: field_book_content/0/value
+  field_book_content/format: field_book_content/0/format
+destination:
+  plugin: 'entity:node'
+  default_bundle: book
+  overwrite_properties:
+    - field_book_content
+migration_dependencies:
+  required:
+    - spike13_node

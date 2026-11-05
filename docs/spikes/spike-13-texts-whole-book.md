@@ -1,6 +1,6 @@
 # Spike 13: Texts book outline and whole-book render
 
-**Status:** ◐ In progress — S1 done 2026-11-02 (passed, with four findings); S2–S6 not started
+**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3–S6 not started
 **Lead:** Than Grove
 **Mode:** Individual
 **Time-box:** 3.5–4.5 days
@@ -159,6 +159,94 @@ Group access model beyond finding 3.
 **Effect on TX3:** on this evidence the outline model is contrib Book with a Mandala lookup-based
 outline migration; the custom-table fallback is not needed. S2 onward is unchanged.
 
-### S2–S6
+### S2 whole-book render — PASS (2026-11-04, Than with Claude Code)
+
+Evidence and scripts: [`assets/spike-13-texts/`](assets/spike-13-texts/README.md) (throwaway; nothing
+merged). Same environment as S1, plus the throwaway module `spike13_render`.
+
+**What was built.** A route `/spike13/book/{nid}` that renders the whole book in outline order using
+D7's section markup (taken from the `single_text_body` view's field rewrite in `shanti_texts_features`):
+`<div class="shanti-texts-section">`, `<a name="shanti-texts-<nid>">`, a title div
+`id="shanti-texts-<nid>" class="shanti-texts-section-title text-level-<depth>"`, and a
+`shanti-texts-section-content` div holding the page text through its text format. The render array
+carries each node's cache tags plus a per-book tag. The S1 stand-ins were title-only, so S2 first
+copied D7's page text onto them (see finding 1).
+
+**Books and results** (DDEV, administrator, render cache on; cold = render and dynamic-page caches
+emptied first; peak = `memory_get_peak_usage` for the request; one operator, so indicative):
+
+| D7 book | Pages | Output | Cold | Warm | Peak memory |
+|---|---|---|---|---|---|
+| 14679 (the 374-page book) | 374 | 2.1 MB | 0.3–0.5 s | 0.08 s | 26–34 MB |
+| 14158 (largest by text) | 294 | 4.8 MB | 0.5–0.6 s | 0.18 s | 29–34 MB |
+| 58791 (the 4 MB single page) | 1 | 4.1 MB | 0.6 s | 0.15 s | 33 MB |
+| 15641 | 46 of 52 | 0.56 MB | 0.17 s | 0.04 s | 18–22 MB |
+
+Targets were cold under about 10 s, warm about 1 s, within the production PHP memory limit.
+Cold and warm are an order of magnitude inside the targets. The first request after a full `drush cr`
+was slower (up to 2.4 s, mostly Twig and opcache warm-up), so quote steady-state cold numbers. **Not
+met strictly:** the production PHP memory limit was not found; local FPM allows 1 GB and the peak was
+at most 34 MB.
+
+**Order and ids match D7.** Section ids come out in the same order, with the same count, as D7's
+own view for 14679, 15641, 53126 and 53536; 14158 differs by one page (finding 3). D7's view drops
+unpublished pages, so 15641 renders 46 of its 52 outline pages, as D7 does.
+
+**Findings that change Sprint 5:**
+
+1. **D7's page text is `field_book_content`, not `body`.** The `body` field is empty for all Texts
+   book nodes. The D11 `book` bundle needs a `field_book_content` (long text, format preserved)
+   before any rendering work; the node migration must copy it with its format. 419 of the 445 pages
+   in the test books have text and the other 26 are empty in D7 too; the copied byte total matched D7
+   exactly (6,600,202 for the four S1 books plus 58791).
+2. **The "4 MB page" is D7 node 58791, which is unpublished in D7.** It is not in any S1 book. D7's
+   view filters on published status, so D7 renders nothing for it today. The test published the local
+   stand-in to get a timing. The largest published text is book 14158 (294 pages, 4.8 MB).
+3. **Sibling order: use Book's own order; ties need a decision.** D7's whole-book view (and its
+   Contents sidebar view, `single_text_toc`) set Views' *sort within level*. That orders each level by
+   menu-link weight, then title (MySQL collation), then the materialized path as a last tiebreak,
+   which is the same rule as D11 Book's tree (`50000 + weight`, title, nid, via `ksort`). So the
+   migration needs no weight rewriting for the order to match D7, and the `p1..p9` columns only have to
+   describe ancestry (Book builds them itself when each row is saved). A raw `p1..p9` sort is **not**
+   D7's order (it differs in 14158 and 15641). The only divergence is ties: when siblings share a
+   weight, D7 breaks the tie with MySQL's title collation and D11 with PHP's byte order. In 14158 one
+   page (D7 node 14209) sits two positions from where D7 puts it.
+
+**Tie simulation across the whole corpus** (published pages, 980 sibling groups; D7 order computed
+in SQL, D11 order by reimplementing Book's sort key in Python): 36 groups in 24 books have tied
+weights; **5 groups in 4 books** (13283, 13871 twice, 14158, 15582) order differently under D7 and
+D11, with 20 sibling positions differing in total. The simulation flagged the 14158 group found by
+hand. Caveats: the D11 side is a reimplementation (the last tiebreak uses the D7 menu-link id because
+the real D11 nids do not exist for the full corpus); the D7 order depends on this database's
+collation; D7 sorts on the menu link's title and D11 on the node title. Re-check against a real full
+migration. **Decision for the team (TX3):** either leave ties alone (faithful to D7's data, ADR 008)
+or have the outline migration rewrite tied weights to strictly increasing values in D7's order (the
+rendered order then matches D7 exactly and no longer depends on a collation quirk; the cost is a
+documented deviation in 36 groups). Recommended by the spike author: normalize, but this is for
+Yuji and Xiaoming to settle.
+
+**A wrong turn, recorded.** The first S2 write-up said D7 sorts by the raw path and Book's order
+diverged in 70 books. That was wrong: it compared Book to a path-only ordering that D7 never used, and
+did not read the view's *sort within level* option. It was caught when the Book UI's weight-based
+ordering was questioned. A cache-context miss (the render ignored `?order=`) briefly made a
+comparison look wrong too; the controller now varies on that query argument. Both are fixed; the
+numbers above are the corrected ones.
+
+**D7 sidebar TOC (input to S4).** The `single_text_toc` view is a tree of
+`<a href="#shanti-texts-[nid]" id="shanti-texts-toc-[nid]">title</a>`, published pages only, depth
+greater than 1 (the root is not listed), ordered as above. S4 should reproduce that anchor scheme.
+
+**Not tested in S2:** anonymous and group-member rendering and the non-administrator Book query
+(finding 3 of S1 blocks it; S3 and TX7), cache invalidation on edit (S3), the Contents sidebar and
+anchor resolution by click-through (S4), footnotes (S5), alternative formats (S6), the D7 "Insert"
+control (editor-only, omitted), production hardware and PHP limits, and the visual styling (not a
+spike concern; the markup, classes and ids are what must be preserved). Anchors in the test use the
+D7 nid looked up from the migration map; production must use `field_legacy_nid`.
+
+**Effect on TX3:** the whole-book render fits the D7 shape without pre-rendering or lazy sections, so
+the fallback in the plan (queue-worker pre-render, cache tag per `bid`) is not needed on this
+evidence. Record the sibling-order rule and the tie decision. S3 onward is unchanged.
+
+### S3–S6
 
 Not started.

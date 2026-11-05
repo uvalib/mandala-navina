@@ -16,3 +16,20 @@ into the application.
 Run order: `drush config:import --partial --source=<dir with the two yml>`; point the DDEV `migrate`
 DB connection at `d7_texts`; grant the `db` user on `d7_texts` (`scripts/load-d7-source.sh` does it);
 `migrate:import spike13_node --idlist=<nids>`; `migrate:import spike13_book --idlist=<mlids> --force`.
+
+## S2 artifacts (throwaway, not for production)
+
+Evidence for S2 (whole-book render). Not merged into the application.
+
+- `s2-setup.php`: adds `field_book_content` (long text) to the `book` bundle. D7's page text is in
+  `field_book_content`, not `body`.
+- `migrate_plus.migration.spike13_content.yml`: update migration that copies D7
+  `field_book_content` (value and format) onto the stand-in nodes via `migration_lookup` on
+  `spike13_node`. Run with `--idlist=<all page nids> --update --force`.
+- `spike13_render/`: throwaway module. `/spike13/book/{nid}` renders the whole book with D7's section
+  markup; default order is Book's own (weight, title); `?order=path` gives the raw `p1..p9` sort
+  (shown not to be D7's order); `?mem=1` prints the request's peak memory (only on a cache miss).
+
+Run order after S1: `drush php:script s2-setup.php`; import the new yml with
+`drush config:import --partial`; `migrate:import spike13_node` and `spike13_book` for extra books
+(D7 58791 and 14158 were added); `migrate:import spike13_content`; `drush en spike13_render`.
