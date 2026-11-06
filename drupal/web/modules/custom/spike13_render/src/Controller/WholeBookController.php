@@ -33,12 +33,15 @@ class WholeBookController extends ControllerBase {
       return ['#markup' => 'Not in a book.'];
     }
     $mode = \Drupal::request()->query->get('cache', 'full');
-    $flat = $this->flatOutline((int) $bid, $nodes);
+    $flat = $this->flatOutline((int) $bid, $nodes, $pids);
     // Spike only: D7 anchors use the D7 nid, which the migrate map holds.
     $d7 = $this->db->query('SELECT destid1, sourceid1 FROM {migrate_map_spike13_node} WHERE destid1 IN (:ids[])', [':ids[]' => array_keys($flat)])->fetchAllKeyed();
 
     $html = '';
     $shown = 0;
+    // Contents rows (D7 single_text_toc: published, depth > 1), built in the same
+    // access loop as the sections so the two cannot disagree.
+    $toc = [];
     $meta = new CacheableMetadata();
     $meta->addCacheTags(['spike13_book:' . $bid]);
     foreach ($flat as $nid => $depth) {
@@ -67,6 +70,9 @@ class WholeBookController extends ControllerBase {
       }
       $shown++;
       $id = $d7[$nid] ?? $nid;
+      if ($depth > 1) {
+        $toc[$nid] = ['id' => $id, 'pid' => $pids[$nid], 'title' => $n->label()];
+      }
       $body = '';
       if (!$n->get('field_book_content')->isEmpty()) {
         $item = $n->get('field_book_content')->first();
@@ -89,10 +95,42 @@ class WholeBookController extends ControllerBase {
     }
     $meta->addCacheContexts($contexts);
     $build = [
-      '#markup' => Markup::create('<!-- shown=' . $shown . ' -->' . $html),
+      '#markup' => Markup::create('<!-- shown=' . $shown . ' -->' . $this->contents((int) $bid, $nodes, $d7, $toc) . $html),
     ];
     $meta->applyTo($build);
     return $build;
+  }
+
+  /**
+   * The Contents list, shaped like D7's single_text_toc.
+   *
+   * D7 renders that view with views_tree: a row whose parent is not in the
+   * result set (unpublished, hidden from the viewer, or the book root, which the
+   * depth > 1 filter removes) becomes a top-level entry, not a child of its
+   * nearest visible ancestor. $toc is in outline order, so children keep it.
+   */
+  protected function contents(int $bid, array $nodes, array $d7, array $toc): string {
+    $byParent = [];
+    foreach ($toc as $nid => $row) {
+      $byParent[isset($toc[$row['pid']]) ? $row['pid'] : 0][] = $nid;
+    }
+    $list = function (int $parent) use (&$list, &$byParent, $toc): string {
+      if (empty($byParent[$parent])) {
+        return '';
+      }
+      $out = '<ul>';
+      foreach ($byParent[$parent] as $nid) {
+        $id = $toc[$nid]['id'];
+        $out .= '<li><a href="#shanti-texts-' . $id . '" id="shanti-texts-toc-' . $id . '">' . Html::escape($toc[$nid]['title']) . '</a>' . $list($nid) . '</li>';
+      }
+      return $out . '</ul>';
+    };
+    $head = '';
+    if (isset($nodes[$bid]) && $nodes[$bid]->access('view')) {
+      $rid = $d7[$bid] ?? $bid;
+      $head = '<div class="shanti-texts-toc-root"><a href="#shanti-texts-' . $rid . '">' . Html::escape($nodes[$bid]->label()) . '</a></div>';
+    }
+    return '<div id="shanti-texts-toc">' . $head . $list(0) . '</div>';
   }
 
   /**
@@ -104,7 +142,7 @@ class WholeBookController extends ControllerBase {
    * @param \Drupal\node\NodeInterface[]|null $nodes
    *   Filled with every outline node, keyed by nid.
    */
-  protected function flatOutline(int $bid, &$nodes): array {
+  protected function flatOutline(int $bid, &$nodes, &$pids = []): array {
     $rows = $this->db->select('book', 'b')->fields('b', ['nid', 'pid', 'weight', 'depth'])
       ->condition('b.bid', $bid)->execute()->fetchAllAssoc('nid');
     $nodes = $this->entityTypeManager()->getStorage('node')->loadMultiple(array_keys($rows));
@@ -113,6 +151,7 @@ class WholeBookController extends ControllerBase {
       if (!isset($nodes[$nid])) {
         continue;
       }
+      $pids[(int) $nid] = (int) $r->pid;
       $children[(int) $r->pid][(50000 + (int) $r->weight) . ' ' . $nodes[$nid]->label() . ' ' . $nid] = (int) $nid;
     }
     $flat = [];

@@ -1,0 +1,374 @@
+16652	14679	0	1	0	1	A Survey of Bonpo Monasteries and Temples in Tibet and the Himalaya
+16653	14680	16652	2	-15	1	Preface
+16654	14681	16652	2	-14	1	Introduction
+16678	14705	16652	2	-13	1	List of the monasteries surveyed
+16730	14757	16652	2	-12	1	Bonpo monasteries and temples in Central Tibet
+16837	14864	16652	2	-11	1	Bonpo monasteries and temples in Nagchu, Chamdo and Ngari regions
+16854	14881	16652	2	-10	1	Bonpo monasteries and temples in Tibetan regions in Qinghai, Gansu and                Sichuan
+17001	15028	16652	2	-9	1	Bonpo monasteries and temples of the Himalayan region
+17020	15047	16652	2	-8	1	Appendix: Excerpts from the history of the Ya ngal clan
+17023	15050	16652	2	-7	1	Terms of governing system and duties in monasteries
+17024	15051	16652	2	-6	1	List of Authors
+16655	14682	16654	3	-15	1	Persecution and destruction
+16656	14683	16654	3	-14	1	Foreign interference
+16657	14684	16654	3	-13	1	Sectarian persecution
+16658	14685	16654	3	-12	1	Surveying of the monasteries
+16659	14686	16654	3	-11	1	The framework for the survey
+16674	14701	16654	3	-10	1	Editorial work
+16675	14702	16654	3	-9	1	References
+16676	14703	16654	3	-8	1	References to Tibetan sources
+16677	14704	16654	3	-7	1	Acknowledgments
+16660	14687	16659	4	-15	1	1. Name
+16661	14688	16659	4	-14	1	2. Location
+16662	14689	16659	4	-13	1	3. History
+16663	14690	16659	4	-12	1	4. Hierarchical system
+16664	14691	16659	4	-11	1	5. Current number of monks
+16665	14692	16659	4	-10	1	6. Current education
+16666	14693	16659	4	-9	1	7. Educational exchange
+16667	14694	16659	4	-8	1	8. Daily rituals
+16668	14695	16659	4	-7	1	9. Annual rituals
+16669	14696	16659	4	-6	1	10. Books held in the monastery
+16670	14697	16659	4	-5	1	11. Income and expenses
+16671	14698	16659	4	-4	1	12. Local community
+16672	14699	16659	4	-3	1	13. Local festivals
+16673	14700	16659	4	-2	1	14. Occupation of the local people
+16679	14706	16678	3	-15	1	TIBET AUTONOMOUS REGION
+16693	14720	16678	3	-14	1	GANSU PROVINCE
+16696	14723	16678	3	-13	1	MTSHO SNGON (QINGHAI) PROVINCE
+16704	14731	16678	3	-12	1	SICHUAN PROVINCE
+16725	14752	16678	3	-11	1	NEPAL
+16728	14755	16678	3	-10	1	INDIA
+16680	14707	16679	4	-15	1	dBus gtsang
+16681	14708	16679	4	-14	1	sNye rong rdzong
+16682	14709	16679	4	-13	1	dPal mgon rdzong
+16683	14710	16679	4	-12	1	Nyi ma rdzong
+16684	14711	16679	4	-11	1	’Bri ru rdzong
+16685	14712	16679	4	-10	1	sBra chen chen rdzong
+16686	14713	16679	4	-9	1	sTeng chen rdzong
+16687	14714	16679	4	-8	1	’Jo mda’ rdzong
+16688	14715	16679	4	-7	1	lHo rong rdzong
+16689	14716	16679	4	-6	1	mDzo sgang rdzong
+16690	14717	16679	4	-5	1	dPa’ shod rdzong
+16691	14718	16679	4	-4	1	Nying khri rdzong
+16692	14719	16679	4	-3	1	mNga’ ris
+16694	14721	16693	4	-15	1	The bo County
+16695	14722	16693	4	-14	1	bSang chu County
+16697	14724	16696	4	-15	1	Reb gong County
+16698	14725	16696	4	-14	1	gCan tsha County
+16699	14726	16696	4	-13	1	rTse khog County
+16700	14727	16696	4	-12	1	Ba yan County
+16701	14728	16696	4	-11	1	Khri ka (Hua long) County
+16702	14729	16696	4	-10	1	Mang ra (Gui nan) County
+16703	14730	16696	4	-9	1	Chab cha (Gong he) County
+16705	14732	16704	4	-15	1	sDe dge County
+16706	14733	16704	4	-14	1	dPal yul County
+16707	14734	16704	4	-13	1	dKar mdzes County
+16708	14735	16704	4	-12	1	Nyag rong County
+16709	14736	16704	4	-11	1	Brag ’go County
+16710	14737	16704	4	-10	1	rTa’u County
+16711	14738	16704	4	-9	1	Nyag chu County
+16712	14739	16704	4	-8	1	Li thang County
+16713	14740	16704	4	-7	1	Rong brag County
+16714	14741	16704	4	-6	1	brGyad zur County
+16715	14742	16704	4	-5	1	Dar rtse mdo County
+16716	14743	16704	4	-4	1	rNga ba County
+16717	14744	16704	4	-3	1	’Bar kham County
+16718	14745	16704	4	-2	1	Chu chen County
+16719	14746	16704	4	-1	1	rMe ba County
+16720	14747	16704	4	0	1	mDzod dge County
+16721	14748	16704	4	1	1	Zung chu County
+16722	14749	16704	4	2	1	gZi tsha sde dgu County
+16723	14750	16704	4	3	1	Wen Chuan County
+16724	14751	16704	4	4	1	Yan yuan County
+16726	14753	16725	4	-15	1	Mustang District
+16727	14754	16725	4	-14	1	Dolpo District
+16729	14756	16728	4	-15	1	(231) sMan ri Monastery in Dolanji                       (232) Gling tshang Monastery                        (233) Zhu gYung drung kun grags gling
+16731	14758	16730	3	-15	1	(1) sMan ri Monastery
+16746	14773	16730	3	-14	1	(2) gYung drung gling
+16760	14787	16730	3	-13	1	(3) Ri rgyal Monastery
+16774	14801	16730	3	-12	1	(4) Ri zhing Monastery
+16789	14816	16730	3	-11	1	(5) bDe chen sgang Hermitage
+16803	14830	16730	3	-10	1	(6) bZang ri Monastery
+16818	14845	16730	3	-9	1	(7) mKhar sna Monastery
+16822	14849	16730	3	-8	1	(8) Pus mo sgang Monastery
+16732	14759	16731	4	-15	1	1. Name
+16733	14760	16731	4	-14	1	2. Location
+16734	14761	16731	4	-13	1	3. History
+16735	14762	16731	4	-12	1	4. Hierarchical system
+16736	14763	16731	4	-11	1	5. Current number of monks
+16737	14764	16731	4	-10	1	6. Current education
+16738	14765	16731	4	-9	1	7. Educational exchange
+16739	14766	16731	4	-8	1	8. Daily rituals
+16740	14767	16731	4	-7	1	9. Annual rituals performed in former times, based on the Tibetan                      calendar
+16741	14768	16731	4	-6	1	10. Books held in the monastery
+16742	14769	16731	4	-5	1	11. Income and expenses
+16743	14770	16731	4	-4	1	12. Local community
+16744	14771	16731	4	-3	1	13. Local festivals
+16745	14772	16731	4	-2	1	14. Occupation of the local people
+16747	14774	16746	4	-15	1	1. Name
+16748	14775	16746	4	-14	1	2. Location
+16749	14776	16746	4	-13	1	3. History
+16750	14777	16746	4	-12	1	4. Hierarchical system
+16751	14778	16746	4	-11	1	5. Current number of monks
+16752	14779	16746	4	-10	1	6. Current education
+16753	14780	16746	4	-9	1	7. Educational exchange
+16754	14781	16746	4	-8	1	8. Daily rituals
+16755	14782	16746	4	-7	1	9. Annual rituals, based on the Tibetan calendar
+16756	14783	16746	4	-6	1	10. Books held in the monastery
+16757	14784	16746	4	-5	1	11. Income and expenses
+16758	14785	16746	4	-4	1	12. Local community
+16759	14786	16746	4	-3	1	13. Local festivals
+16761	14788	16760	4	-15	1	1. Name
+16762	14789	16760	4	-14	1	2. Location
+16763	14790	16760	4	-13	1	3. History
+16764	14791	16760	4	-12	1	4. Headship
+16765	14792	16760	4	-11	1	5. Current number of monks
+16766	14793	16760	4	-10	1	6. Current education
+16767	14794	16760	4	-9	1	7. Educational exchange
+16768	14795	16760	4	-8	1	8. Daily rituals
+16769	14796	16760	4	-7	1	9. Annual rituals, based on the Tibetan calendar
+16770	14797	16760	4	-6	1	10. Books held in the monastery
+16771	14798	16760	4	-5	1	11. Income and expenses
+16772	14799	16760	4	-4	1	12. Local community
+16773	14800	16760	4	-3	1	13. Local festivals
+16775	14802	16774	4	-15	1	1. Name
+16776	14803	16774	4	-14	1	2. Location
+16777	14804	16774	4	-13	1	3. History
+16778	14805	16774	4	-12	1	4. Headship
+16779	14806	16774	4	-11	1	5. Current number of monks
+16780	14807	16774	4	-10	1	6. Current education
+16781	14808	16774	4	-9	1	7. Educational exchange
+16782	14809	16774	4	-8	1	8. Daily rituals
+16783	14810	16774	4	-7	1	9. Annual rituals, based on the Tibetan calendar
+16784	14811	16774	4	-6	1	10. Books held in the monastery
+16785	14812	16774	4	-5	1	11. Income and expenses
+16786	14813	16774	4	-4	1	12. Local community
+16787	14814	16774	4	-3	1	13. Local festivals
+16788	14815	16774	4	-2	1	14. Occupation of the local people
+16790	14817	16789	4	-15	1	1. Name of the hermitage
+16791	14818	16789	4	-14	1	2. Location
+16792	14819	16789	4	-13	1	3. History
+16793	14820	16789	4	-12	1	4. Headship of the hermitage
+16794	14821	16789	4	-11	1	5. Current number of residents
+16795	14822	16789	4	-10	1	6. Current education
+16796	14823	16789	4	-9	1	8. Daily rituals
+16797	14824	16789	4	-8	1	9. Annual rituals
+16798	14825	16789	4	-7	1	10. Books held in the hermitage
+16799	14826	16789	4	-6	1	11. Income and expenses
+16800	14827	16789	4	-5	1	12. Local community
+16801	14828	16789	4	-4	1	13. Local festivals
+16802	14829	16789	4	-3	1	14. Occupation of the local people
+16804	14831	16803	4	-15	1	1. Name
+16805	14832	16803	4	-14	1	2. Location
+16806	14833	16803	4	-13	1	3. History
+16807	14834	16803	4	-12	1	4. Headship system
+16808	14835	16803	4	-11	1	5. Current number of monks
+16809	14836	16803	4	-10	1	6. Current education
+16810	14837	16803	4	-9	1	7. Educational exchange
+16811	14838	16803	4	-8	1	8. Daily rituals
+16812	14839	16803	4	-7	1	9. Annual rituals, based on the Tibetan calendar
+16813	14840	16803	4	-6	1	10. Books held in the monastery
+16814	14841	16803	4	-5	1	11. Income and expenses
+16815	14842	16803	4	-4	1	12. Local community
+16816	14843	16803	4	-3	1	13. Local festivals
+16817	14844	16803	4	-2	1	14. Occupation of the local people
+16819	14846	16818	4	-15	1	1. Name
+16820	14847	16818	4	-14	1	2. Location
+16821	14848	16818	4	-13	1	3. History
+16823	14850	16822	4	-15	1	1. Name
+16824	14851	16822	4	-14	1	2. Location
+16825	14852	16822	4	-13	1	3. History
+16826	14853	16822	4	-12	1	4. Headship system
+16827	14854	16822	4	-11	1	5. Current number of monks
+16828	14855	16822	4	-10	1	6. Current education
+16829	14856	16822	4	-9	1	7. Educational exchange
+16830	14857	16822	4	-8	1	8. Daily rituals
+16831	14858	16822	4	-7	1	9. Annual rituals, based on the Tibetan calendar
+16832	14859	16822	4	-6	1	10. Books held in the monastery
+16833	14860	16822	4	-5	1	11. Income and expenses
+16834	14861	16822	4	-4	1	12. Local community
+16835	14862	16822	4	-3	1	13. Local festivals
+16836	14863	16822	4	-2	1	14. Occupation of the local people
+16838	14865	16837	3	-15	1	The Nagchu region
+16844	14871	16837	3	-14	1	The Chamdo region
+16851	14878	16837	3	-13	1	The Ngari region
+16839	14866	16838	4	-15	1	sNye rong rdzong
+16840	14867	16838	4	-14	1	dPal mgon rdzong
+16841	14868	16838	4	-13	1	Nyi ma rdzong
+16842	14869	16838	4	-12	1	’Bri ru rdzong
+16843	14870	16838	4	-11	1	sBra chen rdzong
+16845	14872	16844	4	-15	1	sTeng chen rdzong
+16846	14873	16844	4	-14	1	’Jo mda’ rDzong
+16847	14874	16844	4	-13	1	lHo rong rdzong
+16848	14875	16844	4	-12	1	mDzo sgang rdzong
+16849	14876	16844	4	-11	1	dPa’ shod rdzong
+16850	14877	16844	4	-10	1	Nying khri rdzong
+16852	14879	16851	4	-15	1	sGar rdzong, mNga’ ris
+16853	14880	16851	4	-14	1	The main Bonpo religious sites in Pu rang rdzong
+16855	14882	16854	3	-15	1	The bo County
+16866	14893	16854	3	-14	1	bSang chu County
+16868	14895	16854	3	-13	1	Reb gong
+16893	14920	16854	3	-12	1	Bonpo temples in sTong che
+16902	14929	16854	3	-11	1	Derge County
+16913	14940	16854	3	-10	1	dPal yul County
+16918	14945	16854	3	-9	1	dKar mdzes County
+16920	14947	16854	3	-8	1	Nyag rong rdzong
+16932	14959	16854	3	-7	1	rTa’u County
+16937	14964	16854	3	-6	1	Nyag chu county
+16940	14967	16854	3	-5	1	Li thang County
+16952	14979	16854	3	-4	1	rNga khog
+16957	14984	16854	3	-3	1	’Bar khams
+16963	14990	16854	3	-2	1	Chu chen County
+16969	14996	16854	3	-1	1	rMe ba county
+16978	15005	16854	3	0	1	Zung chu County
+16996	15023	16854	3	1	1	Wen chuan County
+17000	15027	16854	3	2	1	Abbreviations
+16856	14883	16855	4	-15	1	Introduction
+16857	14884	16855	4	-14	1	History
+16858	14885	16855	4	-13	1	(91) gTso tshang Monastery
+16859	14886	16855	4	-12	1	(92) rGod po Monastery
+16860	14887	16855	4	-11	1	(93) Nags gong Monastery
+16861	14888	16855	4	-10	1	(94) Chags ri Monastery
+16862	14889	16855	4	-9	1	(95) Shing skam Monastery
+16863	14890	16855	4	-8	1	(96) bSam ’grub Monastery
+16864	14891	16855	4	-7	1	(97) gTer ri Monastery
+16865	14892	16855	4	-6	1	(98) rTsa ring (also rTsa ri, Tsa ri) Monastery
+16867	14894	16866	4	-15	1	(99) rTse zhig Monastery
+16869	14896	16868	4	-15	1	(100) Bon brgya Monastery
+16870	14897	16868	4	-14	1	(101) Bon brgya Temple
+16871	14898	16868	4	-13	1	(102) Mag sar Temple
+16872	14899	16868	4	-12	1	(103) rGya mtsho dpal Temple
+16873	14900	16868	4	-11	1	(104) Gad pa skya bo Temple
+16874	14901	16868	4	-10	1	(105) gDong mgo Temple
+16875	14902	16868	4	-9	1	(106) Ngo mo Temple
+16876	14903	16868	4	-8	1	(107) Gyang ru Temple
+16877	14904	16868	4	-7	1	(108) Gling rgya Temple
+16878	14905	16868	4	-6	1	(109) Zho ’ong nyin tha Temple
+16879	14906	16868	4	-5	1	(110) Dar grong Temple
+16880	14907	16868	4	-4	1	(111) Khyung bo thang Temple
+16881	14908	16868	4	-3	1	(112) sDong skam Temple
+16882	14909	16868	4	-2	1	(113) Hor nag Temple
+16883	14910	16868	4	-1	1	(114) sTong che Temple
+16884	14911	16868	4	0	1	(115) Kyung bo la ga Temple
+16885	14912	16868	4	1	1	(116) Zhwa khra Temple
+16886	14913	16868	4	2	1	(117) So nag Temple
+16887	14914	16868	4	3	1	(118) To shes Temple
+16888	14915	16868	4	4	1	(119) Shar steng Temple
+16889	14916	16868	4	5	1	(120) sTong chung Monastery
+16890	14917	16868	4	6	1	(121) sTong chung Temple
+16891	14918	16868	4	7	1	(122) Ser kywa Temple
+16892	14919	16868	4	8	1	(123) Khyung mo Monastery
+16894	14921	16893	4	-15	1	(124) sGar ba Temple, (125) sBra ser Temple, (126) gZe ma Temple,1 (127) sKa rgya Temple
+16895	14922	16893	4	-14	1	(128) ’Brog ru stong skor Temple
+16896	14923	16893	4	-13	1	(129) ’Brog ru’i dPon tshang Tent Temple
+16897	14924	16893	4	-12	1	(130) Bon brgya Tshogs ras (Tent Temple)
+16898	14925	16893	4	-11	1	(131) Bon brgya Khyung smon Monastery
+16899	14926	16893	4	-10	1	(132) Dung dkar Monastery
+16900	14927	16893	4	-9	1	(133) rKa gsar Temple
+16901	14928	16893	4	-8	1	(134) A rig stong skor Temple
+16903	14930	16902	4	-15	1	(135) Khro tshang Monastery
+16904	14931	16902	4	-14	1	(136) sMon rgyal Monastery
+16905	14932	16902	4	-13	1	(137) ’Bum rmad Monastery
+16906	14933	16902	4	-12	1	(138) Shar rdza Hermitage
+16907	14934	16902	4	-11	1	(139) rDza sTeng chen Monastery
+16908	14935	16902	4	-10	1	(140) Zer ’phro Monastery
+16909	14936	16902	4	-9	1	(141) ’Phen zhol Monastery
+16910	14937	16902	4	-8	1	(142) Ri spun Monastery
+16911	14938	16902	4	-7	1	(143) Thar bde Monastery
+16912	14939	16902	4	-6	1	(144) Rab rgyal Monastery
+16914	14941	16913	4	-15	1	(145) Kha rag Monastery
+16915	14942	16913	4	-14	1	(146) Zla ’od Monastery
+16916	14943	16913	4	-13	1	(147) gTsug ’od Monastery
+16917	14944	16913	4	-12	1	(148) lCang lung Monastery
+16919	14946	16918	4	-15	1	(149) Gong lung Monastery
+16921	14948	16920	4	-15	1	(150) Ye shes Monastery
+16922	14949	16920	4	-14	1	(151) rGyal zhing Monastery
+16923	14950	16920	4	-13	1	(152) Gong rgyal Monastery
+16924	14951	16920	4	-12	1	(153) Klu ’bum Monastery
+16925	14952	16920	4	-11	1	(154) La kha Monastery
+16926	14953	16920	4	-10	1	(155) dBal khyung Monastery
+16927	14954	16920	4	-9	1	(156) Brag dben Monastery
+16928	14955	16920	4	-8	1	(157) Mi nub Monastery
+16929	14956	16920	4	-7	1	(158) rBa mda’ Monastery
+16930	14957	16920	4	-6	1	(159) rGyal rong Monastery
+16931	14958	16920	4	-5	1	(160) gZhung ring Monastery
+16933	14960	16932	4	-15	1	(161) bSam ’grub Monastery
+16934	14961	16932	4	-14	1	(162) Chu mig Monastery
+16935	14962	16932	4	-13	1	(163) dGu rdza Monastery
+16936	14963	16932	4	-12	1	(164) Dam pa rang grol Monastery
+16938	14965	16937	4	-15	1	(165) ’Du ra Monastery
+16939	14966	16937	4	-14	1	(166) Thang sgang Monastery
+16941	14968	16940	4	-15	1	(167) ’Gro mgon Monastery
+16942	14969	16940	4	-14	1	(168) Bye ’bur Monastery
+16943	14970	16940	4	-13	1	(169) sPang gi lung Monastery
+16944	14971	16940	4	-12	1	(170) gYung drung dar rgyas Monastery
+16945	14972	16940	4	-11	1	(171) Khyung lung Monastery
+16946	14973	16940	4	-10	1	(172) rJi ngo Monastery
+16947	14974	16940	4	-9	1	(173) dPag bsam lhun ’grub Monastery
+16948	14975	16940	4	-8	1	(174) rDo zur mo Monastery
+16949	14976	16940	4	-7	1	(175) Bya ti lo Monastery
+16950	14977	16940	4	-6	1	(176) Mi rgod Temple
+16951	14978	16940	4	-5	1	(177) Grib srib Monastery
+16953	14980	16952	4	-15	1	(178) rTogs ldan Monastery
+16954	14981	16952	4	-14	1	(179) gDong li Monastery
+16955	14982	16952	4	-13	1	(180) sNang zhig Monastery
+16956	14983	16952	4	-12	1	(181) Cog lo Monastery
+16958	14985	16957	4	-15	1	(182) ’Bo la Monastery
+16959	14986	16957	4	-14	1	(183) Kun ’brog Monastery
+16960	14987	16957	4	-13	1	(184) Ka ca Monastery
+16961	14988	16957	4	-12	1	(185) Ka co Monastery
+16962	14989	16957	4	-11	1	(186) dGon gsar Monastery
+16964	14991	16963	4	-15	1	(187) gYung drung lha steng Monastery
+16965	14992	16963	4	-14	1	(188) mTsho mtho Monastery
+16966	14993	16963	4	-13	1	(189) dGra lha khyung dgon Monastery
+16967	14994	16963	4	-12	1	(190) Bla med Monastery
+16968	14995	16963	4	-11	1	(191) bZod sgom Monastery
+16970	14997	16969	4	-15	1	(192) Mag gsar Temple
+16971	14998	16969	4	-14	1	(193) Tsha lung Monastery
+16972	14999	16969	4	-13	1	mDzod dge county
+16973	15000	16969	4	-12	1	(194) A skyid sKyang tshang Monastery
+16974	15001	16969	4	-11	1	(195) Nyos zhing Monastery
+16975	15002	16969	4	-10	1	(196) sGur skyang Monastery
+16976	15003	16969	4	-9	1	(197) gYung drung bSam ’grub Monastery
+16977	15004	16969	4	-8	1	(198) mDa’ chen Monastery
+16979	15006	16978	4	-15	1	(199) sNa steng Monastery
+16980	15007	16978	4	-14	1	(200) Rin spungs Monastery
+16981	15008	16978	4	-13	1	(201) sNang zhig dngul sku Monastery
+16982	15009	16978	4	-12	1	(202) sKyang tshang Monastery
+16983	15010	16978	4	-11	1	(203) mKhar yag Monastery
+16984	15011	16978	4	-10	1	(204) Gla ro Monastery
+16985	15012	16978	4	-9	1	(205) gSer gling Monastery
+16986	15013	16978	4	-8	1	(206) Sa ’brug Monastery
+16987	15014	16978	4	-7	1	(207) Brag g-yung drung Hermitage
+16988	15015	16978	4	-6	1	(208) dGa’ mal Monastery
+16989	15016	16978	4	-5	1	(209) New dGa’ mal Monastery
+16990	15017	16978	4	-4	1	(210) Shar khog gTso tshang Monastery
+16991	15018	16978	4	-3	1	(211) rTsub ma Monastery
+16992	15019	16978	4	-2	1	(212) Dar rgyas Monastery
+16993	15020	16978	4	-1	1	(213) Sa dbus Monastery
+16994	15021	16978	4	0	1	(214) lDong dpal Monastery
+16995	15022	16978	4	1	1	(215) Rab dben Monastery
+16997	15024	16996	4	-15	1	(1) Interviews
+16998	15025	16996	4	-14	1	(217) mChog gsum Temple
+16999	15026	16996	4	-13	1	(218) La tha Temple
+17002	15029	17001	3	-15	1	Mustang District
+17004	15031	17001	3	-14	1	Dolpo (Nep. Dolpa) District
+17018	15045	17001	3	-13	1	Sikkim
+17003	15030	17002	4	-15	1	(219) Klu Brag Monastery
+17005	15032	17004	4	-15	1	(220) gYung drung shug tshal gling Monastery
+17006	15033	17004	4	-14	1	(221) Dar rgyas phun tshogs gling Monastery
+17007	15034	17004	4	-13	1	(222) Yang dgon Monastery
+17008	15035	17004	4	-12	1	(223) bSam gling Monastery
+17009	15036	17004	4	-11	1	(224) mTha’ srung Monastery
+17010	15037	17004	4	-10	1	(225) sPung mo and sPu mer Temples
+17011	15038	17004	4	-9	1	(226) gYung drung tre ston gling Monastery
+17012	15039	17004	4	-8	1	(227) Srid rgyal Monastery
+17013	15040	17004	4	-7	1	(228) Dorpatan Monastery
+17014	15041	17004	4	-6	1	(229) Mon ri zur gsum Temple
+17015	15042	17004	4	-5	1	(230) Khri brtan nor bu rtse Monastery
+17016	15043	17004	4	-4	1	(231) sMan ri Monastery in Dolanji
+17017	15044	17004	4	-3	1	(232) Gling tshang Monastery
+17019	15046	17018	4	-15	1	(233) Zhu gYung drung kun grags gling
+17021	15048	17020	3	-15	1	The lineage of gSung rab skyabs
+17022	15049	17020	3	-14	1	The lineage of Phur pa skyabs
+17025	15052	17024	3	-15	1	Notes
