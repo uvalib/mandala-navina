@@ -1,6 +1,6 @@
 # Spike 13: Texts book outline and whole-book render
 
-**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3–S6 not started
+**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4–S6 not started
 **Lead:** Than Grove
 **Mode:** Individual
 **Time-box:** 3.5–4.5 days
@@ -254,6 +254,84 @@ D7 nid looked up from the migration map; production must use `field_legacy_nid`.
 the fallback in the plan (queue-worker pre-render, cache tag per `bid`) is not needed on this
 evidence. Record the sibling-order rule and the tie decision. S3 onward is unchanged.
 
-### S3–S6
+### S3 cache and access — PASS with the fail response (2026-11-06, Than with Claude Code)
+
+**Setup (local DDEV, throwaway branch).** Book 15641 (D11 123746, 52 pages) placed in a public
+collection, with per-page overrides: 3 private (`field_group_content_access` = 2), 2 UVA-only (3), 2
+explicit public (1), the rest default. Four viewers over real HTTP (curl, a fresh cookie jar each):
+anonymous, an authenticated non-member, a collection member, and a `content_editor`. Ground truth
+came from SQL, not from the code under test: 46 published pages, so the expected counts are
+anonymous 42, non-member 44, member 46, editor 46.
+
+**Result.** The render gives those counts once the outline is read as in finding 1. Under the
+`full` cache configuration below, every one of 25 checks passed (baseline per viewer, page edit,
+hidden page made visible and back, whole collection made private and back, member removed and
+re-added) and responses were actually cached (6 dynamic-page-cache HITs; the only uncacheable
+responses were the 403s). Editing a page in book A refreshed A's viewers and left book B's cached
+page untouched (checked in all three configurations).
+
+**Findings**
+
+1. **Book's tree API is the wrong source for a whole-book render.** `bookTreeAllData()` drops an
+   inaccessible parent *together with its whole subtree* (`doBookTreeCheckAccess`). D7's whole-book
+   view filters each row on its own status, so published pages under an unpublished parent still
+   render there (read from the view config, not run against D7). The D7 data has this at scale:
+   **1,410 of 7,568 published book pages, in 36 books, sit under an unpublished ancestor** (largest:
+   bid 54836 with 330, 39676 and 40956 with 194 each, 41931 with 187). In the S3 test book all six
+   chapters are unpublished and 45 published pages sit beneath them: through the tree API every
+   non-bypass viewer got 1 section instead of 44 to 46. The S2 admin-only runs could not see this,
+   because an administrator can view unpublished pages. The render now orders the flat `{book}` rows
+   with Book's own sort key (50000 + weight, title, nid) and checks each page on its own. TX20 should
+   do the same, and its tests must include a non-admin viewer.
+2. **Enabling the `book` bundle is not zero-config for access.** `CollectionVisibility` says Texts
+   gets enforcement "with no further code change" once its bundle has a group_node plugin, and that
+   is true of the *visibility rule*. But installing `group_node:book` on the collection type also
+   brings Group's own access into play, and with no `group_node:book` permissions on the collection
+   roles every viewer, including `content_editor`, got 403 on the book root. The roles needed the
+   same view/create/update/delete grants the audio plugin has (5 roles; copied from audio here).
+   TX5 must include them.
+3. **The `NodeQueryAlter` `b.type` error is confirmed over HTTP** (S1 finding 3). With the book
+   bundle in a collection, a non-bypass viewer requesting a page that went through Book's own
+   access-tagged query got a 500 (`SQLSTATE[42S22] Unknown column 'b.type'`, in the Drupal log).
+   Book declares `base_table = book`; `baseTable()` falls back to that table's alias, which has no
+   `type` column. Not fixed here (TX7). One thing I did not explain: the same call from drush returned
+   a (pruned) tree without the error.
+4. **Cache design for an aggregate render.** Three configurations were run against the same four
+   viewers (`?cache=naive|bubbled|full`, run one after the other from a cleared cache):
+   - `naive` (cache tags from visible pages only; context `user.permissions`) **fails**: when a hidden
+     page becomes visible, anonymous and non-member viewers keep the stale count (42 and 44 instead
+     of 43 and 45), and in one of two runs a member removed from the collection kept seeing all 46
+     pages, private ones included (the other run passed that step, so it depends on cache state).
+     It was not worse only because the route's `node.view` check on the book root adds
+     `user.group_permissions` to the response, which happens to separate members from outsiders. That
+     is incidental: the `CollectionMembershipsCacheContext` docblock already explains why
+     `user.group_permissions` is not a safe substitute for membership.
+   - `bubbled` (merge every page's access result as-is) is correct, 25 of 25, but **never cached**:
+     the forbidden-private results declare a per-user context, and dynamic page cache refuses a
+     response with that ("poor cacheability").
+   - `full` is correct, 25 of 25, **and cached**. It merges the cache tags and max-age of every
+     page's access result and node (hidden pages included, so a hidden page that becomes visible
+     refreshes the render), drops the per-user context, and declares `user.permissions`,
+     `user.roles:authenticated` and `user.mandala_collection_memberships` instead. The membership
+     context already determines the private decision, which is what it exists for.
+5. **The S3 fail response fired, and its cost.** Per-viewer cache contexts are needed for these
+   books. The cost is one cache entry per distinct combination of bypass permission, authenticated
+   status and membership set, and an access check on every outline page on each cold render (not
+   measured for the 374-page or 294-page books; S2's timings were admin and had no per-page
+   access work). Also: the `spike13_book:<bid>` tag the spike controller adds is never invalidated
+   by anything; the real invalidation comes from the page and group tags, so TX20 should either drop
+   it or invalidate it from a page-save hook.
+
+**Not tested.** Subcollection and inherited membership (direct member only); D7's rule that children
+inherit the root's access versus D11's per-page overrides (the mixed tree here uses overrides, which
+is what the D11 field supports); the timing of `full` on the large books; two members of different
+collections; unpublished pages for editors with "view own unpublished". One operator, one machine,
+one 52-page book.
+
+**Handed to Sprint 5.** TX5: group role grants for `group_node:book`. TX7: the `baseTable()` fix,
+plus a test with a non-admin viewer on a book. TX20: flat-outline render with per-page access and
+the `full` cache declaration, and a measurement of it on the largest books.
+
+### S4–S6
 
 Not started.
