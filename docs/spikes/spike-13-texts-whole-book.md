@@ -1,6 +1,6 @@
 # Spike 13: Texts book outline and whole-book render
 
-**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference that the TX3 normalization fixes, one new caveat on the weight range); S5–S6 not started
+**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5–S6 not started
 **Lead:** Than Grove
 **Mode:** Individual
 **Time-box:** 3.5–4.5 days
@@ -368,13 +368,13 @@ were renumbered 0..48 in D7 order in the local DB. The Contents order then match
 whole check passed. Restoring the original weights brought the same 3 differences back (weights
 verified identical to the original). This is evidence for the normalize decision, not a new finding.
 
-**Caveat for TX3: the renumber does not fit Book's weight widget.** That one parent has 49 children
-and D7 weights already spanning -15 to 16, and Book's outline form offers -15 to 15 (not checked
-against the form here). Renumbering a whole sibling set to 0..n-1 therefore only works in the
-database. The migration should either renumber only within the tied runs where there is room, or
-store weights outside the widget range and accept that an editor who re-saves through the form
-renormalizes them. TX11 needs to pick one, and the acceptance test (rendered order equals D7 in every
-book) is unchanged.
+**Weight range: not a problem (checked).** That one parent has 49 children and D7 weights already
+spanning -15 to 16, so I first suspected that renumbering would not fit Book's outline form. It does:
+Book 3.x builds the weight element with `#delta = max(50, abs(weight))` (`BookManager.php:316`), so
+the form offers at least -50 to 50 and widens to show the page's current weight. D7's weight of 16 and a
+renumber to 0..48 both display. TX11 can renumber a whole tied sibling set without a range concern;
+only a sibling set larger than 100 would need the widget to widen, and it does so by itself. (An
+earlier draft of this note assumed a -15 to 15 range without checking; that was wrong.)
 
 **Per viewer, on the mixed-access book (123746).** Contents links follow what the viewer may see:
 anonymous 41, non-member 43, member 45, editor 45 (each one less than the section count, the root
