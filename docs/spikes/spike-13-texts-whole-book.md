@@ -1,6 +1,6 @@
 # Spike 13: Texts book outline and whole-book render
 
-**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4–S6 not started
+**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference that the TX3 normalization fixes, one new caveat on the weight range); S5–S6 not started
 **Lead:** Than Grove
 **Mode:** Individual
 **Time-box:** 3.5–4.5 days
@@ -332,6 +332,60 @@ one 52-page book.
 plus a test with a non-admin viewer on a book. TX20: flat-outline render with per-page access and
 the `full` cache declaration, and a measurement of it on the largest books.
 
-### S4–S6
+### S4 Contents and anchors — PASS (2026-11-06, Than with Claude Code)
+
+**What was built.** The whole-book render now emits a Contents list in D7's shape: a root link, then
+a nested list of `<a href="#shanti-texts-<nid>" id="shanti-texts-toc-<nid>">` entries, built in the
+same per-page access loop as the sections so the two cannot disagree about which pages a viewer may
+see. Section ids and TOC hrefs use the D7 nid, as in S2.
+
+**The D7 rule, read from code.** D7's `single_text_toc` is a *tree* list of published pages at depth
+greater than 1. It renders through the contrib `views_tree` style, which sends any row whose parent
+is not in the result set to the top level (`views_tree.module`, "normalize the top level"). So a
+published page under an unpublished chapter is a top-level Contents entry, not a child of its nearest
+visible ancestor. The D11 list does the same.
+
+**Verification.** A verifier parses the HTML (not string counts) and compares it with expectations
+computed from the D7 database: published pages at depth > 1, each page's parent by the rule above,
+and sibling order by weight, then title, then link id, through MySQL. D7's view itself was not run;
+its rules were taken from the view config and the `views_tree` code. As the `content_editor` (who
+sees every published page):
+
+| D7 book (D11 stand-in) | Pages in Contents | Links resolve, ids unique | Set, nesting | Order |
+|---|---|---|---|---|
+| 15641 (123746) | 45 | pass | pass (27 promoted to top level) | pass |
+| 14679 (123372) | 373 | pass | pass | pass |
+| 14158 (123817) | 293 | pass | pass | **3 positions differ** |
+
+Every Contents href resolves to a section anchor in the same page, every section has both the
+`<a name>` and the `div id`, ids are unique, the root link resolves, and the link count equals the
+number of visible non-root sections.
+
+**The one order difference is the known tie group.** In 14158 all three differing positions are the
+same siblings (D7 nodes 14209, 14214, 14215, under 14176), with identical weight 16: the S2 tie case,
+with 0 differences outside a tie. To check that the TX3 decision fixes it, the 49 siblings under 14176
+were renumbered 0..48 in D7 order in the local DB. The Contents order then matched D7 exactly and the
+whole check passed. Restoring the original weights brought the same 3 differences back (weights
+verified identical to the original). This is evidence for the normalize decision, not a new finding.
+
+**Caveat for TX3: the renumber does not fit Book's weight widget.** That one parent has 49 children
+and D7 weights already spanning -15 to 16, and Book's outline form offers -15 to 15 (not checked
+against the form here). Renumbering a whole sibling set to 0..n-1 therefore only works in the
+database. The migration should either renumber only within the tied runs where there is room, or
+store weights outside the widget range and accept that an editor who re-saves through the form
+renormalizes them. TX11 needs to pick one, and the acceptance test (rendered order equals D7 in every
+book) is unchanged.
+
+**Per viewer, on the mixed-access book (123746).** Contents links follow what the viewer may see:
+anonymous 41, non-member 43, member 45, editor 45 (each one less than the section count, the root
+being linked separately). Checked by anchor id, not by title (the titles occur inside other pages'
+text): the private pages' ids appear only for the member, the UVA-only pages' ids for any logged-in
+viewer, and the unpublished chapter for nobody.
+
+**Not tested.** Scrolling to an anchor in a browser (the check is structural); Tibetan title markup
+(D7 passes titles through `shanti_sarvaka_process_title_markup`); depth limits of the real theme; the
+Description and Alternative Formats tabs (S6); Contents for books whose root is hidden.
+
+### S5–S6
 
 Not started.
