@@ -4,7 +4,7 @@
 **Raised during:** Spike 11 / #327 (the solr-proxy build failed after PR #315 merged, 2026-10-14)
 **Issue:** #336
 **Priority:** Medium. Builds work again with the stopgap (PR #335), but the image is on unsupported PHP and Debian and gets no security fixes.
-**Owner:** unassigned
+**Owner:** Yuji (2026-11-06)
 
 ## What is deferred
 
@@ -27,6 +27,26 @@ path (ADR 014), so this is not a place to leave unsupported software indefinitel
    those are the regression tests for the authenticated path (ADR 014).
 3. Revert the archive.debian.org stopgap in `solr-proxy/Dockerfile`.
 4. Look for other images in this repo built on the same or an older base and note them here.
+
+## Progress (2026-11-06)
+
+Steps 1, 3 and 4 are done on branch `fix/solr-proxy-php-8-3`; step 2 is half done.
+
+- **Base:** `php:8.3-apache` (PHP 8.3.36 on Debian 13), apt stopgap removed. `composer.json`
+  platform pin moved to 8.3.0; `composer.lock` changed only in its hash and platform entry (no
+  package changed, no Composer security advisories).
+- **Checked on 8.3, locally (no Drupal or real Solr):** every PHP file lints clean, and the old
+  7.4 image and the new 8.3 image give identical responses and send identical queries to a stub
+  Solr for anonymous search on all three cores (including the join core), a logged-in user whose
+  visibility token comes from Redis, the 404 path, `ping.php` and `status.php`. Logs are clean.
+- **Not yet run:** `verify-solr-proxy-visibility.py` and `verify-oauth2-userinfo.sh` need the
+  real dev proxy (Drupal OAuth, Redis, test user), so they run after deploy to dev-0. This note
+  stays open until they pass.
+- **Other images (step 4):** the only other Dockerfile is `package/Dockerfile`
+  (`drupal:11-php8.4-apache`), already supported.
+- **Follow-up, not blocking:** `FILTER_SANITIZE_STRING` (deprecated in PHP 8.1, removed in
+  PHP 9) is used in `Searcher.php`, `auth.php` and `proxysess.php`. It works on 8.3, and
+  production `php.ini` hides deprecations, but it must be replaced before any move to PHP 9.
 
 ## Sequence, not a date
 
