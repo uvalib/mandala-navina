@@ -219,11 +219,18 @@ D11, with 20 sibling positions differing in total. The simulation flagged the 14
 hand. Caveats: the D11 side is a reimplementation (the last tiebreak uses the D7 menu-link id because
 the real D11 nids do not exist for the full corpus); the D7 order depends on this database's
 collation; D7 sorts on the menu link's title and D11 on the node title. Re-check against a real full
-migration. **Decision for the team (TX3):** either leave ties alone (faithful to D7's data, ADR 008)
-or have the outline migration rewrite tied weights to strictly increasing values in D7's order (the
-rendered order then matches D7 exactly and no longer depends on a collation quirk; the cost is a
-documented deviation in 36 groups). Recommended by the spike author: normalize, but this is for
-Yuji and Xiaoming to settle.
+migration.
+
+**Decision (TX3, Than, 2026-11-06): normalize tied weights.** The outline migration rewrites each
+group of tied sibling weights to strictly increasing values in D7's order (menu-link weight, then
+title in MySQL collation, then menu-link id). The rendered order then matches D7 and no longer depends
+on either side's collation. The cost is a documented deviation in the stored weight of 36 sibling
+groups, which is invisible in rendered output and so consistent with [ADR 008](../adr/008-migrate-dont-improve.md).
+The migration keeps the original D7 weight (e.g. in a migrate map or log) so the change is auditable.
+**Acceptance test:** after a real full migration, the rendered sibling order must equal D7's in every
+book, checked explicitly for 13283, 13871, 14158 and 15582. This also replaces the Python
+reimplementation caveat above with a check against real D11 data. The decision is part of the TX3
+decision record, which Sprint 5 lists for team sign-off.
 
 **A wrong turn, recorded.** The first S2 write-up said D7 sorts by the raw path and Book's order
 diverged in 70 books. That was wrong: it compared Book to a path-only ordering that D7 never used, and
