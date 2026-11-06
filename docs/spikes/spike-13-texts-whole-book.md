@@ -322,6 +322,16 @@ page untouched (checked in all three configurations).
    by anything; the real invalidation comes from the page and group tags, so TX20 should either drop
    it or invalidate it from a page-save hook.
 
+**Anchor scrolling in a real browser (Chrome, as an administrator, book 123746).** Loading the page
+with `#shanti-texts-67480` lands the section 79 px from the top, which is the height of the Drupal
+admin toolbar, so it starts just below it. Clicking Contents links across the book (first, middle,
+last, 6 of 52 sampled) did the same for 5; the sixth is the last section, which cannot reach the top
+because the page ends there. The URL hash updated each time. The page sets `scroll-behavior: smooth`,
+so a test has to wait about 1.5 s for each scroll to settle (my first run measured too early and
+looked like a failure). The full 52-link run exceeded the tool's time limit on this 126,000 px page,
+so 6 links, not all, were clicked. Not covered: a link to a page the viewer cannot see (the anchor is
+simply absent from that render, as in D7) and any fixed header in the real theme (TX20).
+
 **Not tested.** Subcollection and inherited membership (direct member only); D7's rule that children
 inherit the root's access versus D11's per-page overrides (the mixed tree here uses overrides, which
 is what the D11 field supports); the timing of `full` on the large books; two members of different
@@ -382,7 +392,7 @@ being linked separately). Checked by anchor id, not by title (the titles occur i
 text): the private pages' ids appear only for the member, the UVA-only pages' ids for any logged-in
 viewer, and the unpublished chapter for nobody.
 
-**Not tested.** Scrolling to an anchor in a browser (the check is structural); title markup (D7's
+**Not tested.** title markup (D7's
 `shanti_sarvaka_process_title_markup` turns `__x__` into italics; only 1 Texts title, a book root, contains
 it, so it is a TX20 footnote, not a risk); depth limits of the real theme; the
 Description and Alternative Formats tabs (S6); Contents for books whose root is hidden.
