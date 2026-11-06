@@ -382,8 +382,9 @@ being linked separately). Checked by anchor id, not by title (the titles occur i
 text): the private pages' ids appear only for the member, the UVA-only pages' ids for any logged-in
 viewer, and the unpublished chapter for nobody.
 
-**Not tested.** Scrolling to an anchor in a browser (the check is structural); Tibetan title markup
-(D7 passes titles through `shanti_sarvaka_process_title_markup`); depth limits of the real theme; the
+**Not tested.** Scrolling to an anchor in a browser (the check is structural); title markup (D7's
+`shanti_sarvaka_process_title_markup` turns `__x__` into italics; only 1 Texts title, a book root, contains
+it, so it is a TX20 footnote, not a risk); depth limits of the real theme; the
 Description and Alternative Formats tabs (S6); Contents for books whose root is hidden.
 
 ### S5–S6
