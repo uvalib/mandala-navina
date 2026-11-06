@@ -3,6 +3,7 @@
 namespace Drupal\spike13_render\Controller;
 
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Render\Markup;
 use Drupal\node\NodeInterface;
@@ -10,6 +11,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Renders a whole book in outline order with D7's single_text_body markup.
+ *
+ * Spike 13 S3: the outline is read from the flat {book} table rather than
+ * BookManager::bookTreeAllData(), which drops a hidden parent together with its
+ * whole subtree (D7's view filters each row on its own, so it does not).
+ * ?cache=naive|bubbled|full selects how cacheability is declared, so the S3
+ * test can show which ones leak.
  */
 class WholeBookController extends ControllerBase {
 
@@ -25,33 +32,40 @@ class WholeBookController extends ControllerBase {
     if (!$bid) {
       return ['#markup' => 'Not in a book.'];
     }
-    $flat = [];
-    if (\Drupal::request()->query->get('order') !== 'path') {
-      // Book's own sibling order: weight, then title (what D7's view does too, via sort_within_level).
-      $this->flatten($this->bookManager->bookTreeAllData($bid), $flat);
-    }
-    else {
-      // Raw materialized path p1..p9, kept only to show it is NOT D7's order.
-      $q = $this->db->select('book', 'b')->fields('b', ['nid', 'depth'])->condition('b.bid', $bid);
-      foreach (range(1, 9) as $i) {
-        $q->orderBy('b.p' . $i);
-      }
-      foreach ($q->execute() as $r) {
-        $flat[(int) $r->nid] = (int) $r->depth;
-      }
-    }
-    $nodes = $this->entityTypeManager()->getStorage('node')->loadMultiple(array_keys($flat));
+    $mode = \Drupal::request()->query->get('cache', 'full');
+    $flat = $this->flatOutline((int) $bid, $nodes);
     // Spike only: D7 anchors use the D7 nid, which the migrate map holds.
     $d7 = $this->db->query('SELECT destid1, sourceid1 FROM {migrate_map_spike13_node} WHERE destid1 IN (:ids[])', [':ids[]' => array_keys($flat)])->fetchAllKeyed();
 
     $html = '';
-    $tags = ['spike13_book:' . $bid];
+    $shown = 0;
+    $meta = new CacheableMetadata();
+    $meta->addCacheTags(['spike13_book:' . $bid]);
     foreach ($flat as $nid => $depth) {
-      if (!isset($nodes[$nid]) || !$nodes[$nid]->isPublished() || !$nodes[$nid]->access('view')) {
+      $n = $nodes[$nid];
+      $access = $n->access('view', NULL, TRUE);
+      if ($mode === 'bubbled') {
+        // Every outline node, hidden or not: a hidden page that becomes visible
+        // (or a group that changes visibility) has to refresh this render.
+        $meta->addCacheableDependency($access);
+        $meta->addCacheableDependency($n);
+      }
+      elseif ($mode === 'full') {
+        // Same, minus the per-user context the forbidden results declare: the
+        // membership context below already determines that decision, and a
+        // 'user' context makes dynamic_page_cache refuse the response.
+        $meta->addCacheTags($access->getCacheTags());
+        $meta->addCacheTags($n->getCacheTags());
+        $meta->mergeCacheMaxAge($access->getCacheMaxAge());
+        $meta->addCacheContexts(array_diff($access->getCacheContexts(), ['user']));
+      }
+      if (!$access->isAllowed()) {
         continue;
       }
-      $n = $nodes[$nid];
-      $tags = array_merge($tags, $n->getCacheTags());
+      if ($mode === 'naive') {
+        $meta->addCacheableDependency($n);
+      }
+      $shown++;
       $id = $d7[$nid] ?? $nid;
       $body = '';
       if (!$n->get('field_book_content')->isEmpty()) {
@@ -66,19 +80,54 @@ class WholeBookController extends ControllerBase {
     if (\Drupal::request()->query->get('mem')) {
       return new \Symfony\Component\HttpFoundation\Response('peak=' . round(memory_get_peak_usage(TRUE) / 1048576) . 'MB');
     }
-    return [
-      '#markup' => Markup::create($html),
-      '#cache' => ['tags' => $tags, 'contexts' => ['user.permissions', 'url.query_args:order']],
+    $contexts = ['url.query_args:cache'];
+    if ($mode === 'naive') {
+      $contexts[] = 'user.permissions';
+    }
+    elseif ($mode === 'full') {
+      $contexts = array_merge($contexts, ['user.permissions', 'user.roles:authenticated', 'user.mandala_collection_memberships']);
+    }
+    $meta->addCacheContexts($contexts);
+    $build = [
+      '#markup' => Markup::create('<!-- shown=' . $shown . ' -->' . $html),
     ];
+    $meta->applyTo($build);
+    return $build;
   }
 
-  protected function flatten(array $tree, array &$flat): void {
-    foreach ($tree as $item) {
-      $flat[$item['link']['nid']] = (int) $item['link']['depth'];
-      if ($item['below']) {
-        $this->flatten($item['below'], $flat);
+  /**
+   * Outline nid => depth in Book's sibling order (weight, title, nid).
+   *
+   * Same key Book's tree uses (50000 + weight, title, nid, ksort), but over the
+   * unpruned {book} rows, so an inaccessible parent does not hide its children.
+   *
+   * @param \Drupal\node\NodeInterface[]|null $nodes
+   *   Filled with every outline node, keyed by nid.
+   */
+  protected function flatOutline(int $bid, &$nodes): array {
+    $rows = $this->db->select('book', 'b')->fields('b', ['nid', 'pid', 'weight', 'depth'])
+      ->condition('b.bid', $bid)->execute()->fetchAllAssoc('nid');
+    $nodes = $this->entityTypeManager()->getStorage('node')->loadMultiple(array_keys($rows));
+    $children = [];
+    foreach ($rows as $nid => $r) {
+      if (!isset($nodes[$nid])) {
+        continue;
       }
+      $children[(int) $r->pid][(50000 + (int) $r->weight) . ' ' . $nodes[$nid]->label() . ' ' . $nid] = (int) $nid;
     }
+    $flat = [];
+    $walk = function (int $pid) use (&$walk, &$children, &$flat, $rows) {
+      if (empty($children[$pid])) {
+        return;
+      }
+      ksort($children[$pid]);
+      foreach ($children[$pid] as $nid) {
+        $flat[$nid] = (int) $rows[$nid]->depth;
+        $walk($nid);
+      }
+    };
+    $walk(0);
+    return $flat;
   }
 
 }
