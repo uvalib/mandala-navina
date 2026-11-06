@@ -232,12 +232,12 @@ Grouped by each note's **first** `Category` value (a note appears once; its othe
 | [transcript-index-queue-triage.md](transcript-index-queue-triage.md) | solr-search, infrastructure-deploy | unassigned | Spike 11 write path (2026-10-02) | **Medium, before production.** Failed transcript index writes go to a retry queue; visibility, retry policy, alerting and a reconcile command are deferred. Owner unassigned |
 | [production-solr-not-receiving-d7-writes.md](production-solr-not-receiving-d7-writes.md) | solr-search, infrastructure-deploy | Yuji | Session 2026-10-13 | **Medium.** The listener that copies D7 Solr JSON to the S3 ingest path is not running on the legacy production host; production `kmassets` has had no new documents since 2025-08-11. Tracked in mandala_drupal_docker#26; needs input from Dave and Than |
 | [kmaps-widget-ux.md](kmaps-widget-ux.md) | solr-search | unassigned | Spike 1 | Medium |
+| [solr-proxy-filter-sanitize-string-deprecated.md](solr-proxy-filter-sanitize-string-deprecated.md) | solr-search, infrastructure-deploy | unassigned | #336 / PR #392 (2026-11-06) | Low. `FILTER_SANITIZE_STRING` works on PHP 8.3 but is removed in PHP 9; replace before any PHP 9 move |
 
 ### Infrastructure and deploy (`infrastructure-deploy`)
 
 | File | Categories | Owner | Raised | Priority |
 |---|---|---|---|---|
-| [solr-proxy-end-of-life-base-image.md](solr-proxy-end-of-life-base-image.md) | infrastructure-deploy, solr-search | Yuji | Spike 11 / #327 (2026-10-14) | Medium. Base moved to PHP 8.3 / Debian 13 on a branch and checked locally; the visibility and OAuth2 verify scripts still need to run on dev-0 after deploy |
 | [reindeer-x-aws-credential-strategy.md](reindeer-x-aws-credential-strategy.md) | infrastructure-deploy | Yuji | Spike 8 | High |
 | [images-prod-packaging-monorepo-pass.md](images-prod-packaging-monorepo-pass.md) | infrastructure-deploy, migration-images | Yuji, Xiaoming | Sprint 1 (1a) | High |
 | [staging-migration-execution-prerequisites.md](staging-migration-execution-prerequisites.md) | infrastructure-deploy, migration-general | Xiaoming, Yuji, Dave | Session 2026-07-07 (1a.9) | **Deferred 2026-10-01 until a staging server exists.** Sprint 1 closed without it (criteria evidenced on dev-0); what is unproven is a two-D11-environment promotion rehearsal and the per-env config override |
@@ -347,6 +347,7 @@ Kept for the *why*. Priority cell carries the resolution summary. Grouped by fir
 | [pipeline-triggers-on-every-monorepo-commit.md](pipeline-triggers-on-every-monorepo-commit.md) | infrastructure-deploy | Session 2026-07-15 (1b.1 part 4 — reviewing the pipeline before the first apply) | terraform-infrastructure commit `8b753bff1`, applied 2026-07-16 (`trigger_paths` added) |
 | [solr-proxy-has-no-cicd-pipeline.md](solr-proxy-has-no-cicd-pipeline.md) | infrastructure-deploy, solr-search | Session 2026-08-11 (CI/CD pipeline inventory) | **Complete 2026-08-12.** ECR repo (tf-infra `8e9216b93`) + build-only pipeline (`d3eb4a76d`) + playbook (`edb80d9d0`), PRs #96/#97/#99. First green build ran all 7 smoke tests in CodeBuild; deployed to dev-0 and the ALB `idx` target is **healthy** for the first time since 2026-07-15. Proven end to end: 562,952 docs served with the anonymous `fq` injected |
 | [wp-kmaps-mandala-proxy-dependency.md](wp-kmaps-mandala-proxy-dependency.md) | infrastructure-deploy | Spike 6 (2026-08-12) — URL-strategy decision (Option A) | `Requires Plugins` header + README note merged via `shanti-uva/wp-kmaps` PR #2 into `release/v1.2.0-rc`, 2026-08-12 |
+| [solr-proxy-end-of-life-base-image.md](solr-proxy-end-of-life-base-image.md) | infrastructure-deploy, solr-search | Spike 11 / #327 (2026-10-14) | **RESOLVED 2026-11-06** (#336, PR #392). Proxy on PHP 8.3 / Debian 13, deployed to dev-0; visibility and OAuth2 verify scripts pass |
 
 ### Security
 
