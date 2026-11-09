@@ -1,6 +1,6 @@
 # Spike 13: Texts book outline and whole-book render
 
-**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5–S6 not started
+**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5 done 2026-11-09 (passed; six findings, resolution must be per chapter; recommends variant A); S6 not started
 **Lead:** Than Grove
 **Mode:** Individual
 **Time-box:** 3.5–4.5 days
@@ -397,6 +397,88 @@ viewer, and the unpublished chapter for nobody.
 it, so it is a TX20 footnote, not a risk); depth limits of the real theme; the
 Description and Alternative Formats tabs (S6); Contents for books whose root is hidden.
 
-### S5–S6
+### S5 footnotes — PASS, with corrections to Spike 4b's transform (2026-11-09, Than with Claude Code)
+
+**Setup (local DDEV, throwaway branch).** Four more books were migrated through the S1/S2
+`spike13_*` migrations: 15256 (the 4b Antiquities sample), 15582 and 15988 (4b's two outliers),
+16110 (a 4b "orphan footnote 1" book), alongside 14679 and 15641 from earlier steps. The
+transform is a migration-time script (`s5-transform.php`) that writes to side tables instead of
+rewriting nodes, so two variants render from the same content through a `?fn=a|b` switch on the
+S2 controller. Text format: `full_html` plus `filter_footnotes` with its own list off (4b: the stock
+list drops render-cache hits).
+
+- **Variant A**: citations become `<footnotes data-value data-text>`; D7's Notes pages stay where
+  they are, as content.
+- **Variant B**: as A, and the definitions are removed from the Notes pages; an Option 3 list (read
+  from the transform's own table) is appended, one group per chapter.
+
+**Acceptance: counts match D7, both variants.** D7 counts are from the published pages' stored
+bodies (the D7 whole-book view prints them as-is, S2), parsed as HTML.
+
+| D7 book | Citations (D7 = A = B) | Notes (D7 = A in place = B listed) | Note |
+|---|---|---|---|
+| 15256 | 134 | 135 | |
+| 15582 | 410 | 419 | anthology; 23 wrapped XHTML pages (finding 4) |
+| 15988 | 21 | 21 | not an outlier (finding 5) |
+| 16110 | 52 | 53 | |
+| 14679 | 67 | 68 | |
+| 15641 | 10 | 0 | citations with no definition anywhere; left in D7 form |
+
+Beyond counts, per citation, in both variants: the popover text equals the definition D7's reader
+reaches (0 mismatches of 684); every citation links to an element that exists and whose note text is
+that definition; every definition links back to its first citation. The text check was shown to
+fail: built against 4b's book-wide rule it reports 50 wrong popovers in 15582. In the browser, as
+admin, clicking every citation opened the module's dialog with the right note: 410 of 410 in 15582
+and 20 of 21 in 15988, in both variants (finding 6 covers the one that did not). On the live D7 site
+the 15582 whole-book page shows 410 citations and 419 notes, matching the table.
+
+**Findings (corrections to the 4b transform's assumptions):**
+
+1. **Resolve per chapter, not per book.** 15582 is an anthology: each chapter has its own Notes page
+   and numbering restarts, so 30 keys are defined more than once in the book. 4b's rule (match the
+   key anywhere in the `bid`) gives 50 wrong popovers. The rule that works on every sampled book:
+   a citation resolves to **the first page at or after it, in outline order, that defines its key**.
+   Nothing resolves twice under it. D7's own whole-book page has the same collision (`#n1` occurs
+   several times), so D7's click-through goes to the first chapter's note; the transform therefore
+   gives citations and definitions new unique ids (`s5c-<D7 nid>-<key>`, `s5n-<D7 nid>-<key>`).
+2. **Keys are strings.** A second anchor scheme, `nb-b7-1` / `n-b7-1` (chapter-prefixed), carries
+   314 of 15582's definitions. 4b counted only `nb{N}` / `n{N}`.
+3. **`<a name="nN"/>` is not self-closing to an HTML parser.** Many rows write it that way; libxml
+   leaves the anchor open, so the definition text lands *inside* it. A parser that skips the anchor
+   finds empty definitions (it emptied every popover in 16110 and 14679 until fixed). The transform
+   keeps the anchor's children and drops only the `[N]` back-link.
+4. **25 D7 bodies are whole XHTML documents** (`<html><head><title/></head><body>…`, opened and never
+   closed); 23 are in 15582, 2 are in no book. **D11 renders them as escaped raw markup**: `full_html`'s
+   HTML corrector parses `<title/>` as an open title that swallows the page. D7 shows them correctly
+   (checked in the browser). This is not a footnote issue: the Texts migration must strip the
+   wrapper for every page, or these pages break whatever the footnote decision is.
+5. **4b's outliers were miscounted.** 15988 is fully matched (21/21). 15582's surplus definitions are
+   its anthology structure (findings 1, 2). The real quirks in the sample are small: 3 definitions
+   cited nowhere, 6 citations in a chapter page that D7 files under a different book (15851) from its
+   Notes page, and 15641's 10 citations with no definitions at all. The "orphan footnote 1"
+   convention is real but not always number 1: the uncited notes are introductions keyed 253, 32
+   and 1.
+6. **The module's dialog needs help.** With the module's list off, its dialog script finds nothing:
+   it looks the `href` target up inside its own list markup (`.js-footnote-reference`). 4b's "popovers
+   work regardless" held only for the native `title` tooltip. The spike writes definitions in that
+   markup (A in place, B in the list) and points each citation at its definition, which makes the
+   dialog work. Two production points remain: the filter adds one dialog element per page body
+   (73 copies with duplicate ids on one 15256 page), and the script looks only 5 ancestors up for one,
+   so a citation nested in an image-caption table (15988, D7 16090) gets no dialog, and its click is
+   cancelled, so it does nothing. Production should output one dialog per page with its own small
+   handler, or override the template.
+
+**A vs B (for TX3).** Both meet the acceptance. A matches D7's layout exactly (notes stay where the
+author put them, per chapter), keeps the stored Notes pages' text, and needs no aggregation. B removes
+content from stored pages and has to rebuild per-chapter grouping that A gets for free; its one gain,
+a single list the module controls, is not needed now that A's definitions carry the dialog markup.
+**Recommendation: A**, which reduces 4b's Option 3 to the citation rewrite plus id assignment. TX3
+decides.
+
+**Not tested.** CKEditor 5 editing of the transformed markup (4b item 3); the full corpus (7 books
+here); a Notes page hidden from the viewer while its citations are visible (A then shows popovers
+whose click target is missing; B drops the group, as D7 would); the theme's styling.
+
+### S6
 
 Not started.
