@@ -33,7 +33,18 @@ class WholeBookController extends ControllerBase {
       return ['#markup' => 'Not in a book.'];
     }
     $mode = \Drupal::request()->query->get('cache', 'full');
+    // S5: ?fn=a|b renders the footnote transform's output (spike13-tmp/s5-transform.php).
+    $fn = \Drupal::request()->query->get('fn');
     $flat = $this->flatOutline((int) $bid, $nodes, $pids);
+    $fnText = in_array($fn, ['a', 'b'], TRUE) ? $this->db->query('SELECT nid, value FROM {spike13_s5_text} WHERE variant = :v AND nid IN (:ids[])', [':v' => $fn, ':ids[]' => array_keys($flat)])->fetchAllKeyed() : [];
+    $fnLinks = [];
+    if ($fnText) {
+      foreach ($this->db->query('SELECT nid, seq, cid, target FROM {spike13_s5_links} WHERE nid IN (:ids[]) ORDER BY nid, seq', [':ids[]' => array_keys($fnText)]) as $l) {
+        $fnLinks[$l->nid][] = $l;
+      }
+    }
+    $attached = [];
+    $shownNids = [];
     // Spike only: D7 anchors use the D7 nid, which the migrate map holds.
     $d7 = $this->db->query('SELECT destid1, sourceid1 FROM {migrate_map_spike13_node} WHERE destid1 IN (:ids[])', [':ids[]' => array_keys($flat)])->fetchAllKeyed();
 
@@ -69,12 +80,20 @@ class WholeBookController extends ControllerBase {
         $meta->addCacheableDependency($n);
       }
       $shown++;
+      $shownNids[$nid] = $nid;
       $id = $d7[$nid] ?? $nid;
       if ($depth > 1) {
         $toc[$nid] = ['id' => $id, 'pid' => $pids[$nid], 'title' => $n->label()];
       }
       $body = '';
-      if (!$n->get('field_book_content')->isEmpty()) {
+      if (isset($fnText[$nid])) {
+        // Rendered as an element, not check_markup(), so the filter's
+        // attachments (the dialog library) are kept.
+        $text = ['#type' => 'processed_text', '#text' => $fnText[$nid], '#format' => 'spike13_fn'];
+        $body = $this->pointCitations((string) \Drupal::service('renderer')->renderInIsolation($text), $fnLinks[$nid] ?? []);
+        $attached = array_merge_recursive($attached, $text['#attached'] ?? []);
+      }
+      elseif (!$n->get('field_book_content')->isEmpty()) {
         $item = $n->get('field_book_content')->first();
         $body = (string) check_markup($item->value, $item->format);
       }
@@ -86,7 +105,10 @@ class WholeBookController extends ControllerBase {
     if (\Drupal::request()->query->get('mem')) {
       return new \Symfony\Component\HttpFoundation\Response('peak=' . round(memory_get_peak_usage(TRUE) / 1048576) . 'MB');
     }
-    $contexts = ['url.query_args:cache'];
+    if ($fn === 'b') {
+      $html .= $this->notesList((int) $bid, $shownNids, $nodes, $pids);
+    }
+    $contexts = ['url.query_args:cache', 'url.query_args:fn'];
     if ($mode === 'naive') {
       $contexts[] = 'user.permissions';
     }
@@ -98,7 +120,70 @@ class WholeBookController extends ControllerBase {
       '#markup' => Markup::create('<!-- shown=' . $shown . ' -->' . $this->contents((int) $bid, $nodes, $d7, $toc) . $html),
     ];
     $meta->applyTo($build);
+    if ($attached) {
+      // array_merge_recursive() repeats libraries and wraps scalar settings.
+      $attached['library'] = array_values(array_unique($attached['library'] ?? []));
+      unset($attached['drupalSettings']);
+      $build['#attached'] = $attached;
+      $build['#attached']['drupalSettings']['footnotes']['preventBubbling'] = FALSE;
+    }
     return $build;
+  }
+
+  /**
+   * S5: points the footnotes filter's citation links at the transform's ids.
+   *
+   * The filter links each citation to its own (disabled) list; $links holds,
+   * in document order, each citation's id and its definition's id.
+   */
+  protected function pointCitations(string $html, array $links): string {
+    if (!$links) {
+      return $html;
+    }
+    $dom = Html::load($html);
+    $i = 0;
+    foreach ((new \DOMXPath($dom))->query('//a[contains(@class, "footnote__citation")]') as $a) {
+      if (isset($links[$i])) {
+        $a->setAttribute('id', $links[$i]->cid);
+        $a->setAttribute('href', '#' . $links[$i]->target);
+      }
+      $i++;
+    }
+    return Html::serialize($dom);
+  }
+
+  /**
+   * S5 variant b: the Option 3 Notes list, read from the transform's table.
+   *
+   * One group per D7 Notes page, headed by that page's parent (the chapter),
+   * since anthologies restart numbering per chapter. A Notes page the viewer
+   * cannot see contributes nothing, as in D7.
+   */
+  protected function notesList(int $bid, array $shownNids, array $nodes, array $pids): string {
+    $rows = $this->db->query('SELECT def_nid, label, text, target, backlink FROM {spike13_s5_notes} WHERE bid = :b ORDER BY seq', [':b' => $bid])->fetchAll();
+    $groups = [];
+    foreach ($rows as $r) {
+      if (isset($shownNids[$r->def_nid])) {
+        $groups[$r->def_nid][] = $r;
+      }
+    }
+    if (!$groups) {
+      return '';
+    }
+    $out = '<div class="spike13-notes"><h2>Notes</h2>';
+    foreach ($groups as $nid => $notes) {
+      $parent = $nodes[$pids[$nid]] ?? NULL;
+      $out .= '<h3>' . Html::escape($parent && count($groups) > 1 ? $parent->label() : $nodes[$nid]->label()) . '</h3><ol class="spike13-notes-list">';
+      foreach ($notes as $r) {
+        // Same shape as the in-place definitions (s5-transform.php), so
+        // footnotes.dialog.js finds the text.
+        $out .= '<li value="' . (int) $r->label . '" class="footnote js-footnote-reference">'
+          . '<a class="note"' . ($r->target ? ' id="' . $r->target . '"' : '') . ($r->backlink ? ' href="#' . $r->backlink . '"' : '') . '>[' . Html::escape($r->label) . ']</a> '
+          . '<span class="js-footnote-reference-text">' . check_markup($r->text, 'full_html') . '</span></li>';
+      }
+      $out .= '</ol>';
+    }
+    return $out . '</div>';
   }
 
   /**
