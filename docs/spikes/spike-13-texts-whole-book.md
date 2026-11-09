@@ -1,6 +1,6 @@
 # Spike 13: Texts book outline and whole-book render
 
-**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5 done 2026-11-09 (passed; six findings, resolution must be per chapter; recommends variant A); S6 not started
+**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5 done 2026-11-09 (passed; six findings, resolution must be per chapter; variant A chosen); S6 not started
 **Lead:** Than Grove
 **Mode:** Individual
 **Time-box:** 3.5–4.5 days
@@ -472,8 +472,8 @@ the 15582 whole-book page shows 410 citations and 419 notes, matching the table.
 author put them, per chapter), keeps the stored Notes pages' text, and needs no aggregation. B removes
 content from stored pages and has to rebuild per-chapter grouping that A gets for free; its one gain,
 a single list the module controls, is not needed now that A's definitions carry the dialog markup.
-**Recommendation: A**, which reduces 4b's Option 3 to the citation rewrite plus id assignment. TX3
-decides.
+**Decision: A** (Than, 2026-11-09, after clicking through variant A of 15582 locally: "works
+perfectly"). This reduces 4b's Option 3 to the citation rewrite plus id assignment; TX3 records it.
 
 **Not tested.** CKEditor 5 editing of the transformed markup (4b item 3); the full corpus (7 books
 here); a Notes page hidden from the viewer while its citations are visible (A then shows popovers

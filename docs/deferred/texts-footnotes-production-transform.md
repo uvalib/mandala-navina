@@ -32,7 +32,7 @@ the transform was run inside the whole-book render, and parts of the list below 
 there. Resolution must be per chapter (first page at or after the citation that defines the key),
 not per `bid`; keys can be `-b7-1` as well as numbers; the two "outliers" in item 5 were miscounted;
 and the module's dialog needs the definitions in its own markup. Read S5 before building items 1, 2,
-4 and 5.
+4 and 5. Than chose variant A (keep the D7 Notes pages in place; no aggregated list).
 
 ## What remains to build (production, Texts migration)
 
