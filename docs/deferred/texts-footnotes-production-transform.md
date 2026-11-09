@@ -5,6 +5,7 @@
 **Jira:** (add when available)
 **Priority:** **Medium** — not current-phase; belongs to the **Texts-site migration**. No open technical risk (feasibility proven + prototype working in Spike 4b), so this is build-out, not investigation.
 **Owner:** unassigned
+**Issue:** none
 
 ## Context
 
@@ -25,6 +26,13 @@ the Texts-site migration — not spike scope. This note is the checklist so that
   render cache (silently drops any footnote from a page ever rendered standalone). The
   `spike_footnotes_demo` module proves the dedicated aggregation is correct against that exact
   cache-HIT precondition.
+
+**Update 2026-11-09 ([Spike 13 S5](../spikes/spike-13-texts-whole-book.md), section "S5 footnotes"):**
+the transform was run inside the whole-book render, and parts of the list below are corrected
+there. Resolution must be per chapter (first page at or after the citation that defines the key),
+not per `bid`; keys can be `-b7-1` as well as numbers; the two "outliers" in item 5 were miscounted;
+and the module's dialog needs the definitions in its own markup. Read S5 before building items 1, 2,
+4 and 5. Than chose variant A (keep the D7 Notes pages in place; no aggregated list).
 
 ## What remains to build (production, Texts migration)
 
