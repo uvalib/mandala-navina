@@ -11,6 +11,7 @@ use Drupal\migrate\Event\MigrateEvents;
 use Drupal\migrate\Event\MigrateImportEvent;
 use Drupal\migrate\Event\MigratePostRowSaveEvent;
 use Drupal\migrate\Event\MigrateRollbackEvent;
+use Drupal\migrate\Plugin\migrate\id_map\Sql;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -36,6 +37,14 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *
  *    A re-import needs `--update`: the transcript rows are still in the id map
  *    after a node rollback, so a plain import would skip them.
+ *
+ * 3. INDEX THE ID MAP FOR ROLLBACK. Migrate deletes each rolled-back entity's
+ *    id-map row with `WHERE destid1 = ?`, and core creates no index on
+ *    `destid1`, so every delete scans the whole map table. At 243,005 units that
+ *    ran at about 130 rows a minute and falling (measured on DDEV: 73,000 units
+ *    in 3.5 hours before it was stopped); with the index it runs at about 13,000
+ *    a minute. The index is added before a rollback and left in place; import
+ *    only looks rows up by source id, which core does index.
  *
  * The lifecycle is injected as a closure (a service closure in the services
  * file), not as the service. Constructing the lifecycle can reach the event
@@ -71,7 +80,7 @@ class AvTranscriptMigrationSubscriber implements EventSubscriberInterface {
     return [
       MigrateEvents::PRE_IMPORT => 'hold',
       MigrateEvents::POST_IMPORT => 'release',
-      MigrateEvents::PRE_ROLLBACK => 'hold',
+      MigrateEvents::PRE_ROLLBACK => [['indexIdMap', 10], ['hold']],
       MigrateEvents::POST_ROLLBACK => 'release',
       MigrateEvents::POST_ROW_SAVE => 'revive',
     ];
@@ -85,6 +94,26 @@ class AvTranscriptMigrationSubscriber implements EventSubscriberInterface {
     if (in_array($id, static::MIGRATIONS, TRUE) && !isset($this->holding[$id])) {
       $this->holding[$id] = TRUE;
       $this->notifier->hold();
+    }
+  }
+
+  /**
+   * Adds the missing `destid1` index to the id map before a rollback.
+   */
+  public function indexIdMap(MigrateRollbackEvent $event): void {
+    if (!in_array($event->getMigration()->id(), static::MIGRATIONS, TRUE)) {
+      return;
+    }
+    $map = $event->getMigration()->getIdMap();
+    if (!$map instanceof Sql) {
+      return;
+    }
+    $table = $map->mapTableName();
+    $database = $map->getDatabase();
+    // The map table is created on first use; with no table there is nothing to
+    // roll back.
+    if ($database->schema()->tableExists($table) && !$database->schema()->indexExists($table, 'destid1')) {
+      $database->query("ALTER TABLE {{$table}} ADD INDEX destid1 (destid1)");
     }
   }
 

@@ -243,6 +243,22 @@ class AvTranscriptMigrationTest extends KernelTestBase {
     $this->assertTrue($this->loadUnit(202)->isDeleted(), 'A unit an editor deleted on purpose stays deleted.');
   }
 
+  public function testRollbackIndexesTheIdMapOnDestinationId(): void {
+    // Core indexes only the source ids, so each rolled-back row would scan the
+    // whole map. At 243,005 units that took hours.
+    $this->migrateAll();
+    $map = $this->migration('d7_av_tcu')->getIdMap();
+    $schema = \Drupal::database()->schema();
+    $this->assertFalse($schema->indexExists($map->mapTableName(), 'destid1'));
+
+    $this->migrate('d7_av_tcu', 'rollback');
+
+    $this->assertTrue($schema->indexExists($map->mapTableName(), 'destid1'));
+    $this->migrate('d7_av_tcu', 'rollback');
+    $this->migrate('d7_av_tcu');
+    $this->assertSame(12, $this->rowCount('av_tcu'), 'The index does not get in the way of a re-import.');
+  }
+
   public function testRollbackHardDeletesUnitsThenTranscripts(): void {
     $this->migrateAll();
     $this->assertSame(12, $this->rowCount('av_tcu'));
