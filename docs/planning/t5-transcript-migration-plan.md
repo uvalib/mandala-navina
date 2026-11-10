@@ -17,10 +17,14 @@ Background and decisions this plan builds on, not reopened here:
 **Checked 2026-11-10 against the `d7_av` dump in DDEV** (the 2026-09-01 dump; not dev-0, not live D7):
 the counts in the tables below, the tracking table's columns, the edits flag, and the ordering numbers.
 
+**Read 2026-11-10 from the D7 staging host** (`mandala-drupal-dev-1`, container `dockerfiles-hostmaster-1`,
+`/var/aegir/platforms/mandala-base/docroot/sites/all/modules/custom/transcripts`; read-only). The module source
+is not in `~/Code/mandala-legacy` or anywhere else under `~/Code`. This is dev-1's copy; it has not been compared
+with production's, though the dump's `variable` table (production data) agrees with it on the tier configuration.
+
 **Not verified:**
-- **D7's own ordering of units.** The D7 transcripts module source was searched for in
-  `~/Code/mandala-legacy` (whole tree) and under `~/Code` and is not there, so the rule D7's viewer uses
-  to order units is unknown. This is open question 1.
+- That the viewer's read order on production matches what the dev-1 code says, and what a *live* page shows for one
+  of the 201 transcripts whose `tcuid` order and time order differ (see open question 1).
 - Anything on dev-0 or on live D7. Counts may have moved since the 2026-09-01 dump (D7 is still in production).
 - The D11 behaviour of the migration itself. No migration code exists yet.
 - The timing on dev-0. Local timings do not carry over (see "Running it").
@@ -53,7 +57,7 @@ the counts in the tables below, the tracking table's columns, the edits flag, an
 | `node` | tracking `id` | The D11 node, found by legacy composite key `(field_legacy_site = audio-video, field_legacy_nid)`, never by a D11 nid (ADR 017, CLAUDE.md). Unique. |
 | `source_file` | the node's D11 `field_transcript` | The current attachment is the original of record (decided 2026-10-02). The 4 tracked nodes with no current file get none (ADR 019). |
 | `source_format` | file extension | `vtt`, `xml`, `txt`, `srt`. An unrecognised extension leaves it empty and is reported, not guessed. |
-| `tiers` | tracking `tiers` | Comma-delimited list, used as the display order. Where it is empty, fall back to the distinct tier names among the transcript's units, in a fixed order. **Check before building:** how many tracking rows have an empty `tiers`. |
+| `tiers` | tracking `tiers` and D7 config | The tracking `tiers` column (space or comma delimited; format to confirm on the data) gives the transcript's tier **set**. **Display order is not per transcript:** D7 shows `transcripts_ui_tiers()` (the site-wide `transcripts_ui_tiers` variable, 35 tiers, plus `transcripts_ui_hidden_tiers`, currently `ts_content_wylie`) intersected with the transcript's tiers. Store the transcript's tiers in that configured order. Where the tracking column is empty, derive the set from the distinct tiers on its units. **Check before building:** how many tracking rows have an empty `tiers`, and any tier name that is not in the configured list (D7 would not show it). |
 | `has_edits`, `edits_flagged_at` | `flagging` for `keep_transcript_edits` | `TRUE` and the flagging timestamp for the 540 nodes. The flagging user is not carried (no meaning in D11). |
 | `created` | none | Not in the tracking table; use the earliest unit `created` of the transcript. |
 
@@ -62,7 +66,7 @@ the counts in the tables below, the tracking table's columns, the edits flag, an
 | D11 field | From | Rule |
 |---|---|---|
 | `id`, `transcript` | `tcuid`, `trid` | Set explicitly; units start at 2,000,000 for new ids. |
-| `sequence` | derived | **Open question 1.** From 0, per transcript. |
+| `sequence` | derived | From 0, per transcript, ordered by `(start, tcuid)` (open question 1: proposed, matches D7's display order; the tie rule is a choice, not D7's). |
 | `start`, `end` | `start`, `end` | Round to whole milliseconds (D7 floats carry sub-millisecond noise). Stored as found: no repair, no `end` rewrite. `end_original` stays empty. |
 | `timecode_status` | `TimecodeClassifier` | Computed per transcript over the rounded, ordered values. Depends on the ordering in question 1. |
 | `tiers` | `tcu_tier` | JSON object tier → text, NFC-normalised (Spike 4a; 933 Dzongkha and 12 Tibetan values are not NFC). Units with no tier rows get `{}`. Empty values are carried as empty strings, not dropped. |
@@ -74,17 +78,27 @@ Not migrated: the 18 and 95 tier and speaker rows that point at no unit, the 41 
 
 ## Open questions
 
-1. **Ordering: how is `sequence` derived? (Decision needed before the unit migration; Yuji, with Than.)**
-   D7 has no sequence column, and I could not read D7's rule. The data:
-   - In **201 transcripts**, 377 units start *earlier* than the unit with the previous `tcuid`. Ordering by `tcuid` and by time therefore disagree there: 8,741 units sit at a different position. The largest backward step is 3,650 s.
-   - 63 of the 201 are on nodes flagged `keep_transcript_edits` and 2 are orphan trids. The rest are not explained by that flag.
-   - Separately, 1,278 transcripts have units that share a start (5,409 units), so ties need a rule whichever order is chosen.
+1. **Ordering: how is `sequence` derived? Largely answered 2026-11-10; confirm the one gap.**
+   The data (local dump): in **201 transcripts**, 377 units start *earlier* than the unit with the previous
+   `tcuid`, so `tcuid` order and time order disagree for 8,741 units. 63 of the 201 are on `keep_transcript_edits`
+   nodes and 2 are orphan trids. The largest backward step is 3,650 s. Separately, 1,278 transcripts have units that
+   share a start (5,409 units).
 
-   Options: **(A)** order by `tcuid` (insertion order); **(B)** order by `(start, tcuid)` (time order, ties by insertion); **(C)** A, but record a flag on the 201.
+   **What D7 does (read from the module on dev-1):** the viewer does not read the database. It queries Solr for
+   `is_trid = <trid>`, `rows = 9999`, sorted **`fts_start asc`**
+   (`transcripts_apachesolr_transcripts_ui_transcript()` in `transcripts_apachesolr.module`). Readers therefore see
+   **time order**, not `tcuid` order. (The 9,999-row cap is not a concern: the largest transcript has 1,380 units.)
+   For units that share a start, the sort has no second key, so their order is whatever Solr returns for equal values
+   (index order), which D7 does not define and which can shift when a unit is re-indexed after an edit.
 
-   Impact: the classifier's "next unit" and the reader's range read follow `sequence`. Under (B) the 201 transcripts' units read in time order, which suits the viewer's "last unit whose start is at or before the playhead" rule. If D7's viewer used insertion order, (B) changes what readers see in those transcripts. `tcuid` is kept as the id, so `sequence` can be recomputed later at any time.
+   **Proposal:** `sequence` by `(start, tcuid)`. Time order matches what readers see, and `tcuid` is a stable,
+   deterministic tie-break that D7's own ties cannot give us. `tcuid` is kept as the id, so `sequence` can be
+   recomputed at any time. The classifier's "next unit" and the reader's range read then agree with the display.
 
-   **Suggested way to settle it without the code:** open two or three of the 201 transcripts in the live D7 site and see which order the reader shows. The 63 edited ones are the likeliest to matter. I would pick (B) unless D7 shows insertion order.
+   **Still to confirm:** open one of the 63 edited transcripts among the 201 on a live D7 page and check the unit
+   order shown matches time order. That checks the dev-1 code against production behaviour and against what the
+   Solr index actually holds, since the viewer shows the index, not the database. Anything that disagrees (an index
+   out of step with the tables) would be a separate finding.
 2. **Where do the 19 orphan trids' units go?** Than decides after analysing them
    ([note](../deferred/transcript-orphan-trids-keep-for-review.md)). It does not block T5: they are excluded and counted, and the expected total is 243,005. It must be settled before the cutover run, not before the first dev run.
 3. **Untimed units and the one negative start** (3,039 untimed units in 163 transcripts; one start of -0.125). Than's call; T5 stores them as found with whatever status the classifier gives, so nothing is lost, and the status can change later without re-importing text.
@@ -93,6 +107,13 @@ Not migrated: the 18 and 95 tier and speaker rows that point at no unit, the 41 
 6. **Rollback of the transcript migrations themselves.** Rolling back the *node* migration soft-deletes transcripts (ADR 019). Rolling back `d7_av_transcript` / `d7_av_tcu` should hard-delete what they created, so a rollback-and-rerun while developing leaves no stale rows. Confirm, and check it does not conflict with the soft-delete hooks.
 7. **Dependencies.** The sprint table lists T5 as depending on T2–T4. Nothing in the import needs the viewer or the transcript core. Suggest relaxing it to T2, with T4 needed afterwards to see results in search. Team call.
 8. **Who spot-checks against source files.** The sprint asks for checks on each source format. Than holds the files (Spike 11 question 4). The sprint says three formats (Toolbox, SRT, XML), but WebVTT is the majority (3,227 of the tracked files), so the check needs four formats.
+
+## D7 configuration the viewer (T3) will need, found while reading the module
+
+Not part of T5's data migration, but T3 cannot reproduce D7's display without it, and it lives in D7's `variable`
+table, not in `tcu`: `transcripts_ui_tiers` (35 tiers: key to label, in display order),
+`transcripts_ui_hidden_tiers` (`ts_content_wylie`), and `transcripts_ui_speaker_names` (37 speaker labels). Capture
+them as D11 configuration when T3 starts. Tier labels and speaker labels are *not* stored per unit.
 
 ## Design
 
@@ -134,7 +155,7 @@ The workflow-field migrations already exist (`d7_av_workflow`, `d7_av_transcript
 
 ## Order of work
 
-1. Settle open question 1 (look at D7), and confirm questions 4–7.
+1. Confirm question 1 on a live D7 page, and confirm questions 4–7.
 2. Source plugins and the two migrations, with Kernel tests for: the mapping, NFC, rounding, classifier call, idempotency and the soft-delete revive path.
 3. A verification script that compares D7 and D11 (counts, hashes, status counts, dropped-row report), in `scripts/`, with a howto in `docs/dev-notes/`.
 4. DDEV run; fix what it shows.
