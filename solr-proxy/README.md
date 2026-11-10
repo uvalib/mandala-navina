@@ -28,6 +28,11 @@ called `session_start()` unconditionally, writing a session file on every anonym
 request that nothing ever read. A smoke test guards this — see
 [`docs/deferred/solr-proxy-session-per-anonymous-request.md`](../docs/deferred/solr-proxy-session-per-anonymous-request.md).
 
+Likewise `Searcher::search()` must return Solr's UTF-8 body untouched: never use
+`mb_detect_encoding()` on it (on PHP >= 8.1 it can pick ISO-8859-1 and double-encode large
+Tibetan responses). Guarded by `tests/utf8-response.php` (smoke test 8) — see
+[`docs/deferred/solr-proxy-utf8-response-double-encoding.md`](../docs/deferred/solr-proxy-utf8-response-double-encoding.md).
+
 Solr authentication proxy for the D11 platform. Forked from
 [`shanti-uva/mandala-solr-proxy`](https://github.com/shanti-uva/mandala-solr-proxy)
 (vendored at `../` history via the D7 monorepo migration) per
