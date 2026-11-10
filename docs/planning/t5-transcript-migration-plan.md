@@ -58,10 +58,10 @@ though the dump's `variable` table (production data) agrees with them on the tie
 | `id` | `trid` | Set explicitly. Allocated ids start at 100,000, clear of D7's 27,016. |
 | `node` | tracking `id` | The D11 node, found by legacy composite key `(field_legacy_site = audio-video, field_legacy_nid)`, never by a D11 nid (ADR 017, CLAUDE.md). Unique. |
 | `source_file` | the node's D11 `field_transcript` | The current attachment is the original of record (decided 2026-10-02). The 4 tracked nodes with no current file get none (ADR 019). |
-| `source_format` | file extension | `vtt`, `xml`, `txt`, `srt`. An unrecognised extension leaves it empty and is reported, not guessed. |
-| `tiers` | tracking `tiers` and D7 config | The tracking `tiers` column (space or comma delimited; format to confirm on the data) gives the transcript's tier **set**. **Display order is not per transcript:** D7 shows `transcripts_ui_tiers()` (the site-wide `transcripts_ui_tiers` variable, 35 tiers, plus `transcripts_ui_hidden_tiers`, currently `ts_content_wylie`) intersected with the transcript's tiers. Store the transcript's tiers in that configured order. Where the tracking column is empty, derive the set from the distinct tiers on its units. **Check before building:** how many tracking rows have an empty `tiers`, and any tier name that is not in the configured list (D7 would not show it). |
+| `source_format` | file extension | `vtt`, `xml`, `txt`, `srt`. Checked: the current attachments are 3,241 vtt, 1,930 xml, 138 txt and 30 srt (5,339), none with another extension; 4 tracked nodes have no `field_transcript` row. An unrecognised extension would leave it empty and be reported, not guessed. |
+| `tiers` | tracking `tiers` and D7 config | The tracking `tiers` column (space-delimited; no value contains a comma) gives the transcript's tier **set**. **Display order is not per transcript:** D7 shows `transcripts_ui_tiers()` (the site-wide `transcripts_ui_tiers` variable, 35 tiers, plus `transcripts_ui_hidden_tiers`, currently `ts_content_wylie`) intersected with the transcript's tiers. Store the transcript's tiers in that configured order. Where the tracking column is empty (1 NULL and 8 empty rows, 9 transcripts), derive the set from the distinct tiers on its units. Checked: all 17 tier names in use, on tracking rows and on units, are in the configured list, and the two sets are identical, so nothing would be hidden or invented. |
 | `has_edits`, `edits_flagged_at` | `flagging` for `keep_transcript_edits` | `TRUE` and the flagging timestamp for the 540 nodes. The flagging user is not carried (no meaning in D11). |
-| `created` | none | Not in the tracking table; use the earliest unit `created` of the transcript. |
+| `created` | none | Not in the tracking table; use the earliest unit `created` of the transcript. Checked: none is zero (range 2015-08-29 to 2024-11-19). 571 of them are earlier than their node's `created`, so do not derive it from the node; in 9 transcripts the units span more than a day. |
 
 **`av_tcu`** (id = D7 `tcuid`):
 
@@ -71,8 +71,8 @@ though the dump's `variable` table (production data) agrees with them on the tie
 | `sequence` | derived | From 0, per transcript, ordered by `(start, tcuid)` (open question 1: proposed, matches D7's display order; the tie rule is a choice, not D7's). |
 | `start`, `end` | `start`, `end` | Round to whole milliseconds (D7 floats carry sub-millisecond noise). Stored as found: no repair, no `end` rewrite. `end_original` stays empty. |
 | `timecode_status` | `TimecodeClassifier` | Computed per transcript over the rounded, ordered values. Depends on the ordering in question 1. |
-| `tiers` | `tcu_tier` | JSON object tier → text, NFC-normalised (Spike 4a; 933 Dzongkha and 12 Tibetan values are not NFC). Units with no tier rows get `{}`. Empty values are carried as empty strings, not dropped. |
-| `speakers` | `tcu_speaker` | Same shape and normalisation. |
+| `tiers` | `tcu_tier` | JSON object tier → text, NFC-normalised (Spike 4a). Recounted 2026-11-10: **3,526 of 355,536 tier values are not NFC, across 12 tiers**, not only the 933 Dzongkha and 12 Tibetan the audit named; 1,919 of them are wholly decomposed (NFD). Largest: `dzo_bod` 933, `ts_content_gyal` 735, `ts_content_eng` 487, `ts_content_tsum` 422, `ts_content_nmm` 402, `ts_content_gvr` 348. Normalising changes the stored text of those values, so the fidelity hash must compare NFC-normalised D7 text with D11 text. Units with no tier rows get `{}`. Empty values are carried as empty strings, not dropped. |
+| `speakers` | `tcu_speaker` | Same shape and normalisation (136 of 142,445 speaker values are not NFC; 68 are wholly NFD). |
 | `created`, `changed` | `created`, `changed` | As found. |
 | initial revision | none | One revision per unit; history starts here (about 490k revision rows across units and transcripts). |
 
