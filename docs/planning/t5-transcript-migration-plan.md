@@ -27,8 +27,7 @@ though the dump's `variable` table (production data) agrees with them on the tie
 **Dump currency, checked 2026-11-10:** the transcript tables were re-dumped read-only from production (`mandalaavlibvirg` on `rds-mysql8-production`: `tcu`, `tcu_tier`, `tcu_speaker`, `transcripts_apachesolr_transcript`, `flag`, `flagging`, `field_data_field_transcript`, `field_revision_field_transcript`, `file_managed`, `node`, and only the `transcripts%` rows of `variable`) into a separate local database, `d7_av_fresh`. Row counts, maximum ids, the latest edit-flag, unit-created and unit-changed timestamps, and `CHECKSUM TABLE` for `tcu`, `tcu_tier`, `tcu_speaker`, the tracking table, `flagging` and `field_data_field_transcript` are all **identical** to the 2026-09-01 dump. Nothing in the transcript data has changed since then, so every number in this plan holds for production as of 2026-11-10. The newest unit was created 2024-11-19 and the newest edit flag is 2026-04-30.
 
 **Not verified:**
-- That the viewer's read order on production matches what the dev-1 code says, and what a *live* page shows for one
-  of the 201 transcripts whose `tcuid` order and time order differ (see open question 1).
+- The viewer's read order on the other 200 transcripts whose `tcuid` order and time order differ, and the order for equal starts (one of the 201 was checked on a live page; see open question 1).
 - Anything on dev-0. (The 2026-09-01 dump was checked against production on 2026-11-10; see below.)
 - The D11 behaviour of the migration itself. No migration code exists yet.
 - The timing on dev-0. Local timings do not carry over (see "Running it").
@@ -82,7 +81,7 @@ Not migrated: the 18 and 95 tier and speaker rows that point at no unit, the 41 
 
 ## Open questions
 
-1. **Ordering: how is `sequence` derived? Largely answered 2026-11-10; confirm the one gap.**
+1. **Ordering: how is `sequence` derived? Answered 2026-11-10 (time order, confirmed on live D7).**
    The data (local dump): in **201 transcripts**, 377 units start *earlier* than the unit with the previous
    `tcuid`, so `tcuid` order and time order disagree for 8,741 units. 63 of the 201 are on `keep_transcript_edits`
    nodes and 2 are orphan trids. The largest backward step is 3,650 s. Separately, 1,278 transcripts have units that
@@ -99,10 +98,14 @@ Not migrated: the 18 and 95 tier and speaker rows that point at no unit, the 41 
    deterministic tie-break that D7's own ties cannot give us. `tcuid` is kept as the id, so `sequence` can be
    recomputed at any time. The classifier's "next unit" and the reader's range read then agree with the display.
 
-   **Still to confirm:** open one of the 63 edited transcripts among the 201 on a live D7 page and check the unit
-   order shown matches time order. That checks the dev-1 code against production behaviour and against what the
-   Solr index actually holds, since the viewer shows the index, not the database. Anything that disagrees (an index
-   out of step with the tables) would be a separate finding.
+   **Confirmed on live D7, 2026-11-10:** node 761 ("Painting a Deity's Face and Other Details: Tangka Painting
+   Techniques in Action #10", trid 8181, edited, 18 units) was opened on `av.mandala.library.virginia.edu`. Unit
+   614901 (start 152 s) is the last unit by `tcuid` but the page shows it **4th**, between 561681 (1:50) and 561691
+   (2:37). All 18 units appear in start-time order (the page's `data-begin` values are non-decreasing) and the order
+   differs from `tcuid` order. The page therefore shows what the Solr sort gives, matching the dev-1 code and the
+   dump, so question 1 is closed for this transcript. One transcript was checked; the tie order for equal starts and
+   the index-versus-tables comparison across all 201 remain unchecked.
+
 2. **Where do the 19 orphan trids' units go?** Than decides after analysing them
    ([note](../deferred/transcript-orphan-trids-keep-for-review.md)). It does not block T5: they are excluded and counted, and the expected total is 243,005. It must be settled before the cutover run, not before the first dev run.
 3. **Untimed units and the one negative start** (3,039 untimed units in 163 transcripts; one start of -0.125). Than's call; T5 stores them as found with whatever status the classifier gives, so nothing is lost, and the status can change later without re-importing text.
@@ -159,7 +162,7 @@ The workflow-field migrations already exist (`d7_av_workflow`, `d7_av_transcript
 
 ## Order of work
 
-1. Confirm question 1 on a live D7 page, and confirm questions 4–7.
+1. Confirm questions 4–7 (question 1 is settled).
 2. Source plugins and the two migrations, with Kernel tests for: the mapping, NFC, rounding, classifier call, idempotency and the soft-delete revive path.
 3. A verification script that compares D7 and D11 (counts, hashes, status counts, dropped-row report), in `scripts/`, with a howto in `docs/dev-notes/`.
 4. DDEV run; fix what it shows.
