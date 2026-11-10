@@ -1,6 +1,6 @@
 # T5 plan: migrate D7 transcripts into `av_transcript` / `av_tcu`
 
-**Status:** DRAFT 2026-11-10, for review. Nothing is built. Sprint 4 task T5.
+**Status:** plan reviewed; decisions 1 and 4-7 taken 2026-11-10. Source plugins `d7_av_transcript` and `d7_av_tcu` built and tested (below); the migration YAMLs, the process plugin that classifies timecodes, and the verification script are not. Sprint 4 task T5.
 **Depends on:** T2 (entities, lifecycle, classifier; built, in `main`), Sprint 3 AV4 (AV nodes and `field_transcript` files migrated).
 **Does not need:** T3 (viewer) or T4 (transcript core indexing) to run; see "Dependencies" below.
 **Unblocks:** the resolver swap (T2 phase 7, [#290](https://github.com/uvalib/mandala-navina/issues/290)), and T3/T4/T6/T7/T8 on real data.
@@ -159,6 +159,30 @@ The workflow-field migrations already exist (`d7_av_workflow`, `d7_av_transcript
 | Rollback and re-import | Node rollback soft-deletes; re-import restores the same ids with no duplicates |
 | Spot-check against source files | A sample from each of vtt, xml, txt, srt matches (Than) |
 | `trid_i` | Still on 5,343 documents after the reindex |
+
+## Source plugins: built 2026-11-10
+
+`D7AvTranscript` (`d7_av_transcript`) and `D7AvTcu` (`d7_av_tcu`) in `mandala_migrations`, with
+`AvTranscriptSourcesTest` (15 Kernel tests). Run against the full production re-dump (`d7_av_fresh`) they yield:
+
+| Check | Result |
+|---|---|
+| Transcripts | 5,343; 540 with the edits flag; 9 with an empty tracking `tiers` column; formats vtt 3,241, xml 1,930, txt 138, srt 30, none 4 |
+| Units | **243,005** in 5,343 transcripts; per-transcript counts equal D7's for every transcript |
+| `sequence` | contiguous from 0 in every transcript, no duplicates, exactly one last unit (no `next_start`) each |
+| Unit 614901 (node 761) | sequence 3, start 152.000, next start 157.267: the order the live D7 page shows |
+| NFC | 3,658 tier and speaker values change on migrated units (3,662 corpus-wide; the other 4 are on orphan-trid units) |
+| Units with no tier rows | 900 migrated (908 corpus-wide; 8 are orphan units) |
+| Run time | transcripts 1.3 s; units 38.8 s on DDEV, reading and normalising only, no writes |
+
+Two design points the tests caught before real data did. Migrate joins its id map on the bare source id, so the
+unit id needs `alias: c` (the derived tables also expose `tcuid`). And SQL evaluates `WHERE` before window
+functions, while migrate adds its own `WHERE` to skip imported rows; the numbering therefore lives in a derived
+table, or a run resumed part-way through a transcript would restart `sequence` over the remaining units.
+
+Still to build: the migration YAMLs, a process plugin that calls `TimecodeClassifier` on the rounded start, end
+and `next_start_s`, the verification script, the node lookup by legacy key, the soft-delete revive path, and the
+rollback tests (units before transcripts; whether the migrate suppressor covers rollback events).
 
 ## Order of work
 
