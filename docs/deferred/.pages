@@ -144,3 +144,4 @@ nav:
   - "solr-proxy uses FILTER_SANITIZE_STRING, which PHP 9 removes": solr-proxy-filter-sanitize-string-deprecated.md
   - "Sources: ADR 020 review gate before migration": sources-adr-020-review-before-migration.md
   - "Sources record display parity (check several D7 subtypes)": sources-record-display-parity-check-d7-subtypes.md
+  - "Node.js end-of-life sweep (DDEV pin fixed; reindeer_x base image open)": nodejs-end-of-life-sweep.md

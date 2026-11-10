@@ -238,6 +238,7 @@ Grouped by each note's **first** `Category` value (a note appears once; its othe
 
 | File | Categories | Owner | Raised | Priority |
 |---|---|---|---|---|
+| [nodejs-end-of-life-sweep.md](nodejs-end-of-life-sweep.md) | infrastructure-deploy | unassigned | Session 2026-11-04 (Node.js EOL sweep) | Low. DDEV `nodejs_version` moved 18 → 22 (resolved); `reindeer_x` still builds on Node 18 / Debian 11 in its own repo. Nothing here runs Node in production |
 | [reindeer-x-aws-credential-strategy.md](reindeer-x-aws-credential-strategy.md) | infrastructure-deploy | Yuji | Spike 8 | High |
 | [images-prod-packaging-monorepo-pass.md](images-prod-packaging-monorepo-pass.md) | infrastructure-deploy, migration-images | Yuji, Xiaoming | Sprint 1 (1a) | High |
 | [staging-migration-execution-prerequisites.md](staging-migration-execution-prerequisites.md) | infrastructure-deploy, migration-general | Xiaoming, Yuji, Dave | Session 2026-07-07 (1a.9) | **Deferred 2026-10-01 until a staging server exists.** Sprint 1 closed without it (criteria evidenced on dev-0); what is unproven is a two-D11-environment promotion rehearsal and the per-env config override |
