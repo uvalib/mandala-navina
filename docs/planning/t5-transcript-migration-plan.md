@@ -1,0 +1,143 @@
+# T5 plan: migrate D7 transcripts into `av_transcript` / `av_tcu`
+
+**Status:** DRAFT 2026-11-10, for review. Nothing is built. Sprint 4 task T5.
+**Depends on:** T2 (entities, lifecycle, classifier; built, in `main`), Sprint 3 AV4 (AV nodes and `field_transcript` files migrated).
+**Does not need:** T3 (viewer) or T4 (transcript core indexing) to run; see "Dependencies" below.
+**Unblocks:** the resolver swap (T2 phase 7, [#290](https://github.com/uvalib/mandala-navina/issues/290)), and T3/T4/T6/T7/T8 on real data.
+
+Background and decisions this plan builds on, not reopened here:
+[Spike 11](../spikes/spike-11-av-transcript-replication.md),
+[T2 plan](t2-transcript-entities-plan.md),
+[ADR 019](../adr/019-av-transcript-lifecycle-soft-delete-and-existence-rule.md),
+[ADR 017](../adr/017-legacy-identity-composite-key.md),
+[bad timecodes note](../deferred/transcript-bad-timecodes-investigate-and-fix.md).
+
+## What was and was not verified for this draft
+
+**Checked 2026-11-10 against the `d7_av` dump in DDEV** (the 2026-09-01 dump; not dev-0, not live D7):
+the counts in the tables below, the tracking table's columns, the edits flag, and the ordering numbers.
+
+**Not verified:**
+- **D7's own ordering of units.** The D7 transcripts module source was searched for in
+  `~/Code/mandala-legacy` (whole tree) and under `~/Code` and is not there, so the rule D7's viewer uses
+  to order units is unknown. This is open question 1.
+- Anything on dev-0 or on live D7. Counts may have moved since the 2026-09-01 dump (D7 is still in production).
+- The D11 behaviour of the migration itself. No migration code exists yet.
+- The timing on dev-0. Local timings do not carry over (see "Running it").
+
+## Source facts
+
+| Fact | Value |
+|---|---|
+| Tracked transcripts (`transcripts_apachesolr_transcript`, module `transcripts_node`, type `node`) | 5,343, one per node, all status 1 |
+| Units (`tcu`) | 245,158 in 5,362 distinct `trid`s |
+| Tracking rows' `trid` set vs units' `trid` set | 5,343 tracked + 19 orphan trids (units, no tracking row, no node) |
+| Orphan-trid units | 2,153 |
+| **Units to migrate** | **243,005** (245,158 − 2,153) |
+| `tcu_tier` rows | 355,536 (18 rows point at no unit) |
+| `tcu_speaker` rows | 142,445 (95 rows point at no unit) |
+| Units with no `tcu_tier` row | 908 |
+| Empty tier value / empty speaker value rows | 176 / 67 |
+| `keep_transcript_edits` flaggings | 540, on 540 distinct nodes, every one with a tracking row; timestamps 2016-01-06 to 2026-04-30; one flagging user |
+| Tracking rows whose `fid` has no `file_managed` row | 71 (the 68 replaced files and 3 with no file; ADR 019 / Spike 11 decisions cover them) |
+| Time range | start -0.125 to 81,795.3 s; end 0 to 81,807.4 s; fits `DECIMAL(10,3)` |
+| `tcu` keys | primary key on `tcuid` only; **no index on `trid`**, so any per-transcript query on D7 must be written as a window or grouped scan (a self-join on `trid` did not finish) |
+
+## Mapping
+
+**`av_transcript`** (one per tracking row; id = D7 `trid`):
+
+| D11 field | From | Rule |
+|---|---|---|
+| `id` | `trid` | Set explicitly. Allocated ids start at 100,000, clear of D7's 27,016. |
+| `node` | tracking `id` | The D11 node, found by legacy composite key `(field_legacy_site = audio-video, field_legacy_nid)`, never by a D11 nid (ADR 017, CLAUDE.md). Unique. |
+| `source_file` | the node's D11 `field_transcript` | The current attachment is the original of record (decided 2026-10-02). The 4 tracked nodes with no current file get none (ADR 019). |
+| `source_format` | file extension | `vtt`, `xml`, `txt`, `srt`. An unrecognised extension leaves it empty and is reported, not guessed. |
+| `tiers` | tracking `tiers` | Comma-delimited list, used as the display order. Where it is empty, fall back to the distinct tier names among the transcript's units, in a fixed order. **Check before building:** how many tracking rows have an empty `tiers`. |
+| `has_edits`, `edits_flagged_at` | `flagging` for `keep_transcript_edits` | `TRUE` and the flagging timestamp for the 540 nodes. The flagging user is not carried (no meaning in D11). |
+| `created` | none | Not in the tracking table; use the earliest unit `created` of the transcript. |
+
+**`av_tcu`** (id = D7 `tcuid`):
+
+| D11 field | From | Rule |
+|---|---|---|
+| `id`, `transcript` | `tcuid`, `trid` | Set explicitly; units start at 2,000,000 for new ids. |
+| `sequence` | derived | **Open question 1.** From 0, per transcript. |
+| `start`, `end` | `start`, `end` | Round to whole milliseconds (D7 floats carry sub-millisecond noise). Stored as found: no repair, no `end` rewrite. `end_original` stays empty. |
+| `timecode_status` | `TimecodeClassifier` | Computed per transcript over the rounded, ordered values. Depends on the ordering in question 1. |
+| `tiers` | `tcu_tier` | JSON object tier → text, NFC-normalised (Spike 4a; 933 Dzongkha and 12 Tibetan values are not NFC). Units with no tier rows get `{}`. Empty values are carried as empty strings, not dropped. |
+| `speakers` | `tcu_speaker` | Same shape and normalisation. |
+| `created`, `changed` | `created`, `changed` | As found. |
+| initial revision | none | One revision per unit; history starts here (about 490k revision rows across units and transcripts). |
+
+Not migrated: the 18 and 95 tier and speaker rows that point at no unit, the 41 never-processed nodes (no tracking row, so no transcript) and the 19 orphan trids (open question 2). All are counted in the run report so none disappear silently.
+
+## Open questions
+
+1. **Ordering: how is `sequence` derived? (Decision needed before the unit migration; Yuji, with Than.)**
+   D7 has no sequence column, and I could not read D7's rule. The data:
+   - In **201 transcripts**, 377 units start *earlier* than the unit with the previous `tcuid`. Ordering by `tcuid` and by time therefore disagree there: 8,741 units sit at a different position. The largest backward step is 3,650 s.
+   - 63 of the 201 are on nodes flagged `keep_transcript_edits` and 2 are orphan trids. The rest are not explained by that flag.
+   - Separately, 1,278 transcripts have units that share a start (5,409 units), so ties need a rule whichever order is chosen.
+
+   Options: **(A)** order by `tcuid` (insertion order); **(B)** order by `(start, tcuid)` (time order, ties by insertion); **(C)** A, but record a flag on the 201.
+
+   Impact: the classifier's "next unit" and the reader's range read follow `sequence`. Under (B) the 201 transcripts' units read in time order, which suits the viewer's "last unit whose start is at or before the playhead" rule. If D7's viewer used insertion order, (B) changes what readers see in those transcripts. `tcuid` is kept as the id, so `sequence` can be recomputed later at any time.
+
+   **Suggested way to settle it without the code:** open two or three of the 201 transcripts in the live D7 site and see which order the reader shows. The 63 edited ones are the likeliest to matter. I would pick (B) unless D7 shows insertion order.
+2. **Where do the 19 orphan trids' units go?** Than decides after analysing them
+   ([note](../deferred/transcript-orphan-trids-keep-for-review.md)). It does not block T5: they are excluded and counted, and the expected total is 243,005. It must be settled before the cutover run, not before the first dev run.
+3. **Untimed units and the one negative start** (3,039 untimed units in 163 transcripts; one start of -0.125). Than's call; T5 stores them as found with whatever status the classifier gives, so nothing is lost, and the status can change later without re-importing text.
+4. **`field_transcript` after T5.** The sprint says T5 replaces the inert placeholder. This plan keeps the file field: it is the source of `source_file` and the base for revert-to-upload (T7). Confirm that is intended.
+5. **Entity API or bulk insert.** The spike chose the migrate entity destination for row-count verification, access and hooks. Measured on DDEV, 245,158 unit inserts took 260 s through the entity layer; dev-0 will differ. Proposal: entity destination with the change notifier suppressed, and a 5% sample run on dev-0 to decide whether it is fast enough before a full run.
+6. **Rollback of the transcript migrations themselves.** Rolling back the *node* migration soft-deletes transcripts (ADR 019). Rolling back `d7_av_transcript` / `d7_av_tcu` should hard-delete what they created, so a rollback-and-rerun while developing leaves no stale rows. Confirm, and check it does not conflict with the soft-delete hooks.
+7. **Dependencies.** The sprint table lists T5 as depending on T2–T4. Nothing in the import needs the viewer or the transcript core. Suggest relaxing it to T2, with T4 needed afterwards to see results in search. Team call.
+8. **Who spot-checks against source files.** The sprint asks for checks on each source format. Than holds the files (Spike 11 question 4). The sprint says three formats (Toolbox, SRT, XML), but WebVTT is the majority (3,227 of the tracked files), so the check needs four formats.
+
+## Design
+
+**Migrations**, new in `mandala_migrations`, in group `mandala_av`, reading the D7 AV database through the existing key:
+1. `d7_av_transcript`: source reads the tracking table joined to the edits flag; depends on the AV node migrations and `d7_av_files`. Destination `entity:av_transcript`.
+2. `d7_av_tcu`: source reads `tcu` with `tcu_tier` and `tcu_speaker` aggregated, **one transcript per batch** (the large-migration memory and resume behaviour is documented in the
+   [deferred note](../deferred/migrate-large-migration-oom-and-resume-behavior.md): raise the CLI `memory_limit`, and a resume re-reads the whole source). Depends on `d7_av_transcript`. Destination `entity:av_tcu`. Sequence and status are computed per transcript, in the same pass, with the classifier.
+
+The workflow-field migrations already exist (`d7_av_workflow`, `d7_av_transcript_workflow_notes`); the workflow fields stay on the node (T2 plan correction 2026-10-21) and are not part of T5.
+
+**Wrapping:** run inside `TranscriptChangeNotifier::suppressed()` so units cost one event and one cache invalidation per transcript, not one each. Transcript-level events are *not* coalesced: 5,343 transcript saves would each write a node to Solr, so either rely on the migrate suppressor (inside `drush migrate:import` it applies) or index afterwards with `kmassets:index-all video` and `audio`. Do not use a custom script without checking this.
+
+**Idempotency (ADR 019).** Keyed on `trid` and `tcuid`. A re-run updates in place. If a transcript exists soft-deleted (because its node was rolled back and re-imported), the import finds it by id, re-points `node` at the new node and restores it, with its units, instead of creating a duplicate. This needs a test that rolls back the node migration, re-imports, and checks the counts, the ids and the restored flags.
+
+**Ids are set, never allocated,** and the id-sequence reservation (`AvTranscriptIdSequence`) must stay above D7's maxima while D7 keeps minting ids.
+
+## Running it
+
+1. **DDEV first**, on the local dump: proves correctness and the verification script, not runtime.
+2. **dev-0 sample run** (about 5% of transcripts), to measure time and memory on the real database. Do not extrapolate the DDEV figure; dev-0 migrations have run several times slower than local.
+3. **dev-0 full run**, after node migrations are in place. `drush migrate:*` works on dev-0 again since the authmap fix (#371).
+4. `kmassets:index-all video` and `audio`, then confirm `trid_i` still covers the same 5,343 documents.
+5. Only then the resolver swap (T2 phase 7): entity-backed resolver that skips soft-deleted transcripts, then remove the interim `mandala_kmassets_trid_map` table. Removing it earlier drops `trid_i`.
+
+## Verification (acceptance for T5)
+
+| Check | Pass |
+|---|---|
+| `av_transcript` count | 5,343 (live), each with a distinct node |
+| `av_tcu` count | 243,005, and per transcript equal to D7's count for that `trid` |
+| Text fidelity | A hash of every transcript's tier text in D7, NFC-normalised, equals the same hash read back from D11 |
+| `timecode_status` counts | Recorded per status; flagged units are in the counts (none dropped) |
+| `has_edits` | 540 transcripts true, with the flagging timestamps |
+| Dropped rows | Exactly the 18 + 95 orphan tier/speaker rows, the 2,153 orphan-trid units and the 41 never-processed nodes, each reported |
+| Idempotent re-run | Second run: zero created, zero updated |
+| Rollback and re-import | Node rollback soft-deletes; re-import restores the same ids with no duplicates |
+| Spot-check against source files | A sample from each of vtt, xml, txt, srt matches (Than) |
+| `trid_i` | Still on 5,343 documents after the reindex |
+
+## Order of work
+
+1. Settle open question 1 (look at D7), and confirm questions 4–7.
+2. Source plugins and the two migrations, with Kernel tests for: the mapping, NFC, rounding, classifier call, idempotency and the soft-delete revive path.
+3. A verification script that compares D7 and D11 (counts, hashes, status counts, dropped-row report), in `scripts/`, with a howto in `docs/dev-notes/`.
+4. DDEV run; fix what it shows.
+5. dev-0 sample run, then full run.
+6. Reindex, then the resolver swap, as its own PR.
+7. Update #290, the Sprint 4 T5 and T9 rows, and the T2 plan's phase 7.
