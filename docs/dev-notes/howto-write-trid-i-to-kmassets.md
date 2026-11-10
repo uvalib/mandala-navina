@@ -46,7 +46,15 @@ rewrite is what adds it, and since #321 the field has docValues.
 `scripts/measure-transcript-join-cost.py` loads synthetic units at D7's real shape (243,005
 units, one set per real `trid`), times the proxy's cross-core join against the same queries
 without it, and deletes the units again (`load`, `measure`, `cleanup`; writes need `--apply`).
-It reports numbers only. The pass/fail threshold is the team's call.
+It reports numbers only; the script applies no threshold.
+
+**Threshold (decided 2026-11-10, Yuji):** the 2026-10-15 measurements are accepted as the
+pass bar for the go/no-go checkpoint. Join cost is acceptable if, on dev at D7's real shape
+(243,005 units), the cold uncached join adds about 20 ms at the median (first query after the
+replica opens a new searcher: about 31 ms anonymous, about 140 ms authenticated) and warm
+queries are about 0-2 ms. Materially worse numbers on a re-run, or on the cases not yet measured
+(a user in many collections; many different users arriving just after a searcher reopens),
+reopen the access design.
 
 **Result, 2026-10-15** (dev replica, Solr QTime in ms; anonymous visibility join):
 
