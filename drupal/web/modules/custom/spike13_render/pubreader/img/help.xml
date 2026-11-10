@@ -1,0 +1,37 @@
+﻿<article data-type="helper">
+  <header>
+    <img id="help-pmc-logo" data-src="{$path}img/help-pmc.png"/>
+    <div>Using PMC PubReader™</div>
+    <img id="help-ncbi-logo" data-src="{$path}img/help-ncbi.png"/>
+  </header>
+  <div><table><tr><td><img data-src="{$path}img/help-artnav.png"/></td>
+      <td>The Article navigation button offers a fast way to directly navigate to different sections of the article.</td></tr>
+    </table>
+  </div>
+  <div><table><tr><td><img data-src="{$path}img/help-settings.png"/></td>
+      <td>Use the gear icon to access size/layout options. You may increase/decrease the font size and select from auto-calculated, single, or two-column layouts.</td></tr>
+    </table>
+  </div>
+  <div><table><tr><td><img data-src="{$path}img/help-kbd.png"/></td>
+      <td>Arrow keys and page up/down keys turn pages via the keyboard. Home and end keys bring you to the start and end of an article.</td></tr>
+    </table>
+  </div>
+  <div><table><tr><td><img data-src="{$path}img/help-figtabs.png"/></td>
+      <td>Mousing over a figure strip icon (arrows) will provide a preview of the figure or table. Clicking on the icon will bring the item into a full-view page, complete with caption. On touch devices, simply click on the icon to view the full image or table.</td></tr>
+    </table>
+  </div>
+  <div><table><tr><td><img data-src="{$path}img/help-isnav.png"/></td>
+      <td>Swipe to turn pages on a touch device. Pages also have clickable regions on each side.
+        The icon on the bottom right of pages (arrow) toggles the bottom area between a figure bar and a progress bar.</td></tr>
+    </table>
+  </div>
+  <div><table><tr><td><img data-src="{$path}img/help-links.png"/></td>
+      <td><ol><li>Go to PMC homepage</li><li>Links to journal list, issue list, etc.</li><li>Other forms of the article.</li></ol></td></tr>
+    </table>
+  </div>
+  <div><table><tr><td><img data-src="{$path}img/help-find.png"/></td>
+      <td>Use the magnifying glass icon to activate the search feature. Enter term(s) in the text box and click on the magnifying glass icon to start the search. Current term is highlighted in orange; use the arrows at the bottom to advance through items.</td>
+    </table>
+  </div>
+
+</article>

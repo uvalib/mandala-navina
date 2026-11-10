@@ -9,3 +9,23 @@ spike13_render.book:
     parameters:
       node:
         type: entity:node
+spike13_render.text:
+  path: '/spike13/text/{node}'
+  defaults:
+    _controller: '\Drupal\spike13_render\Controller\WholeBookController::text'
+  requirements:
+    _entity_access: 'node.view'
+  options:
+    parameters:
+      node:
+        type: entity:node
+spike13_render.pubreader:
+  path: '/spike13/pubreader/{node}'
+  defaults:
+    _controller: '\Drupal\spike13_render\Controller\WholeBookController::pubreader'
+  requirements:
+    _entity_access: 'node.view'
+  options:
+    parameters:
+      node:
+        type: entity:node

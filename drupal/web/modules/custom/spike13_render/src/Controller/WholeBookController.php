@@ -26,7 +26,95 @@ class WholeBookController extends ControllerBase {
     return new static($container->get('book.manager'), $container->get('database'));
   }
 
-  public function view(NodeInterface $node) {
+  /**
+   * S6 (a): D7 shanti_texts_node_ajax_text, the raw text Voyant fetches.
+   *
+   * Same transform as D7: the single_text_body sections (no Contents), runs of
+   * whitespace collapsed, then tags stripped.
+   */
+  public function text(NodeInterface $node) {
+    $build = $this->view($node, TRUE);
+    $html = (string) \Drupal::service('renderer')->renderInIsolation($build);
+    $html = preg_replace('/\s{2,}/', ' ', trim($html));
+    $html = preg_replace("/\n{2,}/", "\n", $html);
+    $response = new \Drupal\Core\Cache\CacheableResponse(strip_tags($html), 200, ['Content-Type' => 'text/html; charset=utf-8']);
+    $response->addCacheableDependency(CacheableMetadata::createFromRenderArray($build));
+    return $response;
+  }
+
+  /**
+   * S6 (b): D7 book_pubreader, the bundled NCBI PubReader3 fed from the outline.
+   *
+   * Served outside the theme, as D7's delivery callback did. Nested <section>
+   * per page with an h<depth> title (D7 book-pubreader-node-html.tpl.php). A
+   * page the viewer cannot see is dropped with its subtree, as D7's
+   * book_menu_subtree_data() did; the whole-book render (S3) keeps the
+   * subtree instead, a difference TX3 must settle.
+   */
+  public function pubreader(NodeInterface $node) {
+    $link = $this->bookManager->loadBookLink($node->id(), FALSE);
+    if (empty($link['bid'])) {
+      throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException();
+    }
+    $bid = (int) $link['bid'];
+    $flat = $this->flatOutline($bid, $nodes, $pids);
+    $d7 = $this->db->query('SELECT destid1, sourceid1 FROM {migrate_map_spike13_node} WHERE destid1 IN (:ids[])', [':ids[]' => array_keys($flat)])->fetchAllKeyed();
+    $meta = new CacheableMetadata();
+    $meta->addCacheTags(['spike13_book:' . $bid]);
+    $meta->addCacheContexts(['user.permissions', 'user.roles:authenticated', 'user.mandala_collection_memberships']);
+    $html = '';
+    $open = [];
+    $skipBelow = NULL;
+    $shown = 0;
+    foreach ($flat as $nid => $depth) {
+      if ($skipBelow !== NULL && $depth > $skipBelow) {
+        continue;
+      }
+      $skipBelow = NULL;
+      $n = $nodes[$nid];
+      $access = $n->access('view', NULL, TRUE);
+      $meta->addCacheTags($access->getCacheTags());
+      $meta->addCacheTags($n->getCacheTags());
+      if (!$access->isAllowed()) {
+        $skipBelow = $depth;
+        continue;
+      }
+      while ($open && end($open) >= $depth) {
+        array_pop($open);
+        $html .= "</section>\n";
+      }
+      $body = '';
+      if (!$n->get('field_book_content')->isEmpty()) {
+        $item = $n->get('field_book_content')->first();
+        $body = (string) check_markup($item->value, $item->format);
+      }
+      $id = 'node-' . ($d7[$nid] ?? $nid);
+      $tag = 'h' . min($depth, 6);
+      $html .= '<section id="' . $id . '" class="sec">' . "\n  <$tag id=\"$id-title\" class=\"head\">" . Html::escape($n->label()) . "</$tag>\n  " . $body . "\n";
+      $open[] = $depth;
+      $shown++;
+    }
+    $html .= str_repeat("</section>\n", count($open));
+    $base = '/' . \Drupal::service('extension.list.module')->getPath('spike13_render');
+    $vars = [
+      'title' => Html::escape($nodes[$bid]->label()),
+      'contents' => '<!-- shown=' . $shown . ' -->' . $html,
+      'pubreader_path' => $base . '/pubreader',
+      'css_path' => $base . '/book_pubreader.css',
+      'site_name' => Html::escape(\Drupal::config('system.site')->get('name')),
+    ];
+    $out = (function (array $vars) {
+      extract($vars);
+      ob_start();
+      include __DIR__ . '/../../templates/pubreader.tpl.php';
+      return ob_get_clean();
+    })($vars);
+    $response = new \Drupal\Core\Cache\CacheableResponse($out, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+    $response->addCacheableDependency($meta);
+    return $response;
+  }
+
+  public function view(NodeInterface $node, bool $sectionsOnly = FALSE) {
     $link = $this->bookManager->loadBookLink($node->id(), FALSE);
     $bid = $link['bid'] ?? NULL;
     if (!$bid) {
@@ -97,10 +185,12 @@ class WholeBookController extends ControllerBase {
         $item = $n->get('field_book_content')->first();
         $body = (string) check_markup($item->value, $item->format);
       }
-      $html .= '<div class="shanti-texts-section">'
-        . '<a name="shanti-texts-' . $id . '"></a>'
-        . '<div id="shanti-texts-' . $id . '" class="shanti-texts-section-title text-level-' . $depth . '">' . Html::escape($n->label()) . '</div>'
-        . '<div class="shanti-texts-section-content">' . $body . '</div></div>';
+      // S6: newlines between the elements, as D7's views templates emit; the
+      // raw text depends on them to keep words apart.
+      $html .= "\n<div class=\"shanti-texts-section\">\n"
+        . '<a name="shanti-texts-' . $id . '"></a>' . "\n"
+        . '<div id="shanti-texts-' . $id . '" class="shanti-texts-section-title text-level-' . $depth . '">' . Html::escape($n->label()) . "</div>\n"
+        . '<div class="shanti-texts-section-content">' . $body . "</div>\n</div>\n";
     }
     if (\Drupal::request()->query->get('mem')) {
       return new \Symfony\Component\HttpFoundation\Response('peak=' . round(memory_get_peak_usage(TRUE) / 1048576) . 'MB');
@@ -117,7 +207,7 @@ class WholeBookController extends ControllerBase {
     }
     $meta->addCacheContexts($contexts);
     $build = [
-      '#markup' => Markup::create('<!-- shown=' . $shown . ' -->' . $this->contents((int) $bid, $nodes, $d7, $toc) . $html),
+      '#markup' => Markup::create($sectionsOnly ? $html : '<!-- shown=' . $shown . ' -->' . $this->contents((int) $bid, $nodes, $d7, $toc) . $html),
     ];
     $meta->applyTo($build);
     if ($attached) {
