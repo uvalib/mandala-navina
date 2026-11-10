@@ -111,7 +111,7 @@ Not migrated: the 18 and 95 tier and speaker rows that point at no unit, the 41 
 3. **Untimed units and the one negative start** (3,039 untimed units in 163 transcripts; one start of -0.125). Than's call; T5 stores them as found with whatever status the classifier gives, so nothing is lost, and the status can change later without re-importing text.
 4. **`field_transcript` after T5. DECIDED 2026-11-10 (Yuji): keep it.** The sprint says T5 replaces the inert placeholder; this plan keeps the file field instead. It stays on the node as the upload field and is the source of `source_file` and the base for revert-to-upload (T7).
 5. **Entity API or bulk insert. DECIDED 2026-11-10 (Yuji): entity destination, with a 5% dev-0 sample run first.** The spike chose the migrate entity destination for row-count verification, access and hooks. Measured on DDEV, 245,158 unit inserts took 260 s through the entity layer; dev-0 will differ. The change notifier is suppressed during the run, and the sample run on dev-0 measures time and memory before the full run.
-6. **Rollback of the transcript migrations themselves. DECIDED 2026-11-10 (Yuji): hard-delete.** Rolling back the *node* migration soft-deletes transcripts (ADR 019). Rolling back `d7_av_transcript` / `d7_av_tcu` hard-deletes what they created, so a rollback-and-rerun while developing leaves no stale rows. Checked in the T2 code: soft-delete fires only from the node-delete cascade (`NodeDeleteCascade`, on `hook_node_delete`); deleting an `av_transcript` or `av_tcu` entity directly is a real delete whose `postDelete` only emits change events, so there is no conflict. Two things to build and test: a hard delete of a transcript does **not** cascade to its units, so units must roll back first (migrate rolls back in reverse dependency order, but add a test); and each hard delete emits `TRANSCRIPT_DELETED` / `UNIT_DELETED`, and whether the migrate suppressor covers rollback as it covers import has **not** been verified.
+6. **Rollback of the transcript migrations themselves. DECIDED 2026-11-10 (Yuji): hard-delete.** Rolling back the *node* migration soft-deletes transcripts (ADR 019). Rolling back `d7_av_transcript` / `d7_av_tcu` hard-deletes what they created, so a rollback-and-rerun while developing leaves no stale rows. Checked in the T2 code: soft-delete fires only from the node-delete cascade (`NodeDeleteCascade`, on `hook_node_delete`); deleting an `av_transcript` or `av_tcu` entity directly is a real delete whose `postDelete` only emits change events, so there is no conflict. Two things to build and test: a hard delete of a transcript does **not** cascade to its units, so units must roll back first (migrate rolls back in reverse dependency order, but add a test); and each hard delete emits `TRANSCRIPT_DELETED` / `UNIT_DELETED`, the migrate suppressor did **not** cover unit events, which `hold()`/`release()` now do (see "Migrations built").
 7. **Dependencies. DECIDED 2026-11-10 (Yuji): relax to T2** (and Sprint 3 AV4). Nothing in the import needs the viewer or the transcript core; T4 is needed afterwards to see results in search. The Sprint 4 table is updated to match. Recorded here for the team to see; it gates nothing.
 8. **Who spot-checks against source files.** The sprint asks for checks on each source format. Than holds the files (Spike 11 question 4). The sprint says three formats (Toolbox, SRT, XML), but WebVTT is the majority (3,227 of the tracked files), so the check needs four formats.
 
@@ -180,9 +180,54 @@ unit id needs `alias: c` (the derived tables also expose `tcuid`). And SQL evalu
 functions, while migrate adds its own `WHERE` to skip imported rows; the numbering therefore lives in a derived
 table, or a run resumed part-way through a transcript would restart `sequence` over the remaining units.
 
-Still to build: the migration YAMLs, a process plugin that calls `TimecodeClassifier` on the rounded start, end
-and `next_start_s`, the verification script, the node lookup by legacy key, the soft-delete revive path, and the
-rollback tests (units before transcripts; whether the migrate suppressor covers rollback events).
+## Migrations built: 2026-11-10
+
+`d7_av_transcript` and `d7_av_tcu` (config in `drupal/config/sync`, exported from a live Drupal), with three process
+plugins (`mandala_node_by_legacy_key`, `mandala_entity_field_target`, `mandala_av_timecode_status`),
+`AvTranscriptMigrationSubscriber`, and `AvTranscriptMigrationTest` (8 end-to-end Kernel tests; 27 in the module).
+Verified against D7 by `scripts/verify-av-transcript-migration.sh` (counts, ids, legacy keys, per-transcript unit
+counts, millisecond timecodes, sequence rank, edits flag, source files, orphan accounting, status distribution, NFC
+text fidelity). First run on the re-dump: all checks passed.
+
+- **Node link** is found by the legacy composite key (`field_legacy_site` + `field_legacy_nid`, ADR 017), never an id.
+- **A unit whose transcript was not migrated is skipped** (`migration_lookup` then `skip_on_empty`), not imported
+  pointing at nothing.
+- **Notifier.** Transcript-level events were already covered by the migrate suppressor (kmassets consults it). Unit-level
+  events were not, so the subscriber calls the new `TranscriptChangeNotifier::hold()` before an import or rollback and
+  `release()` after: one `UNITS_REPLACED` per transcript instead of one event per unit. This answers the open part of
+  question 6: the suppressor did not cover rollback; `hold()`/`release()` do.
+- **Revive.** After a node rollback and re-import, the id-map rows persist, so run
+  `drush migrate:import d7_av_transcript --update`; the subscriber restores a soft-deleted transcript (and its units)
+  when it is saved.
+
+Three bugs found by building it, none visible to the earlier T2 tests:
+
+1. **Stale entity cache.** `TranscriptLifecycle` flips unit flags with raw SQL, so a unit loaded earlier read stale and
+   saved the old flag back over a restore. Fixed in the lifecycle (it resets the cache for the ids it flipped), with a
+   regression test.
+2. **Dangling unit.** A unit whose transcript failed was imported against a transcript that did not exist. Fixed as above.
+3. **Circular service reference on a real boot** (`orphan_manager` → `lifecycle` → subscriber → `lifecycle`). Kernel
+   tests resolve services in a different order and missed it; `drush migrate:rollback` hit it. Fixed with a service
+   closure, confirmed by a real drush boot.
+
+Corpus counts on migrated units (differ slightly from the T2 plan's 3,111 and 54; not yet explained): ok 238,684;
+zero_length_shared_start 3,110; inverted 901; zero_length_other 188; last_unit_no_end 66; end_implausible 56.
+Timings from the full DDEV cycle are added below when it finishes.
+
+## Questions for Than
+
+None of these block the code or a dev run. Questions 2 and 3 must be settled before the cutover run; question 8 before
+T5 is called done. Than holds the D7 history and the source files.
+
+| # | Question | What T5 does meanwhile | Needed by |
+|---|---|---|---|
+| 2 | Where do the 19 orphan trids' units go (2,153 units, no tracking row, so no transcript)? Than is analysing them ([note](../deferred/transcript-orphan-trids-keep-for-review.md)). | Excluded and counted: the expected total is 243,005. | Cutover run |
+| 3 | The 3,039 untimed units (163 transcripts) and the one negative start (-0.125): keep, repair or drop? | Stored as found, with the status the classifier gives. The status can change later without re-importing text. | Cutover run |
+| 8 | Spot-check migrated text against the original source files, **four formats**: WebVTT (3,241), XML (1,930), Toolbox text (138), SRT (30). The sprint names three. | Verification script proves D11 equals D7's tables, not that D7's tables equal the files. | Before T5 is done |
+| new | 68 transcripts whose tracking row names a different, now-deleted file: the current `field_transcript` is used as the original (decided 2026-10-02). Still right? | Uses the current attachment. | Informational |
+| new | The tie order of units with equal starts (1,278 transcripts, 5,409 units): D7 leaves it undefined; we use `tcuid`. Acceptable? | Ordered by `(start, tcuid)`. | Informational |
+
+The two "new" rows have not been put to Than yet; a comment on #353 carries the earlier questions.
 
 ## Order of work
 
