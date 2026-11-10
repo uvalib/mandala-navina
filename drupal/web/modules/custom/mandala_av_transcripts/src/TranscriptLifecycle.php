@@ -7,6 +7,7 @@ namespace Drupal\mandala_av_transcripts;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\mandala_av_transcripts\Entity\AvTranscript;
 use Drupal\mandala_av_transcripts\Entity\AvTranscriptInterface;
@@ -34,6 +35,7 @@ class TranscriptLifecycle {
     private readonly TranscriptChangeNotifier $notifier,
     private readonly AccountInterface $currentUser,
     private readonly TimeInterface $time,
+    private readonly EntityTypeManagerInterface $entityTypeManager,
   ) {}
 
   /**
@@ -51,6 +53,7 @@ class TranscriptLifecycle {
     if ($transcript->isDeleted()) {
       return FALSE;
     }
+    $flipped = $this->unitIds($transcript, 'deleted', 0);
     $transaction = $this->database->startTransaction();
     try {
       // Units first, so a subscriber reacting to the event sees them gone.
@@ -70,6 +73,7 @@ class TranscriptLifecycle {
       $transaction->rollBack();
       throw $e;
     }
+    $this->forgetUnits($flipped);
     Cache::invalidateTags([AvTranscript::unitsCacheTag((int) $transcript->id())]);
     return TRUE;
   }
@@ -84,6 +88,7 @@ class TranscriptLifecycle {
     if (!$transcript->isDeleted()) {
       return FALSE;
     }
+    $flipped = $this->unitIds($transcript, 'deleted_with_transcript', 1);
     $transaction = $this->database->startTransaction();
     try {
       $this->database->update('av_tcu')
@@ -99,9 +104,40 @@ class TranscriptLifecycle {
       $transaction->rollBack();
       throw $e;
     }
+    $this->forgetUnits($flipped);
     // Index consumers rewrite the whole transcript, not unit by unit.
     $this->notifier->unitsReplaced((int) $transcript->id());
     return TRUE;
+  }
+
+  /**
+   * Ids of the transcript's units that have the given flag value.
+   *
+   * @return int[]
+   */
+  private function unitIds(AvTranscriptInterface $transcript, string $flag, int $value): array {
+    return array_map('intval', $this->database->select('av_tcu', 'u')
+      ->fields('u', ['id'])
+      ->condition('transcript', $transcript->id())
+      ->condition($flag, $value)
+      ->execute()
+      ->fetchCol());
+  }
+
+  /**
+   * Drops the entity caches of units whose flags were changed with raw SQL.
+   *
+   * The flags are flipped with one UPDATE (a transcript can have 1,380 units, and
+   * a save each would write a revision each), which Drupal's entity cache cannot
+   * see. Without this a unit loaded earlier keeps reading as live, and saving it
+   * writes the old flag straight back (found by the T5 migration tests).
+   *
+   * @param int[] $ids
+   */
+  private function forgetUnits(array $ids): void {
+    if ($ids) {
+      $this->entityTypeManager->getStorage('av_tcu')->resetCache($ids);
+    }
   }
 
   /**
