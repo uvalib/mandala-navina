@@ -14,7 +14,7 @@ Background and decisions this plan builds on, not reopened here:
 
 ## What was and was not verified for this draft
 
-**Checked 2026-11-10 against the `d7_av` dump in DDEV** (the 2026-09-01 dump; not dev-0, not live D7):
+**Checked 2026-11-10 against the `d7_av` dump in DDEV** (the 2026-09-01 dump):
 the counts in the tables below, the tracking table's columns, the edits flag, and the ordering numbers.
 
 **Read 2026-11-10 from the D7 staging host** (`mandala-drupal-dev-1`, container `dockerfiles-hostmaster-1`,
@@ -24,10 +24,12 @@ repo `shanti-uva/mandala-drupal`); only the ordering line (`fts_start asc`, line
 was compared, and it is identical. The two copies have not been diffed, and neither has been compared with production's,
 though the dump's `variable` table (production data) agrees with them on the tier configuration.
 
+**Dump currency, checked 2026-11-10:** the transcript tables were re-dumped read-only from production (`mandalaavlibvirg` on `rds-mysql8-production`: `tcu`, `tcu_tier`, `tcu_speaker`, `transcripts_apachesolr_transcript`, `flag`, `flagging`, `field_data_field_transcript`, `field_revision_field_transcript`, `file_managed`, `node`, and only the `transcripts%` rows of `variable`) into a separate local database, `d7_av_fresh`. Row counts, maximum ids, the latest edit-flag, unit-created and unit-changed timestamps, and `CHECKSUM TABLE` for `tcu`, `tcu_tier`, `tcu_speaker`, the tracking table, `flagging` and `field_data_field_transcript` are all **identical** to the 2026-09-01 dump. Nothing in the transcript data has changed since then, so every number in this plan holds for production as of 2026-11-10. The newest unit was created 2024-11-19 and the newest edit flag is 2026-04-30.
+
 **Not verified:**
 - That the viewer's read order on production matches what the dev-1 code says, and what a *live* page shows for one
   of the 201 transcripts whose `tcuid` order and time order differ (see open question 1).
-- Anything on dev-0 or on live D7. Counts may have moved since the 2026-09-01 dump (D7 is still in production).
+- Anything on dev-0. (The 2026-09-01 dump was checked against production on 2026-11-10; see below.)
 - The D11 behaviour of the migration itself. No migration code exists yet.
 - The timing on dev-0. Local timings do not carry over (see "Running it").
 
