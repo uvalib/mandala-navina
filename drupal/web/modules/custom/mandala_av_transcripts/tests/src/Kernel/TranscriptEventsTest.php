@@ -206,6 +206,35 @@ class TranscriptEventsTest extends KernelTestBase {
     $this->assertSame([TranscriptEvents::UNIT_SAVED], $this->names(), 'Per-unit events are back.');
   }
 
+  /**
+   * A migrate run starts and ends in different event handlers, so it cannot use
+   * the callable form: hold()/release() give the same coalescing.
+   */
+  public function testHoldAndReleaseCoalesceLikeSuppressedAndNest(): void {
+    $this->transcript(10);
+    $this->seen = [];
+    $this->notifier->hold();
+    $this->notifier->hold();
+    $this->unit(100, 10);
+    $this->unit(101, 10, 1);
+    $this->assertSame([], $this->names(), 'Held back.');
+    $this->notifier->release();
+    $this->assertSame([], $this->names(), 'The inner release does not flush.');
+    $this->assertTrue($this->notifier->isSuppressed());
+    $this->notifier->release();
+    $this->assertSame([TranscriptEvents::UNITS_REPLACED], $this->names(), 'One event for the transcript, not one per unit.');
+    $this->assertFalse($this->notifier->isSuppressed());
+  }
+
+  public function testAnUnbalancedReleaseIsHarmless(): void {
+    $this->notifier->release();
+    $this->assertFalse($this->notifier->isSuppressed());
+    $this->transcript(11);
+    $this->seen = [];
+    $this->unit(110, 11);
+    $this->assertSame([TranscriptEvents::UNIT_SAVED], $this->names(), 'Events still flow after a stray release.');
+  }
+
   public function testSuppressedReturnsTheOperationsValueAndSkipsUntouchedTranscripts(): void {
     $this->seen = [];
     $this->assertSame('v', $this->notifier->suppressed(fn() => 'v'));
