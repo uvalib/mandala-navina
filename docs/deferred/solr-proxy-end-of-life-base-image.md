@@ -1,10 +1,10 @@
-# solr-proxy runs on an end-of-life base image (PHP 7.4 / Debian 11)
+# solr-proxy runs on an end-of-life base image (PHP 7.4 / Debian 11) — resolved 2026-11-06
 
 **Category:** infrastructure-deploy, solr-search
 **Raised during:** Spike 11 / #327 (the solr-proxy build failed after PR #315 merged, 2026-10-14)
-**Issue:** #336
-**Priority:** Medium. Builds work again with the stopgap (PR #335), but the image is on unsupported PHP and Debian and gets no security fixes.
-**Owner:** unassigned
+**Issue:** #336 (closed 2026-11-06)
+**Priority:** ~~Medium~~ — **RESOLVED 2026-11-06.** The proxy runs on PHP 8.3 / Debian 13 on dev-0, and both verify scripts pass.
+**Owner:** n/a (resolved)
 
 ## What is deferred
 
@@ -27,6 +27,29 @@ path (ADR 014), so this is not a place to leave unsupported software indefinitel
    those are the regression tests for the authenticated path (ADR 014).
 3. Revert the archive.debian.org stopgap in `solr-proxy/Dockerfile`.
 4. Look for other images in this repo built on the same or an older base and note them here.
+
+## Resolved (2026-11-06)
+
+PR #392 moved the proxy to `php:8.3-apache` (PHP 8.3.36 on Debian 13) and removed the apt
+stopgap. Built by `uva-mandala-solr-proxy-codepipeline` as `build-20261106163420` and deployed to
+dev-0 with `deploy_solrproxy.yml` the same day. The previous image, `build-20261014193854`
+(PHP 7.4), is the rollback.
+
+- **Base:** `composer.json` platform pin moved to 8.3.0; `composer.lock` changed only in its hash
+  and platform entry (no package changed, no Composer security advisories).
+- **Before deploy (local):** every PHP file lints clean, and the old 7.4 image and the new 8.3
+  image gave identical responses and sent identical queries to a stub Solr for anonymous search
+  on all three cores (including the join core), a logged-in user whose token comes from Redis,
+  the 404 path, `ping.php` and `status.php`.
+- **After deploy (dev-0):** `scripts/verify-solr-proxy-visibility.py` 12 of 12 PASS;
+  `scripts/verify-oauth2-userinfo.sh` PASS (`sub=600`); `/solr/kmassets/status`, `/ping.php` and a
+  search return 200; Apache config test passes; no errors in the container log.
+- **Other images (step 4):** the only other Dockerfile is `package/Dockerfile`
+  (`drupal:11-php8.4-apache`), already supported.
+- **Left over:** `FILTER_SANITIZE_STRING` is still used (see
+  [solr-proxy-filter-sanitize-string-deprecated.md](solr-proxy-filter-sanitize-string-deprecated.md)).
+- **Not deployed anywhere else.** Staging and production pick up the image through the normal
+  deploy path; production's legacy D7 proxy was already on PHP 8.3 and is a separate codebase.
 
 ## Sequence, not a date
 

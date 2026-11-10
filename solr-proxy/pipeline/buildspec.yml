@@ -150,6 +150,22 @@ phases:
             fwrite(STDERR, "SMOKE FAIL: unexpected anonymous session state\n"); exit(1);
           }
           echo "smoke: no session spawned for an anonymous request\n";'
+      # 8. The response body must reach the client byte-for-byte. The proxy used to
+      #    run it through mb_convert_encoding(mb_detect_encoding(...)); on PHP >= 8.1
+      #    that picks ISO-8859-1 for large/Tibetan-heavy valid UTF-8 and double-encodes
+      #    the whole response (2026-11 incident: Tibetan names garbled on thlib.org).
+      #    Short responses survive, so only a large fixture catches it. The test file
+      #    is mounted, not baked into the image. Verified to FAIL against the pre-fix
+      #    Searcher.php, so it is a real guard.
+      - |
+        docker run --rm \
+          -e SOLR_BASEURL=http://smoke.invalid:8080 \
+          -e DEFAULT_RETURL=https://smoke.invalid/home \
+          -e SOLRPROXY_OAUTH_ROOT=https://smoke.invalid/oauth \
+          -e SOLRPROXY_CLIENT_SECRET=smoke-secret \
+          -e SOLRPROXY_REDIRECT_URI=https://smoke.invalid/auth \
+          -v "$PWD/solr-proxy/tests:/tests:ro" \
+          $CONTAINER_IMAGE:latest php /tests/utf8-response.php
       - echo All smoke tests passed.
       # ---- end smoke tests ------------------------------------------------
 

@@ -261,8 +261,13 @@ class Searcher {
             $results = json_encode($results);
 	    http_response_code($retcode);
         }
-        $this->results = mb_convert_encoding($results, 'UTF-8',
-            mb_detect_encoding($results, 'UTF-8, ISO-8859-1', true));
+        // Solr answers in UTF-8. Only transcode a body that is genuinely not valid
+        // UTF-8. Do NOT use mb_detect_encoding() here: on PHP >= 8.1 it ranks the
+        // candidates heuristically and can pick ISO-8859-1 for a valid UTF-8 body
+        // (large or Tibetan-heavy responses), which double-encodes the whole response.
+        $this->results = mb_check_encoding($results, 'UTF-8')
+            ? $results
+            : mb_convert_encoding($results, 'UTF-8', 'ISO-8859-1');
 
         return $this->results;
     }

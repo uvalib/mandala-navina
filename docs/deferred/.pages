@@ -71,6 +71,7 @@ nav:
   - "solr-proxy: uid=1 access now decided by Drupal (resolved)": solr-proxy-uid1-admin-gets-anonymous-filter.md
   - "solr-proxy forwards the session id to Solr": solr-proxy-session-id-forwarded-to-solr.md
   - "solr-proxy starts a session on every anonymous request": solr-proxy-session-per-anonymous-request.md
+  - "solr-proxy double-encodes UTF-8 responses on PHP 8 (Tibetan garbled)": solr-proxy-utf8-response-double-encoding.md
   - "mandala-wp-proxy json_proxy open proxy / SSRF (FIXED 2026-08-12)": mandala-wp-proxy-json-proxy-open-ssrf.md
   - "wp-kmaps declared dependency on mandala-wp-proxy (MERGED 2026-08-12)": wp-kmaps-mandala-proxy-dependency.md
   - "mandala_node_api sees every request as anonymous (no identity via JSON proxy)": mandala-node-api-no-identity-forwarded-through-json-proxy.md
@@ -139,7 +140,8 @@ nav:
   - "AV delete-Kaltura checkbox: admin session verification": av-delete-kaltura-checkbox-admin-session-verification.md
   - "dev-0 Unicode filenames needed NFC normalization (RESOLVED 2026-10-09)": dev0-unicode-filenames-need-nfc-normalization.md
   - "Production Solr kmassets not receiving D7 writes (S3 sync listener not running)": production-solr-not-receiving-d7-writes.md
-  - "solr-proxy runs on an end-of-life base image (PHP 7.4 / Debian 11)": solr-proxy-end-of-life-base-image.md
+  - "solr-proxy runs on an end-of-life base image (PHP 7.4 / Debian 11) (RESOLVED 2026-11-06)": solr-proxy-end-of-life-base-image.md
+  - "solr-proxy uses FILTER_SANITIZE_STRING, which PHP 9 removes": solr-proxy-filter-sanitize-string-deprecated.md
   - "Sources: ADR 020 review gate before migration": sources-adr-020-review-before-migration.md
   - "Sources record display parity (check several D7 subtypes)": sources-record-display-parity-check-d7-subtypes.md
   - "Node.js end-of-life sweep (DDEV pin fixed; reindeer_x base image open)": nodejs-end-of-life-sweep.md

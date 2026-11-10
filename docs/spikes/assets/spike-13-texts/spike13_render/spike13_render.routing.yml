@@ -1,0 +1,11 @@
+spike13_render.book:
+  path: '/spike13/book/{node}'
+  defaults:
+    _controller: '\Drupal\spike13_render\Controller\WholeBookController::view'
+    _title: 'Spike 13 whole book'
+  requirements:
+    _entity_access: 'node.view'
+  options:
+    parameters:
+      node:
+        type: entity:node
