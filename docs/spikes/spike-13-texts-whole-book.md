@@ -1,6 +1,6 @@
 # Spike 13: Texts book outline and whole-book render
 
-**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5 done 2026-11-09 (passed; six findings, resolution must be per chapter; variant A chosen); S6 not started
+**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5 done 2026-11-09 (passed; six findings, resolution must be per chapter; variant A chosen); S6 in progress 2026-11-10 ((a) raw text and (b) PubReader passed; (c) Voyant not yet run against a reachable URL)
 **Lead:** Than Grove
 **Mode:** Individual
 **Time-box:** 3.5–4.5 days
@@ -481,4 +481,62 @@ whose click target is missing; B drops the group, as D7 would); the theme's styl
 
 ### S6
 
-Not started.
+**Status 2026-11-10: (a) and (b) passed, (c) not yet tested.** Throwaway code is on the branch
+`spike/13-texts-whole-book-s1` (pushed for this step; never merge): routes `/spike13/text/{nid}` and
+`/spike13/pubreader/{nid}` in `spike13_render`.
+
+**(a) Raw text: passed.** Uses the same transform as D7 `shanti_texts_node_ajax_text`: the
+`single_text_body` sections without the Contents list, runs of whitespace collapsed, then tags
+stripped. Compared word by word with live D7 `shanti_texts/node_ajax_text/<nid>` (fetched with curl,
+no WAF challenge) for 15256, 14158 and 14679, all as anonymous. Every word matches except:
+
+1. 14158: one section is in a different position. This is the S4 sibling tie (weight 16), which the
+   TX3 normalization fixes.
+2. 14679: D7's text includes KMaps popover text ("… places 431 For more information about this
+   term, see Full Entry below …"), because D7's KMaps filter writes the popover inline. D11 has no
+   such filter yet, so its text is cleaner. TX3 should keep popover markup out of the raw text.
+3. A few places where D7 runs two words together (for example a city name and an email address, or
+   "WyliePhoneticsType" and a letter) and D11 has a space. D11 is the more correct.
+4. One inline `<script>` in 15256 strips to different text. One `&nbsp;` per book stays an entity in
+   D11; D7 outputs the character.
+
+Finding: D7's views templates put newlines between the section elements, and the raw text depends
+on them. Without them, D11 joined the last word of each page to the next page's title. The spike
+render now emits them; TX3's render template must do the same.
+
+Book 15641 was left out of the comparison because S3 changed its access (10 of 52 pages private).
+
+**(b) PubReader: passed.** D7's `book_pubreader` module (the bundled NCBI PubReader3, 2.3 MB, plus its
+page template) was copied into the spike module unchanged and is served outside the theme, as D7's
+delivery callback did. One nested `<section id="node-<d7 nid>">` per page with an `h<depth>` title.
+Checked in Chrome on the 374-page book (14679) against D7's `book_pubreader/14679`: 374 sections in
+both, the same 11 Contents entries, the same section ids, no console errors. The other two books
+return 200 with every section (checked over HTTP only). The page count differs (D11 289, D7 457 at
+the same window size); likely the extra popover and image markup in D7, not checked, and not part of
+the acceptance.
+
+Open for TX3: like D7, PubReader drops a page the viewer cannot see together with its subtree; the
+whole-book render (S3) keeps the subtree. One rule should apply to both.
+
+Open, not checked: an access question about the D7 raw-text route. Ask Than before writing about it here.
+
+**(c) Voyant: not yet tested.** Local DDEV is not public, and dev-0 does not have the spike module.
+First attempt (2026-11-10): `ddev share` with a free ngrok tunnel. The raw-text route answered
+through the tunnel, but Voyant built a corpus of 0 words. Cause: on free domains ngrok serves an
+"about to visit" warning page (ERR_NGROK_6024) instead of the site to requests that look like a
+browser, and only a client-sent header skips it. Reproduced with a Chrome User-Agent (2.8 KB warning
+page) against curl or Java (391 KB text). ngrok's request log shows no request from Voyant reached
+DDEV. This is a tunnel limit, not a route problem. The tunnel was stopped right after.
+
+Next steps for (c):
+
+1. Turn off PHP error display for the raw-text route (locally DDEV prints `field_group`
+   deprecation notices into the response; Voyant would count them as words). Spike-only.
+2. Retry with a tunnel that has no warning page: `brew install cloudflared`, then
+   `ddev share --provider=cloudflared`, then open
+   `https://voyant-tools.org/?input=<tunnel>/spike13/text/123372` (D7's hand-off is a redirect with
+   the raw-text URL as `input`). Pass: Voyant reports the book's word count (about 203,000 for 14679).
+   Stop the tunnel afterwards.
+3. Whatever the tunnel shows, the real question for TX3 stays open: whether the WAF in front of
+   dev-0, staging and production lets Voyant's server fetch the raw-text URL. Check it once the
+   route exists there.
