@@ -19,8 +19,10 @@ the counts in the tables below, the tracking table's columns, the edits flag, an
 
 **Read 2026-11-10 from the D7 staging host** (`mandala-drupal-dev-1`, container `dockerfiles-hostmaster-1`,
 `/var/aegir/platforms/mandala-base/docroot/sites/all/modules/custom/transcripts`; read-only). The module source
-is not in `~/Code/mandala-legacy` or anywhere else under `~/Code`. This is dev-1's copy; it has not been compared
-with production's, though the dump's `variable` table (production data) agrees with it on the tier configuration.
+is also in the local legacy checkout (`~/Code/mandala-legacy/mandala-drupal/docroot/sites/all/modules/custom/transcripts`,
+repo `shanti-uva/mandala-drupal`); only the ordering line (`fts_start asc`, line 84 of `transcripts_apachesolr.module`)
+was compared, and it is identical. The two copies have not been diffed, and neither has been compared with production's,
+though the dump's `variable` table (production data) agrees with them on the tier configuration.
 
 **Not verified:**
 - That the viewer's read order on production matches what the dev-1 code says, and what a *live* page shows for one
