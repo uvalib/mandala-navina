@@ -93,7 +93,7 @@ includes), `mandala-om`, `mandala_drupal_docker`, `kmaps_engine`, and the JS ind
 | Rest of this monorepo, `mandala-om`, `mandala_drupal_docker`, `kmaps_engine`, JS indexers | No occurrences |
 | Legacy D7 Drupal core `includes/unicode.inc` | Uses an explicit source encoding, not detection; not affected |
 | Legacy D7 simplesamlphp InfoCard module | Explicit `iconv` between fixed encodings for a dead card-issuer feature; not related |
-| `shanti_general_solr_query` (D7 module) | An earlier read of the deployed code showed the same detect-then-convert idiom. It was **not found in the checked-out repos on 2026-11-10** (it is probably deployed from outside the repo), and the production box was unreachable to re-check. It is read-only and runs on PHP 7.2, where the idiom behaves; **it would break the same way if the D7 stack were ever moved to PHP >= 8.1.** Worth a look if that move is ever planned |
+| `shanti_general_solr_query()` in the legacy D7 `shanti_general` module | **Same idiom, not affected today.** It is a function in the custom `shanti_general` module (not a module of its own), so an earlier search for a module by that name found nothing. Tested on production 2026-11-10: a 240,838-byte Tibetan-heavy Solr response (300 terms) run through the exact idiom on the production PHP 7.2.24 is valid UTF-8, detected as UTF-8 and returned byte-identical, and all 300 docs parse. PHP 7.x returns the first candidate that validates, so it is correct there. **It would break the same way if the D7 stack were ever moved to PHP >= 8.1**; fix it with the same `mb_check_encoding` pattern at that time. Other `mb_detect_encoding` uses in D7 custom modules are not Solr responses |
 
 ## Related
 
