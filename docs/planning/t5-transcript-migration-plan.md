@@ -212,7 +212,29 @@ Three bugs found by building it, none visible to the earlier T2 tests:
 
 Corpus counts on migrated units (differ slightly from the T2 plan's 3,111 and 54; not yet explained): ok 238,684;
 zero_length_shared_start 3,110; inverted 901; zero_length_other 188; last_unit_no_end 66; end_implausible 56.
-Timings from the full DDEV cycle are added below when it finishes.
+
+### Full local cycle on real data (DDEV, `d7_av_fresh`, 2026-11-10)
+
+| Step | Result | Time (DDEV) |
+|---|---|---|
+| Import `d7_av_transcript` | 5,343 created, 0 failed | 30 s |
+| Import `d7_av_tcu` | 243,005 created, 0 failed, 243,005 revisions | 696 s (11.6 min) |
+| `verify-av-transcript-migration.sh` | **ALL CHECKS PASSED** (counts, ids, legacy keys, per-transcript unit counts, ms timecodes, sequence rank, edits flag 540, source files, NFC text fidelity: 352,881 tier and 141,650 speaker values equal D7) | 117 s |
+| Second import of each | 0 items processed, nothing created or updated; counts unchanged | 5 s, 8 s |
+| Rollback `d7_av_transcript` | 5,343 hard-deleted, no soft-deleted rows left | 28 s |
+| Rollback `d7_av_tcu` | 243,005 hard-deleted, 0 left. **No clean time**: see below | not comparable |
+
+**Rollback of units was quadratic until the id map got an index.** Migrate removes a rolled-back entity's id-map
+row with `WHERE destid1 = ?`, and core indexes only the source ids, so each of 243,005 deletes scanned the whole map
+table. The first run managed about 130 units a minute and falling (73,000 units in 3.5 hours before it was stopped).
+With an index on `destid1` it ran at roughly 4,000 to 20,000 a minute, varying with other load on the machine, and
+finished after the interruption and restart, so there is no single clean figure. The subscriber now adds the index
+before a rollback of either migration (`AvTranscriptMigrationSubscriber::indexIdMap`, with a Kernel test). Import is
+unaffected: it looks rows up by source id, which core does index.
+
+Reading these timings: they prove the code is correct on the real corpus, not how long dev-0 will take. The kinds of
+difference that matter (in-container MySQL against RDS, mutagen against a direct volume) made dev-0 several times
+slower in earlier migrations. The sample run on dev-0 is what measures it.
 
 ## Questions for Than
 
