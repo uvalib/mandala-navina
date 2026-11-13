@@ -3,7 +3,7 @@
 **Category:** migration-av
 **Raised during:** T2 review meeting, 2026-10-19 (Spike 11 audit found them 2026-10-01)
 **Issue:** none
-**Priority:** Low. Not blocking T2 or T5; needs a decision before the units are migrated.
+**Priority:** Low. **Resolved 2026-11-13** (see the Resolved section at the foot). Nothing is migrated and nothing is built.
 **Owner:** unassigned (Than is analysing the 19; the storage decision waits for that, 2026-10-21)
 
 ## What is deferred
@@ -125,6 +125,22 @@ Counts are matching values, not units, so a figure can exceed the unit count whe
 To reproduce: the orphans are `select distinct trid from tcu where trid not in (select trid from
 transcripts_apachesolr_transcript)`; text matches join `tcu_tier` on equal `tier` and `value` across different
 trids. In DDEV the D7 copy is the `d7_av` database.
+
+## Resolved 2026-11-13
+
+**The orphan-trid question is closed. None of the 19 is migrated and nothing is built for them.**
+
+- **The 16 superseded trids are discarded.** Their text matches a file that is migrated anyway
+  (groups 1 and 2 and the three "matched, node not fully traced" trids above). They exist only in D7's
+  `tcu` tables, so there is nothing to remove from D11. T5 excludes them and reports them in its run
+  count. No D7 data was deleted.
+- **The 3 unplaced trids (10266, 10271, 12361) are backed up.** On 2026-11-13 their rows were exported from
+  the local D7 AV copy (`tcu`, `tcu_tier`, `tcu_speaker`) and zipped: 256 units, 464 tier rows, 34
+  speaker rows, matching the source counts. The zip holds transcript text, so it is not committed or
+  linked here. Than keeps it (Teams) and will look at it later.
+- The storage options above (staging table, CSV) are not used. The T5 plan's question 2 is closed.
+- Still true: the matches rest on five sampled units each, and the three "not fully traced" trids are
+  counted as superseded on that evidence alone.
 
 ## Related
 
