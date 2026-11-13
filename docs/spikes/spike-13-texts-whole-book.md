@@ -532,3 +532,53 @@ DDEV. This is a tunnel limit, not a route problem. The tunnel was stopped right 
 tunnel, check it once Texts content and the raw-text route are on dev-0, which is publicly reachable.
 That check, including the open WAF question, is tracked in
 [texts-voyant-handoff-check-post-migration.md](../deferred/texts-voyant-handoff-check-post-migration.md).
+
+### Load times on the largest books (2026-11-13, Than with Claude Code)
+
+Asked after S6: does rendering the whole book to show one page make the big books slow? S2 timed only
+14679 and 14158, as an administrator, with no per-page access work. This adds the books Than named
+(Antiquities of Zhang Zhung, Studies in Genre) and times the S3 `full` access/cache path.
+
+**Largest published books in D7** (sum of `field_book_content`): 14158 Khams vol. 2 (294 pages,
+4.46 MB), 13871 Khams vol. 1 (287, 3.91), 14566 Khams vol. 3 (113, 3.49), 39676 / 40956 (194, 2.8),
+42871 (270, 2.66), **15256 Antiquities of Zhang Zhung vol. II (326, 2.58)**, 15053 vol. I (202,
+1.99), **15582 Tibetan Literature: Studies in Genre (284, 1.91)**, 14679 (374, 1.89).
+
+**Server (curl, local DDEV, `?cache=full`, three runs each).** Cold = `cache_render`,
+`cache_dynamic_page_cache`, `cache_page` and `cache_entity` emptied before each request.
+
+| D7 book | Pages | HTML | Cold | Warm |
+|---|---|---|---|---|
+| 14158 Khams vol. 2 | 294 | 4.8 MB | 0.7–0.9 s (first request after clearing 3.3 s, PHP warm-up) | 0.15 s |
+| 15256 Zhang Zhung vol. II | 326 | 2.8 MB | 0.8 s | 0.05 s |
+| 15582 Studies in Genre | 284 | 2.1 MB | 0.6 s | 0.06 s |
+| 14679 Bonpo monasteries | 374 | 2.1 MB | 0.6 s | 0.05 s |
+
+Anonymous and `content_editor` timed the same (all four books are fully public locally, so both see
+every page). The per-page access check adds about 0.2–0.3 s to a cold render over S2's admin numbers.
+15053 is not migrated locally.
+
+**Browser (Chrome, navigation and paint timings, deep-page anchor in the URL).** D11 local is the
+spike route as an administrator; D7 is the live site, anonymous, by its `/node/<page nid>` URL.
+Times in ms from navigation start; transfer is compressed.
+
+| Run | TTFB | First paint | DOM ready | Load | Transfer / HTML | Images | Lands on the page |
+|---|---|---|---|---|---|---|---|
+| D11 15256, server cold | 1,237 | 1,624 | 2,522 | 2,709 | 443 KB / 2.8 MB | 0 (none migrated) | yes, 79 px (toolbar) |
+| D11 15256, reload | 183 | 364 | 597 | — | | | yes |
+| D11 14158, server warm-ish | 421 | 528 | 1,104 | 1,220 | 756 KB / 4.8 MB | 264 | yes |
+| D7 15256, page 15581 | 1,168 | 1,468 | 2,062 | 2,600 | 452 KB / 3.0 MB | 101 | yes |
+| D7 14158, page 14451 | 1,003 | 1,184 | 1,530 | 1,832 | 764 KB / 5.0 MB | 365 | yes |
+
+**Reading.** D11 and D7 are in the same range: first paint about 0.4–1.6 s, ready in 0.6–2.5 s,
+on the largest books. Showing one page by rendering the whole book is not slow in either system
+once the server cache is warm, and a cold D11 render is no worse than live D7. Caveats: one machine,
+one run per cell; D11 is DDEV on a laptop, D7 is production over the network; D11 15256 had no image
+files locally, so its load time is a lower bound; D7 results may have come from its own cache.
+
+**Finding: D7 redirects a page URL to the book root.** `/node/15581` arrived at
+`/thl/zhangzhung/antiquities/vol2#shanti-texts-15581` (one redirect, `redirectCount` 1), and
+`/node/14451` at `/thl/monasteries/khams-v2#shanti-texts-14451`. So D7 does not show the whole book
+at the page's own URL; it sends the browser to the root's alias with the page anchor. D7 also scrolls
+an inner pane, not the window (document height 992 px). This corrects the description of D7 page
+URLs used for ADR 021 decision 4.

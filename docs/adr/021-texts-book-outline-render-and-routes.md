@@ -45,8 +45,11 @@ The outline is stored by contrib Book (verified on D11.4 with 3.0.8, S1). No cus
   (`50000 + weight`, title, nid), checking **each page's own access**. Do **not** use Book's tree
   API, which drops an inaccessible page together with its subtree; in D7's data 1,410 published
   pages in 36 books sit under an unpublished ancestor and D7 shows them (S3 finding 1).
-- No pre-rendering, queue worker or lazy sections: cold 0.3–0.6 s and warm under 0.2 s on the
-  largest books (S2).
+- No pre-rendering, queue worker or lazy sections. Measured on the largest books with the per-page
+  access check (Spike 13, "Load times", 2026-11-13): server cold 0.6–0.9 s, warm 0.05–0.15 s, for
+  14158 (294 pages, 4.8 MB), 15256 Zhang Zhung vol. II (326), 15582 Studies in Genre (284) and
+  14679 (374). In Chrome, first paint 0.4–1.6 s and DOM ready 0.6–2.5 s, the same range as live D7
+  on the same books (first paint 1.2–1.5 s, ready 1.5–2.1 s).
 - **Cache declaration** (the S3 `full` configuration): merge the cache tags and max-age of every
   outline page and its access result, **hidden pages included**; drop per-user contexts; declare
   `user.permissions`, `user.roles:authenticated` and `user.mandala_collection_memberships`. Never
@@ -70,8 +73,14 @@ one footnote dialog per page (S5 findings 1–6).
 ### 4. Page URLs: any page shows the whole book, scrolled to that page
 
 A page's own URL (its preserved D7 alias, or `/texts/{nid}`, ADR 016) renders the whole book and
-scrolls to that page's anchor, as D7 does. Each page keeps its own canonical URL; there is no
-redirect to the root.
+scrolls to that page's anchor. Each page keeps its own canonical URL; there is no redirect to the
+root.
+
+> **Reopened 2026-11-13, before sign-off.** This was chosen as D7 parity, but a browser check the
+> same day showed D7 does **not** do this: `/node/<page nid>` redirects to the book root's alias
+> with the page anchor (`/node/15581` → `/thl/zhangzhung/antiquities/vol2#shanti-texts-15581`).
+> D7 parity is therefore "redirect to root#anchor". Than to decide between the two before the PR
+> goes for sign-off.
 
 ### 5. `/api/json/{nid}`: a page collapses to its book root
 
@@ -119,8 +128,9 @@ All invisible or corrective; none changes what a reader sees except where noted:
   outline migration with weight normalization; TX15 the per-chapter footnote transform and XHTML
   wrapper strip; TX17 rollback order; TX20 the render and cache declaration above, timed on the
   largest books with per-page access; TX23 the routes above.
-- One cache entry per book per distinct (bypass permission, authenticated, membership set); the
-  per-page access cost on the 374-page book is not yet measured (TX20).
+- One cache entry per book per distinct (bypass permission, authenticated, membership set). The
+  per-page access check adds about 0.2–0.3 s to a cold render on the largest books (measured
+  locally); TX20 re-measures on staging hardware.
 - An upstream Book issue for the destination's update branch is worth filing.
 
 ## Not decided here
