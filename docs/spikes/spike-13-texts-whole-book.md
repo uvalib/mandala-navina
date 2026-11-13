@@ -1,6 +1,6 @@
 # Spike 13: Texts book outline and whole-book render
 
-**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5 done 2026-11-09 (passed; six findings, resolution must be per chapter; variant A chosen); S6 in progress 2026-11-10 ((a) raw text and (b) PubReader passed; (c) Voyant not yet run against a reachable URL)
+**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5 done 2026-11-09 (passed; six findings, resolution must be per chapter; variant A chosen); S6 done 2026-11-13 ((a) raw text and (b) PubReader passed; (c) Voyant moved to a post-migration check on dev-0)
 **Lead:** Than Grove
 **Mode:** Individual
 **Time-box:** 3.5–4.5 days
@@ -481,7 +481,7 @@ whose click target is missing; B drops the group, as D7 would); the theme's styl
 
 ### S6
 
-**Status 2026-11-10: (a) and (b) passed, (c) not yet tested.** Throwaway code is on the branch
+**Status 2026-11-13: (a) and (b) passed; (c) moved out of the spike.** Throwaway code is on the branch
 `spike/13-texts-whole-book-s1` (pushed for this step; never merge): routes `/spike13/text/{nid}` and
 `/spike13/pubreader/{nid}` in `spike13_render`.
 
@@ -528,15 +528,7 @@ browser, and only a client-sent header skips it. Reproduced with a Chrome User-A
 page) against curl or Java (391 KB text). ngrok's request log shows no request from Voyant reached
 DDEV. This is a tunnel limit, not a route problem. The tunnel was stopped right after.
 
-Next steps for (c):
-
-1. Turn off PHP error display for the raw-text route (locally DDEV prints `field_group`
-   deprecation notices into the response; Voyant would count them as words). Spike-only.
-2. Retry with a tunnel that has no warning page: `brew install cloudflared`, then
-   `ddev share --provider=cloudflared`, then open
-   `https://voyant-tools.org/?input=<tunnel>/spike13/text/123372` (D7's hand-off is a redirect with
-   the raw-text URL as `input`). Pass: Voyant reports the book's word count (about 203,000 for 14679).
-   Stop the tunnel afterwards.
-3. Whatever the tunnel shows, the real question for TX3 stays open: whether the WAF in front of
-   dev-0, staging and production lets Voyant's server fetch the raw-text URL. Check it once the
-   route exists there.
+**Decision 2026-11-13 (Than): Voyant is not required to close S6.** Rather than retry with another
+tunnel, check it once Texts content and the raw-text route are on dev-0, which is publicly reachable.
+That check, including the open WAF question, is tracked in
+[texts-voyant-handoff-check-post-migration.md](../deferred/texts-voyant-handoff-check-post-migration.md).
