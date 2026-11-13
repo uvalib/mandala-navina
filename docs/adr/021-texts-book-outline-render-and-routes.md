@@ -70,17 +70,18 @@ outline order, that defines its key**; keys are strings; citations and definitio
 ids. D7's Notes pages stay where they are as content (no aggregated Notes list). Production outputs
 one footnote dialog per page (S5 findings 1–6).
 
-### 4. Page URLs: any page shows the whole book, scrolled to that page
+### 4. Page URLs: a page redirects to its book root, with the page's anchor
 
-A page's own URL (its preserved D7 alias, or `/texts/{nid}`, ADR 016) renders the whole book and
-scrolls to that page's anchor. Each page keeps its own canonical URL; there is no redirect to the
-root.
+As D7 does (checked in a browser on live D7, 2026-11-13: `/node/15581` →
+`/thl/zhangzhung/antiquities/vol2#shanti-texts-15581`, one redirect). A request for a non-root
+page's URL (its preserved D7 alias, or `/texts/{nid}`, ADR 016) redirects to the book root's URL
+with `#shanti-texts-<D7 nid>`. Only the root renders the whole book, so there is one cached render
+per book (per access context), not one per page. The redirect is access-checked like the page
+itself, so it never reveals a page the viewer cannot see.
 
-> **Reopened 2026-11-13, before sign-off.** This was chosen as D7 parity, but a browser check the
-> same day showed D7 does **not** do this: `/node/<page nid>` redirects to the book root's alias
-> with the page anchor (`/node/15581` → `/thl/zhangzhung/antiquities/vol2#shanti-texts-15581`).
-> D7 parity is therefore "redirect to root#anchor". Than to decide between the two before the PR
-> goes for sign-off.
+An earlier draft of this ADR chose "render the whole book at the page's own URL" as D7 parity; that
+description of D7 was wrong (Spike 13, "Load times", finding), and Than chose the redirect on
+2026-11-13 once it was checked.
 
 ### 5. `/api/json/{nid}`: a page collapses to its book root
 
