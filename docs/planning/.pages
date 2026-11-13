@@ -31,3 +31,4 @@ nav:
   - "Uniform Asset-Endpoint Access: the _entity_access convention": entity-access-endpoint-convention.md
   - "T2 plan: transcript entities": t2-transcript-entities-plan.md
   - "T5 plan: transcript migration": t5-transcript-migration-plan.md
+  - "T5: the 68 replaced-file transcripts (ids only)": t5-replaced-file-transcripts-68.md

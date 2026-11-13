@@ -37,7 +37,7 @@ Three more tracked transcripts have a missing `fid` and no current file at all; 
    ```
    Add `--include-no-file` to include the 3 with no file at all (71 rows; their `current_*` columns are empty).
    Use `D7DB=<name>` for a differently named D7 database.
-2. Do not commit the file. It names content (node titles), so send it to the reviewer directly.
+2. Do not commit the file. An ids-only copy (no filenames or titles) is committed at [t5-replaced-file-transcripts-68.md](../planning/t5-replaced-file-transcripts-68.md). The full output names content (node titles), so send it to the reviewer directly.
 
 ## Columns
 
