@@ -4,7 +4,7 @@
 **Raised during:** Spike 5 (session 2026-11-02)
 **Issue:** #386
 **Priority:** High — a gate: blocks the start of the Sources migration and Sources build
-**Owner:** Yuji, Xiaoming (reviewers); Than (author, chases the review)
+**Owner:** n/a (resolved)
 **Cutover review:** pending
 
 ## Instruction to Claude (read this at session start, and before any Sources migration or build work)
@@ -66,10 +66,31 @@ Add a dated entry per reviewer. Do not edit earlier entries.
 
 | Reviewer | Date | Outcome | Where given / notes |
 |---|---|---|---|
-| Yuji | | pending | |
-| Xiaoming | | pending | |
+| Yuji | 2026-11-13 | **approved** | Joint session (Than, Yuji, Xiaoming, Carla, Dave, David, Andres); recorded by Than |
+| Xiaoming | 2026-11-13 | **approved** | Same joint session; recorded by Than |
 
 ## Resolved
 
-(Add a dated section here when both have signed off, or when a superseding ADR replaces
-ADR 020. Then close the issue and set Owner to `n/a (resolved)`.)
+### Resolved 2026-11-13: both reviewers approved ADR 020
+
+Reviewed in a joint session. The group discussed two node-based alternatives before approving:
+(A) a `source` node wrapping a 1:1 `bibcite_reference`, and (B) plain nodes with custom CSL
+rendering. Both were rejected: A adds a permanent two-entity sync for about 25,600 records (the
+same class of problem as the orphan sweeps, #289 and #357) and still needs entity-aware code for
+Solr, display and editing; B gives up bibcite's type mapping, contributors and import/export. Neither
+was prototyped; ADR 020's route is the one Spike 5 proved.
+
+The one fact that could have reversed the decision was checked during the review, by reading the
+code of bibcite 3.1.2 and pathauto 8.x-1.16 (not run on an install):
+
+- **Revisions: supported.** `bibcite_reference` is revisionable with a revision UI (history, view,
+  revert, delete), and is publishable on the same base class as nodes, so core content moderation
+  should attach (not run). **New revisions are off by default per reference type**: the build must
+  turn on "Create new revision" for every type in config.
+- **Pathauto: supported once enabled.** Pathauto derives an alias type for any fieldable entity type
+  with a canonical link, but adds the `path` field only to entity types listed in
+  `pathauto.settings:enabled_entity_types`. The build must enable `bibcite_reference` there and add a
+  `/sources/[id]` pattern.
+
+Both are config items for the Sources build; the first build task should confirm them on a real
+install. **The Sources migration and build may now start** (Xiaoming's track).

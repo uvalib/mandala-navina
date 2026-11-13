@@ -163,7 +163,7 @@ Grouped by each note's **first** `Category` value (a note appears once; its othe
 
 | File | Categories | Owner | Raised | Priority |
 |---|---|---|---|---|
-| [sources-adr-020-review-before-migration.md](sources-adr-020-review-before-migration.md) | migration-sources | Yuji, Xiaoming | Spike 5, session 2026-11-02 | **High — a gate.** ADR 020 (Sources as `bibcite_reference` entities) was decided by Than alone; the Sources migration and build must not start until Yuji and Xiaoming both sign off in the note's Review log. [#386](https://github.com/uvalib/mandala-navina/issues/386) |
+| [sources-adr-020-review-before-migration.md](sources-adr-020-review-before-migration.md) | migration-sources | n/a (resolved) | Spike 5, session 2026-11-02 | **✅ Resolved 2026-11-13** — Yuji and Xiaoming approved ADR 020 in a joint session; the Sources gate is lifted. Build config items found in review: revisions on per reference type, pathauto enabled for `bibcite_reference` |
 | [sources-record-display-parity-check-d7-subtypes.md](sources-record-display-parity-check-d7-subtypes.md) | migration-sources | unassigned | Spike 5, session 2026-10-30 | High (trigger: building the Sources record page) |
 
 ### Migration: cross-site (`migration-general`)
