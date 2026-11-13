@@ -1,6 +1,6 @@
 # Spike 13: Texts book outline and whole-book render
 
-**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5 done 2026-11-09 (passed; six findings, resolution must be per chapter; variant A chosen); S6 done 2026-11-13 ((a) raw text and (b) PubReader passed; (c) Voyant moved to a post-migration check on dev-0)
+**Status:** ✅ Complete 2026-11-13 — go; decisions recorded in [ADR 021](../adr/021-texts-book-outline-render-and-routes.md). S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5 done 2026-11-09 (passed; six findings, resolution must be per chapter; variant A chosen); S6 done 2026-11-13 ((a) raw text and (b) PubReader passed; (c) Voyant moved to a post-migration check on dev-0)
 **Lead:** Than Grove
 **Mode:** Individual
 **Time-box:** 3.5–4.5 days

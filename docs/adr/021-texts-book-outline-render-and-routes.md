@@ -1,9 +1,9 @@
 # ADR 021: Texts books use contrib Book with a flat-outline whole-book render; page URLs, API and alternative formats keep D7 behaviour under ADR 016 paths
 
-**Status:** Proposed — 2026-11-13, by Than Grove. **Needs team sign-off** (Sprint 5 TX3) before
-TX5 onward starts.
+**Status:** Accepted — 2026-11-13. Proposed by Than Grove; reviewed and approved by Yuji Shinozaki
+and Xiaoming Wang (Sprint 5 TX3 team sign-off; approval given outside GitHub, recorded by Than).
 **Date:** 2026-11-13
-**Deciders:** Than Grove (Spike 13 lead); for sign-off: Yuji Shinozaki, Xiaoming Wang
+**Deciders:** Than Grove (Spike 13 lead), Yuji Shinozaki, Xiaoming Wang
 **Relates to:** [Spike 13](../spikes/spike-13-texts-whole-book.md) (the evidence for every point
 here), [Sprint 5](../sprints/sprint-05-texts-core-implementation.md) (TX3 and the tasks it gates),
 [Spike 4b](../spikes/spike-04b-ckeditor5-footnotes.md), [Spike 6](../spikes/spike-06-api-compatibility.md),
@@ -123,7 +123,7 @@ All invisible or corrective; none changes what a reader sees except where noted:
 
 ## Consequences
 
-- Sprint 5 TX5 onward is unblocked once this is signed off. Work handed on by the spike:
+- Sprint 5 TX5 onward is unblocked. Work handed on by the spike:
   TX5 group role grants for `group_node:book` (S3 finding 2); TX7 the `NodeQueryAlter::baseTable()`
   fix for Book's `node_access` queries, with a non-admin test (S1 finding 3); TX11 the lookup-based
   outline migration with weight normalization; TX15 the per-chapter footnote transform and XHTML

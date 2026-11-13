@@ -1,6 +1,6 @@
 # Sprint 5: Texts core implementation (D7 `book` → D11)
 
-**Status:** ○ Planned — not started. **Gated on [Spike 13](../spikes/spike-13-texts-whole-book.md)** (task TX3).
+**Status:** ○ Planned — not started. Gate cleared 2026-11-13: [Spike 13](../spikes/spike-13-texts-whole-book.md) complete and TX3 accepted as [ADR 021](../adr/021-texts-book-outline-render-and-routes.md).
 **Phase:** [Roadmap](../roadmap.md) Phase 2, the Texts track (un-paused 2026-11-02).
 **Lead:** Than Grove.
 **Mode:** Individual, with team sign-off on the TX3 decision record.
@@ -39,8 +39,8 @@ listings), following the Images and AV migrations' pattern.
 |---|---|---|---|
 | **Phase 0: audit and decision** | | | |
 | TX1 | Refresh the [Texts audit](../planning/texts-content-model-audit.md): Book is out of core, the display is a whole-book render, journal fields were missing, real counts. Rescore the complexity (the 2.0/5 figure predates both findings) | — | ◐ audit updated 2026-11-02; complexity rescore open |
-| TX2 | Run [Spike 13](../spikes/spike-13-texts-whole-book.md) | TX1 | ◐ S1 (outline) passed 2026-11-02; S2–S6 open |
-| TX3 | Decision record (ADR) from the spike: outline model; whole-book render strategy; page URL semantics (D7: any page URL shows the whole book scrolled to the page's anchor); `/api/json` per page vs book root (Spike 6's open item); `node_embed` equivalent; D11 routes for PubReader, raw text and Voyant (keep D7 paths by redirect under ADR 016?). Team sign-off | TX2 | ○ |
+| TX2 | Run [Spike 13](../spikes/spike-13-texts-whole-book.md) | TX1 | ✅ done 2026-11-13 (S1–S6 passed; Voyant deferred to #408) |
+| TX3 | Decision record (ADR) from the spike: outline model; whole-book render strategy; page URL semantics (D7: any page URL shows the whole book scrolled to the page's anchor); `/api/json` per page vs book root (Spike 6's open item); `node_embed` equivalent; D11 routes for PubReader, raw text and Voyant (keep D7 paths by redirect under ADR 016?). Team sign-off | TX2 | ✅ [ADR 021](../adr/021-texts-book-outline-render-and-routes.md), accepted 2026-11-13 |
 | TX4 | Settle the `kmassets` `texts` bundle naming against the 5,381 existing legacy documents; plan the Texts orphan review-group sweep ([#289](https://github.com/uvalib/mandala-navina/issues/289)) | TX1 | ○ |
 | **Phase 1: content model (config exported from a live Drupal, never hand-edited)** | | | |
 | TX5 | Install contrib `drupal/book` 3.x (S1: works on D11.4; export its config from a live Drupal, since `allowed_types` is a list of `{content_type, child_type}` entries, not core's flat list). `book` bundle with the field set in the audit (plus journal fields, `field_legacy_site = texts`, `field_legacy_nid`). `asset_link` bundle. Reuse the `collection` and `subcollection` group types | TX3 | ○ |
@@ -70,7 +70,7 @@ listings), following the Images and AV migrations' pattern.
 
 ## Acceptance criteria
 
-- [ ] Spike 13 closed with a go decision and TX3 signed off by the team
+- [x] Spike 13 closed with a go decision and TX3 signed off by the team
 - [ ] `verify-texts-migration.sh` passes against the D7 dump with every expected anomaly documented
 - [ ] A migrated book's page URL shows the whole book scrolled to that page, with the D7 section markup and anchors
 - [ ] Contents, Description and Views tabs match D7; the three Views links work (PubReader, raw text, Voyant)
