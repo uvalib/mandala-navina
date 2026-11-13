@@ -1,0 +1,51 @@
+uuid: ed07d703-7661-445f-8918-70e4a05a8880
+langcode: en
+status: true
+dependencies: {  }
+id: d7_av_tcu
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 4 T5'
+migration_group: mandala_av
+label: 'AV: time-coded units → av_tcu entities'
+source:
+  plugin: d7_av_tcu
+process:
+  id: tcuid
+  transcript:
+    -
+      plugin: migration_lookup
+      migration: d7_av_transcript
+      source: trid
+      no_stub: true
+    -
+      plugin: skip_on_empty
+      method: row
+      message: 'Its transcript was not migrated, so this unit is skipped.'
+  sequence: sequence
+  start: start_s
+  end: end_s
+  timecode_status:
+    plugin: mandala_av_timecode_status
+    source:
+      - start_s
+      - end_s
+      - next_start_s
+  tiers: tiers_json
+  speakers: speakers_json
+  created: created
+  changed: changed
+  revision_log_message:
+    plugin: default_value
+    default_value: 'Migrated from D7.'
+destination:
+  plugin: 'entity:av_tcu'
+idMap: {  }
+migration_dependencies:
+  required:
+    - d7_av_transcript
+include: null

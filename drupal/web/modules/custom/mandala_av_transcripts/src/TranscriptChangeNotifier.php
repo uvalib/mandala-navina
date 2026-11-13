@@ -131,18 +131,40 @@ class TranscriptChangeNotifier {
    * @return T
    */
   public function suppressed(callable $operation): mixed {
-    $this->suppressDepth++;
+    $this->hold();
     try {
       return $operation();
     }
     finally {
-      $this->suppressDepth--;
-      if ($this->suppressDepth === 0) {
-        $pending = array_keys($this->pending);
-        $this->pending = [];
-        foreach ($pending as $id) {
-          $this->unitsReplaced($id);
-        }
+      $this->release();
+    }
+  }
+
+  /**
+   * Starts holding per-unit notifications, for callers that cannot be wrapped
+   * in a callable (a migrate run begins and ends in different event handlers).
+   *
+   * Every hold() needs a release(); they nest like suppressed() does. Process
+   * scoped, so a run that dies without releasing cannot silence later requests.
+   */
+  public function hold(): void {
+    $this->suppressDepth++;
+  }
+
+  /**
+   * Ends one hold(). When the outermost ends, every transcript touched while
+   * held gets one unitsReplaced(). An unbalanced release is a no-op.
+   */
+  public function release(): void {
+    if ($this->suppressDepth === 0) {
+      return;
+    }
+    $this->suppressDepth--;
+    if ($this->suppressDepth === 0) {
+      $pending = array_keys($this->pending);
+      $this->pending = [];
+      foreach ($pending as $id) {
+        $this->unitsReplaced($id);
       }
     }
   }
