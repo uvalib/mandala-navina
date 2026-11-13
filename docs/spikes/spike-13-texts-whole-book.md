@@ -1,6 +1,6 @@
 # Spike 13: Texts book outline and whole-book render
 
-**Status:** ◐ In progress — S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5 done 2026-11-09 (passed; six findings, resolution must be per chapter; variant A chosen); S6 not started
+**Status:** ✅ Complete 2026-11-13 — go; decisions recorded in [ADR 021](../adr/021-texts-book-outline-render-and-routes.md). S1 done 2026-11-02 (passed, four findings); S2 done 2026-11-04 (passed, three findings); S3 done 2026-11-06 (passed with the per-viewer-context fail response, five findings); S4 done 2026-11-06 (passed; one tie-order difference, which the TX3 normalization fixes); S5 done 2026-11-09 (passed; six findings, resolution must be per chapter; variant A chosen); S6 done 2026-11-13 ((a) raw text and (b) PubReader passed; (c) Voyant moved to a post-migration check on dev-0)
 **Lead:** Than Grove
 **Mode:** Individual
 **Time-box:** 3.5–4.5 days
@@ -481,4 +481,104 @@ whose click target is missing; B drops the group, as D7 would); the theme's styl
 
 ### S6
 
-Not started.
+**Status 2026-11-13: (a) and (b) passed; (c) moved out of the spike.** Throwaway code is on the branch
+`spike/13-texts-whole-book-s1` (pushed for this step; never merge): routes `/spike13/text/{nid}` and
+`/spike13/pubreader/{nid}` in `spike13_render`.
+
+**(a) Raw text: passed.** Uses the same transform as D7 `shanti_texts_node_ajax_text`: the
+`single_text_body` sections without the Contents list, runs of whitespace collapsed, then tags
+stripped. Compared word by word with live D7 `shanti_texts/node_ajax_text/<nid>` (fetched with curl,
+no WAF challenge) for 15256, 14158 and 14679, all as anonymous. Every word matches except:
+
+1. 14158: one section is in a different position. This is the S4 sibling tie (weight 16), which the
+   TX3 normalization fixes.
+2. 14679: D7's text includes KMaps popover text ("… places 431 For more information about this
+   term, see Full Entry below …"), because D7's KMaps filter writes the popover inline. D11 has no
+   such filter yet, so its text is cleaner. TX3 should keep popover markup out of the raw text.
+3. A few places where D7 runs two words together (for example a city name and an email address, or
+   "WyliePhoneticsType" and a letter) and D11 has a space. D11 is the more correct.
+4. One inline `<script>` in 15256 strips to different text. One `&nbsp;` per book stays an entity in
+   D11; D7 outputs the character.
+
+Finding: D7's views templates put newlines between the section elements, and the raw text depends
+on them. Without them, D11 joined the last word of each page to the next page's title. The spike
+render now emits them; TX3's render template must do the same.
+
+Book 15641 was left out of the comparison because S3 changed its access (10 of 52 pages private).
+
+**(b) PubReader: passed.** D7's `book_pubreader` module (the bundled NCBI PubReader3, 2.3 MB, plus its
+page template) was copied into the spike module unchanged and is served outside the theme, as D7's
+delivery callback did. One nested `<section id="node-<d7 nid>">` per page with an `h<depth>` title.
+Checked in Chrome on the 374-page book (14679) against D7's `book_pubreader/14679`: 374 sections in
+both, the same 11 Contents entries, the same section ids, no console errors. The other two books
+return 200 with every section (checked over HTTP only). The page count differs (D11 289, D7 457 at
+the same window size); likely the extra popover and image markup in D7, not checked, and not part of
+the acceptance.
+
+Open for TX3: like D7, PubReader drops a page the viewer cannot see together with its subtree; the
+whole-book render (S3) keeps the subtree. One rule should apply to both.
+
+Open, not checked: an access question about the D7 raw-text route. Ask Than before writing about it here.
+
+**(c) Voyant: not yet tested.** Local DDEV is not public, and dev-0 does not have the spike module.
+First attempt (2026-11-10): `ddev share` with a free ngrok tunnel. The raw-text route answered
+through the tunnel, but Voyant built a corpus of 0 words. Cause: on free domains ngrok serves an
+"about to visit" warning page (ERR_NGROK_6024) instead of the site to requests that look like a
+browser, and only a client-sent header skips it. Reproduced with a Chrome User-Agent (2.8 KB warning
+page) against curl or Java (391 KB text). ngrok's request log shows no request from Voyant reached
+DDEV. This is a tunnel limit, not a route problem. The tunnel was stopped right after.
+
+**Decision 2026-11-13 (Than): Voyant is not required to close S6.** Rather than retry with another
+tunnel, check it once Texts content and the raw-text route are on dev-0, which is publicly reachable.
+That check, including the open WAF question, is tracked in
+[texts-voyant-handoff-check-post-migration.md](../deferred/texts-voyant-handoff-check-post-migration.md).
+
+### Load times on the largest books (2026-11-13, Than with Claude Code)
+
+Asked after S6: does rendering the whole book to show one page make the big books slow? S2 timed only
+14679 and 14158, as an administrator, with no per-page access work. This adds the books Than named
+(Antiquities of Zhang Zhung, Studies in Genre) and times the S3 `full` access/cache path.
+
+**Largest published books in D7** (sum of `field_book_content`): 14158 Khams vol. 2 (294 pages,
+4.46 MB), 13871 Khams vol. 1 (287, 3.91), 14566 Khams vol. 3 (113, 3.49), 39676 / 40956 (194, 2.8),
+42871 (270, 2.66), **15256 Antiquities of Zhang Zhung vol. II (326, 2.58)**, 15053 vol. I (202,
+1.99), **15582 Tibetan Literature: Studies in Genre (284, 1.91)**, 14679 (374, 1.89).
+
+**Server (curl, local DDEV, `?cache=full`, three runs each).** Cold = `cache_render`,
+`cache_dynamic_page_cache`, `cache_page` and `cache_entity` emptied before each request.
+
+| D7 book | Pages | HTML | Cold | Warm |
+|---|---|---|---|---|
+| 14158 Khams vol. 2 | 294 | 4.8 MB | 0.7–0.9 s (first request after clearing 3.3 s, PHP warm-up) | 0.15 s |
+| 15256 Zhang Zhung vol. II | 326 | 2.8 MB | 0.8 s | 0.05 s |
+| 15582 Studies in Genre | 284 | 2.1 MB | 0.6 s | 0.06 s |
+| 14679 Bonpo monasteries | 374 | 2.1 MB | 0.6 s | 0.05 s |
+
+Anonymous and `content_editor` timed the same (all four books are fully public locally, so both see
+every page). The per-page access check adds about 0.2–0.3 s to a cold render over S2's admin numbers.
+15053 is not migrated locally.
+
+**Browser (Chrome, navigation and paint timings, deep-page anchor in the URL).** D11 local is the
+spike route as an administrator; D7 is the live site, anonymous, by its `/node/<page nid>` URL.
+Times in ms from navigation start; transfer is compressed.
+
+| Run | TTFB | First paint | DOM ready | Load | Transfer / HTML | Images | Lands on the page |
+|---|---|---|---|---|---|---|---|
+| D11 15256, server cold | 1,237 | 1,624 | 2,522 | 2,709 | 443 KB / 2.8 MB | 0 (none migrated) | yes, 79 px (toolbar) |
+| D11 15256, reload | 183 | 364 | 597 | — | | | yes |
+| D11 14158, server warm-ish | 421 | 528 | 1,104 | 1,220 | 756 KB / 4.8 MB | 264 | yes |
+| D7 15256, page 15581 | 1,168 | 1,468 | 2,062 | 2,600 | 452 KB / 3.0 MB | 101 | yes |
+| D7 14158, page 14451 | 1,003 | 1,184 | 1,530 | 1,832 | 764 KB / 5.0 MB | 365 | yes |
+
+**Reading.** D11 and D7 are in the same range: first paint about 0.4–1.6 s, ready in 0.6–2.5 s,
+on the largest books. Showing one page by rendering the whole book is not slow in either system
+once the server cache is warm, and a cold D11 render is no worse than live D7. Caveats: one machine,
+one run per cell; D11 is DDEV on a laptop, D7 is production over the network; D11 15256 had no image
+files locally, so its load time is a lower bound; D7 results may have come from its own cache.
+
+**Finding: D7 redirects a page URL to the book root.** `/node/15581` arrived at
+`/thl/zhangzhung/antiquities/vol2#shanti-texts-15581` (one redirect, `redirectCount` 1), and
+`/node/14451` at `/thl/monasteries/khams-v2#shanti-texts-14451`. So D7 does not show the whole book
+at the page's own URL; it sends the browser to the root's alias with the page anchor. D7 also scrolls
+an inner pane, not the window (document height 992 px). This corrects the description of D7 page
+URLs used for ADR 021 decision 4.
