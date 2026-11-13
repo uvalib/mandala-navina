@@ -28,6 +28,7 @@ services:
       - '@mandala_av_transcripts.change_notifier'
       - '@current_user'
       - '@datetime.time'
+      - '@entity_type.manager'
 
   # Deleting an AV node soft-deletes its transcript (see NodeDeleteCascade).
   mandala_av_transcripts.node_delete_cascade:

@@ -9,3 +9,4 @@ dependencies:
   - migrate_plus:migrate_plus
   - migrate_tools:migrate_tools
   - paragraphs:paragraphs
+  - mandala_av_transcripts:mandala_av_transcripts

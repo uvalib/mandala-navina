@@ -36,7 +36,7 @@ class GroupRelationshipDestination extends DestinationBase {
   /**
    * {@inheritdoc}
    */
-  public function fields(MigrationInterface $migration = NULL) {
+  public function fields(?MigrationInterface $migration = NULL) {
     return [
       'gid' => 'D11 Group entity ID',
       'entity_id' => 'D11 entity ID to add to the group',

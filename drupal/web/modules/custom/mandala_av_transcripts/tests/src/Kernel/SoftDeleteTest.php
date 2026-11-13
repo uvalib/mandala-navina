@@ -156,6 +156,24 @@ class SoftDeleteTest extends CollectionVisibilityKernelTestBase {
     $this->assertFalse($this->unit(11)->isDeletedWithTranscript());
   }
 
+  /**
+   * The lifecycle flags units with one SQL update. A unit already in the entity
+   * cache must not keep reading as live (or as deleted) afterwards: found by the
+   * T5 migration tests, where a stale cached unit was saved back over the restore.
+   * No resetCache() between the load and the check, unlike unit() above.
+   */
+  public function testAUnitLoadedBeforeASoftDeleteOrRestoreIsNotStale(): void {
+    [$transcript] = $this->fixture();
+    $this->assertFalse(AvTcu::load(10)->isDeleted(), 'Loaded, and now in the entity cache.');
+
+    $this->lifecycle->softDelete($transcript);
+    $this->assertTrue(AvTcu::load(10)->isDeleted(), 'The cached unit reads as deleted after the soft-delete.');
+    $this->assertTrue(AvTcu::loadMultiple([10, 11])[11]->isDeletedWithTranscript());
+
+    $this->lifecycle->restore(AvTranscript::load(1));
+    $this->assertFalse(AvTcu::load(10)->isDeleted(), 'And as live again after the restore.');
+  }
+
   public function testLifecycleIsIdempotent(): void {
     [$transcript] = $this->fixture();
     $this->assertFalse($this->lifecycle->restore($transcript), 'Restoring a live transcript does nothing.');

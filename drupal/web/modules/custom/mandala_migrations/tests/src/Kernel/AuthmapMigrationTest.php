@@ -26,7 +26,7 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 class AuthmapMigrationTest extends KernelTestBase {
 
   protected static $modules = [
-    'system', 'user', 'migrate', 'externalauth', 'mandala_migrations', 'migrate_drupal', 'migrate_plus', 'migrate_tools', 'paragraphs', 'entity_reference_revisions', 'file', 'field', 'text', 'filter',
+    'system', 'user', 'migrate', 'externalauth', 'mandala_migrations', 'migrate_drupal', 'migrate_plus', 'migrate_tools', 'paragraphs', 'entity_reference_revisions', 'file', 'field', 'text', 'filter', 'node', 'options', 'mandala_av_transcripts',
   ];
 
   private ?string $d7Prefix = NULL;

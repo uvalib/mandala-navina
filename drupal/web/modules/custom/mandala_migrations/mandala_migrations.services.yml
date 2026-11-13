@@ -1,0 +1,12 @@
+services:
+
+  # Holds transcript unit notifications during the T5 migrations and revives a
+  # soft-deleted transcript when its import updates it. See the class docs.
+  mandala_migrations.av_transcript_migration_subscriber:
+    class: Drupal\mandala_migrations\EventSubscriber\AvTranscriptMigrationSubscriber
+    arguments:
+      - '@mandala_av_transcripts.change_notifier'
+      - !service_closure '@mandala_av_transcripts.lifecycle'
+      - '@entity_type.manager'
+    tags:
+      - { name: event_subscriber }

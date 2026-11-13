@@ -1,0 +1,43 @@
+uuid: 92ae9f38-1f6e-46f7-9d1c-69c8b09f3c91
+langcode: en
+status: true
+dependencies: {  }
+id: d7_av_transcript
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala AV'
+  - 'Sprint 4 T5'
+migration_group: mandala_av
+label: 'AV: transcripts → av_transcript entities'
+source:
+  plugin: d7_av_transcript
+process:
+  id: trid
+  node:
+    plugin: mandala_node_by_legacy_key
+    source: nid
+    site: audio-video
+  source_file:
+    plugin: mandala_entity_field_target
+    source: '@node'
+    entity_type: node
+    field_name: field_transcript
+  source_format: source_format
+  tiers: tiers_json
+  has_edits: has_edits
+  edits_flagged_at: edits_flagged_at
+  created: created
+  revision_log_message:
+    plugin: default_value
+    default_value: 'Migrated from D7.'
+destination:
+  plugin: 'entity:av_transcript'
+idMap: {  }
+migration_dependencies:
+  required:
+    - d7_av_video
+    - d7_av_audio
+include: null
