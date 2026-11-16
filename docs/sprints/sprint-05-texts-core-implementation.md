@@ -38,7 +38,7 @@ listings), following the Images and AV migrations' pattern.
 | | Task | Depends on | Status |
 |---|---|---|---|
 | **Phase 0: audit and decision** | | | |
-| TX1 | Refresh the [Texts audit](../planning/texts-content-model-audit.md): Book is out of core, the display is a whole-book render, journal fields were missing, real counts. Rescore the complexity (the 2.0/5 figure predates both findings) | — | ◐ audit updated 2026-11-02; complexity rescore open |
+| TX1 | Refresh the [Texts audit](../planning/texts-content-model-audit.md): Book is out of core, the display is a whole-book render, journal fields were missing, real counts. Rescore the complexity (the 2.0/5 figure predates both findings) | — | ✅ audit updated 2026-11-02; rescored 2026-11-16 (2.0 → 2.6/5, [rescore](../planning/av-sources-texts-migration-complexity-comparison.md#texts-rescore-2026-11-16-sprint-5-tx1)) |
 | TX2 | Run [Spike 13](../spikes/spike-13-texts-whole-book.md) | TX1 | ✅ done 2026-11-13 (S1–S6 passed; Voyant deferred to #408) |
 | TX3 | Decision record (ADR) from the spike: outline model; whole-book render strategy; page URL semantics (D7: any page URL shows the whole book scrolled to the page's anchor); `/api/json` per page vs book root (Spike 6's open item); `node_embed` equivalent; D11 routes for PubReader, raw text and Voyant (keep D7 paths by redirect under ADR 016?). Team sign-off | TX2 | ✅ [ADR 021](../adr/021-texts-book-outline-render-and-routes.md), accepted 2026-11-13 |
 | TX4 | Settle the `kmassets` `texts` bundle naming against the 5,381 existing legacy documents; plan the Texts orphan review-group sweep ([#289](https://github.com/uvalib/mandala-navina/issues/289)) | TX1 | ○ |

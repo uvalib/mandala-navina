@@ -53,6 +53,31 @@ already a single shared fix, so it doesn't differentiate them.
 **Result: AV is hardest, Sources is second, Texts is easiest — roughly half AV's
 difficulty by this rubric.**
 
+## Texts rescore (2026-11-16, Sprint 5 TX1)
+
+The Texts column above was scored before the Texts migration planning and
+[Spike 13](../spikes/spike-13-texts-whole-book.md) (decisions in
+[ADR 021](../adr/021-texts-book-outline-render-and-routes.md)). Two of its premises turned out
+wrong: Book is not in Drupal 11 core, and the D7 display is a whole-book render, not one page per
+request ([audit corrections](texts-content-model-audit.md#corrections-2026-11-02)). This rescores
+Texts only, on the same rubric. AV and Sources are not rescored here: Sources has also moved since
+(Spike 5 complete, [ADR 020](../adr/020-sources-records-are-bibcite-reference-entities.md)), so read their columns as
+the 2026-09-01 snapshot.
+
+| Dimension | Was | Now | Why it changed |
+|---|---:|---:|---|
+| **Storage/schema shape** | 2 | 2 | Still ordinary Field-API fields. Book comes from contrib 3.x instead of core, but S1 proved it on D11.4. New small items: page text is `field_book_content`, not `body` (S2); five missed journal/DOI fields; 25 bodies wrapped in a whole XHTML document (S5); Book 3.x's structured `allowed_types` config (S1). |
+| **Entity graph complexity** | 2 | 3 | The outline is no longer "a solved problem". Book's shipped `d7_book` assumes preserved nids, so it needs a Mandala copy using `migration_lookup`; its destination cannot update an outline, which fixes the rollback order; tied sibling weights get normalized; footnotes resolve across pages per chapter, so the body transform runs after the outline migration. All proven, all real work. |
+| **Functional/rendering fidelity risk** | 3 | 3 | The surface grew: whole-book render with Contents/Description/Views sidebar, plus four alternative-format routes (raw text, PubReader, Voyant, embed). The risk did not, because the spike proved render order, anchors, footnotes, raw text and PubReader against D7, with load times at D7's level on the largest books. Open: Voyant through the WAF (#408) and timing on staging hardware. |
+| **Access-model complexity** | 1 | 3 | The largest change. The render aggregates many access-checked pages, so access is per page inside one response: Book's tree API is unusable (1,410 published pages in 36 books sit under an unpublished ancestor), the cache needs a custom membership context to be both correct and cacheable (S3), `group_node:book` needs explicit role grants, and `NodeQueryAlter::baseTable()` throws an SQL error on Book's queries for non-admins. No extra grant realms (the reason AV scores 4), but no longer the plain shared pattern either. |
+| **Unresolved unknowns** | 2 | 2 | Several resolved (outline model, render strategy, page URLs, footnotes). Remaining are small: the three language fields, what to do with the 65 unpublished books, Voyant, production-scale migration time, and one D7 question tracked privately (ask Than). |
+| **Total (average)** | **2.0 / 5** | **2.6 / 5** | — |
+
+**Result: Texts is harder than first scored but still the easiest of the three** against the
+2026-09-01 AV (3.8) and Sources (3.2) figures, so the sequencing reading below is unchanged. The
+difference from September is the kind of difficulty: little open uncertainty, but more
+implementation work, concentrated in access and the outline migration (Sprint 5 TX7, TX11, TX20).
+
 ## Reading the result
 
 - **This validates ADR 009's existing sequencing** (Texts/Sources fork after Images,
