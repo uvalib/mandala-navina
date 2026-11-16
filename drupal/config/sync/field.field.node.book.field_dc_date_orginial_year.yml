@@ -1,0 +1,21 @@
+uuid: 562ffaef-d192-47f8-b498-fa488860e18d
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_dc_date_orginial_year
+    - node.type.book
+  module:
+    - datetime
+id: node.book.field_dc_date_orginial_year
+field_name: field_dc_date_orginial_year
+entity_type: node
+bundle: book
+label: 'Original publication year'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

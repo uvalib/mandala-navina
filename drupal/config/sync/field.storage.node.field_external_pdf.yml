@@ -1,0 +1,21 @@
+uuid: e23fd478-2875-4241-9c4b-5fcb487bb27b
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_external_pdf
+field_name: field_external_pdf
+entity_type: node
+type: string
+settings:
+  max_length: 255
+  case_sensitive: false
+  is_ascii: false
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

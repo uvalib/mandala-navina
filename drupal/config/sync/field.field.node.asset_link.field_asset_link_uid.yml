@@ -1,0 +1,19 @@
+uuid: 1af5c8a5-7ae7-4e33-bcc5-17e4bea3e30a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_asset_link_uid
+    - node.type.asset_link
+id: node.asset_link.field_asset_link_uid
+field_name: field_asset_link_uid
+entity_type: node
+bundle: asset_link
+label: 'Asset Link Uid'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

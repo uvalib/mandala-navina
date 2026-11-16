@@ -1,0 +1,21 @@
+uuid: df7e732f-184b-4943-a884-0749b7ecf37d
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_group_content_access
+    - node.type.book
+  module:
+    - options
+id: node.book.field_group_content_access
+field_name: field_group_content_access
+entity_type: node
+bundle: book
+label: Visibility
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_integer

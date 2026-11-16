@@ -1,0 +1,19 @@
+uuid: 5c74a356-7780-42f2-a7c0-f3d23583faef
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_journal_volume
+    - node.type.book
+id: node.book.field_journal_volume
+field_name: field_journal_volume
+entity_type: node
+bundle: book
+label: 'Journal Volume'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -1,0 +1,23 @@
+uuid: 26b09a17-e258-4e6d-a912-e8f2ce80e151
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_language_kmap
+    - node.type.book
+  module:
+    - shanti_kmaps_fields
+id: node.book.field_language_kmap
+field_name: field_language_kmap
+entity_type: node
+bundle: book
+label: Language
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: subjects
+  search_root_kmapid: 301
+field_type: shanti_kmaps_fields_default

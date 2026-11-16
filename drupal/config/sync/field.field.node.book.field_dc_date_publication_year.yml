@@ -1,0 +1,21 @@
+uuid: c81527f2-10d2-42ec-a238-60342d99ab02
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_dc_date_publication_year
+    - node.type.book
+  module:
+    - datetime
+id: node.book.field_dc_date_publication_year
+field_name: field_dc_date_publication_year
+entity_type: node
+bundle: book
+label: 'Publication year'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

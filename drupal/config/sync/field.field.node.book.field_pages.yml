@@ -1,0 +1,19 @@
+uuid: 07f4e79e-ae64-42f5-b228-3d7fe485a5da
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_pages
+    - node.type.book
+id: node.book.field_pages
+field_name: field_pages
+entity_type: node
+bundle: book
+label: Pages
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

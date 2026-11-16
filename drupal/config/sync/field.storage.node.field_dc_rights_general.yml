@@ -1,0 +1,19 @@
+uuid: 70665299-1fc8-4897-b726-9cbf9e80da04
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - text
+id: node.field_dc_rights_general
+field_name: field_dc_rights_general
+entity_type: node
+type: text_long
+settings: {  }
+module: text
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

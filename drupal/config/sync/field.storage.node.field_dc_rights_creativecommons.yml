@@ -1,0 +1,48 @@
+uuid: dfded462-0cde-472e-adad-d5eccc0538af
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_dc_rights_creativecommons
+field_name: field_dc_rights_creativecommons
+entity_type: node
+type: list_integer
+settings:
+  allowed_values:
+    -
+      value: 1
+      label: 'All Rights Reserved'
+    -
+      value: 2
+      label: 'Attribution CC BY'
+    -
+      value: 3
+      label: 'Attribution, Share Alike CC BY-SA'
+    -
+      value: 4
+      label: 'Attribution, No Derivative Works CC BY-ND'
+    -
+      value: 5
+      label: 'Attribution, Non-Commercial CC BY-NC'
+    -
+      value: 6
+      label: 'Attribution, Non-Commercial, Share Alike CC BY-NC-SA'
+    -
+      value: 7
+      label: 'Attribution, Non-Commercial, No Derivative Works CC BY-NC-ND'
+    -
+      value: 8
+      label: CC0
+    -
+      value: 9
+      label: 'Public Domain'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

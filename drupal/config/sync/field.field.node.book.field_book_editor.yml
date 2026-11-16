@@ -1,0 +1,19 @@
+uuid: d233f7af-5ec6-4158-ad0b-6db246f30162
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_book_editor
+    - node.type.book
+id: node.book.field_book_editor
+field_name: field_book_editor
+entity_type: node
+bundle: book
+label: Editor
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

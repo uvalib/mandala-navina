@@ -1,0 +1,38 @@
+uuid: da321e40-9fa3-4c27-97fb-570fc9c858df
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_general_featured_image
+    - node.type.book
+  module:
+    - image
+id: node.book.field_general_featured_image
+field_name: field_general_featured_image
+entity_type: node
+bundle: book
+label: 'Featured image'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:file'
+  handler_settings: {  }
+  file_directory: 'texts/featured/[date:custom:Y]-[date:custom:m]'
+  file_extensions: 'png gif jpg jpeg webp'
+  max_filesize: ''
+  max_resolution: ''
+  min_resolution: ''
+  alt_field: true
+  alt_field_required: true
+  title_field: false
+  title_field_required: false
+  default_image:
+    uuid: null
+    alt: ''
+    title: ''
+    width: null
+    height: null
+field_type: image

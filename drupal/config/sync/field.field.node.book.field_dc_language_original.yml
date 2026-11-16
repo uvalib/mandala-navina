@@ -1,0 +1,19 @@
+uuid: d478250a-9816-4edf-b197-a038a0493d6c
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_dc_language_original
+    - node.type.book
+id: node.book.field_dc_language_original
+field_name: field_dc_language_original
+entity_type: node
+bundle: book
+label: 'Original language'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

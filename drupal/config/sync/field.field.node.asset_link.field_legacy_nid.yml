@@ -1,0 +1,23 @@
+uuid: 06034a86-5e25-4eee-9fb5-687b829b98ab
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_legacy_nid
+    - node.type.asset_link
+id: node.asset_link.field_legacy_nid
+field_name: field_legacy_nid
+entity_type: node
+bundle: asset_link
+label: 'Legacy node ID'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer
