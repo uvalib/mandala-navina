@@ -102,15 +102,15 @@ right for Texts. It needs no code change to run.
 ### Plan
 
 1. After the Texts node and membership migrations (TX10 and TX7) land on DDEV, run
-   `drush group:sweep-orphans --site=texts --gid=<Texts review group> --dry-run`. Expect about
-   **222** nodes (55 roots + 167 pages), less any excluded under TX10's unpublished-book
-   decision.
-2. **Open decision: the 34 pages with no membership whose root has one.** Either
-   (a) sweep them as-is into the review group, so a book is split across two groups, or
-   (b) have the Texts membership migration give such a page its root's group, so only whole
-   books get swept. Option (b) is recommended: a book renders as one scroll (ADR 021), so
-   mixed access within a book has no sensible display. It's an ADR 008 deviation, though,
-   so it needs Than's call.
+   `drush group:sweep-orphans --site=texts --gid=<Texts review group> --dry-run`. Before step 2
+   that would be 222 nodes (55 roots + 167 pages); less any excluded under TX10's
+   unpublished-book decision.
+2. **Decided (Than, 2026-11-16): the 34 pages with no membership whose root has one take
+   their root's group** in the Texts membership migration (TX7), and are not swept. A book renders
+   as one scroll (ADR 021), so mixed access within a book has no sensible display. This is a
+   deliberate, small ADR 008 deviation. The rejected alternative was sweeping them as-is, which
+   would split those books across two groups. The dry-run should then report about **188** nodes
+   (55 roots + 133 pages).
 3. The 133 pages under a group-less root follow their root into the review group either way.
 4. Run on dev-0 (Than, by hand) after the Texts migration reaches it; the Texts review group
    (DDEV gid 417) must exist there first, as it did for Images and AV.
