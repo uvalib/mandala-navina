@@ -176,6 +176,15 @@ settings:
         -
           label: 'Marker: Red'
           element: '<span class="marker-red">'
+        -
+          label: 'Heading 7'
+          element: '<h6 class="h7">'
+        -
+          label: 'Heading 8'
+          element: '<h6 class="h8">'
+        -
+          label: 'Heading 9'
+          element: '<h6 class="h9">'
     linkit_extension:
       linkit_enabled: true
       linkit_profile: default

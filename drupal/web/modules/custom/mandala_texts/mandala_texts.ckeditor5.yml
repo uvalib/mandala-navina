@@ -1,0 +1,8 @@
+mandala_texts_word_headings:
+  ckeditor5:
+    plugins:
+      - mandalaTexts.WordHeadings
+  drupal:
+    label: Word headings 7-9
+    library: mandala_texts/word-headings
+    elements: false

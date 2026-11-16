@@ -13,7 +13,8 @@ use Drupal\Component\Utility\Html;
  *    everything up to the next split heading (the heading itself is dropped);
  *  - sections nest by level: an h3 goes under the h2 before it, and so on;
  *    a section with no lower-level heading above it goes under the original;
- *  - headings at levels not chosen stay in the body as content.
+ *  - headings at levels not chosen stay in the body as content;
+ *  - <h6 class="h7"> (to h9), Word's Heading 7-9, never split.
  *
  * Deliberate differences from D7:
  *  - weights are sequential per parent with no cap (D7 capped at +-15);
@@ -194,6 +195,10 @@ class TextSplitter {
    */
   protected static function splitLevel(\DOMNode $node, array $levels): ?int {
     if ($node instanceof \DOMElement && preg_match('/^h([1-6])$/i', $node->tagName, $m)) {
+      // <h6 class="h7"> etc. are Word's Heading 7-9; never split points.
+      if (preg_match('/\bh([7-9]|[1-9]\d)\b/', $node->getAttribute('class'))) {
+        return NULL;
+      }
       $level = (int) $m[1];
       return in_array($level, $levels, TRUE) ? $level : NULL;
     }

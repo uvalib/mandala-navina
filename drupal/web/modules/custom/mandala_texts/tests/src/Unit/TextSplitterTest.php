@@ -115,6 +115,12 @@ class TextSplitterTest extends UnitTestCase {
     $this->assertStringStartsWith('<p><footnotes data-text="Other"', $r['sections'][1]['html']);
   }
 
+  public function testDeepWordHeadingsNeverSplit(): void {
+    $r = TextSplitter::split('<h6>Six</h6><p>a</p><h6 class="h7">Seven</h6><p>b</p><h6 class="h9 bo">Nine</h6><p>c</p>', [6]);
+    $this->assertSame(['Six'], array_column($r['sections'], 'title'));
+    $this->assertStringContainsString('<h6 class="h7">Seven</h6>', $r['sections'][0]['html']);
+  }
+
   public function testImageOnlySectionIsKept(): void {
     $r = TextSplitter::split('<h1>Plate</h1><p><img src="a.jpg"></p>', [1]);
     $this->assertCount(1, $r['sections']);
