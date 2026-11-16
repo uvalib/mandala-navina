@@ -42,6 +42,8 @@
         "drupal/footnotes": "^4.0",
         "drupal/group": "^3.3",
         "drupal/kaltura_media": "1.0.4",
+        "drupal/linkit": "^7.0",
+        "drupal/mathjax": "^4.1",
         "drupal/migrate_plus": "^6.0",
         "drupal/migrate_tools": "^6.1",
         "drupal/module_filter": "^6.0",

@@ -15,15 +15,19 @@ settings:
     items:
       - bold
       - italic
+      - underline
       - strikethrough
       - superscript
       - subscript
       - removeFormat
       - '|'
       - link
+      - footnotes
       - '|'
       - bulletedList
       - numberedList
+      - outdent
+      - indent
       - '|'
       - blockQuote
       - drupalInsertImage
@@ -31,10 +35,21 @@ settings:
       - horizontalLine
       - '|'
       - heading
+      - style
+      - textPartLanguage
+      - alignment
+      - '|'
+      - specialCharacters
       - codeBlock
       - '|'
       - sourceEditing
   plugins:
+    ckeditor5_alignment:
+      enabled_alignments:
+        - center
+        - justify
+        - left
+        - right
     ckeditor5_codeBlock:
       languages:
         -
@@ -81,6 +96,7 @@ settings:
           language: xml
     ckeditor5_heading:
       enabled_headings:
+        - heading1
         - heading2
         - heading3
         - heading4
@@ -88,6 +104,8 @@ settings:
         - heading6
     ckeditor5_imageResize:
       allow_resize: true
+    ckeditor5_language:
+      language_list: all
     ckeditor5_list:
       properties:
         reversed: true
@@ -96,6 +114,71 @@ settings:
       multiBlock: true
     ckeditor5_sourceEditing:
       allowed_tags: {  }
+    ckeditor5_style:
+      styles:
+        -
+          label: 'Chinese Title'
+          element: '<h2 class="zh">'
+        -
+          label: 'Dzongkha Title'
+          element: '<h2 class="dz">'
+        -
+          label: 'Sanskrit Title'
+          element: '<h2 class="sa">'
+        -
+          label: 'Tibetan Title'
+          element: '<h2 class="bo">'
+        -
+          label: 'Chinese Paragraph'
+          element: '<p class="zh">'
+        -
+          label: 'Dzongkha Paragraph'
+          element: '<p class="dz">'
+        -
+          label: 'Sanskrit Paragraph'
+          element: '<p class="sa">'
+        -
+          label: 'Tibetan Paragraph'
+          element: '<p class="bo">'
+        -
+          label: Bourdieu
+          element: '<div class="bourdieu">'
+        -
+          label: 'Pull Quote Right'
+          element: '<div class="pull-quote-right">'
+        -
+          label: 'Pull Quote Left'
+          element: '<div class="pull-quote-left">'
+        -
+          label: 'Chinese Text'
+          element: '<span class="zh">'
+        -
+          label: 'Dzongkha Text'
+          element: '<span class="dz">'
+        -
+          label: 'English in Non-English'
+          element: '<span class="en">'
+        -
+          label: 'Sanskrit Text'
+          element: '<span class="sa">'
+        -
+          label: 'Tibetan Text'
+          element: '<span class="bo">'
+        -
+          label: 'Marker: Yellow'
+          element: '<span class="marker-yellow">'
+        -
+          label: 'Marker: Green'
+          element: '<span class="marker-green">'
+        -
+          label: 'Marker: Blue'
+          element: '<span class="marker-blue">'
+        -
+          label: 'Marker: Red'
+          element: '<span class="marker-red">'
+    linkit_extension:
+      linkit_enabled: true
+      linkit_profile: default
 image_upload:
   status: true
   scheme: public

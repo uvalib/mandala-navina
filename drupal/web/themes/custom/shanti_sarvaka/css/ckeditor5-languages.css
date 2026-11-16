@@ -1,0 +1,17 @@
+/* Editor-only language styling for CKEditor 5, matching the D7 Texts
+   style set (class + lang). Font stacks copied from D7 shanti-main.css. */
+.ck-content .bo, .ck-content [lang="bo"],
+.ck-content .dz, .ck-content [lang="dz"] {
+  font-family: 'Babelstone', 'Jomolhari-ID', 'Jomolhari', 'Noto Sans Tibetan', 'Tibetan Machine Uni', 'Kailasa', 'Uchen_05', 'Microsoft Himalaya';
+  font-style: normal;
+  font-size: 110%;
+}
+.ck-content h2.bo, .ck-content h2.dz { font-size: 150%; }
+.ck-content .zh, .ck-content [lang="zh"] { font-style: normal; }
+.ck-content .sa, .ck-content [lang="sa"] { font-style: normal; }
+.ck-content .pull-quote-right { float: right; width: 40%; margin: 0 0 1em 1em; font-size: 120%; }
+.ck-content .pull-quote-left { float: left; width: 40%; margin: 0 1em 1em 0; font-size: 120%; }
+.ck-content .marker-yellow { background: #ff6; }
+.ck-content .marker-green { background: #6f6; }
+.ck-content .marker-blue { background: #6cf; }
+.ck-content .marker-red { background: #f66; }

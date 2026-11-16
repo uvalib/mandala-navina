@@ -30,6 +30,7 @@ module:
   file: 0
   filter: 0
   flexible_permissions: 0
+  footnotes: 0
   gnode: 0
   group: 0
   help: 0
@@ -38,6 +39,7 @@ module:
   kaltura_media: 0
   language: 0
   link: 0
+  linkit: 0
   mandala_av_metadata: 0
   mandala_av_transcripts: 0
   mandala_file_hygiene: 0
@@ -50,6 +52,7 @@ module:
   mandala_node_api: 0
   mandala_saml_oauth: 0
   mandala_solr_visibility: 0
+  mathjax: 0
   media: 0
   menu_link_content: 0
   menu_ui: 0

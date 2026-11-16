@@ -1,0 +1,7 @@
+_core:
+  default_config_hash: h50WqjNwEtxaKnXLONDDKm0vezpH5hITx6sM-d4W6to
+use_cdn: 1
+cdn_url: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_HTMLorMML,Safe'
+config_type: 0
+default_config_string: '{"tex2jax":{"inlineMath":[["$$","$$"],["\\(","\\)"]],"processEscapes":"true"},"showProcessingMessages":"false","messageStyle":"none"}'
+enable_for_admin: 0

@@ -21,3 +21,6 @@ regions:
 
 libraries:
   - shanti_sarvaka/global-styling
+
+ckeditor5-stylesheets:
+  - css/ckeditor5-languages.css
