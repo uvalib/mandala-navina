@@ -1,0 +1,8 @@
+name: 'Mandala Texts'
+type: module
+description: 'Texts (book) site features. Currently the splitter: turns one pasted document into a tree of Book pages at chosen heading levels (port of D7 shanti_texts_splitter, Sprint 5 TX6).'
+package: Mandala
+core_version_requirement: ^11
+dependencies:
+  - drupal:node
+  - book:book
