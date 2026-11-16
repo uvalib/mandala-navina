@@ -106,7 +106,8 @@ Found while planning the Texts migration ([plan](texts-migration-plan.md),
    `og_membership` 7,419 on `field_og_collection_ref` plus 57 on `field_og_parent_collection_ref`.
 6. **Complexity.** The 2.0/5 score in the
    [complexity comparison](av-sources-texts-migration-complexity-comparison.md) predates items 1
-   and 2 and should be read as a lower bound; a rescore is Sprint 5 task TX1's last open part.
+   and 2 and should be read as a lower bound. **Rescored 2026-11-16 (TX1): 2.6/5**, see the
+   [Texts rescore](av-sources-texts-migration-complexity-comparison.md#texts-rescore-2026-11-16-sprint-5-tx1).
 
 ---
 
