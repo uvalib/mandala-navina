@@ -74,13 +74,12 @@ services:
 
 
 
-  # trid_i on AV documents (Spike 11 T9 half a). The resolver is the swap
-  # point: an av_transcript-entity resolver replaces the D7-derived table
-  # (T2) by changing this one alias.
+  # trid_i on AV documents (Spike 11 T9 half a). The resolver reads the
+  # av_transcript entity (T2 phase 7); a soft-deleted transcript does not resolve.
   mandala_kmassets_sync.trid_resolver:
-    class: Drupal\mandala_kmassets_sync\Transcript\LegacyTridMapResolver
+    class: Drupal\mandala_kmassets_sync\Transcript\EntityTridResolver
     arguments:
-      - '@database'
+      - '@entity_type.manager'
 
   mandala_kmassets_sync.contributor.transcript_id:
     class: Drupal\mandala_kmassets_sync\Contributor\TranscriptIdContributor

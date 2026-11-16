@@ -5,49 +5,24 @@
  * Install and update hooks for mandala_kmassets_sync.
  */
 
-use Drupal\mandala_kmassets_sync\Transcript\LegacyTridMapResolver;
-
 /**
- * Defines the node-to-trid table (see schema below).
- */
-function _mandala_kmassets_sync_trid_map_schema(): array {
-  return [
-    'description' => 'D7 transcript id (trid) per legacy AV node, interim source for kmassets trid_i until the T2 transcript entity exists.',
-    'fields' => [
-      'legacy_site' => [
-        'type' => 'varchar',
-        'length' => 64,
-        'not null' => TRUE,
-      ],
-      'legacy_nid' => [
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ],
-      'trid' => [
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ],
-    ],
-    'primary key' => ['legacy_site', 'legacy_nid'],
-    'unique keys' => ['trid' => ['trid']],
-  ];
-}
-
-/**
- * Implements hook_schema().
- */
-function mandala_kmassets_sync_schema(): array {
-  return [LegacyTridMapResolver::TABLE => _mandala_kmassets_sync_trid_map_schema()];
-}
-
-/**
- * Create the node-to-trid table on existing installs.
+ * Formerly created the interim node-to-trid table; superseded by update 10002.
+ *
+ * Left as a no-op so installs that never ran it do not create a table that
+ * update 10002 would immediately drop.
  */
 function mandala_kmassets_sync_update_10001(): void {
+}
+
+/**
+ * Drop the interim node-to-trid table (T2 phase 7).
+ *
+ * `trid_i` now comes from the av_transcript entity. The table was only ever a
+ * copy of D7's tracking rows, so nothing is lost; D7 still holds the source.
+ */
+function mandala_kmassets_sync_update_10002(): void {
   $schema = \Drupal::database()->schema();
-  if (!$schema->tableExists(LegacyTridMapResolver::TABLE)) {
-    $schema->createTable(LegacyTridMapResolver::TABLE, _mandala_kmassets_sync_trid_map_schema());
+  if ($schema->tableExists('mandala_kmassets_trid_map')) {
+    $schema->dropTable('mandala_kmassets_trid_map');
   }
 }
