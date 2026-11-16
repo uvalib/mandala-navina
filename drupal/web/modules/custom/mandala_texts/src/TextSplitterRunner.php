@@ -51,6 +51,19 @@ class TextSplitterRunner {
     if (!$plan['sections']) {
       return NULL;
     }
+    if ($plan['leftover_count']) {
+      $rootWeights = array_column(array_filter($plan['sections'], fn($s) => $s['parent'] === NULL), 'weight');
+      $plan['sections'][] = [
+        'title' => 'Notes',
+        'level' => 1,
+        'html' => $plan['leftover_notes'],
+        'parent' => NULL,
+        'weight' => max($rootWeights) + 1,
+      ];
+      \Drupal::messenger()->addWarning($this->formatPlural($plan['leftover_count'],
+        '1 Word footnote could not be converted and was put on a final "Notes" page. Move it into its page as a footnote by hand.',
+        '@count Word footnotes could not be converted and were put on a final "Notes" page. Move them into their pages as footnotes by hand.'));
+    }
     return [
       'title' => $this->t('Splitting @title into pages', ['@title' => $node->label()]),
       'operations' => [[[static::class, 'batchCreate'], [(int) $node->id(), $plan['sections']]]],

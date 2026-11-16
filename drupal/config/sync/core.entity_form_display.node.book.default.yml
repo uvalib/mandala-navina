@@ -256,7 +256,7 @@ content:
       progress_indicator: throbber
     third_party_settings: {  }
   field_split_headings:
-    type: options_select
+    type: options_buttons
     weight: 38
     region: content
     settings: {  }

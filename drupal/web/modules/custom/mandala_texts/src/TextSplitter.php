@@ -22,6 +22,13 @@ use Drupal\Component\Utility\Html;
  *
  * Only top-level headings split: CKEditor 5 saves a flat block structure, and
  * a heading inside a table or div is treated as content.
+ *
+ * Word footnotes: on a paste into full_html, the Footnotes module turns most
+ * Word footnotes into inline <footnotes data-text> tags, which then travel
+ * with their section. About 1% fail and are left in an <ol class="footnotes">
+ * list at the end, next to Word's separator (<div><hr>...). Those are taken
+ * out and returned as 'leftover_notes', for a final "Notes" page (Than,
+ * 2026-11-16); the editor is warned to fix them by hand.
  */
 class TextSplitter {
 
@@ -36,12 +43,15 @@ class TextSplitter {
    * @return array
    *   ['intro' => string, 'sections' => list of ['title', 'level', 'html',
    *   'parent' (index into sections, or NULL for the original node),
-   *   'weight']].
+   *   'weight'], 'leftover_notes' => string (an <ol>, or ''),
+   *   'leftover_count' => int].
    */
   public static function split(string $html, array $levels): array {
     $levels = array_map('intval', $levels);
     $dom = Html::load($html);
     $body = $dom->getElementsByTagName('body')->item(0);
+    static::unwrapWordSections($body);
+    [$leftover, $count] = static::extractLeftoverNotes($dom, $body);
 
     $intro = '';
     $sections = [];
@@ -52,8 +62,15 @@ class TextSplitter {
         if ($current !== NULL) {
           $sections[] = $current;
         }
+        // A page title is plain text, so footnotes on the heading move to the
+        // start of the page's first paragraph (Gnosis: 6 chapter headings).
+        $notes = '';
+        foreach (iterator_to_array($node->getElementsByTagName('footnotes')) as $fn) {
+          $notes .= $dom->saveHTML($fn);
+          $fn->parentNode->removeChild($fn);
+        }
         $title = trim(preg_replace('/\s+/u', ' ', $node->textContent));
-        $current = ['title' => $title, 'level' => $level, 'html' => ''];
+        $current = ['title' => $title, 'level' => $level, 'html' => '', 'notes' => $notes];
         continue;
       }
       $markup = $dom->saveHTML($node);
@@ -70,14 +87,106 @@ class TextSplitter {
 
     $sections = static::dropEmpty($sections);
     foreach ($sections as $i => &$section) {
-      $section['html'] = trim($section['html']);
+      $section['html'] = static::prependNotes(trim($section['html']), $section['notes']);
+      unset($section['notes']);
       if ($section['title'] === '') {
         $section['title'] = 'Section ' . ($i + 1);
       }
     }
     unset($section);
 
-    return ['intro' => trim($intro), 'sections' => static::nest($sections)];
+    return [
+      'intro' => trim($intro),
+      'sections' => static::nest($sections),
+      'leftover_notes' => $leftover,
+      'leftover_count' => $count,
+    ];
+  }
+
+  /**
+   * Replaces Word's section wrappers (div.WordSection1, ...) by their children.
+   *
+   * A Word paste into full_html keeps one wrapper per Word section break, with
+   * the headings inside, so without this no heading is at the top level.
+   */
+  protected static function unwrapWordSections(\DOMElement $body): void {
+    foreach (iterator_to_array($body->childNodes) as $node) {
+      if ($node instanceof \DOMElement && $node->tagName === 'div' && preg_match('/^WordSection\d+$/', trim($node->getAttribute('class')))) {
+        static::unwrapWordSections($node);
+        while ($node->firstChild) {
+          $body->insertBefore($node->firstChild, $node);
+        }
+        $body->removeChild($node);
+      }
+    }
+  }
+
+  /**
+   * Removes unconverted Word footnotes and Word's separator from the body.
+   *
+   * @return array
+   *   [the notes as one <ol> (or ''), how many].
+   */
+  protected static function extractLeftoverNotes(\DOMDocument $dom, \DOMElement $body): array {
+    $notes = [];
+    foreach (iterator_to_array($body->childNodes) as $node) {
+      if (!$node instanceof \DOMElement) {
+        continue;
+      }
+      if ($node->tagName === 'ol' && preg_match('/\bfootnotes\b/', $node->getAttribute('class'))) {
+        foreach ($node->getElementsByTagName('li') as $li) {
+          $content = NULL;
+          foreach ($li->getElementsByTagName('div') as $div) {
+            if (preg_match('/\bfootnote-content\b/', $div->getAttribute('class'))) {
+              $content = $div;
+              break;
+            }
+          }
+          // Keep everything but Word's "^" back-link: in some items the
+          // note itself is a converted <footnotes> tag outside the content div.
+          foreach (iterator_to_array($li->getElementsByTagName('a')) as $a) {
+            if (preg_match('/\bfootnote-backlink\b/', $a->getAttribute('class'))) {
+              $a->parentNode->removeChild($a);
+            }
+          }
+          $html = '';
+          foreach ($li->childNodes as $child) {
+            $html .= $dom->saveHTML($child);
+          }
+          $html = preg_replace('/<p>\s*<\/p>|<div class="footnote-content">|<\/div>/', '', $html);
+          $notes[] = '<li>' . trim($html) . '</li>';
+        }
+        $body->removeChild($node);
+      }
+      elseif ($node->tagName === 'div' && static::isWordSeparator($dom, $node)) {
+        $body->removeChild($node);
+      }
+    }
+    return $notes ? ['<ol>' . implode('', $notes) . '</ol>', count($notes)] : ['', 0];
+  }
+
+  /**
+   * Whether a div is Word's footnote separator: starts with <hr>, no text.
+   */
+  protected static function isWordSeparator(\DOMDocument $dom, \DOMElement $div): bool {
+    $first = $div->firstChild;
+    while ($first && !$first instanceof \DOMElement) {
+      $first = $first->nextSibling;
+    }
+    return $first && $first->tagName === 'hr' && !static::hasText(preg_replace('/<hr[^>]*>/i', '', $dom->saveHTML($div)));
+  }
+
+  /**
+   * Puts heading footnotes at the start of the first paragraph (or a new one).
+   */
+  protected static function prependNotes(string $html, string $notes): string {
+    if ($notes === '') {
+      return $html;
+    }
+    if (preg_match('/^<p\b[^>]*>/', $html, $m)) {
+      return $m[0] . $notes . substr($html, strlen($m[0]));
+    }
+    return '<p>' . $notes . '</p>' . $html;
   }
 
   /**
@@ -99,7 +208,7 @@ class TextSplitter {
     foreach ($sections as $i => $section) {
       $next = $sections[$i + 1] ?? NULL;
       $hasChildren = $next !== NULL && $next['level'] > $section['level'];
-      if (static::hasText($section['html']) || $hasChildren) {
+      if (static::hasText($section['html']) || $section['notes'] !== '' || $hasChildren) {
         $kept[] = $section;
       }
     }
