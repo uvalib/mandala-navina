@@ -1,8 +1,8 @@
 # Session Log: Tx1 Texts Complexity Rescore
 
 **Date:** 2026-11-16  
-**Participants:** ThanGrove, Claude Code  
-**Outcome:** *(add link to relevant spike or planning doc)*
+**Participants:** Than Grove, Claude Code  
+**Outcome:** Sprint 5 TX1 done: Texts rescored 2.0 → 2.6/5 ([rescore](../planning/av-sources-texts-migration-complexity-comparison.md#texts-rescore-2026-11-16-sprint-5-tx1)), PR #413. Local DB restored from snapshot + `cim`; all start checks clean. Next: TX4 (kmassets naming, #289 sweep plan), then TX5.  
 
 ---
 
