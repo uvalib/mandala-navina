@@ -289,8 +289,11 @@ Unit `timecode_status` on dev-0, carried as found (repair stays with
 **What this does not prove.** D11 equals D7's *tables*. That D7's tables equal the original source files is Than's
 question 8 review, including the 68 replaced-file transcripts.
 
-**Reindex.** `kmassets:index-all video`, then `audio`, started 20:31 UTC against the staging master. Baseline taken just
-before: 11,582 D11 AV documents (uid `*-11-*`), of which 5,343 carry `trid_i`. Pass: the same two numbers afterwards.
+**Reindex (done 2026-11-16).** `kmassets:index-all video`, then `audio`, against the staging master, 20:31 to 21:05 UTC.
+Video: 7,395 indexed, 0 skipped, 0 errors, exit 0, 21 min. Audio: 4,187 indexed, 0 skipped, 0 errors, exit 0, 12 min.
+Total about 34 min (the 2026-09-14 rate predicted about 14, so budget about 35 min for a full AV reindex on dev-0).
+Baseline taken just before: 11,582 D11 AV documents (uid `*-11-*`), of which 5,343 carry `trid_i`. **After: 11,582 and
+5,343, unchanged. Pass.** `trid_i` coverage matches the interim table's 5,343 rows, so the resolver swap can go ahead.
 
 ## Questions for Than
 
@@ -305,7 +308,7 @@ T5 is called done. Than holds the D7 history and the source files.
 | new | 68 transcripts whose tracking row names a different, now-deleted file: the current `field_transcript` is used as the original (decided 2026-10-02). Still right? | Uses the current attachment. | Informational |
 | new | The tie order of units with equal starts (1,278 transcripts, 5,409 units): D7 leaves it undefined; we use `tcuid`. Acceptable? | Ordered by `(start, tcuid)`. | Informational |
 
-The two "new" rows have not been put to Than yet; a comment on #353 carries the earlier questions.
+The two "new" rows were posted to Than on #353 on 2026-11-10; no answer recorded yet.
 
 ## Order of work
 
@@ -314,5 +317,5 @@ The two "new" rows have not been put to Than yet; a comment on #353 carries the 
 3. A verification script that compares D7 and D11 (counts, hashes, status counts, dropped-row report), in `scripts/`, with a howto in `docs/dev-notes/`.
 4. DDEV run; fix what it shows.
 5. dev-0 sample run and full run (both done 2026-11-16, verified, see above).
-6. Reindex (started 2026-11-16), then the resolver swap, as its own PR.
+6. Reindex (done 2026-11-16, counts unchanged), then the resolver swap, as its own PR.
 7. Update #290, the Sprint 4 T5 and T9 rows, and the T2 plan's phase 7.
