@@ -263,6 +263,35 @@ inverted 21, `zero_length_other` 14, `last_unit_no_end` 1.
   check `drush migrate:status d7_av_transcript,d7_av_tcu` shows 5,343 and 243,005.
 - The sample rows stay in the tables; the full run updates them in place.
 
+## dev-0 full run and verification (2026-11-16)
+
+Run with `php -d memory_limit=2G vendor/drush/drush/drush.php migrate:import d7_av_transcript`, then `d7_av_tcu`, detached
+in `mandala-drupal-0` (log `/tmp/t5-full.log`). The 268 + 13,519 sample rows were skipped as already imported.
+
+| | New rows | Time | Failed / ignored / messages |
+|---|---|---|---|
+| `d7_av_transcript` | 5,075 (5,343 in total) | 17:01 to 17:07 UTC, about 5 min 45 s | 0 / 0 / 0 |
+| `d7_av_tcu` | 229,486 (243,005 in total) | 17:07 to 19:44 UTC, **2 h 37 min** | 0 / 0 / 0 |
+
+The unit rate held at about 24.6 units a second (0.041 s each), as the sample measured, so the 2.8-hour projection was
+slightly pessimistic. (The last progress line, "Processed 9,486", is only the final batch of 20,000-item batches.)
+
+**Verification, `TARGET=dev0 ./scripts/verify-av-transcript-migration.sh`: ALL CHECKS PASSED.** Counts, identity,
+millisecond start and end, sequence, soft-delete flags, the edits flag (540) and `source_file` (5,339) all match D7.
+The orphan accounting is as planned: none of the 2,153 orphan-trid units is in D11; 18 tier rows and 95 speaker rows
+are held back. Text fidelity: all 352,881 tier values and 141,650 speaker values equal D7's after NFC, and NFC changed
+3,522 tier and 136 speaker values, 3,658 in all, the number predicted above.
+
+Unit `timecode_status` on dev-0, carried as found (repair stays with
+[#353](https://github.com/uvalib/mandala-navina/issues/353)): ok 238,684; `zero_length_shared_start` 3,110; inverted
+901; `zero_length_other` 188; `last_unit_no_end` 66; `end_implausible` 56.
+
+**What this does not prove.** D11 equals D7's *tables*. That D7's tables equal the original source files is Than's
+question 8 review, including the 68 replaced-file transcripts.
+
+**Reindex.** `kmassets:index-all video`, then `audio`, started 20:31 UTC against the staging master. Baseline taken just
+before: 11,582 D11 AV documents (uid `*-11-*`), of which 5,343 carry `trid_i`. Pass: the same two numbers afterwards.
+
 ## Questions for Than
 
 None of these block the code or a dev run. Questions 2, 3 and 8 were decided 2026-11-13 (rows kept below for the record); Than's review for question 8 must be done before
@@ -284,6 +313,6 @@ The two "new" rows have not been put to Than yet; a comment on #353 carries the 
 2. Source plugins and the two migrations, with Kernel tests for: the mapping, NFC, rounding, classifier call, idempotency and the soft-delete revive path.
 3. A verification script that compares D7 and D11 (counts, hashes, status counts, dropped-row report), in `scripts/`, with a howto in `docs/dev-notes/`.
 4. DDEV run; fix what it shows.
-5. dev-0 sample run (done 2026-11-16, see above), then full run (started 2026-11-16).
-6. Reindex, then the resolver swap, as its own PR.
+5. dev-0 sample run and full run (both done 2026-11-16, verified, see above).
+6. Reindex (started 2026-11-16), then the resolver swap, as its own PR.
 7. Update #290, the Sprint 4 T5 and T9 rows, and the T2 plan's phase 7.
