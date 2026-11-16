@@ -10,6 +10,11 @@
 #
 # Usage: ./scripts/verify-av-transcript-migration.sh
 #        D7DB=d7_av_fresh ./scripts/verify-av-transcript-migration.sh
+#        TARGET=dev0 ./scripts/verify-av-transcript-migration.sh
+# TARGET=dev0 runs the same checks against dev-0 (needs the VPN and your SSH key, see
+# docs/dev-notes/howto-access-mandala-nodes.md). The queries go through `drush sql:query` in
+# the app container, and the D7 source (mandala_d7_av) is on the same RDS server as the D11
+# database, so the cross-database queries work. Each query is a round trip: expect a few minutes.
 # Exit:  0 if every check matches, 1 otherwise.
 #
 # The text-fidelity check (NFC) is done in PHP by verify-av-transcript-text.php,
@@ -17,11 +22,29 @@
 
 set -u -o pipefail
 
-D7DB="${D7DB:-d7_av}"
-D11DB="${D11DB:-db}"
+TARGET="${TARGET:-ddev}"
+if [ "$TARGET" = dev0 ]; then
+  D7DB="${D7DB:-mandala_d7_av}"
+  D11DB="${D11DB:-mandala_drupal_0}"
+  DEV0_HOST="${DEV0_HOST:-$USER@mandala-drupal-dev-0.internal.lib.virginia.edu}"
+else
+  D7DB="${D7DB:-d7_av}"
+  D11DB="${D11DB:-db}"
+fi
 fail=0
 
-q() { ddev mysql -uroot -proot -N -B -e "$1" 2>/dev/null | tr -d '[:space:]'; }
+# run_sql: raw rows (no header) for one statement, on the chosen target.
+run_sql() {
+  if [ "$TARGET" = dev0 ]; then
+    local b64
+    b64=$(printf '%s' "$1" | base64 | tr -d '\n')
+    ssh -o ConnectTimeout=15 -o BatchMode=yes -i ~/.ssh/id_rsa "$DEV0_HOST" \
+      "sudo docker exec mandala-drupal-0 sh -c 'cd /opt/drupal/app/drupal && vendor/bin/drush sql:query --extra=--skip-ssl-verify-server-cert \"\$(echo $b64 | base64 -d)\"'" 2>/dev/null
+  else
+    ddev mysql -uroot -proot -N -B -e "$1" 2>/dev/null
+  fi
+}
+q() { run_sql "$1" | tr -d '[:space:]'; }
 
 check() {
   local label="$1" expected="$2" actual="$3"
@@ -103,11 +126,18 @@ check "nodes with a transcript file but no tracking row have no transcript" "0" 
 
 echo
 echo "timecode_status distribution (recorded so the number can be watched going down)"
-ddev mysql -uroot -proot -B -e "SELECT timecode_status, COUNT(*) AS units FROM $D11DB.av_tcu GROUP BY timecode_status ORDER BY units DESC" 2>/dev/null | sed 's/^/       /'
+run_sql "SELECT timecode_status, COUNT(*) AS units FROM $D11DB.av_tcu GROUP BY timecode_status ORDER BY units DESC" | sed 's/^/       /'
 
 echo
 echo "Text fidelity (NFC), in PHP"
-if D7DB="$D7DB" ddev drush php:script scripts/verify-av-transcript-text.php 2>/dev/null | grep -v '^Deprecated\|^$' | tee /tmp/av-transcript-text.out; then :; fi
+if [ "$TARGET" = dev0 ]; then
+  scp -q -i ~/.ssh/id_rsa scripts/verify-av-transcript-text.php "$DEV0_HOST:/tmp/verify-av-transcript-text.php" \
+    && ssh -o ConnectTimeout=15 -o BatchMode=yes -i ~/.ssh/id_rsa "$DEV0_HOST" \
+      "sudo docker cp /tmp/verify-av-transcript-text.php mandala-drupal-0:/tmp/ && sudo docker exec -e D7DB=$D7DB mandala-drupal-0 sh -c 'cd /opt/drupal/app/drupal && php -d memory_limit=2G vendor/drush/drush/drush.php php:script /tmp/verify-av-transcript-text.php'" 2>/dev/null \
+    | grep -v '^Deprecated\|^$' | tee /tmp/av-transcript-text.out
+else
+  if D7DB="$D7DB" ddev drush php:script scripts/verify-av-transcript-text.php 2>/dev/null | grep -v '^Deprecated\|^$' | tee /tmp/av-transcript-text.out; then :; fi
+fi
 grep -q '^  FAIL' /tmp/av-transcript-text.out && fail=1
 [ -s /tmp/av-transcript-text.out ] || { echo "  FAIL text-fidelity script produced no output"; fail=1; }
 

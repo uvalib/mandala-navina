@@ -236,6 +236,65 @@ Reading these timings: they prove the code is correct on the real corpus, not ho
 difference that matter (in-container MySQL against RDS, mutagen against a direct volume) made dev-0 several times
 slower in earlier migrations. The sample run on dev-0 is what measures it.
 
+## dev-0 sample run (2026-11-16)
+
+Every 20th tracked transcript by `trid`: **268 transcripts (5.0%) and 13,519 units (5.6%)**, run with
+`scripts/t5-sample-run.php` inside `mandala-drupal-0` (PHP CLI `memory_limit` raised to 1G).
+
+| | Rows | Time | Peak memory |
+|---|---|---|---|
+| `d7_av_transcript` | 268 | 19.4 s (about 0.07 s each) | 78 MB |
+| `d7_av_tcu` | 13,519 | 565.8 s (about 0.042 s each) | 72 MB |
+
+Result: no migrate messages; both id maps match the source counts; no soft-deleted rows; all 268 transcripts have
+units; 24 are flagged as edited. Unit `timecode_status` on the sample: ok 12,965, `zero_length_shared_start` 518,
+inverted 21, `zero_length_other` 14, `last_unit_no_end` 1.
+
+- **Speed.** About 39 times slower than DDEV (245,158 units in 260 s locally). A linear projection puts the full 243,005
+  units at about **2.8 hours** and the 5,343 transcripts at 6 to 7 minutes. The full `d7_av_tcu` source query numbers
+  every unit with a window function over the whole `tcu` table, which has no index on `trid` on D7, so the per-unit cost
+  of the full run may differ from the sample's. Memory is not a constraint (under 80 MB peak).
+- **Sampling needs both migrations scoped.** A `trids` source option on one migration is not enough: core makes
+  `d7_av_tcu` require `d7_av_transcript` to be fully processed (`migration_lookup` adds that dependency itself), which a
+  sample can never meet. The script scopes both with a runtime config override; nothing is written to config.
+- **Trap, found and fixed:** rebuilding plugin definitions under the override left the scoped definitions in the
+  persistent plugin cache, so the next `migrate:import` on dev-0 reported `d7_av_tcu` with a total of 13,519 and
+  "processed 0 items". The script now clears the cache as its last statement. If a run dies first, clear it by hand and
+  check `drush migrate:status d7_av_transcript,d7_av_tcu` shows 5,343 and 243,005.
+- The sample rows stay in the tables; the full run updates them in place.
+
+## dev-0 full run and verification (2026-11-16)
+
+Run with `php -d memory_limit=2G vendor/drush/drush/drush.php migrate:import d7_av_transcript`, then `d7_av_tcu`, detached
+in `mandala-drupal-0` (log `/tmp/t5-full.log`). The 268 + 13,519 sample rows were skipped as already imported.
+
+| | New rows | Time | Failed / ignored / messages |
+|---|---|---|---|
+| `d7_av_transcript` | 5,075 (5,343 in total) | 17:01 to 17:07 UTC, about 5 min 45 s | 0 / 0 / 0 |
+| `d7_av_tcu` | 229,486 (243,005 in total) | 17:07 to 19:44 UTC, **2 h 37 min** | 0 / 0 / 0 |
+
+The unit rate held at about 24.6 units a second (0.041 s each), as the sample measured, so the 2.8-hour projection was
+slightly pessimistic. (The last progress line, "Processed 9,486", is only the final batch of 20,000-item batches.)
+
+**Verification, `TARGET=dev0 ./scripts/verify-av-transcript-migration.sh`: ALL CHECKS PASSED.** Counts, identity,
+millisecond start and end, sequence, soft-delete flags, the edits flag (540) and `source_file` (5,339) all match D7.
+The orphan accounting is as planned: none of the 2,153 orphan-trid units is in D11; 18 tier rows and 95 speaker rows
+are held back. Text fidelity: all 352,881 tier values and 141,650 speaker values equal D7's after NFC, and NFC changed
+3,522 tier and 136 speaker values, 3,658 in all, the number predicted above.
+
+Unit `timecode_status` on dev-0, carried as found (repair stays with
+[#353](https://github.com/uvalib/mandala-navina/issues/353)): ok 238,684; `zero_length_shared_start` 3,110; inverted
+901; `zero_length_other` 188; `last_unit_no_end` 66; `end_implausible` 56.
+
+**What this does not prove.** D11 equals D7's *tables*. That D7's tables equal the original source files is Than's
+question 8 review, including the 68 replaced-file transcripts.
+
+**Reindex (done 2026-11-16).** `kmassets:index-all video`, then `audio`, against the staging master, 20:31 to 21:05 UTC.
+Video: 7,395 indexed, 0 skipped, 0 errors, exit 0, 21 min. Audio: 4,187 indexed, 0 skipped, 0 errors, exit 0, 12 min.
+Total about 34 min (the 2026-09-14 rate predicted about 14, so budget about 35 min for a full AV reindex on dev-0).
+Baseline taken just before: 11,582 D11 AV documents (uid `*-11-*`), of which 5,343 carry `trid_i`. **After: 11,582 and
+5,343, unchanged. Pass.** `trid_i` coverage matches the interim table's 5,343 rows, so the resolver swap can go ahead.
+
 ## Questions for Than
 
 None of these block the code or a dev run. Questions 2, 3 and 8 were decided 2026-11-13 (rows kept below for the record); Than's review for question 8 must be done before
@@ -249,7 +308,7 @@ T5 is called done. Than holds the D7 history and the source files.
 | new | 68 transcripts whose tracking row names a different, now-deleted file: the current `field_transcript` is used as the original (decided 2026-10-02). Still right? | Uses the current attachment. | Informational |
 | new | The tie order of units with equal starts (1,278 transcripts, 5,409 units): D7 leaves it undefined; we use `tcuid`. Acceptable? | Ordered by `(start, tcuid)`. | Informational |
 
-The two "new" rows have not been put to Than yet; a comment on #353 carries the earlier questions.
+The two "new" rows were posted to Than on #353 on 2026-11-10; no answer recorded yet.
 
 ## Order of work
 
@@ -257,6 +316,6 @@ The two "new" rows have not been put to Than yet; a comment on #353 carries the 
 2. Source plugins and the two migrations, with Kernel tests for: the mapping, NFC, rounding, classifier call, idempotency and the soft-delete revive path.
 3. A verification script that compares D7 and D11 (counts, hashes, status counts, dropped-row report), in `scripts/`, with a howto in `docs/dev-notes/`.
 4. DDEV run; fix what it shows.
-5. dev-0 sample run, then full run.
-6. Reindex, then the resolver swap, as its own PR.
+5. dev-0 sample run and full run (both done 2026-11-16, verified, see above).
+6. Reindex (done 2026-11-16, counts unchanged), then the resolver swap, as its own PR.
 7. Update #290, the Sprint 4 T5 and T9 rows, and the T2 plan's phase 7.
