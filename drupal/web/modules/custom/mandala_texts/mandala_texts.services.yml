@@ -1,0 +1,4 @@
+services:
+  mandala_texts.splitter_runner:
+    class: Drupal\mandala_texts\TextSplitterRunner
+    arguments: ['@entity_type.manager']

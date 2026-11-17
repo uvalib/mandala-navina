@@ -1,0 +1,41 @@
+<?php
+
+/**
+ * @file
+ * Mandala Texts: the splitter's form action on the book node form.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter() for node_form.
+ */
+function mandala_texts_form_node_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void {
+  if (!in_array($form_id, ['node_book_form', 'node_book_edit_form'], TRUE) || !isset($form['field_split_text'])) {
+    return;
+  }
+  $form['mandala_texts_splitter'] = [
+    '#type' => 'details',
+    '#title' => t('Split into pages'),
+    '#description' => t('Paste a whole document (for example, copied from Word) into Content, tick "Split Text on Headers", choose the heading levels, and save. Each chosen heading becomes a page titled by the heading; text before the first heading stays on this page. Lower-level headings nest under higher ones.'),
+    '#open' => FALSE,
+    '#weight' => ($form['field_book_content']['#weight'] ?? 0) + 0.5,
+  ];
+  foreach (['field_split_text', 'field_split_headings'] as $field) {
+    $form['mandala_texts_splitter'][$field] = $form[$field];
+    unset($form[$field]);
+  }
+  // After the node's own save, so a new node has an id and a book.
+  $form['actions']['submit']['#submit'][] = 'mandala_texts_splitter_submit';
+}
+
+/**
+ * Submit handler: runs the splitter if its checkbox was ticked.
+ */
+function mandala_texts_splitter_submit(array $form, FormStateInterface $form_state): void {
+  $node = $form_state->getFormObject()->getEntity();
+  $batch = \Drupal::service('mandala_texts.splitter_runner')->prepare($node);
+  if ($batch) {
+    batch_set($batch);
+  }
+}

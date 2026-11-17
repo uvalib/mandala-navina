@@ -15,3 +15,7 @@
 .ck-content .marker-green { background: #6f6; }
 .ck-content .marker-blue { background: #6cf; }
 .ck-content .marker-red { background: #f66; }
+/* Word Heading 7-9, kept as <h6 class="h7"> etc. (HTML stops at h6). */
+.ck-content h6.h7 { font-size: 0.95em; }
+.ck-content h6.h8 { font-size: 0.9em; font-style: italic; }
+.ck-content h6.h9 { font-size: 0.85em; font-style: italic; font-weight: normal; }

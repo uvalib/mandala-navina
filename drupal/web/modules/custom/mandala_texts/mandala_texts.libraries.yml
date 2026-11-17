@@ -1,0 +1,5 @@
+word-headings:
+  js:
+    js/word-headings.js: {}
+  dependencies:
+    - core/ckeditor5

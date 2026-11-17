@@ -13,25 +13,22 @@ settings:
   allowed_values:
     -
       value: '1'
-      label: '<h1>'
+      label: 'Heading 1'
     -
       value: '2'
-      label: '<h2>'
+      label: 'Heading 2'
     -
       value: '3'
-      label: '<h3>'
+      label: 'Heading 3'
     -
       value: '4'
-      label: '<h4>'
+      label: 'Heading 4'
     -
       value: '5'
-      label: '<h5>'
+      label: 'Heading 5'
     -
       value: '6'
-      label: '<h6>'
-    -
-      value: '7'
-      label: '<h7>'
+      label: 'Heading 6'
   allowed_values_function: ''
 module: options
 locked: false
