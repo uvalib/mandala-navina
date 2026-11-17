@@ -1,0 +1,19 @@
+uuid: b6dfbbea-95b7-49d2-976e-3ce59ae39028
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_journal_issue
+    - node.type.book
+id: node.book.field_journal_issue
+field_name: field_journal_issue
+entity_type: node
+bundle: book
+label: 'Journal Issue'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

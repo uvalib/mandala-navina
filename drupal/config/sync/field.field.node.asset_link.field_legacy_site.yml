@@ -1,0 +1,21 @@
+uuid: a1124cd6-7b15-477c-a37e-a7b701142923
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_legacy_site
+    - node.type.asset_link
+  module:
+    - options
+id: node.asset_link.field_legacy_site
+field_name: field_legacy_site
+entity_type: node
+bundle: asset_link
+label: 'Legacy site'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

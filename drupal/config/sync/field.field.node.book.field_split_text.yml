@@ -1,0 +1,21 @@
+uuid: 2842dbd3-0916-4b48-ada4-d801c4387cd9
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_split_text
+    - node.type.book
+id: node.book.field_split_text
+field_name: field_split_text
+entity_type: node
+bundle: book
+label: 'Split Text on Headers'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

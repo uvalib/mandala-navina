@@ -1,0 +1,21 @@
+uuid: 713d6716-d2e3-46c4-87ad-c9dd05de40e8
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_split_headings
+    - node.type.book
+  module:
+    - options
+id: node.book.field_split_headings
+field_name: field_split_headings
+entity_type: node
+bundle: book
+label: 'Split Headings'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

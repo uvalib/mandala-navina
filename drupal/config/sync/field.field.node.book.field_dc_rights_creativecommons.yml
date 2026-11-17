@@ -1,0 +1,21 @@
+uuid: 334f885d-0305-49cc-ba3a-7dd57eb1a6b2
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_dc_rights_creativecommons
+    - node.type.book
+  module:
+    - options
+id: node.book.field_dc_rights_creativecommons
+field_name: field_dc_rights_creativecommons
+entity_type: node
+bundle: book
+label: 'Rights (CC)'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_integer

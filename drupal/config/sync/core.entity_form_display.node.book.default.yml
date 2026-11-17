@@ -1,0 +1,311 @@
+uuid: 196113e8-7f84-48f7-a27a-697779fe94f7
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.book.field_admin_status
+    - field.field.node.book.field_book_author
+    - field.field.node.book.field_book_content
+    - field.field.node.book.field_book_date
+    - field.field.node.book.field_book_editor
+    - field.field.node.book.field_book_translator
+    - field.field.node.book.field_dc_date_orginial_year
+    - field.field.node.book.field_dc_date_publication_year
+    - field.field.node.book.field_dc_description
+    - field.field.node.book.field_dc_lang_code
+    - field.field.node.book.field_dc_language_original
+    - field.field.node.book.field_dc_rights_creativecommons
+    - field.field.node.book.field_dc_rights_general
+    - field.field.node.book.field_doi
+    - field.field.node.book.field_external_pdf
+    - field.field.node.book.field_general_featured_image
+    - field.field.node.book.field_group_content_access
+    - field.field.node.book.field_journal_issue
+    - field.field.node.book.field_journal_title
+    - field.field.node.book.field_journal_volume
+    - field.field.node.book.field_kmap_places
+    - field.field.node.book.field_kmap_term
+    - field.field.node.book.field_kmap_terms
+    - field.field.node.book.field_language_kmap
+    - field.field.node.book.field_legacy_nid
+    - field.field.node.book.field_legacy_site
+    - field.field.node.book.field_pages
+    - field.field.node.book.field_pdf_version
+    - field.field.node.book.field_split_headings
+    - field.field.node.book.field_split_text
+    - image.style.thumbnail
+    - node.type.book
+  module:
+    - datetime
+    - file
+    - image
+    - path
+    - shanti_kmaps_fields
+    - text
+id: node.book.default
+targetEntityType: node
+bundle: book
+mode: default
+content:
+  created:
+    type: datetime_timestamp
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_admin_status:
+    type: string_textfield
+    weight: 10
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_book_author:
+    type: string_textfield
+    weight: 11
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_book_content:
+    type: text_textarea
+    weight: 12
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_book_date:
+    type: datetime_default
+    weight: 13
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_book_editor:
+    type: string_textfield
+    weight: 14
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_book_translator:
+    type: string_textfield
+    weight: 15
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_dc_date_orginial_year:
+    type: datetime_default
+    weight: 16
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_dc_date_publication_year:
+    type: datetime_default
+    weight: 17
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_dc_description:
+    type: text_textarea_with_summary
+    weight: 18
+    region: content
+    settings:
+      rows: 9
+      summary_rows: 3
+      placeholder: ''
+      show_summary: false
+    third_party_settings: {  }
+  field_dc_lang_code:
+    type: options_select
+    weight: 20
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_dc_language_original:
+    type: string_textfield
+    weight: 19
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_dc_rights_creativecommons:
+    type: options_select
+    weight: 21
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_dc_rights_general:
+    type: text_textarea
+    weight: 22
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_doi:
+    type: string_textfield
+    weight: 23
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_external_pdf:
+    type: string_textfield
+    weight: 24
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_general_featured_image:
+    type: image_image
+    weight: 25
+    region: content
+    settings:
+      progress_indicator: throbber
+      preview_image_style: thumbnail
+    third_party_settings: {  }
+  field_group_content_access:
+    type: options_select
+    weight: 26
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_journal_issue:
+    type: string_textfield
+    weight: 27
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_journal_title:
+    type: string_textfield
+    weight: 28
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_journal_volume:
+    type: string_textfield
+    weight: 29
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_kmap_places:
+    type: kmap_tree_picker
+    weight: 30
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_kmap_term:
+    type: kmap_tree_picker
+    weight: 31
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_kmap_terms:
+    type: kmap_tree_picker
+    weight: 32
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_language_kmap:
+    type: kmap_tree_picker
+    weight: 33
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_legacy_nid:
+    type: number
+    weight: 34
+    region: content
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+  field_legacy_site:
+    type: options_select
+    weight: 35
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_pages:
+    type: string_textfield
+    weight: 36
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_pdf_version:
+    type: file_generic
+    weight: 37
+    region: content
+    settings:
+      progress_indicator: throbber
+    third_party_settings: {  }
+  field_split_headings:
+    type: options_select
+    weight: 38
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_split_text:
+    type: boolean_checkbox
+    weight: 39
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  langcode:
+    type: language_select
+    weight: 2
+    region: content
+    settings:
+      include_locked: true
+    third_party_settings: {  }
+  path:
+    type: path
+    weight: 30
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  status:
+    type: boolean_checkbox
+    weight: 120
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  title:
+    type: string_textfield
+    weight: -5
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 5
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  promote: true
+  sticky: true

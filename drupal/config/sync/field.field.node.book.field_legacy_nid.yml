@@ -1,0 +1,23 @@
+uuid: 6ba45d0f-a526-42e5-b60a-074095b41ce5
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_legacy_nid
+    - node.type.book
+id: node.book.field_legacy_nid
+field_name: field_legacy_nid
+entity_type: node
+bundle: book
+label: 'Legacy node ID'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

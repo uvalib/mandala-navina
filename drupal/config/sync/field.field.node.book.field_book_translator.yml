@@ -1,0 +1,19 @@
+uuid: 029a481f-a6a0-4902-9229-0f2bf6869adc
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_book_translator
+    - node.type.book
+id: node.book.field_book_translator
+field_name: field_book_translator
+entity_type: node
+bundle: book
+label: Translator
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

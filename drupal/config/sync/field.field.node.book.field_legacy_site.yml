@@ -1,0 +1,21 @@
+uuid: 0bc5562c-b272-4cf1-a7ec-c95762c0edef
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_legacy_site
+    - node.type.book
+  module:
+    - options
+id: node.book.field_legacy_site
+field_name: field_legacy_site
+entity_type: node
+bundle: book
+label: 'Legacy site'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string
