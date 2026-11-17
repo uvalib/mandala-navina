@@ -317,5 +317,5 @@ The two "new" rows were posted to Than on #353 on 2026-11-10; no answer recorded
 3. A verification script that compares D7 and D11 (counts, hashes, status counts, dropped-row report), in `scripts/`, with a howto in `docs/dev-notes/`.
 4. DDEV run; fix what it shows.
 5. dev-0 sample run and full run (both done 2026-11-16, verified, see above).
-6. Reindex (done 2026-11-16, counts unchanged), then the resolver swap, as its own PR.
+6. Reindex (done 2026-11-16, counts unchanged), then the resolver swap, as its own PR (built 2026-11-16: `EntityTridResolver`, update 10002 drops the table).
 7. Update #290, the Sprint 4 T5 and T9 rows, and the T2 plan's phase 7.

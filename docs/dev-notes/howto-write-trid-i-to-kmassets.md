@@ -9,27 +9,21 @@ AV document carried it.
 
 - `TranscriptIdContributor` (a `mandala_kmassets_sync.doc_contributor`) sets `trid_i` on
   `audio` and `video` documents. A node with no transcript gets no field.
-- It asks a `TridResolverInterface`. Today's implementation, `LegacyTridMapResolver`, reads
-  the table `mandala_kmassets_trid_map`, keyed by `(legacy_site, legacy_nid)` per ADR 017,
-  never by a D11 node id.
-- **Swap point for T2:** when the `av_transcript` entity exists, add a resolver that reads
-  it and repoint the `mandala_kmassets_sync.trid_resolver` service. The contributor and the
-  table's consumers do not change; the table and `kmassets:load-trid-map` can then be removed.
+- It asks a `TridResolverInterface`. The implementation is `EntityTridResolver`, which reads the
+  `av_transcript` entity by the node's own id (the entity id **is** the `trid`). A soft-deleted
+  transcript (ADR 019) does not resolve, so `trid_i` leaves the document when the transcript is
+  deleted and returns when it is restored.
+- Transcript create, move and delete events already refresh the node's document
+  (`TranscriptReindexSubscriber`), so day-to-day edits need no manual step.
 
-## Load the map
+## Where the data comes from
 
-Source is D7 `transcripts_apachesolr_transcript` (`id` = D7 nid), read through the
-`migrate_av` connection, so the D7 AV database must be present in that environment.
+The `av_transcript` rows come from the T5 migration (`d7_av_transcript`), so an environment has
+`trid_i` only once T5 has run there. Until then a reindex writes no `trid_i`; run T5 first.
 
-```bash
-ddev drush updb -y                       # creates mandala_kmassets_trid_map (update 10001)
-ddev drush kmassets:load-trid-map --dry-run
-ddev drush kmassets:load-trid-map        # truncates and reloads; safe to re-run
-```
-
-Expected: 5,343 rows (one transcript per node, audited in Spike 11). The 19 orphan `trid`s
-have no node and are not loaded; the 41 never-processed nodes have no tracking row and get no
-`trid_i`.
+History: until T2 phase 7 the resolver read an interim table, `mandala_kmassets_trid_map`,
+loaded by `drush kmassets:load-trid-map`. Update `mandala_kmassets_sync_update_10002` drops the
+table and that command no longer exists. If you find either in an old note, they are gone.
 
 ## Then reindex the AV documents
 
