@@ -259,6 +259,8 @@ content:
     weight: 100
     region: content
 hidden:
+  book_navigation: true
+  book_navigation_without_tree: true
   field_admin_status: true
   field_legacy_nid: true
   field_legacy_site: true
