@@ -126,4 +126,10 @@ class TextSplitterTest extends UnitTestCase {
     $this->assertCount(1, $r['sections']);
   }
 
+  public function testInlineStylesAreStrippedButSpansKept(): void {
+    $r = TextSplitter::split('<p style="margin:0">a <span lang="bo" style="mso-x:1">b</span></p><h1 style="color:red">One</h1><p><b style="x">c</b></p>', [1]);
+    $this->assertSame('<p>a <span lang="bo">b</span></p>', $r['intro']);
+    $this->assertSame('<p><b>c</b></p>', $r['sections'][0]['html']);
+  }
+
 }
