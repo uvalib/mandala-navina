@@ -4,6 +4,9 @@ status: true
 dependencies:
   module:
     - editor
+    - footnotes
+    - linkit
+    - mathjax
 _core:
   default_config_hash: vpZysv3RHJjhYzq7O_q5q8mVlHdrSzKELmXyiX6RtV0
 name: 'Full HTML'
@@ -28,6 +31,20 @@ filters:
     status: true
     weight: 9
     settings: {  }
+  filter_footnotes:
+    id: filter_footnotes
+    provider: footnotes
+    status: true
+    weight: 5
+    settings:
+      footnotes_collapse: false
+      footnotes_css: true
+      footnotes_clean_anchors: false
+      footnotes_dialog: false
+      footnotes_dialog_prevent_bubbling: false
+      footnotes_footer_disable: true
+      footnotes_preview_show_text: true
+      footnotes_preview_character: ''
   filter_htmlcorrector:
     id: filter_htmlcorrector
     provider: filter
@@ -40,3 +57,17 @@ filters:
     status: true
     weight: 15
     settings: {  }
+  filter_mathjax:
+    id: filter_mathjax
+    provider: mathjax
+    status: true
+    weight: 20
+    settings: {  }
+  linkit:
+    id: linkit
+    provider: linkit
+    status: true
+    weight: 0
+    settings:
+      title: false
+      media_substitution: metadata

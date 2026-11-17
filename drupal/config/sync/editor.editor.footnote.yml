@@ -1,0 +1,27 @@
+uuid: 9a3689c2-931f-4c3f-b1f7-a19f2db5a3aa
+langcode: en
+status: true
+dependencies:
+  config:
+    - filter.format.footnote
+  module:
+    - ckeditor5
+_core:
+  default_config_hash: SyHxfjreOgdyYXaIXOlKvLazJjPl6X-6ywdJeSruOzg
+format: footnote
+editor: ckeditor5
+settings:
+  toolbar:
+    items:
+      - bold
+      - italic
+      - link
+  plugins:
+    ckeditor5_heading:
+      enabled_headings:
+        - heading2
+        - heading3
+        - heading4
+        - heading5
+        - heading6
+image_upload: {  }
