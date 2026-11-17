@@ -266,5 +266,6 @@ hidden:
   field_legacy_site: true
   field_split_headings: true
   field_split_text: true
+  footnotes_group: true
   langcode: true
   search_api_excerpt: true
