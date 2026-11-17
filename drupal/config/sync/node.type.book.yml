@@ -1,0 +1,11 @@
+uuid: 41cc1c26-277f-4ec3-880f-8d0d9a6c4ca8
+langcode: en
+status: true
+dependencies: {  }
+name: 'Book page'
+type: book
+description: '<em>Books</em> have a built-in hierarchical navigation. Use for handbooks or tutorials.'
+help: null
+new_revision: true
+preview_mode: 1
+display_submitted: true

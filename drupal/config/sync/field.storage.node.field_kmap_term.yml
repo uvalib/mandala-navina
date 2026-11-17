@@ -1,0 +1,19 @@
+uuid: c18de503-c9df-45ec-a9ea-c0993ddd6dcd
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - shanti_kmaps_fields
+id: node.field_kmap_term
+field_name: field_kmap_term
+entity_type: node
+type: shanti_kmaps_fields_default
+settings: {  }
+module: shanti_kmaps_fields
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

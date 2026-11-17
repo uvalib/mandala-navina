@@ -1,0 +1,21 @@
+uuid: 835980a4-c5e4-4504-8edf-3aa11a75d16e
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_group_content_access
+    - node.type.asset_link
+  module:
+    - options
+id: node.asset_link.field_group_content_access
+field_name: field_group_content_access
+entity_type: node
+bundle: asset_link
+label: 'Group content visibility'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_integer

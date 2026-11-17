@@ -1,0 +1,11 @@
+uuid: 8a6fb5dc-71c4-465d-8abb-7da9041ef50f
+langcode: en
+status: true
+dependencies: {  }
+name: 'Asset Link'
+type: asset_link
+description: ''
+help: null
+new_revision: true
+preview_mode: 1
+display_submitted: true

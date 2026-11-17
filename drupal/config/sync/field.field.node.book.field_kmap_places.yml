@@ -1,0 +1,23 @@
+uuid: 2f8b72bd-f855-4330-b655-6508476b87c6
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_kmap_places
+    - node.type.book
+  module:
+    - shanti_kmaps_fields
+id: node.book.field_kmap_places
+field_name: field_kmap_places
+entity_type: node
+bundle: book
+label: Places
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  kmap_domain: places
+  search_root_kmapid: null
+field_type: shanti_kmaps_fields_default

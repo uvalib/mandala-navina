@@ -1,0 +1,24 @@
+uuid: e23b3ad2-275e-4945-9b77-611157782c02
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_book_content
+    - filter.format.full_html
+    - node.type.book
+  module:
+    - text
+id: node.book.field_book_content
+field_name: field_book_content
+entity_type: node
+bundle: book
+label: Content
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats:
+    - full_html
+field_type: text_long

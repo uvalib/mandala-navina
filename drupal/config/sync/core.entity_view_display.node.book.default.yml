@@ -1,0 +1,268 @@
+uuid: 3527d1e9-0ac8-4d2e-9cc3-7fa5a178c5b0
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.book.field_admin_status
+    - field.field.node.book.field_book_author
+    - field.field.node.book.field_book_content
+    - field.field.node.book.field_book_date
+    - field.field.node.book.field_book_editor
+    - field.field.node.book.field_book_translator
+    - field.field.node.book.field_dc_date_orginial_year
+    - field.field.node.book.field_dc_date_publication_year
+    - field.field.node.book.field_dc_description
+    - field.field.node.book.field_dc_lang_code
+    - field.field.node.book.field_dc_language_original
+    - field.field.node.book.field_dc_rights_creativecommons
+    - field.field.node.book.field_dc_rights_general
+    - field.field.node.book.field_doi
+    - field.field.node.book.field_external_pdf
+    - field.field.node.book.field_general_featured_image
+    - field.field.node.book.field_group_content_access
+    - field.field.node.book.field_journal_issue
+    - field.field.node.book.field_journal_title
+    - field.field.node.book.field_journal_volume
+    - field.field.node.book.field_kmap_places
+    - field.field.node.book.field_kmap_term
+    - field.field.node.book.field_kmap_terms
+    - field.field.node.book.field_language_kmap
+    - field.field.node.book.field_legacy_nid
+    - field.field.node.book.field_legacy_site
+    - field.field.node.book.field_pages
+    - field.field.node.book.field_pdf_version
+    - field.field.node.book.field_split_headings
+    - field.field.node.book.field_split_text
+    - node.type.book
+  module:
+    - datetime
+    - file
+    - image
+    - options
+    - shanti_kmaps_fields
+    - text
+    - user
+id: node.book.default
+targetEntityType: node
+bundle: book
+mode: default
+content:
+  field_book_author:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: 11
+    region: content
+  field_book_content:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 12
+    region: content
+  field_book_date:
+    type: datetime_default
+    label: above
+    settings:
+      timezone_override: ''
+      format_type: medium
+    third_party_settings: {  }
+    weight: 13
+    region: content
+  field_book_editor:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: 14
+    region: content
+  field_book_translator:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: 15
+    region: content
+  field_dc_date_orginial_year:
+    type: datetime_default
+    label: above
+    settings:
+      timezone_override: ''
+      format_type: medium
+    third_party_settings: {  }
+    weight: 16
+    region: content
+  field_dc_date_publication_year:
+    type: datetime_default
+    label: above
+    settings:
+      timezone_override: ''
+      format_type: medium
+    third_party_settings: {  }
+    weight: 17
+    region: content
+  field_dc_description:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 18
+    region: content
+  field_dc_lang_code:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 20
+    region: content
+  field_dc_language_original:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: 19
+    region: content
+  field_dc_rights_creativecommons:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 21
+    region: content
+  field_dc_rights_general:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 22
+    region: content
+  field_doi:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: 23
+    region: content
+  field_external_pdf:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: 24
+    region: content
+  field_general_featured_image:
+    type: image
+    label: above
+    settings:
+      image_link: ''
+      image_style: ''
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 25
+    region: content
+  field_group_content_access:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 26
+    region: content
+  field_journal_issue:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: 27
+    region: content
+  field_journal_title:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: 28
+    region: content
+  field_journal_volume:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: 29
+    region: content
+  field_kmap_places:
+    type: kmap_default_formatter
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 30
+    region: content
+  field_kmap_term:
+    type: kmap_default_formatter
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 31
+    region: content
+  field_kmap_terms:
+    type: kmap_default_formatter
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 32
+    region: content
+  field_language_kmap:
+    type: kmap_default_formatter
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 33
+    region: content
+  field_pages:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+      link_rel: canonical
+    third_party_settings: {  }
+    weight: 36
+    region: content
+  field_pdf_version:
+    type: file_default
+    label: above
+    settings:
+      use_description_as_link_text: true
+    third_party_settings: {  }
+    weight: 37
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  field_admin_status: true
+  field_legacy_nid: true
+  field_legacy_site: true
+  field_split_headings: true
+  field_split_text: true
+  langcode: true
+  search_api_excerpt: true

@@ -1,0 +1,19 @@
+uuid: 00e57dd8-d9f2-4789-9be5-7dec20cd1346
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_external_pdf
+    - node.type.book
+id: node.book.field_external_pdf
+field_name: field_external_pdf
+entity_type: node
+bundle: book
+label: 'External PDF'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string
