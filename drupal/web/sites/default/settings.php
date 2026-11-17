@@ -145,10 +145,13 @@ if (($envDbName = getenv('MYSQL_DATABASE')) !== false && $envDbName !== '') {
 //                               name their source key explicitly, so there is
 //                               never an ambiguous "which D7 database is this
 //                               reading?" (Sprint 3 AV4).
+//   MIGRATE_TEXTS_DATABASE   -> 'migrate_texts' key: the D7 Texts content DB,
+//                               its own key for the same reason (Sprint 5 TX9).
 $mandala_migrate_sources = [
   'migrate'       => getenv('MIGRATE_SOURCE_DATABASE'),
   'migrate_users' => getenv('MIGRATE_USERS_DATABASE'),
   'migrate_av'    => getenv('MIGRATE_AV_DATABASE'),
+  'migrate_texts' => getenv('MIGRATE_TEXTS_DATABASE'),
 ];
 foreach ($mandala_migrate_sources as $mandala_migrate_key => $mandala_migrate_db) {
   if ($mandala_migrate_db === false || $mandala_migrate_db === '') {
@@ -1118,6 +1121,17 @@ if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev
   // migration actually runs.
   $databases['migrate_av']['default'] = [
     'database' => 'd7_av',
+    'username' => 'db',
+    'password' => 'db',
+    'host'     => 'db',
+    'port'     => 3306,
+    'driver'   => 'mysql',
+    'prefix'   => '',
+  ];
+  // Migrate API source DB connection for Texts (Sprint 5 TX9) — the
+  // secondary 'd7_texts' database, same pattern as 'migrate_av' above.
+  $databases['migrate_texts']['default'] = [
+    'database' => 'd7_texts',
     'username' => 'db',
     'password' => 'db',
     'host'     => 'db',
