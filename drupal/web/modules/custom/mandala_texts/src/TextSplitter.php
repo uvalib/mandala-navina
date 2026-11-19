@@ -19,7 +19,9 @@ use Drupal\Component\Utility\Html;
  * Deliberate differences from D7:
  *  - weights are sequential per parent with no cap (D7 capped at +-15);
  *  - a section with no text of its own is dropped only if it also has no
- *    subsections (D7 dropped it either way, re-parenting its subsections).
+ *    subsections (D7 dropped it either way, re-parenting its subsections);
+ *  - inline style attributes are stripped, but <span>s are kept (D7 removed
+ *    every <span>, losing their lang attributes; Than, 2026-11-17).
  *
  * Only top-level headings split: CKEditor 5 saves a flat block structure, and
  * a heading inside a table or div is treated as content.
@@ -52,6 +54,7 @@ class TextSplitter {
     $dom = Html::load($html);
     $body = $dom->getElementsByTagName('body')->item(0);
     static::unwrapWordSections($body);
+    static::stripStyles($body);
     [$leftover, $count] = static::extractLeftoverNotes($dom, $body);
 
     $intro = '';
@@ -119,6 +122,15 @@ class TextSplitter {
         }
         $body->removeChild($node);
       }
+    }
+  }
+
+  /**
+   * Removes every inline style attribute (Word's mso-* formatting).
+   */
+  protected static function stripStyles(\DOMElement $body): void {
+    foreach (iterator_to_array($body->getElementsByTagName('*')) as $element) {
+      $element->removeAttribute('style');
     }
   }
 
