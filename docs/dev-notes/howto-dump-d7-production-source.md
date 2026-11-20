@@ -11,7 +11,9 @@ re-run a migration against the exact data it was developed on.
 ./scripts/dump-d7-production-source.sh --check texts   # connect only, writes nothing
 ./scripts/dump-d7-production-source.sh texts           # dump one site
 ./scripts/dump-d7-production-source.sh av images       # several
-./scripts/dump-d7-production-source.sh all             # every site
+./scripts/dump-d7-production-source.sh all             # the six asset sites (not shared)
+./scripts/dump-d7-production-source.sh shared          # the user base: name it explicitly
+./scripts/dump-d7-production-source.sh --push dev-0 av # dump, then copy up to dev-0 and verify
 ./scripts/dump-d7-production-source.sh --keep 3 texts  # dump, then keep the newest 3
 ./scripts/dump-d7-production-source.sh --list          # what the repository holds
 ```
@@ -46,6 +48,15 @@ No migrate source reads them, and `sessions` holds live session ids. Matching is
 name, because a `%log%` pattern would also catch real content such as
 `field_data_field_catalog_workflow_notes`. Override the exact-name list with
 `SKIP_TABLES="a b c"`. The skipped names are recorded in each `.meta` file.
+
+## Copy up to dev-0 (`--push`)
+
+`--push dev-0` (or `--push user@host`) copies each new dump and its `.meta` to
+`/home/dumps/<site>/` on the host and checks the sha256 over there against the `.meta`.
+`PUSH_DIR` changes the destination. Asset sites land `root:admin`, directory 2770, files
+660, so any account in `admin` can read them. `shared` lands in `/home/dumps/shared/`, owned
+`root:root`, directory 700 and files 600. dev-0's root volume is not backed up, so this is a
+convenience copy, not the record.
 
 ## Check a dump, then load it
 
