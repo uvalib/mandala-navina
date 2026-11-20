@@ -47,6 +47,9 @@
 # the shared-user dump carries real PII; nothing about this run touches disk
 # except Docker's own image cache.
 #
+# To keep dated local copies of a production database instead, use
+# dump-d7-production-source.sh (docs/dev-notes/howto-dump-d7-production-source.md).
+#
 # Usage:
 #   ./scripts/refresh-d7-staging-source.sh [source_db:target_db ...]
 #

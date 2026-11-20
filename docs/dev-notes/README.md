@@ -41,3 +41,4 @@ until added there) and add a row to the index below.
 | [migration-config-rationale.md](migration-config-rationale.md) | Reference | Why each migration/settings config is shaped as it is, and the data findings behind it (formerly `#` comments in `config/sync`) |
 | [howto-template.md](howto-template.md) | Template | Starting point for new how-to guides |
 | [howto-list-replaced-file-transcripts.md](howto-list-replaced-file-transcripts.md) | How-to | `list-av-transcripts-replaced-file.sh`: the 68 transcripts whose units came from a file that no longer exists, for the T5 Q8 source-file review |
+| [howto-dump-d7-production-source.md](howto-dump-d7-production-source.md) | How-to | `dump-d7-production-source.sh`: read-only dump of any D7 asset database from production into a dated local repository (cache and log tables skipped, row counts recorded) |
