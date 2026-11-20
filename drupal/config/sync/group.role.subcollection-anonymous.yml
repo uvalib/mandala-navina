@@ -14,8 +14,12 @@ global_role: anonymous
 group_type: subcollection
 permissions:
   - 'view group'
+  - 'view group_node:asset_link entity'
+  - 'view group_node:asset_link relationship'
   - 'view group_node:audio entity'
   - 'view group_node:audio relationship'
+  - 'view group_node:book entity'
+  - 'view group_node:book relationship'
   - 'view group_node:shanti_image entity'
   - 'view group_node:shanti_image relationship'
   - 'view group_node:video entity'

@@ -1,0 +1,17 @@
+uuid: b3903aff-8fb4-4c3e-af96-6b8f0b75b29f
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.subcollection
+    - node.type.book
+  module:
+    - gnode
+    - node
+id: subcollection-group_node-book
+group_type: subcollection
+content_plugin: 'group_node:book'
+plugin_config:
+  group_cardinality: 0
+  entity_cardinality: 1
+  use_creation_wizard: false

@@ -82,6 +82,20 @@ final class NodeQueryAlter {
       return;
     }
 
+    // Book's tree queries declare base_table 'book', which has nid but no type
+    // column (Spike 13 S1 finding 3). Read the bundle from node_field_data
+    // instead. Book-only on purpose: any other non-node base table still errors
+    // on "$base_table.type", failing closed, so generalize this only when a
+    // second case appears.
+    $type_table = $base_table;
+    if ($query->getTables()[$base_table]['table'] === 'book') {
+      $type_table = $query->innerJoin(
+        'node_field_data',
+        'mgi_nfd',
+        "%alias.nid = $base_table.nid AND %alias.default_langcode = 1",
+      );
+    }
+
     $grel = $query->leftJoin(
       'group_relationship_field_data',
       'mgi_rel',
@@ -105,7 +119,7 @@ final class NodeQueryAlter {
       // Bundles with no group_node plugin are none of our business. Discovered,
       // not listed, so Texts and Sources are covered the moment their plugins
       // are installed.
-      ->condition("$base_table.type", $bundles, 'NOT IN')
+      ->condition("$type_table.type", $bundles, 'NOT IN')
       // Not in a collection: nothing to enforce. This deliberately matches the
       // hook, which returns neutral before reading the node's own override --
       // so 18 published video nodes marked private or UVA but belonging to no
