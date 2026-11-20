@@ -11,16 +11,18 @@
 # Usage:
 #   ./scripts/dump-d7-production-source.sh texts            # one site
 #   ./scripts/dump-d7-production-source.sh av images        # several
-#   ./scripts/dump-d7-production-source.sh all              # every site below
+#   ./scripts/dump-d7-production-source.sh all              # the six asset sites (not shared)
 #   ./scripts/dump-d7-production-source.sh mandalatextslibv # a raw database name
 #   ./scripts/dump-d7-production-source.sh --list           # show the repository
 #   ./scripts/dump-d7-production-source.sh --check texts    # connect only, no dump
 #   ./scripts/dump-d7-production-source.sh --keep 3 texts   # dump, then keep newest 3
+#   ./scripts/dump-d7-production-source.sh --push dev-0 av  # dump, then copy up to dev-0
 #
 # Sites (production database on rds-mysql8-production):
 #   images=mandalaimageslib  av=mandalaavlibvirg  sources=mandalasourcesli
 #   texts=mandalatextslibv   visuals=mandalavisualsli  home=mandalalibvirgin
-#   shared=mandala_shared    (the user/role base all five sites share: REAL PII)
+#   shared=mandala_shared    (the user/role base all five sites share: REAL PII;
+#                             never part of `all`, name it explicitly)
 #
 # Repository layout (default $HOME/mandala-d7-dumps, override with D7_DUMP_DIR):
 #   <site>/mandala-prod-<site>-db_YYYY-MM-DD.sql.gz         the dump
@@ -35,6 +37,15 @@
 # *.sql.gz is gitignored as a second guard). Directories are mode 700 and files
 # 600. The `shared` dump carries real user data: keep it on an encrypted disk and
 # do not copy it anywhere shared.
+#
+# --push HOST copies each new dump and its .meta to HOST after dumping, then
+# checks the sha256 over there against the .meta. HOST is `dev-0` or user@host.
+# Destination: PUSH_DIR (default /home/dumps) on the host, same <site>/ layout.
+# Asset sites land root:admin mode 2770 (group-writable, new files inherit the
+# group); `shared` lands in <PUSH_DIR>/shared owned root:root, directory 700 and
+# files 600. The file is staged in your home directory on the host (not /tmp,
+# which is a small tmpfs) and installed with sudo. A `latest.sql.gz` symlink is
+# kept there too. dev-0's root volume is not backed up: it is a convenience copy.
 #
 # What is skipped: every cache* table (runtime cache; 64% of the AV dump) and the
 # log and runtime-state tables watchdog, accesslog, feeds_log, flood and sessions.
@@ -78,7 +89,7 @@ site_db() {
     *) return 1 ;;
   esac
 }
-ALL_SITES=(images av sources texts visuals home shared)
+ALL_SITES=(images av sources texts visuals home)
 
 # Log and runtime-state tables skipped by exact name (cache* is skipped by prefix).
 SKIP_TABLES="${SKIP_TABLES:-watchdog accesslog feeds_log flood sessions}"
@@ -107,6 +118,8 @@ list_repo() {
 }
 
 KEEP=""
+PUSH=""
+PUSH_DIR="${PUSH_DIR:-/home/dumps}"
 CHECK=0
 SITES=()
 while [ "$#" -gt 0 ]; do
@@ -118,6 +131,12 @@ while [ "$#" -gt 0 ]; do
       shift
       KEEP="${1:-}"
       [[ "$KEEP" =~ ^[1-9][0-9]*$ ]] || { echo "ERROR: --keep needs a positive number" >&2; exit 2; }
+      ;;
+    --push)
+      shift
+      PUSH="${1:-}"
+      [ -n "$PUSH" ] || { echo "ERROR: --push needs a host (dev-0 or user@host)" >&2; exit 2; }
+      [ "$PUSH" != "dev-0" ] || PUSH="$(whoami)@mandala-drupal-dev-0.internal.lib.virginia.edu"
       ;;
     -*) echo "ERROR: unknown option $1" >&2; usage >&2; exit 2 ;;
     all) SITES=("${ALL_SITES[@]}") ;;
@@ -147,6 +166,38 @@ echo "    OK."
 umask 077
 mkdir -p "$DUMP_DIR"
 chmod 700 "$DUMP_DIR"
+
+push_dump() {
+  local site="$1" out="$2" owner_group mode dirmode remote_dir name stage
+  name="$(basename "$out")"
+  remote_dir="$PUSH_DIR/$site"
+  if [ "$site" = "shared" ]; then
+    owner_group="root:root"; dirmode=700; mode=600
+  else
+    owner_group="root:admin"; dirmode=2770; mode=660
+  fi
+  stage=".d7push.$$"
+  echo "    Pushing to $PUSH:$remote_dir ..."
+  ssh -i "$PROD_SSH_KEY" -o ConnectTimeout=15 -o BatchMode=yes "$PUSH" "mkdir -m 700 -p \"\$HOME/$stage\""
+  scp -q -i "$PROD_SSH_KEY" -o ConnectTimeout=15 -o BatchMode=yes "$out" "$out.meta" "$PUSH:$stage/"
+  local want got
+  want="$(grep '^sha256=' "$out.meta" | cut -d= -f2)"
+  got="$(ssh -i "$PROD_SSH_KEY" -o ConnectTimeout=15 -o BatchMode=yes "$PUSH" "
+    set -e
+    sudo install -d -o ${owner_group%%:*} -g ${owner_group##*:} -m $dirmode '$PUSH_DIR' 2>/dev/null || true
+    sudo install -d -o ${owner_group%%:*} -g ${owner_group##*:} -m $dirmode '$remote_dir'
+    sudo install -o ${owner_group%%:*} -g ${owner_group##*:} -m $mode \"\$HOME/$stage/$name\" \"\$HOME/$stage/$name.meta\" '$remote_dir/'
+    sudo ln -sfn '$name' '$remote_dir/latest.sql.gz'
+    rm -rf \"\$HOME/$stage\"
+    sudo sha256sum '$remote_dir/$name' | cut -d' ' -f1
+  ")"
+  if [ "$got" = "$want" ]; then
+    echo "    Pushed and verified (sha256 ${got:0:12}...)."
+  else
+    echo "ERROR: checksum mismatch on $PUSH for $name (local ${want:0:12}, remote ${got:0:12})" >&2
+    return 1
+  fi
+}
 
 PARTIAL=""
 trap '[ -z "$PARTIAL" ] || rm -f "$PARTIAL"' EXIT
@@ -228,6 +279,10 @@ dump_site() {
 
   echo "    Done: $(du -h "$out" | cut -f1), sha256 ${sum:0:12}..."
   [ -z "$counts" ] || printf '    %s\n' $(printf '%s' "$counts" | tr '\n' ' ')
+
+  if [ -n "$PUSH" ]; then
+    push_dump "$site" "$out" || return 1
+  fi
 
   if [ -n "$KEEP" ]; then
     local old
