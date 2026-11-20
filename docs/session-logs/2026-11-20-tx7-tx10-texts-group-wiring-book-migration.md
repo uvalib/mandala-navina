@@ -2170,3 +2170,26 @@ Next is TX14 (collections and memberships as Groups), which is the last thing TX
 no that's it for this session. Let's wrap it up.
 
 ---
+
+## Claude — 2026-11-20 20:13
+
+The session is wrapped up, with two PRs left open for you to merge:
+
+- **#433** (docs only, no deploy) has the final session log and today's sprint doc updates for TX7, TX10 and TX11. The log's summary covers what merged, your three decisions, the findings, and that TX14 is next.
+- **#434** (TX11 outline migration) triggers a deploy when merged, though nothing runs automatically. Check dev-0 is idle first, as usual.
+
+**Close check:**
+- The close script passes apart from a warning about those two open PRs, which are left open on purpose.
+- No deferred issues changed today. #289 (the orphaned-content sweep) is related to TX7 part B's 34 group-less pages, but nothing about it has changed yet.
+
+**Memory:** I updated the task queue and project state notes, so next session starts from "merge #433 and #434, then TX14".
+
+Local DDEV is back on `main`. Its database still holds today's Texts books and outline, which is fine for TX14.
+
+---
+
+## User — 2026-11-20 20:13
+
+ok remember everything and write the session log
+
+---
