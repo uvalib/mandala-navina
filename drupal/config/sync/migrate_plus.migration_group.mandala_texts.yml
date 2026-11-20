@@ -1,0 +1,12 @@
+uuid: 1c837f3f-019d-463d-9379-e31248cb878b
+langcode: en
+status: true
+dependencies: {  }
+id: mandala_texts
+label: 'Mandala Texts (Sprint 5)'
+description: 'D7 Texts → D11 book nodes, outlines and Group memberships.'
+source_type: 'Drupal 7 Texts site'
+module: null
+shared_configuration:
+  source:
+    key: migrate_texts
