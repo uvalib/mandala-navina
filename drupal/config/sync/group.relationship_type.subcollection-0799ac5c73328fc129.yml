@@ -1,0 +1,17 @@
+uuid: 0bb4535d-a8c4-4164-831d-3dcc552f343d
+langcode: en
+status: true
+dependencies:
+  config:
+    - group.type.subcollection
+    - node.type.asset_link
+  module:
+    - gnode
+    - node
+id: subcollection-0799ac5c73328fc129
+group_type: subcollection
+content_plugin: 'group_node:asset_link'
+plugin_config:
+  group_cardinality: 0
+  entity_cardinality: 1
+  use_creation_wizard: false
