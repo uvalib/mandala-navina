@@ -317,5 +317,5 @@ The two "new" rows were posted to Than on #353 on 2026-11-10; no answer recorded
 3. A verification script that compares D7 and D11 (counts, hashes, status counts, dropped-row report), in `scripts/`, with a howto in `docs/dev-notes/`.
 4. DDEV run; fix what it shows.
 5. dev-0 sample run and full run (both done 2026-11-16, verified, see above).
-6. Reindex (done 2026-11-16, counts unchanged), then the resolver swap, as its own PR (built 2026-11-16: `EntityTridResolver`, update 10002 drops the table).
+6. Reindex (done 2026-11-16, counts unchanged), then the resolver swap, as its own PR (#420, merged and deployed 2026-11-17: `EntityTridResolver`, update 10002 dropped the table). **Verified 2026-11-20:** a second full reindex, this time through the entity resolver, indexed 7,395 video and 4,187 audio with 0 errors in 34 min (15:28 to 16:02 UTC), and the counts held at 11,582 AV documents and 5,343 with `trid_i`.
 7. Update #290, the Sprint 4 T5 and T9 rows, and the T2 plan's phase 7.
