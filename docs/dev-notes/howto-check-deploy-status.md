@@ -11,6 +11,12 @@ by hand each session.
 
 ## Prerequisites
 
+No AWS credentials? `./scripts/dev0-status.sh` (VPN + SSH to dev-0) shows the
+Drupal container's uptime (a restart soon after a merge means the new build is
+live) and dev-0's `config:status` (only `simplesamlphp_auth.settings` is
+expected).
+
+
 - AWS credentials reachable from the shell — either already present (an
   `aws-vault exec`'d shell, SSO session) or `aws-vault` installed with a
   `staging` profile configured. Both scripts below try plain `aws` first and
