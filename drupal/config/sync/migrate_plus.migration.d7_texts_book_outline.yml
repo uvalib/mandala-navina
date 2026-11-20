@@ -1,0 +1,58 @@
+uuid: 6e0dce5c-f8aa-46de-9cd3-d6b4f360642c
+langcode: en
+status: true
+dependencies: {  }
+id: d7_texts_book_outline
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Texts'
+  - 'Sprint 5 TX11'
+migration_group: mandala_texts
+label: 'Texts: D7 book outline -> Book outline (nid and bid through d7_texts_book; tied weights normalized)'
+source:
+  plugin: d7_texts_book_outline
+process:
+  nid:
+    -
+      plugin: migration_lookup
+      migration: d7_texts_book
+      source: nid
+      no_stub: true
+    -
+      plugin: skip_on_empty
+      method: row
+      message: 'Outline node not migrated by d7_texts_book'
+  book/bid:
+    -
+      plugin: migration_lookup
+      migration: d7_texts_book
+      source: bid
+      no_stub: true
+    -
+      plugin: skip_on_empty
+      method: row
+      message: 'Book root not migrated by d7_texts_book'
+  book/weight: weight
+  book/pid:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: plid
+    -
+      plugin: migration_lookup
+      migration: d7_texts_book_outline
+      no_stub: true
+    -
+      plugin: skip_on_empty
+      method: row
+      message: 'Parent outline link not migrated'
+destination:
+  plugin: book
+idMap: {  }
+migration_dependencies:
+  required:
+    - d7_texts_book
+include: null
