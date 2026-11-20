@@ -1,0 +1,119 @@
+uuid: b7a28207-16d4-4053-af34-bc711f0a827b
+langcode: en
+status: true
+dependencies: {  }
+id: d7_texts_book
+class: null
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags:
+  - 'Drupal 7'
+  - 'Mandala Texts'
+  - 'Sprint 5 TX10'
+migration_group: mandala_texts
+label: 'Texts: D7 book nodes -> D11 book nodes (scalar fields; files, KMaps, outline, body transform in later migrations)'
+source:
+  plugin: d7_texts_node
+  node_type: book
+process:
+  title: title
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+  uid: node_uid
+  field_legacy_nid: nid
+  field_legacy_site:
+    plugin: default_value
+    default_value: texts
+  field_book_content/value: field_book_content/0/value
+  field_book_content/format:
+    plugin: default_value
+    default_value: full_html
+  field_dc_description/value: field_dc_description/0/value
+  field_dc_description/summary: field_dc_description/0/summary
+  field_dc_description/format:
+    plugin: default_value
+    default_value: full_html
+  field_book_author:
+    plugin: sub_process
+    source: field_book_author
+    process:
+      value: value
+  field_book_editor:
+    plugin: sub_process
+    source: field_book_editor
+    process:
+      value: value
+  field_book_translator:
+    plugin: sub_process
+    source: field_book_translator
+    process:
+      value: value
+  field_book_date:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_book_date/0/value
+    -
+      plugin: substr
+      start: 0
+      length: 10
+  field_dc_date_orginial_year:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_dc_date_orginial_year/0/value
+    -
+      plugin: substr
+      start: 0
+      length: 10
+  field_dc_date_publication_year:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_dc_date_publication_year/0/value
+    -
+      plugin: substr
+      start: 0
+      length: 10
+  field_dc_lang_code: field_dc_lang_code/0/value
+  field_dc_language_original: field_dc_language_original/0/value
+  field_dc_rights_creativecommons: field_dc_rights_creativecommons/0/licence
+  field_dc_rights_general/value: field_dc_rights_general/0/value
+  field_dc_rights_general/format:
+    plugin: default_value
+    default_value: plain_text
+  field_doi: field_doi/0/value
+  field_external_pdf: field_external_pdf/0/value
+  field_journal_title: field_journal_title/0/value
+  field_journal_issue: field_journal_issue/0/value
+  field_journal_volume: field_journal_volume/0/value
+  field_pages: field_pages/0/value
+  field_admin_status: field_admin_status/0/value
+  field_group_content_access: group_content_access/0/value
+  field_split_text: field_split_text/0/value
+  field_split_headings:
+    plugin: sub_process
+    source: field_split_headings
+    process:
+      value:
+        plugin: static_map
+        source: value
+        map:
+          1: '1'
+          2: '2'
+          3: '3'
+          4: '4'
+          5: '5'
+          6: '6'
+        default_value: null
+destination:
+  plugin: 'entity:node'
+  default_bundle: book
+idMap: {  }
+migration_dependencies:
+  required: {  }
+  optional: {  }
+include: null
