@@ -1,8 +1,8 @@
-# Session Log: TX7, TX10 Texts group wiring and book migration
+# Session Log: TX7, TX10, TX11 Texts group wiring, book and outline migrations
 
 **Date:** 2026-11-20  
 **Participants:** Than Grove (with Yuji Shinozaki and Xiaoming Wang for the group part), Claude Code  
-**Outcome:** [Sprint 5](../sprints/sprint-05-texts-core-implementation.md), in progress (session not closed; this log is updated at the end). Merged and deployed clean on dev-0: #424 (TX9), #426 (TX6 marked done), #430 (TX7 part A), #431 (TX10); Yuji's D7 dump script (#427–#429, #432) and `MIGRATE_TEXTS_DATABASE` set on dev-0. **Decided (Than):** the `NodeQueryAlter` fix for Book's `book` base table is Book-only, generalized only if a second case appears (not put to Yuji/Xiaoming); the 65 unpublished D7 books migrate as unpublished; local Texts loads use the verified dump from dev-0 `/home/dumps/texts/`. **Finding:** 43 D7 books have `field_book_content` rows on revision ids missing from `node_revision`, so the stock d7_node source reads older text for 6; `d7_texts_node` reads `field_data` as D7 renders it. Next: TX7 part B, TX8, TX11.
+**Outcome:** [Sprint 5](../sprints/sprint-05-texts-core-implementation.md). Merged and deployed clean on dev-0: #424 (TX9), #426, #430 (TX7 part A), #431 (TX10); Yuji's D7 dump script (#427–#429, #432); `MIGRATE_TEXTS_DATABASE` set on dev-0. Open: #433 (this log, sprint notes), #434 (TX11 outline migration). **Decided (Than):** the `NodeQueryAlter` fix for Book's `book` base table is Book-only; the 65 unpublished D7 books migrate as unpublished; local Texts loads use the verified dump from dev-0 `/home/dumps/texts/`. **Findings:** 43 D7 books have `field_book_content` on revision ids missing from `node_revision` (`d7_texts_node` reads `field_data`); 2 D7 pages have a stale `book.bid` (outline takes the menu-link root); Book outline re-runs need the outline rows cleared first. TX7 part B: access mapping and splitter join done; the 34 group-less pages and the Book tree check wait on TX14. Next: TX14.
 
 ---
 
@@ -2042,5 +2042,131 @@ The messages after this summary are the most recent messages from before compact
 ## User — 2026-11-20 19:41
 
 I merged all the PRs so far. Can you document the decided work that has not been recorded and do begin the session logs though we are not done yet.
+
+---
+
+## Claude — 2026-11-20 19:42
+
+I've written up today's undocumented decisions and started the session log, both in **PR #433** (https://github.com/uvalib/mandala-navina/pull/433). It's docs-only, so merging it won't deploy anything.
+
+Most of today's decisions were already in the sprint doc's TX7 and TX10 rows. What was missing:
+
+- **Open items in the sprint doc** still listed the 65 unpublished books, the leftover body rows from deleted nodes, and the 63 books with no body as undecided. That now says they were decided in TX10:
+  - the 65 unpublished books migrate as unpublished
+  - the leftover body rows are never read
+  - books with no body migrate with an empty body
+- **TX10 row:** it now says local loads use the verified dump copied from dev-0 `/home/dumps/texts/`, checked against its `.meta` counts.
+- **New session log** (`docs/session-logs/2026-11-20-tx7-tx10-texts-group-wiring-book-migration.md`). The summary at the top lists:
+  - what merged and deployed today
+  - your three decisions: the Book-only `NodeQueryAlter` fix, unpublished books migrate as unpublished, and local loads use the dev-0 dump
+  - the D7 revision-id finding
+  - next steps: TX7 part B, TX8, TX11
+
+The permission for me to copy dumps from dev-0 is only in my local memory, not the repo. It only affects what I'm allowed to do, so it doesn't belong in the team docs.
+
+The log is marked "in progress". When we close the session I'll regenerate it with the rest of today's conversation and push it to the same PR. I also updated my task-queue memory.
+
+What next: TX7 part B, TX8, or TX11?
+
+---
+
+## User — 2026-11-20 19:44
+
+Lets do TX7 part B
+
+---
+
+## Claude — 2026-11-20 19:45
+
+Two of TX7 part B's four items are done. The other two can't be finished until TX11 (the book outlines) and TX14 (collections and memberships as Groups) are built.
+
+**Done:**
+1. **Access level mapping (public/UVA/private, stored as 0/1/2).** TX10 already migrates this field, the same way AV does. The local counts match D7 exactly: 4,668 public, 2,693 UVA and 272 private.
+2. **Splitter's collection join.** I tested it on local DDEV with a throwaway private collection containing one book. A page split from that book joined the same collection, and an anonymous visitor couldn't see it. I deleted the test collection and both nodes afterwards.
+
+**Waiting on TX11 and TX14:**
+3. **The 34 pages with no collection inheriting their root book's collection.** This needs TX11 to know each page's root book, and TX14 to create the collections.
+4. **The end-to-end check of the book's table of contents as a non-admin user.** This needs the outlines and collection memberships migrated.
+
+I recorded this progress in the TX7 row of the sprint doc and pushed it to the open docs PR #433. Nothing here changed code, so there's nothing to deploy.
+
+My suggestion is to do TX11 next, then TX14, and then come back and finish TX7 part B. Should I start TX11?
+
+---
+
+## User — 2026-11-20 20:01
+
+Yes start on TX11
+
+---
+
+## Claude — 2026-11-20 20:01
+
+Checking a D7 outline anomaly before writing the migration: two pages whose book id disagrees with their parent's book.
+
+---
+
+## Claude — 2026-11-20 20:02
+
+Writing the source plugin (book row with bid taken from the menu-link root, and normalized tied weights).
+
+---
+
+## Claude — 2026-11-20 20:03
+
+Config is in place. Running the outline migration on all 7,633 rows locally.
+
+---
+
+## Claude — 2026-11-20 20:04
+
+1,540 weights changed, far more than the spike's 36 tied groups. Investigating before going further.
+
+---
+
+## Claude — 2026-11-20 20:04
+
+Found it: the 1,051 book roots all have parent 0, so my code treated them as one giant sibling group. Roots aren't siblings, so I'm excluding them.
+
+---
+
+## Claude — 2026-11-20 20:06
+
+Rollback on Book's destination may delete the nodes themselves, so I'm checking that before anything else.
+
+---
+
+## Claude — 2026-11-20 20:08
+
+Without normalization, 20 positions differ, exactly the spike's prediction. So the check would have caught a problem. Finishing up: lint, config check, sprint row, PR.
+
+---
+
+## Claude — 2026-11-20 20:10
+
+TX11 is built and checked on local DDEV against the 2026-11-20 production dump: **PR #434** (https://github.com/uvalib/mandala-navina/pull/434).
+
+**What's in it:** a new outline migration, `d7_texts_book_outline`, with its own source plugin. It links pages to their books by looking up their new node ids, so it doesn't depend on D7 and D11 node ids being the same. It also renumbers tied sibling weights, as decided in TX3.
+
+**Results:**
+- All 7,633 outline rows migrated in about a minute, with no failures.
+- Compared with D7, every page has the same book, parent and depth.
+- **Page order within each parent matches D7 for all 6,582 non-root pages**, including the four books the spike named (13283, 13871, 14158, 15582). No ties are left.
+- To check that comparison can actually fail, I ran it on the raw D7 weights. It found 20 positions out of order, exactly what Spike 13 predicted.
+- 491 pages in 93 tied sibling groups got a new weight. The spike counted 36 groups, but that was published pages only; this includes unpublished ones. Each change is logged as a migrate message with the original D7 weight. Root weights are unchanged.
+
+**Two things I found:**
+- **Two D7 pages (15779, 15856) have the wrong book id in D7's `book` table.** Their menu links put them inside book 15582, and that's where D7 displays them. The migration takes the book from the menu link, so they land in 15582 as in D7.
+- **Re-running the migration needs a manual step.** Rollback leaves the outline rows in place, and Book's importer can't update an existing outline. A plain re-run silently keeps the old outline; this caught me once today. The fix is to clear the outline rows before re-importing. I noted this in the TX11 sprint row so the TX17 run script handles it.
+
+The sprint doc's TX11 row is marked done in the same PR. Merging it triggers a deploy, but nothing runs automatically on deploy. As before, check dev-0 is idle first.
+
+Next is TX14 (collections and memberships as Groups), which is the last thing TX7 part B is waiting on. Should I start it?
+
+---
+
+## User — 2026-11-20 20:12
+
+no that's it for this session. Let's wrap it up.
 
 ---
