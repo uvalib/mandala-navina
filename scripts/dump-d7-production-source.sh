@@ -184,7 +184,7 @@ push_dump() {
   want="$(grep '^sha256=' "$out.meta" | cut -d= -f2)"
   got="$(ssh -i "$PROD_SSH_KEY" -o ConnectTimeout=15 -o BatchMode=yes "$PUSH" "
     set -e
-    sudo install -d -o ${owner_group%%:*} -g ${owner_group##*:} -m $dirmode '$PUSH_DIR' 2>/dev/null || true
+    sudo install -d -o root -g admin -m 2770 '$PUSH_DIR' 2>/dev/null || true
     sudo install -d -o ${owner_group%%:*} -g ${owner_group##*:} -m $dirmode '$remote_dir'
     sudo install -o ${owner_group%%:*} -g ${owner_group##*:} -m $mode \"\$HOME/$stage/$name\" \"\$HOME/$stage/$name.meta\" '$remote_dir/'
     sudo ln -sfn '$name' '$remote_dir/latest.sql.gz'
